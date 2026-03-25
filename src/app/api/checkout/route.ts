@@ -1,11 +1,9 @@
 import Stripe from 'stripe'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '')
-
 const prices: Record<string, string> = {
-  pro: process.env.STRIPE_PRICE_PRO || 'price_1234567890',
-  elite: process.env.STRIPE_PRICE_ELITE || 'price_0987654321',
-  lifetime: process.env.STRIPE_PRICE_LIFETIME || 'price_5555555555',
+  pro: 'price_1234567890',
+  elite: 'price_0987654321',
+  lifetime: 'price_5555555555',
 }
 
 export async function POST(request: Request) {
@@ -15,6 +13,11 @@ export async function POST(request: Request) {
     if (!email || !plan || !prices[plan]) {
       return Response.json({ error: 'Missing email or invalid plan' }, { status: 400 })
     }
+
+    // Initialize Stripe inside the function so env vars are available
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
+      httpClient: undefined,
+    })
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
