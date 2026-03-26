@@ -218,8 +218,8 @@ function TypeWriter({ words }: { words: string[] }) {
     <span className="relative inline-block">
       {/* Invisible ghost text reserves space for the longest word */}
       <span className="invisible" aria-hidden="true">{longest}</span>
-      {/* Actual animated text overlaid on top */}
-      <span className="absolute left-0 top-0">{text}<span className="animate-pulse text-[#fd79a8]">|</span></span>
+      {/* Actual animated text overlaid on top — force gradient text visible */}
+      <span className="absolute left-0 top-0 bg-gradient-to-r from-[#fd79a8] via-[#e84393] to-[#d63031] bg-clip-text text-transparent">{text}<span className="animate-pulse text-[#fd79a8]" style={{ WebkitTextFillColor: '#fd79a8' }}>|</span></span>
     </span>
   )
 }
@@ -469,7 +469,7 @@ export default function Home() {
               <Reveal delay={100}>
                 <h1 className="text-[clamp(2.8rem,6vw,5rem)] font-black leading-[1.02] tracking-[-3px] mb-7">
                   Stop Applying.<br />
-                  Start <span className="bg-gradient-to-r from-[#fd79a8] via-[#e84393] to-[#d63031] bg-clip-text text-transparent"><TypeWriter words={['Getting Hired.', 'Landing Offers.', 'Getting Interviews.', 'Winning Jobs.']} /></span>
+                  Start <TypeWriter words={['Getting Hired.', 'Landing Offers.', 'Getting Interviews.', 'Winning Jobs.']} />
                 </h1>
               </Reveal>
 
