@@ -211,11 +211,11 @@ function TypeWriter({ words }: { words: string[] }) {
     return () => clearTimeout(timer)
   }, [text, del, idx, words])
 
-  // Calculate max width from all words (fixes layout shift)
-  const maxLength = Math.max(...words.map(w => w.length))
-  const estimatedWidth = maxLength * 0.65 // em units, rough estimate
-
-  return <span style={{ display: 'inline-block', minWidth: `${estimatedWidth}em` }}>{text}<span className="animate-pulse text-[#fd79a8]">|</span></span>
+  return <span style={{
+    display: 'inline-block',
+    minWidth: '18.5ch',
+    whiteSpace: 'nowrap'
+  }}>{text}<span className="animate-pulse text-[#fd79a8]">|</span></span>
 }
 
 // ===== SCROLL REVEAL =====
