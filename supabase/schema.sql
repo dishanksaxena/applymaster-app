@@ -223,3 +223,120 @@ create policy "Users can view own resumes" on storage.objects for select using (
 create policy "Users can delete own resumes" on storage.objects for delete using (
   bucket_id = 'resumes' and auth.uid()::text = (storage.foldername(name))[1]
 );
+
+-- ============================================
+-- New Tables: AI Features & Extended Functionality
+-- ============================================
+
+-- Parsed resume data (structured from Claude AI)
+create table if not exists public.parsed_resumes (
+  id uuid primary key default gen_random_uuid(),
+  resume_id uuid references public.resumes(id) on delete cascade not null,
+  user_id uuid references public.profiles(id) on delete cascade not null,
+  full_name text,
+  email text,
+  phone text,
+  location text,
+  summary text,
+  skills text[] not null default '{}',
+  experience jsonb not null default '[]',
+  education jsonb not null default '[]',
+  certifications text[] not null default '{}',
+  languages text[] not null default '{}',
+  raw_text text,
+  created_at timestamptz not null default now(),
+  unique(resume_id)
+);
+
+-- Job match scores
+create table if not exists public.job_matches (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references public.profiles(id) on delete cascade not null,
+  job_id uuid references public.jobs(id) on delete cascade not null,
+  resume_id uuid references public.resumes(id) on delete set null,
+  overall_score integer not null,
+  skills_score integer,
+  experience_score integer,
+  education_score integer,
+  match_reasons text[] not null default '{}',
+  missing_skills text[] not null default '{}',
+  tailored_summary text,
+  created_at timestamptz not null default now(),
+  unique(user_id, job_id)
+);
+
+-- Optimized resumes per job
+create table if not exists public.optimized_resumes (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references public.profiles(id) on delete cascade not null,
+  resume_id uuid references public.resumes(id) on delete cascade not null,
+  job_id uuid references public.jobs(id) on delete cascade not null,
+  optimized_text text not null,
+  optimized_data jsonb,
+  ats_score integer,
+  changes_made text[] not null default '{}',
+  created_at timestamptz not null default now()
+);
+
+-- Auto-apply task queue
+create table if not exists public.auto_apply_tasks (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references public.profiles(id) on delete cascade not null,
+  application_id uuid references public.applications(id) on delete cascade,
+  job_id uuid references public.jobs(id) on delete cascade not null,
+  status text not null default 'pending',
+  mode text not null default 'copilot',
+  portal_type text,
+  form_data jsonb,
+  resume_url text,
+  cover_letter_text text,
+  error_message text,
+  estimated_time_seconds integer,
+  started_at timestamptz,
+  completed_at timestamptz,
+  created_at timestamptz not null default now()
+);
+
+-- Network connections for referral feature
+create table if not exists public.network_connections (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references public.profiles(id) on delete cascade not null,
+  name text not null,
+  email text,
+  linkedin_url text,
+  company text,
+  title text,
+  relationship text not null default 'direct',
+  connected_via uuid references public.network_connections(id),
+  notes text,
+  created_at timestamptz not null default now()
+);
+
+-- Interview prep sessions
+create table if not exists public.interview_sessions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references public.profiles(id) on delete cascade not null,
+  job_id uuid references public.jobs(id),
+  interview_type text not null default 'behavioral',
+  questions jsonb not null default '[]',
+  answers jsonb not null default '[]',
+  feedback jsonb not null default '[]',
+  overall_score integer,
+  duration_seconds integer,
+  created_at timestamptz not null default now()
+);
+
+-- RLS for all new tables
+alter table public.parsed_resumes enable row level security;
+alter table public.job_matches enable row level security;
+alter table public.optimized_resumes enable row level security;
+alter table public.auto_apply_tasks enable row level security;
+alter table public.network_connections enable row level security;
+alter table public.interview_sessions enable row level security;
+
+create policy "Users can manage own parsed_resumes" on public.parsed_resumes for all using (auth.uid() = user_id);
+create policy "Users can manage own job_matches" on public.job_matches for all using (auth.uid() = user_id);
+create policy "Users can manage own optimized_resumes" on public.optimized_resumes for all using (auth.uid() = user_id);
+create policy "Users can manage own auto_apply_tasks" on public.auto_apply_tasks for all using (auth.uid() = user_id);
+create policy "Users can manage own network_connections" on public.network_connections for all using (auth.uid() = user_id);
+create policy "Users can manage own interview_sessions" on public.interview_sessions for all using (auth.uid() = user_id);

@@ -117,3 +117,143 @@ export interface Usage {
   ai_tokens_used: number
   created_at: string
 }
+
+export interface ResumeExperience {
+  company: string
+  title: string
+  start_date: string
+  end_date: string | null
+  description: string
+  location: string | null
+}
+
+export interface ResumeEducation {
+  institution: string
+  degree: string
+  field: string
+  start_date: string
+  end_date: string | null
+  gpa: string | null
+}
+
+export interface ParsedResume {
+  id: string
+  resume_id: string
+  user_id: string
+  full_name: string | null
+  email: string | null
+  phone: string | null
+  location: string | null
+  summary: string | null
+  skills: string[]
+  experience: ResumeExperience[]
+  education: ResumeEducation[]
+  certifications: string[]
+  languages: string[]
+  raw_text: string | null
+  created_at: string
+}
+
+export interface JobMatch {
+  id: string
+  user_id: string
+  job_id: string
+  resume_id: string | null
+  overall_score: number
+  skills_score: number | null
+  experience_score: number | null
+  education_score: number | null
+  match_reasons: string[]
+  missing_skills: string[]
+  tailored_summary: string | null
+  created_at: string
+}
+
+export interface OptimizedResume {
+  id: string
+  user_id: string
+  resume_id: string
+  job_id: string
+  optimized_text: string
+  optimized_data: Record<string, unknown> | null
+  ats_score: number | null
+  changes_made: string[]
+  created_at: string
+}
+
+export interface AutoApplyFormData {
+  first_name: string
+  last_name: string
+  email: string
+  phone: string
+  address: {
+    street: string
+    city: string
+    state: string
+    zip: string
+    country: string
+  }
+  // US-specific
+  authorized_to_work?: boolean
+  requires_sponsorship?: boolean
+  veteran_status?: string
+  disability_status?: string
+  gender?: string
+  ethnicity?: string
+  // India-specific
+  notice_period_days?: number
+  current_ctc?: string
+  expected_ctc?: string
+  // Professional
+  years_experience: number
+  education_highest: string
+  linkedin_url?: string
+  portfolio_url?: string
+  // AI-generated answers
+  custom_answers: Record<string, string>
+}
+
+export interface AutoApplyTask {
+  id: string
+  user_id: string
+  application_id: string | null
+  job_id: string
+  status: 'pending' | 'preparing' | 'ready_for_review' | 'approved' | 'submitting' | 'completed' | 'failed' | 'skipped'
+  mode: 'copilot' | 'autopilot'
+  portal_type: string | null
+  form_data: AutoApplyFormData | null
+  resume_url: string | null
+  cover_letter_text: string | null
+  error_message: string | null
+  estimated_time_seconds: number | null
+  started_at: string | null
+  completed_at: string | null
+  created_at: string
+}
+
+export interface NetworkConnection {
+  id: string
+  user_id: string
+  name: string
+  email: string | null
+  linkedin_url: string | null
+  company: string | null
+  title: string | null
+  relationship: 'direct' | 'second_degree' | 'alumni' | 'imported'
+  connected_via: string | null
+  notes: string | null
+  created_at: string
+}
+
+export interface InterviewSession {
+  id: string
+  user_id: string
+  job_id: string | null
+  interview_type: 'behavioral' | 'technical' | 'system_design' | 'case_study' | 'mock_full'
+  questions: Array<{ question: string; category: string }>
+  answers: Array<{ question_index: number; answer: string; timestamp: string }>
+  feedback: Array<{ question_index: number; score: number; strengths: string[]; improvements: string[]; better_answer: string }>
+  overall_score: number | null
+  duration_seconds: number | null
+  created_at: string
+}

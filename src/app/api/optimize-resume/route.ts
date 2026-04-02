@@ -1,48 +1,118 @@
-import { Anthropic } from '@anthropic-ai/sdk'
+import { NextRequest } from 'next/server'
+import { createClient } from '@/lib/supabase-server'
+import Anthropic from '@anthropic-ai/sdk'
 
-const client = new Anthropic()
+const anthropic = new Anthropic()
 
-export async function POST(request: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const { resume_id, job_title, resume_text } = await request.json()
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
 
-    if (!resume_text || !job_title) {
-      return Response.json({ error: 'Missing resume_text or job_title' }, { status: 400 })
+    const { job_title, job_description, job_id, resume_id } = await req.json()
+
+    if (!job_title) {
+      return Response.json({ error: 'job_title required' }, { status: 400 })
     }
 
-    const message = await client.messages.create({
-      model: 'claude-opus-4-6',
-      max_tokens: 2000,
+    // Get user's primary parsed resume
+    let rawText = ''
+    let parsedResume = null
+    let resumeRecordId = resume_id
+
+    if (resume_id) {
+      const { data } = await supabase
+        .from('parsed_resumes')
+        .select('*')
+        .eq('resume_id', resume_id)
+        .single()
+      parsedResume = data
+      rawText = data?.raw_text || ''
+    } else {
+      const { data: primary } = await supabase
+        .from('resumes')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('is_primary', true)
+        .single()
+
+      if (primary) {
+        resumeRecordId = primary.id
+        const { data } = await supabase
+          .from('parsed_resumes')
+          .select('*')
+          .eq('resume_id', primary.id)
+          .single()
+        parsedResume = data
+        rawText = data?.raw_text || ''
+      }
+    }
+
+    if (!rawText && !parsedResume) {
+      return Response.json({ error: 'No resume found. Please upload your resume first.' }, { status: 404 })
+    }
+
+    // Use structured data if raw text not available
+    const resumeContent = rawText || JSON.stringify(parsedResume, null, 2)
+
+    const msg = await anthropic.messages.create({
+      model: 'claude-opus-4-5',
+      max_tokens: 4000,
       messages: [
         {
           role: 'user',
-          content: `You are an expert ATS (Applicant Tracking System) optimizer. Analyze this resume for the job title "${job_title}" and provide:
+          content: `You are an expert ATS optimization specialist and professional resume writer. Optimize this resume for the specific job posting.
 
-1. An ATS compatibility score (0-100)
-2. 3-4 key strengths
-3. 3-4 improvement recommendations
-4. A brief tailored version optimized for this job
+JOB POSTING:
+Title: ${job_title}
+${job_description ? `Description: ${job_description.slice(0, 3000)}` : ''}
 
-Resume text:
-${resume_text}
+ORIGINAL RESUME:
+${resumeContent.slice(0, 4000)}
 
-Respond in JSON format:
+TASK: Rewrite and optimize this resume to maximize ATS score and match for this specific role.
+
+Return ONLY valid JSON (no markdown):
 {
-  "ats_score": number,
-  "strengths": [strings],
-  "improvements": [strings],
-  "tailored_resume": "string"
+  "ats_score": <0-100 score for optimized version>,
+  "original_score": <estimated original ATS score>,
+  "optimized_resume_text": "Full optimized resume as plain text, professionally formatted",
+  "key_changes": ["Change 1", "Change 2", "Change 3", "Change 4", "Change 5"],
+  "keywords_added": ["keyword1", "keyword2", "keyword3"],
+  "keywords_to_add_manually": ["keyword that requires actual experience"],
+  "tailored_summary": "2-3 sentence tailored professional summary",
+  "strengths": ["Strength 1", "Strength 2", "Strength 3"],
+  "gaps": ["Gap 1", "Gap 2"]
 }`,
         },
       ],
     })
 
-    const responseText = message.content[0].type === 'text' ? message.content[0].text : ''
-    const result = JSON.parse(responseText)
+    const text = msg.content[0].type === 'text' ? msg.content[0].text : '{}'
+    let result
+    try {
+      result = JSON.parse(text)
+    } catch {
+      const match = text.match(/\{[\s\S]*\}/)
+      result = match ? JSON.parse(match[0]) : { ats_score: 75, optimized_resume_text: text }
+    }
+
+    // Save optimized version
+    if (resumeRecordId && job_id) {
+      await supabase.from('optimized_resumes').insert({
+        user_id: user.id,
+        resume_id: resumeRecordId,
+        job_id,
+        optimized_text: result.optimized_resume_text || '',
+        ats_score: result.ats_score,
+        changes_made: result.key_changes || [],
+      })
+    }
 
     return Response.json(result)
-  } catch (error) {
-    console.error('Error optimizing resume:', error)
-    return Response.json({ error: 'Failed to optimize resume' }, { status: 500 })
+  } catch (err) {
+    console.error('Resume optimization error:', err)
+    return Response.json({ error: 'Optimization failed' }, { status: 500 })
   }
 }

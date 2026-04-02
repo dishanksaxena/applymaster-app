@@ -1,44 +1,113 @@
-import { Anthropic } from '@anthropic-ai/sdk'
+import { NextRequest } from 'next/server'
+import { createClient } from '@/lib/supabase-server'
+import Anthropic from '@anthropic-ai/sdk'
 
-const client = new Anthropic()
+const anthropic = new Anthropic()
 
-export async function POST(request: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const { job_title, company, tone } = await request.json()
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const { job_title, company, job_description, tone = 'professional', job_id } = await req.json()
 
     if (!job_title || !company) {
-      return Response.json({ error: 'Missing job_title or company' }, { status: 400 })
+      return Response.json({ error: 'job_title and company required' }, { status: 400 })
     }
 
-    const message = await client.messages.create({
-      model: 'claude-opus-4-6',
+    // Get user's primary parsed resume for personalization
+    let resumeContext = ''
+    let candidateName = 'the candidate'
+
+    const { data: primaryResume } = await supabase
+      .from('resumes')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('is_primary', true)
+      .single()
+
+    if (primaryResume) {
+      const { data: parsedResume } = await supabase
+        .from('parsed_resumes')
+        .select('*')
+        .eq('resume_id', primaryResume.id)
+        .single()
+
+      if (parsedResume) {
+        candidateName = parsedResume.full_name || 'the candidate'
+        resumeContext = `
+Candidate Name: ${parsedResume.full_name || 'Unknown'}
+Skills: ${(parsedResume.skills || []).slice(0, 20).join(', ')}
+Most Recent Role: ${parsedResume.experience?.[0]?.title || 'N/A'} at ${parsedResume.experience?.[0]?.company || 'N/A'}
+Key Achievement: ${parsedResume.experience?.[0]?.description?.slice(0, 300) || ''}
+Education: ${parsedResume.education?.[0]?.degree || ''} in ${parsedResume.education?.[0]?.field || ''} from ${parsedResume.education?.[0]?.institution || ''}
+Summary: ${parsedResume.summary?.slice(0, 300) || ''}
+        `.trim()
+      }
+    }
+
+    const toneInstructions: Record<string, string> = {
+      professional: 'formal, polished, and professional tone',
+      casual: 'conversational yet respectful tone',
+      enthusiastic: 'energetic, passionate, and enthusiastic tone',
+      confident: 'assertive, confident, and results-focused tone',
+    }
+    const toneText = toneInstructions[tone] || 'professional tone'
+
+    const msg = await anthropic.messages.create({
+      model: 'claude-opus-4-5',
       max_tokens: 1500,
       messages: [
         {
           role: 'user',
-          content: `Write a personalized cover letter for a ${job_title} position at ${company}.
+          content: `Write a highly personalized, compelling cover letter for this job application.
 
-Tone: ${tone}
+JOB DETAILS:
+Position: ${job_title}
+Company: ${company}
+${job_description ? `Job Description: ${job_description.slice(0, 2000)}` : ''}
 
-Requirements:
-- 3-4 paragraphs
-- Personalized to the company and role
-- Professional but engaging
-- Highlight relevant skills and achievements
-- Include a strong closing
+CANDIDATE BACKGROUND:
+${resumeContext || 'No resume data available — write a general but compelling letter.'}
 
-Start with "Dear Hiring Manager," and end with "Sincerely, [Your Name]"
+TONE: Use a ${toneText}
 
-Write only the cover letter, no additional text.`,
+REQUIREMENTS:
+- Start with "Dear Hiring Team,"
+- 3-4 powerful paragraphs
+- Reference specific skills and achievements from the resume
+- Show genuine interest in ${company} specifically
+- Quantify achievements where possible
+- Strong, memorable closing with a call to action
+- End with "Best regards,\n${candidateName}"
+- Write ONLY the letter body, nothing else`,
         },
       ],
     })
 
-    const content = message.content[0].type === 'text' ? message.content[0].text : ''
+    const coverLetter = msg.content[0].type === 'text' ? msg.content[0].text : ''
 
-    return Response.json({ cover_letter: content })
-  } catch (error) {
-    console.error('Error generating cover letter:', error)
+    // Save to database
+    const { data: savedLetter } = await supabase
+      .from('cover_letters')
+      .insert({
+        user_id: user.id,
+        job_id: job_id || null,
+        content: coverLetter,
+        tone,
+        job_title,
+        company,
+      })
+      .select('id')
+      .single()
+
+    return Response.json({
+      cover_letter: coverLetter,
+      cover_letter_id: savedLetter?.id || null,
+    })
+  } catch (err) {
+    console.error('Cover letter error:', err)
     return Response.json({ error: 'Failed to generate cover letter' }, { status: 500 })
   }
 }
