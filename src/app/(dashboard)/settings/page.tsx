@@ -1,135 +1,147 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { motion } from 'framer-motion'
 import { createClient } from '@/lib/supabase-browser'
 import { useRouter } from 'next/navigation'
 
-interface Profile {
-  full_name: string
-  email: string
-  plan: string
-}
+const container = { hidden: {}, show: { transition: { staggerChildren: 0.08 } } }
+const fadeUp = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] as const } } }
 
 export default function SettingsPage() {
-  const [profile, setProfile] = useState<Profile | null>(null)
+  const [profile, setProfile] = useState<{ full_name: string; email: string; plan: string } | null>(null)
   const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [name, setName] = useState('')
   const supabase = createClient()
   const router = useRouter()
 
   useEffect(() => {
-    loadProfile()
-  }, [])
-
-  const loadProfile = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-    const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-    if (data) {
-      setProfile({
-        full_name: data.full_name || '',
-        email: data.email,
-        plan: data.plan,
-      })
+    const load = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+      if (data) {
+        setProfile({ full_name: data.full_name || '', email: data.email, plan: data.plan })
+        setName(data.full_name || '')
+      }
+      setLoading(false)
     }
-    setLoading(false)
+    load()
+  }, [supabase])
+
+  const saveName = async () => {
+    setSaving(true)
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) await supabase.from('profiles').update({ full_name: name }).eq('id', user.id)
+    setSaving(false)
   }
 
   const handleCheckout = async (plan: string) => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
-
     try {
-      const response = await fetch('/api/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          user_id: user.id,
-          email: user.email,
-          plan: plan,
-        }),
-      })
-
+      const response = await fetch('/api/checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user_id: user.id, email: user.email, plan }) })
       const { url } = await response.json()
       if (url) window.location.href = url
-    } catch (err) {
-      console.error(err)
-      alert('Failed to start checkout')
-    }
+    } catch { alert('Failed to start checkout') }
   }
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut()
-    router.push('/')
-    router.refresh()
-  }
+  const handleSignOut = async () => { await supabase.auth.signOut(); router.push('/'); router.refresh() }
 
-  if (loading) return <div className="text-center py-12 text-[#5a5a6a]">Loading...</div>
+  if (loading) return (
+    <div className="flex items-center justify-center py-20">
+      <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+        className="w-8 h-8 rounded-full" style={{ border: '2px solid rgba(253,121,168,0.1)', borderTopColor: '#fd79a8' }} />
+    </div>
+  )
+
+  const plans = [
+    { name: 'pro', price: 29, period: '/mo', color: '#fd79a8', features: ['100 applications/month', 'AI resume optimization', 'Cover letter generation', 'Email support'], icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><polygon points="13,2 3,14 12,14 11,22 21,10 12,10"/></svg> },
+    { name: 'elite', price: 59, period: '/mo', color: '#a29bfe', popular: true, features: ['Unlimited applications', 'Priority AI processing', 'Auto-apply engine', 'Interview coaching', 'Priority support'], icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> },
+    { name: 'lifetime', price: 199, period: ' once', color: '#00b894', features: ['Everything in Elite', 'Lifetime access', 'All future features', 'VIP support', 'Early access'], icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> },
+  ]
 
   return (
-    <div className="space-y-8 max-w-2xl">
-      <div>
-        <h2 className="text-2xl font-black tracking-tight mb-1">Settings</h2>
-        <p className="text-[14px] text-[#8a8a9a]">Manage your account and subscription.</p>
-      </div>
+    <motion.div variants={container} initial="hidden" animate="show" className="space-y-8 max-w-[900px] mx-auto">
+      <motion.div variants={fadeUp}>
+        <h1 className="text-2xl font-black tracking-tight">Settings</h1>
+        <p className="text-[14px] text-[#5a5a6a] mt-1">Manage your account, billing, and preferences</p>
+      </motion.div>
 
-      {/* Account */}
-      <div className="p-6 rounded-2xl bg-[#12121a] border border-[rgba(255,255,255,0.06)]">
-        <h3 className="text-[15px] font-bold mb-5">Account</h3>
-        {profile && (
-          <div className="space-y-4">
-            <div>
-              <label className="block text-[12px] font-semibold text-[#8a8a9a] mb-2">Name</label>
-              <div className="px-4 py-3 rounded-xl bg-[#16161f] border border-[rgba(255,255,255,0.06)] text-white text-[14px]">
-                {profile.full_name || 'Not set'}
-              </div>
-            </div>
-            <div>
-              <label className="block text-[12px] font-semibold text-[#8a8a9a] mb-2">Email</label>
-              <div className="px-4 py-3 rounded-xl bg-[#16161f] border border-[rgba(255,255,255,0.06)] text-white text-[14px]">
-                {profile.email}
-              </div>
+      {/* Profile */}
+      <motion.div variants={fadeUp} className="p-6 rounded-2xl" style={{ background: 'linear-gradient(135deg, #12121a 0%, #0e0e16 100%)', border: '1px solid rgba(255,255,255,0.06)' }}>
+        <div className="flex items-center gap-4 mb-6">
+          <div className="w-16 h-16 rounded-full flex items-center justify-center shrink-0" style={{ background: 'linear-gradient(135deg, rgba(253,121,168,0.15), rgba(162,155,254,0.15))' }}>
+            <span className="text-xl font-bold bg-gradient-to-br from-[#fd79a8] to-[#a29bfe] bg-clip-text text-transparent">
+              {profile?.full_name?.[0]?.toUpperCase() || '?'}
+            </span>
+          </div>
+          <div>
+            <h3 className="text-[18px] font-bold">{profile?.full_name || 'User'}</h3>
+            <p className="text-[13px] text-[#5a5a6a]">{profile?.email}</p>
+            <span className="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded" style={{ background: 'rgba(253,121,168,0.1)', color: '#fd79a8', border: '1px solid rgba(253,121,168,0.2)' }}>
+              {profile?.plan?.toUpperCase() || 'FREE'} PLAN
+            </span>
+          </div>
+        </div>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-[12px] font-semibold text-[#6a6a7a] mb-2">Display Name</label>
+            <div className="flex gap-3">
+              <input value={name} onChange={e => setName(e.target.value)} className="flex-1 px-4 py-3 rounded-xl bg-[#16161f] border border-white/[0.06] text-white text-[14px] focus:outline-none focus:border-[rgba(253,121,168,0.3)] transition-all" />
+              <motion.button whileTap={{ scale: 0.95 }} onClick={saveName} disabled={saving} className="px-6 py-3 rounded-xl text-[13px] font-bold text-white" style={{ background: 'linear-gradient(135deg, #fd79a8, #e84393)' }}>
+                {saving ? 'Saving...' : 'Save'}
+              </motion.button>
             </div>
           </div>
-        )}
-      </div>
+          <div>
+            <label className="block text-[12px] font-semibold text-[#6a6a7a] mb-2">Email</label>
+            <div className="px-4 py-3 rounded-xl bg-[#16161f] border border-white/[0.06] text-[#5a5a6a] text-[14px]">{profile?.email}</div>
+          </div>
+        </div>
+      </motion.div>
 
       {/* Billing */}
-      <div className="p-6 rounded-2xl bg-[#12121a] border border-[rgba(255,255,255,0.06)]">
-        <h3 className="text-[15px] font-bold mb-5">Billing</h3>
-        <div className="mb-6">
-          <p className="text-[13px] text-[#8a8a9a] mb-3">Current Plan: <span className="font-bold text-white">{profile?.plan?.toUpperCase() || 'FREE'}</span></p>
-        </div>
-
-        <div className="grid grid-cols-3 gap-4">
-          {[
-            { name: 'pro', price: 29, features: '100 apps/mo' },
-            { name: 'elite', price: 59, features: 'Unlimited apps' },
-            { name: 'lifetime', price: 199, features: 'Forever access' },
-          ].map(plan => (
-            <button
-              key={plan.name}
-              onClick={() => handleCheckout(plan.name)}
-              disabled={profile?.plan === plan.name}
-              className={`p-4 rounded-xl border transition-all text-center ${
-                profile?.plan === plan.name ? 'bg-[rgba(253,121,168,0.08)] border-[rgba(253,121,168,0.2)] cursor-not-allowed' : 'bg-[rgba(255,255,255,0.02)] border-[rgba(255,255,255,0.06)] hover:border-[rgba(253,121,168,0.2)]'
-              }`}
-            >
-              <div className="text-[13px] font-bold text-white capitalize mb-1">{plan.name}</div>
-              <div className="text-2xl font-black text-[#fd79a8] mb-2">${plan.price}</div>
-              <div className="text-[11px] text-[#5a5a6a]">{plan.features}</div>
-              {profile?.plan === plan.name && <div className="text-[10px] text-[#00b894] mt-2">✓ Current</div>}
-            </button>
+      <motion.div variants={fadeUp} className="p-6 rounded-2xl" style={{ background: 'linear-gradient(135deg, #12121a 0%, #0e0e16 100%)', border: '1px solid rgba(255,255,255,0.06)' }}>
+        <h3 className="text-[16px] font-bold mb-1">Upgrade Your Plan</h3>
+        <p className="text-[12px] text-[#5a5a6a] mb-6">Unlock more features</p>
+        <div className="grid sm:grid-cols-3 gap-4">
+          {plans.map(plan => (
+            <motion.div key={plan.name} whileHover={{ y: -4, scale: 1.02 }} className="relative p-5 rounded-2xl group"
+              style={{ background: profile?.plan === plan.name ? `${plan.color}08` : 'rgba(255,255,255,0.02)', border: `1px solid ${plan.popular ? `${plan.color}20` : 'rgba(255,255,255,0.06)'}` }}>
+              {plan.popular && <div className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] font-bold px-3 py-1 rounded-full text-white" style={{ background: 'linear-gradient(135deg, #a29bfe, #6c5ce7)' }}>POPULAR</div>}
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4" style={{ background: `${plan.color}12`, color: plan.color }}>{plan.icon}</div>
+              <div className="text-[13px] font-bold capitalize mb-1" style={{ color: plan.color }}>{plan.name}</div>
+              <div className="flex items-baseline gap-1 mb-4">
+                <span className="text-3xl font-black text-white">${plan.price}</span>
+                <span className="text-[12px] text-[#5a5a6a]">{plan.period}</span>
+              </div>
+              <div className="space-y-2 mb-5">
+                {plan.features.map(f => (
+                  <div key={f} className="flex items-center gap-2 text-[12px] text-[#8a8a9a]">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={plan.color} strokeWidth="3"><path d="M20 6L9 17L4 12"/></svg>{f}
+                  </div>
+                ))}
+              </div>
+              <motion.button whileTap={{ scale: 0.95 }} onClick={() => handleCheckout(plan.name)} disabled={profile?.plan === plan.name}
+                className="w-full py-2.5 rounded-xl text-[12px] font-bold disabled:opacity-30"
+                style={{ background: `${plan.color}15`, color: plan.color, border: `1px solid ${plan.color}20` }}>
+                {profile?.plan === plan.name ? 'Current Plan' : 'Upgrade'}
+              </motion.button>
+            </motion.div>
           ))}
         </div>
-      </div>
+      </motion.div>
 
       {/* Danger Zone */}
-      <div className="p-6 rounded-2xl bg-[#12121a] border border-[rgba(255,95,87,0.1)]">
-        <h3 className="text-[15px] font-bold text-[#ff5f57] mb-4">Danger Zone</h3>
-        <button onClick={handleSignOut} className="px-6 py-2.5 rounded-xl bg-[rgba(255,95,87,0.1)] border border-[rgba(255,95,87,0.2)] text-[13px] font-bold text-[#ff5f57] hover:bg-[rgba(255,95,87,0.15)] transition-all">
+      <motion.div variants={fadeUp} className="p-6 rounded-2xl" style={{ background: '#12121a', border: '1px solid rgba(255,95,87,0.1)' }}>
+        <h3 className="text-[15px] font-bold text-[#ff6b6b] mb-4">Danger Zone</h3>
+        <motion.button whileTap={{ scale: 0.95 }} onClick={handleSignOut}
+          className="px-6 py-2.5 rounded-xl text-[13px] font-bold text-[#ff6b6b] hover:bg-[rgba(255,107,107,0.08)]" style={{ border: '1px solid rgba(255,107,107,0.15)' }}>
           Sign Out
-        </button>
-      </div>
-    </div>
+        </motion.button>
+      </motion.div>
+    </motion.div>
   )
 }
