@@ -33,10 +33,13 @@ export default function CoverLettersPage() {
     try {
       const response = await fetch('/api/generate-cover-letter', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ job_title: formData.jobTitle, company: formData.company, tone: formData.tone }) })
       const data = await response.json()
+      if (!data.cover_letter) { alert('Failed to generate cover letter'); return }
+      // API already saves to DB — just load from DB to refresh
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
-      const { data: saved } = await supabase.from('cover_letters').insert({ user_id: user.id, title: `${formData.jobTitle} at ${formData.company}`, content: data.cover_letter, tone: formData.tone }).select().single()
-      if (saved) { setCoverLetters([saved, ...coverLetters]); setSelectedLetter(saved); setFormData({ jobTitle: '', company: '', tone: 'professional' }) }
+      const { data: latest } = await supabase.from('cover_letters').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1).single()
+      if (latest) { setCoverLetters([latest, ...coverLetters]); setSelectedLetter(latest) }
+      setFormData({ jobTitle: '', company: '', tone: 'professional' })
     } catch { alert('Failed to generate') }
     setGenerating(false)
   }

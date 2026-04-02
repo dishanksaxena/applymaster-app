@@ -45,6 +45,13 @@ const feedbackTemplates = [
 const container = { hidden: {}, show: { transition: { staggerChildren: 0.08 } } }
 const fadeUp = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] as const } } }
 
+const interviewTypeMap: Record<string, string> = {
+  'Behavioral': 'behavioral',
+  'Technical': 'technical',
+  'System Design': 'system_design',
+  'Case Study': 'case_study',
+}
+
 export default function InterviewCoachPage() {
   const [type, setType] = useState('Behavioral')
   const [mode, setMode] = useState<'setup' | 'interview' | 'review'>('setup')
@@ -52,12 +59,14 @@ export default function InterviewCoachPage() {
   const [role, setRole] = useState('')
   const [currentQ, setCurrentQ] = useState(0)
   const [answer, setAnswer] = useState('')
-  const [feedback, setFeedback] = useState<typeof feedbackTemplates[0] | null>(null)
+  const [feedback, setFeedback] = useState<{ score: number; strengths: string[]; improvements: string[]; example: string } | null>(null)
   const [timer, setTimer] = useState(120)
   const [timerActive, setTimerActive] = useState(false)
   const [scores, setScores] = useState<number[]>([])
   const [questions, setQuestions] = useState<string[]>([])
   const [analyzing, setAnalyzing] = useState(false)
+  const [generatingQuestions, setGeneratingQuestions] = useState(false)
+  const [sessionId, setSessionId] = useState<string | null>(null)
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => { setMounted(true) }, [])
@@ -68,25 +77,54 @@ export default function InterviewCoachPage() {
     return () => clearInterval(t)
   }, [timerActive, timer])
 
-  const startInterview = () => {
-    const qs = mockQuestions[type] || mockQuestions.Behavioral
-    setQuestions(qs)
+  const startInterview = async () => {
+    setGeneratingQuestions(true)
+    try {
+      const res = await fetch('/api/interview/prep', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'generate_questions',
+          interview_type: interviewTypeMap[type] || 'behavioral',
+          job_title: role || 'Software Engineer',
+          company: company || undefined,
+        }),
+      })
+      const data = await res.json()
+      const qs: string[] = (data.questions || []).map((q: { question: string }) => q.question).filter(Boolean)
+      setQuestions(qs.length > 0 ? qs : (mockQuestions[type] || mockQuestions.Behavioral))
+      setSessionId(data.session_id || null)
+    } catch {
+      setQuestions(mockQuestions[type] || mockQuestions.Behavioral)
+    }
     setCurrentQ(0)
     setScores([])
     setFeedback(null)
     setAnswer('')
     setTimer(120)
     setTimerActive(true)
+    setGeneratingQuestions(false)
     setMode('interview')
   }
 
   const submitAnswer = async () => {
     setTimerActive(false)
     setAnalyzing(true)
-    await new Promise(r => setTimeout(r, 2000))
-    const fb = feedbackTemplates[Math.floor(Math.random() * feedbackTemplates.length)]
-    setFeedback(fb)
-    setScores([...scores, fb.score])
+    try {
+      const res = await fetch('/api/interview/prep', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'score_answer', question: questions[currentQ], answer, session_id: sessionId }),
+      })
+      const data = await res.json()
+      const score = Math.round((data.score || 70) / 10)
+      setFeedback({ score, strengths: data.strengths || [], improvements: data.improvements || [], example: data.better_answer || '' })
+      setScores(prev => [...prev, score])
+    } catch {
+      const fb = feedbackTemplates[Math.floor(Math.random() * feedbackTemplates.length)]
+      setFeedback(fb)
+      setScores(prev => [...prev, fb.score])
+    }
     setAnalyzing(false)
   }
 
@@ -168,8 +206,8 @@ export default function InterviewCoachPage() {
                 { name: 'Full Interview', time: '45 min', qs: '15 questions', color: '#a29bfe', icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg> },
                 { name: 'Company Specific', time: 'Custom', qs: 'Tailored', color: '#fd79a8', icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> },
               ].map(m => (
-                <motion.button key={m.name} whileHover={{ y: -4, scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={startInterview}
-                  className="p-6 rounded-2xl text-left group transition-all" style={{ background: `${m.color}06`, border: `1px solid ${m.color}15` }}>
+                <motion.button key={m.name} whileHover={{ y: -4, scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={startInterview} disabled={generatingQuestions}
+                  className="p-6 rounded-2xl text-left group transition-all disabled:opacity-60" style={{ background: `${m.color}06`, border: `1px solid ${m.color}15` }}>
                   <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4" style={{ background: `${m.color}15`, color: m.color }}>{m.icon}</div>
                   <h4 className="text-[15px] font-bold text-white group-hover:text-[#fd79a8] transition-colors">{m.name}</h4>
                   <div className="flex items-center gap-3 mt-2">

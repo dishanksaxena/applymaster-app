@@ -24,7 +24,7 @@ export default function JobsPage() {
     if (!searchTerm) return
     setLoading(true)
     try {
-      const response = await fetch('/api/search-jobs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: searchTerm, location: filters.location || 'United States', remote: filters.remote, min_salary: filters.minSalary ? parseInt(filters.minSalary) : null }) })
+      const response = await fetch('/api/search-jobs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query: searchTerm, location: filters.location || 'United States', remote: filters.remote, country: 'US' }) })
       const data = await response.json()
       setJobs(data.jobs || [])
     } catch { alert('Failed to search') }

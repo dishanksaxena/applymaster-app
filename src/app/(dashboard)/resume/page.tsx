@@ -216,40 +216,44 @@ export default function ResumePage() {
     setLoading(true)
     setUploadProgress(0)
 
-    // Simulate progress
+    // Simulate progress while API processes
     const progressInterval = setInterval(() => {
       setUploadProgress(prev => {
-        if (prev >= 90) { clearInterval(progressInterval); return 90 }
-        return prev + Math.random() * 15
+        if (prev >= 85) { clearInterval(progressInterval); return 85 }
+        return prev + Math.random() * 10
       })
-    }, 200)
+    }, 300)
 
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { clearInterval(progressInterval); setLoading(false); return }
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
 
-    const ext = file.name.split('.').pop()
-    const path = `${user.id}/${Date.now()}.${ext}`
+      const response = await fetch('/api/resume/upload', {
+        method: 'POST',
+        body: formData,
+      })
 
-    const { error: uploadError } = await supabase.storage.from('resumes').upload(path, file)
-    if (uploadError) { console.error(uploadError); clearInterval(progressInterval); setLoading(false); setUploadProgress(0); return }
+      clearInterval(progressInterval)
 
-    const { data: { publicUrl } } = supabase.storage.from('resumes').getPublicUrl(path)
+      if (!response.ok) {
+        const err = await response.json()
+        console.error('Upload error:', err)
+        alert(err.error || 'Upload failed. Please try again.')
+        setLoading(false)
+        setUploadProgress(0)
+        return
+      }
 
-    const { error: insertError } = await supabase.from('resumes').insert({
-      user_id: user.id,
-      name: file.name,
-      file_url: publicUrl,
-      file_size: file.size,
-      is_primary: resumes.length === 0,
-    })
-
-    clearInterval(progressInterval)
-    setUploadProgress(100)
-
-    if (!insertError) {
+      setUploadProgress(100)
       await loadResumes()
+      setTimeout(() => { setLoading(false); setUploadProgress(0) }, 600)
+    } catch (e) {
+      clearInterval(progressInterval)
+      console.error('Upload error:', e)
+      alert('Upload failed. Please try again.')
+      setLoading(false)
+      setUploadProgress(0)
     }
-    setTimeout(() => { setLoading(false); setUploadProgress(0) }, 500)
   }
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
