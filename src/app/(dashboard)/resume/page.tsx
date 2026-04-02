@@ -184,6 +184,7 @@ export default function ResumePage() {
   const [resumes, setResumes] = useState<any[]>([])
   const [selectedResume, setSelectedResume] = useState<any>(null)
   const [loading, setLoading] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [optimizing, setOptimizing] = useState(false)
   const [optimization, setOptimization] = useState<OptimizationResult | null>(null)
@@ -195,6 +196,8 @@ export default function ResumePage() {
   const fileRef = useRef<HTMLInputElement>(null)
   const supabase = createClient()
   const router = useRouter()
+
+  useEffect(() => { setMounted(true) }, [])
 
   useEffect(() => {
     loadResumes()
@@ -323,6 +326,8 @@ export default function ResumePage() {
     if (!dateStr) return ''
     return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
   }
+
+  if (!mounted) return <div className="p-8" />
 
   return (
     <>

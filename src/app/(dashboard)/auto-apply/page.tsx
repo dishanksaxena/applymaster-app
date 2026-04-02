@@ -23,7 +23,10 @@ export default function AutoApplyPage() {
   const [activeSources, setActiveSources] = useState(['LinkedIn', 'Indeed', 'Glassdoor'])
   const [logs, setLogs] = useState<any[]>([])
   const [saving, setSaving] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const supabase = createClient()
+
+  useEffect(() => { setMounted(true) }, [])
 
   useEffect(() => {
     const load = async () => {
@@ -50,6 +53,8 @@ export default function AutoApplyPage() {
     { id: 'copilot' as const, label: 'Copilot', desc: 'Review before each application is sent', color: '#74b9ff', icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> },
     { id: 'autopilot' as const, label: 'Autopilot', desc: 'AI applies automatically to matching jobs', color: '#00b894', icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><polygon points="13,2 3,14 12,14 11,22 21,10 12,10"/></svg> },
   ]
+
+  if (!mounted) return <div className="p-8" />
 
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-8 max-w-[1200px] mx-auto">

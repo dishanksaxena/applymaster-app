@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { createClient } from '@/lib/supabase-browser'
 
@@ -22,7 +22,10 @@ export default function CoverLettersPage() {
   const [selectedLetter, setSelectedLetter] = useState<CoverLetter | null>(null)
   const [copied, setCopied] = useState(false)
   const [formData, setFormData] = useState({ jobTitle: '', company: '', tone: 'professional' })
+  const [mounted, setMounted] = useState(false)
   const supabase = createClient()
+
+  useEffect(() => { setMounted(true) }, [])
 
   const generateCoverLetter = async () => {
     if (!formData.jobTitle || !formData.company) { alert('Please fill in all fields'); return }
@@ -41,6 +44,8 @@ export default function CoverLettersPage() {
   const copyToClipboard = () => {
     if (selectedLetter) { navigator.clipboard.writeText(selectedLetter.content); setCopied(true); setTimeout(() => setCopied(false), 2000) }
   }
+
+  if (!mounted) return <div className="p-8" />
 
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-8 max-w-[1200px] mx-auto">

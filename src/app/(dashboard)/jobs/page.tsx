@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { createClient } from '@/lib/supabase-browser'
 
@@ -15,7 +15,10 @@ export default function JobsPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [savedJobs, setSavedJobs] = useState<Set<string>>(new Set())
   const [filters, setFilters] = useState({ location: '', remote: 'any', minSalary: '' })
+  const [mounted, setMounted] = useState(false)
   const supabase = createClient()
+
+  useEffect(() => { setMounted(true) }, [])
 
   const searchJobs = async () => {
     if (!searchTerm) return
@@ -37,6 +40,8 @@ export default function JobsPage() {
   }
 
   const remoteIcons: Record<string, string> = { remote: '🌐', hybrid: '🏢', onsite: '📍' }
+
+  if (!mounted) return <div className="p-8" />
 
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-8 max-w-[1200px] mx-auto">

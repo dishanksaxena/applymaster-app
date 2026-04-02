@@ -226,6 +226,8 @@ export default function ApplicationsPage() {
     return idx
   }, [pipelineCounts])
 
+  if (!mounted) return <div className="p-8" />
+
   return (
     <div className="space-y-8">
       {/* ─── Inline Styles for Animations ────────────────────────────── */}

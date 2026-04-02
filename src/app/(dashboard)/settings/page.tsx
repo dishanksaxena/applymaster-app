@@ -13,8 +13,11 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [name, setName] = useState('')
+  const [mounted, setMounted] = useState(false)
   const supabase = createClient()
   const router = useRouter()
+
+  useEffect(() => { setMounted(true) }, [])
 
   useEffect(() => {
     const load = async () => {
@@ -61,6 +64,8 @@ export default function SettingsPage() {
     { name: 'elite', price: 59, period: '/mo', color: '#a29bfe', popular: true, features: ['Unlimited applications', 'Priority AI processing', 'Auto-apply engine', 'Interview coaching', 'Priority support'], icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> },
     { name: 'lifetime', price: 199, period: ' once', color: '#00b894', features: ['Everything in Elite', 'Lifetime access', 'All future features', 'VIP support', 'Early access'], icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> },
   ]
+
+  if (!mounted) return <div className="p-8" />
 
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-8 max-w-[900px] mx-auto">

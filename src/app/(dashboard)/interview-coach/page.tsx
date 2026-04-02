@@ -58,6 +58,9 @@ export default function InterviewCoachPage() {
   const [scores, setScores] = useState<number[]>([])
   const [questions, setQuestions] = useState<string[]>([])
   const [analyzing, setAnalyzing] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => { setMounted(true) }, [])
 
   useEffect(() => {
     if (!timerActive || timer <= 0) return
@@ -99,6 +102,8 @@ export default function InterviewCoachPage() {
   const avgScore = scores.length > 0 ? (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1) : '0'
   const timerPercent = (timer / 120) * 100
   const timerColor = timer > 60 ? '#00b894' : timer > 30 ? '#fdcb6e' : '#ff6b6b'
+
+  if (!mounted) return <div className="p-8" />
 
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-8 max-w-[1200px] mx-auto">

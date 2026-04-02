@@ -111,7 +111,10 @@ export default function DashboardPage() {
   const [recentActivity, setRecentActivity] = useState<{ action: string; details: string | null; created_at: string }[]>([])
   const [userName, setUserName] = useState('')
   const [greeting, setGreeting] = useState('Good morning')
+  const [mounted, setMounted] = useState(false)
   const supabase = createClient()
+
+  useEffect(() => { setMounted(true) }, [])
 
   useEffect(() => {
     const hour = new Date().getHours()
@@ -176,6 +179,8 @@ export default function DashboardPage() {
     { step: 3, label: 'Enable Auto-Apply', desc: 'Apply on autopilot', href: '/auto-apply', done: false, color: '#a29bfe' },
     { step: 4, label: 'Ace Interviews', desc: 'Practice with AI coach', href: '/interview-coach', done: stats.interviews > 0, color: '#fdcb6e' },
   ]
+
+  if (!mounted) return <div className="p-8" />
 
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-8 max-w-[1400px] mx-auto">
