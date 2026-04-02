@@ -30,7 +30,8 @@ async function searchAdzuna(query: string, location: string, country: string, pa
     max_days_old: '30',
     'content-type': 'application/json',
   })
-  if (location && location !== 'Remote') params.set('where', location)
+  const skipLocationTerms = ['remote', 'united states', 'india', 'us', 'usa', 'in', '']
+  if (location && !skipLocationTerms.includes(location.toLowerCase())) params.set('where', location)
 
   try {
     const res = await fetch(
