@@ -104,12 +104,12 @@ export default function JobsPage() {
             <p className="text-[12px] text-[#3a3a4a] mt-1">We aggregate results from LinkedIn, Indeed, Glassdoor, and 50+ more</p>
           </motion.div>
         ) : (
-          <motion.div variants={container} initial="hidden" animate="show" className="space-y-3">
+          <div className="space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-[13px] font-semibold text-[#5a5a6a]">{jobs.length} jobs found</span>
             </div>
-            {jobs.map((job) => (
-              <motion.div key={job.id} variants={fadeUp} whileHover={{ y: -2, transition: { duration: 0.2 } }}
+            {jobs.map((job, i) => (
+              <motion.div key={job.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: Math.min(i * 0.04, 0.6) }} whileHover={{ y: -2, transition: { duration: 0.2 } }}
                 className="p-5 rounded-2xl group transition-all"
                 style={{ background: 'linear-gradient(135deg, #252545 0%, #1e1e3a 100%)', border: '1px solid rgba(255,255,255,0.18)' }}>
                 <div className="flex items-start justify-between gap-4">
@@ -142,7 +142,7 @@ export default function JobsPage() {
                 </div>
               </motion.div>
             ))}
-          </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </motion.div>
