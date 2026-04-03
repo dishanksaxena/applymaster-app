@@ -166,9 +166,38 @@ export default function JobsPage() {
   const saveJob = async (job: Job) => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
-    await supabase.from('jobs').upsert({ external_id: `${job.source}-${job.id}`, source: job.source, title: job.title, company: job.company, location: job.location, remote_type: job.remote_type, salary_min: job.salary_min, salary_max: job.salary_max, url: job.url })
-    await supabase.from('applications').upsert({ user_id: user.id, job_id: job.id, status: 'saved' })
-    setSavedJobs(new Set(Array.from(savedJobs).concat(job.id)))
+    try {
+      // Save job with unique external_id
+      const { error: jobError } = await supabase.from('jobs').upsert({
+        external_id: `${job.source}-${job.id}`,
+        source: job.source,
+        title: job.title,
+        company: job.company,
+        location: job.location,
+        remote_type: job.remote_type,
+        salary_min: job.salary_min,
+        salary_max: job.salary_max,
+        url: job.url,
+      }, { onConflict: 'external_id' })
+
+      if (jobError) throw jobError
+
+      // Create application with status 'saved'
+      const { error: appError } = await supabase.from('applications').upsert({
+        user_id: user.id,
+        job_id: job.id,
+        status: 'saved',
+        job_title: job.title,
+        company: job.company,
+      }, { onConflict: 'user_id,job_id' })
+
+      if (appError) throw appError
+
+      setSavedJobs(new Set(Array.from(savedJobs).concat(job.id)))
+    } catch (err) {
+      console.error('Save job error:', err)
+      alert('Failed to save job. Please try again.')
+    }
   }
 
   const applyJob = async (job: Job) => {
@@ -176,19 +205,33 @@ export default function JobsPage() {
     if (!user) return
     try {
       // Save job first
-      await supabase.from('jobs').upsert({ external_id: `${job.source}-${job.id}`, source: job.source, title: job.title, company: job.company, location: job.location, remote_type: job.remote_type, salary_min: job.salary_min, salary_max: job.salary_max, url: job.url })
+      const { error: jobError } = await supabase.from('jobs').upsert({
+        external_id: `${job.source}-${job.id}`,
+        source: job.source,
+        title: job.title,
+        company: job.company,
+        location: job.location,
+        remote_type: job.remote_type,
+        salary_min: job.salary_min,
+        salary_max: job.salary_max,
+        url: job.url,
+      }, { onConflict: 'external_id' })
+
+      if (jobError) throw jobError
 
       // Create/update application with "applied" status
-      await supabase.from('applications').upsert({
+      const { error: appError } = await supabase.from('applications').upsert({
         user_id: user.id,
         job_id: job.id,
         status: 'applied',
         job_title: job.title,
         company: job.company,
-      })
+      }, { onConflict: 'user_id,job_id' })
+
+      if (appError) throw appError
 
       setAppliedJobs(new Set(Array.from(appliedJobs).concat(job.id)))
-      alert(`Applied to ${job.title} at ${job.company}!`)
+      alert(`✓ Applied to ${job.title} at ${job.company}!`)
     } catch (err) {
       console.error('Apply error:', err)
       alert('Failed to apply. Please try again.')
