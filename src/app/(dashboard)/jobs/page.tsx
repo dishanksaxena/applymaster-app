@@ -20,31 +20,31 @@ const COUNTRIES = [
 const SALARY_RANGES: Record<string, { label: string; min: number; max: number }[]> = {
   USD: [
     { label: 'Any salary', min: 0, max: 0 },
-    { label: '$30K+', min: 30000, max: 0 },
-    { label: '$50K+', min: 50000, max: 0 },
-    { label: '$70K+', min: 70000, max: 0 },
-    { label: '$100K+', min: 100000, max: 0 },
+    { label: '$30K - $50K', min: 30000, max: 50000 },
+    { label: '$50K - $80K', min: 50000, max: 80000 },
+    { label: '$80K - $100K', min: 80000, max: 100000 },
+    { label: '$100K - $120K', min: 100000, max: 120000 },
+    { label: '$120K - $150K', min: 120000, max: 150000 },
     { label: '$150K+', min: 150000, max: 0 },
-    { label: '$200K+', min: 200000, max: 0 },
   ],
   INR: [
     { label: 'Any salary', min: 0, max: 0 },
-    { label: '₹3 LPA+', min: 300000, max: 0 },
-    { label: '₹5 LPA+', min: 500000, max: 0 },
-    { label: '₹8 LPA+', min: 800000, max: 0 },
-    { label: '₹12 LPA+', min: 1200000, max: 0 },
-    { label: '₹20 LPA+', min: 2000000, max: 0 },
-    { label: '₹30 LPA+', min: 3000000, max: 0 },
+    { label: '₹3L - ₹5L', min: 300000, max: 500000 },
+    { label: '₹5L - ₹8L', min: 500000, max: 800000 },
+    { label: '₹8L - ₹12L', min: 800000, max: 1200000 },
+    { label: '₹12L - ₹20L', min: 1200000, max: 2000000 },
+    { label: '₹20L - ₹30L', min: 2000000, max: 3000000 },
+    { label: '₹30L+', min: 3000000, max: 0 },
   ],
 }
 
 const DATE_OPTIONS = [
-  { label: 'Any time', value: 0 },
-  { label: 'Last 24 hours', value: 1 },
-  { label: 'Last 3 days', value: 3 },
-  { label: 'Last 7 days', value: 7 },
-  { label: 'Last 15 days', value: 15 },
-  { label: 'Last 30 days', value: 30 },
+  { label: 'Job Posted - Any time', value: 0 },
+  { label: 'Job Posted - Last 24 hours', value: 1 },
+  { label: 'Job Posted - Last 3 days', value: 3 },
+  { label: 'Job Posted - Last 7 days', value: 7 },
+  { label: 'Job Posted - Last 15 days', value: 15 },
+  { label: 'Job Posted - Last 30 days', value: 30 },
 ]
 
 export default function JobsPage() {
@@ -167,10 +167,11 @@ export default function JobsPage() {
   const formatSalary = (job: Job) => {
     if (!job.salary_min) return null
     const fmt = (n: number) => {
-      if (job.salary_currency === 'INR') return `₹${(n / 100000).toFixed(0)}L`
+      if (job.salary_currency === 'INR') return `₹${(n / 100000).toFixed(1)}L`
       return `$${Math.round(n / 1000)}K`
     }
-    return job.salary_max ? `${fmt(job.salary_min)} – ${fmt(job.salary_max)}` : `${fmt(job.salary_min)}+`
+    if (!job.salary_max || job.salary_max === 0) return `${fmt(job.salary_min)}+`
+    return `${fmt(job.salary_min)} – ${fmt(job.salary_max)}`
   }
 
   if (!mounted) return <div className="p-8" />

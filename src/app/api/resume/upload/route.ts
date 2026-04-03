@@ -7,11 +7,27 @@ export const maxDuration = 60
 const anthropic = new Anthropic()
 
 async function extractTextFromPDF(buffer: Buffer): Promise<string> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const pdfModule = await import('pdf-parse') as any
-  const pdfParse = pdfModule.default || pdfModule
-  const data = await pdfParse(buffer)
-  return data.text || ''
+  try {
+    // Check if file is likely a PDF
+    const pdfHeader = buffer.toString('utf8', 0, 4)
+    if (!pdfHeader.startsWith('%PDF')) {
+      throw new Error('Invalid PDF file format')
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const pdfModule = await import('pdf-parse') as any
+    const pdfParse = pdfModule.default || pdfModule
+    const data = await pdfParse(buffer)
+
+    if (!data.text) {
+      throw new Error('Failed to extract text from PDF')
+    }
+
+    return data.text
+  } catch (err) {
+    console.error('PDF extraction error:', err)
+    throw new Error(`Failed to read file contents: ${err instanceof Error ? err.message : 'Unknown error'}`)
+  }
 }
 
 async function extractTextFromDOCX(buffer: Buffer): Promise<string> {

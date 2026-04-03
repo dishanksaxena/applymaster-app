@@ -213,7 +213,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           />
 
           {/* Logo */}
-          <div className="flex items-center gap-3 px-5 h-[64px] border-b border-white/[0.04] shrink-0 relative">
+          <Link href="/dashboard" className="flex items-center gap-3 px-5 h-[64px] border-b border-white/[0.04] shrink-0 relative hover:opacity-80 transition-opacity duration-200">
             <div className="relative w-8 h-8 shrink-0">
               <div
                 className="absolute inset-0 rounded-lg"
@@ -232,7 +232,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 Apply<span className="bg-gradient-to-r from-[#fd79a8] to-[#e84393] bg-clip-text text-transparent">Master</span>
               </span>
             )}
-          </div>
+          </Link>
 
           {/* Navigation */}
           <nav className="flex-1 py-4 px-3 space-y-0.5 overflow-y-auto">
@@ -464,7 +464,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </button>
 
               {/* Notification bell */}
-              <button className="relative p-2 rounded-lg text-[#5a5a6a] hover:text-white/80 hover:bg-white/[0.03] transition-all duration-200">
+              <button
+                onClick={() => router.push('/notifications')}
+                className="relative p-2 rounded-lg text-[#5a5a6a] hover:text-white/80 hover:bg-white/[0.03] transition-all duration-200 cursor-pointer"
+                title="Notifications"
+              >
                 {icons.bell}
                 {/* Badge */}
                 <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#fd79a8]" style={{ boxShadow: '0 0 6px rgba(253,121,168,0.5)' }} />
