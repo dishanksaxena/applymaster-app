@@ -209,7 +209,7 @@ export default function DashboardPage() {
         {statCards.map((s) => (
           <motion.div key={s.label} variants={fadeUp} whileHover={{ y: -4, transition: { duration: 0.2 } }}
             className="relative group p-5 rounded-2xl overflow-hidden"
-            style={{ background: 'linear-gradient(135deg, #12121a 0%, #0e0e16 100%)', border: '1px solid rgba(255,255,255,0.06)' }}>
+            style={{ background: 'linear-gradient(135deg, #1c1c2e 0%, #16162a 100%)', border: '1px solid rgba(255,255,255,0.1)' }}>
             <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
               style={{ background: `radial-gradient(circle at 50% 50%, ${s.color}08, transparent 70%)` }} />
             <div className="flex items-center justify-between mb-4">
@@ -228,7 +228,7 @@ export default function DashboardPage() {
 
       {/* ─── Getting Started Journey ─── */}
       <motion.div variants={fadeUp} className="p-6 rounded-2xl" style={{
-        background: 'linear-gradient(135deg, #12121a 0%, #0e0e16 100%)', border: '1px solid rgba(255,255,255,0.06)',
+        background: 'linear-gradient(135deg, #1c1c2e 0%, #16162a 100%)', border: '1px solid rgba(255,255,255,0.1)',
       }}>
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -243,7 +243,7 @@ export default function DashboardPage() {
           {journeySteps.map((step) => (
             <Link key={step.step} href={step.href}>
               <motion.div whileHover={{ y: -3, scale: 1.02 }} className="relative p-5 rounded-xl cursor-pointer group transition-all duration-300"
-                style={{ background: step.done ? `${step.color}08` : 'rgba(255,255,255,0.02)', border: `1px solid ${step.done ? `${step.color}20` : 'rgba(255,255,255,0.06)'}` }}>
+                style={{ background: step.done ? `${step.color}08` : 'rgba(255,255,255,0.02)', border: `1px solid ${step.done ? `${step.color}20` : 'rgba(255,255,255,0.1)'}` }}>
                 <div className="w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-bold mb-3" style={{
                   background: step.done ? `${step.color}20` : 'rgba(255,255,255,0.04)', color: step.done ? step.color : '#5a5a6a',
                   boxShadow: step.done ? `0 0 12px ${step.color}20` : 'none',
@@ -264,7 +264,7 @@ export default function DashboardPage() {
       {/* ─── Main Grid ─── */}
       <div className="grid lg:grid-cols-[1fr_420px] gap-6">
         <motion.div variants={fadeUp} className="p-6 rounded-2xl" style={{
-          background: 'linear-gradient(135deg, #12121a 0%, #0e0e16 100%)', border: '1px solid rgba(255,255,255,0.06)',
+          background: 'linear-gradient(135deg, #1c1c2e 0%, #16162a 100%)', border: '1px solid rgba(255,255,255,0.1)',
         }}>
           <h3 className="text-[16px] font-bold mb-1">Quick Actions</h3>
           <p className="text-[12px] text-[#5a5a6a] mb-6">Jump right into any workflow</p>

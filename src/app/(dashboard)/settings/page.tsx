@@ -75,7 +75,7 @@ export default function SettingsPage() {
       </motion.div>
 
       {/* Profile */}
-      <motion.div variants={fadeUp} className="p-6 rounded-2xl" style={{ background: 'linear-gradient(135deg, #12121a 0%, #0e0e16 100%)', border: '1px solid rgba(255,255,255,0.06)' }}>
+      <motion.div variants={fadeUp} className="p-6 rounded-2xl" style={{ background: 'linear-gradient(135deg, #1c1c2e 0%, #16162a 100%)', border: '1px solid rgba(255,255,255,0.1)' }}>
         <div className="flex items-center gap-4 mb-6">
           <div className="w-16 h-16 rounded-full flex items-center justify-center shrink-0" style={{ background: 'linear-gradient(135deg, rgba(253,121,168,0.15), rgba(162,155,254,0.15))' }}>
             <span className="text-xl font-bold bg-gradient-to-br from-[#fd79a8] to-[#a29bfe] bg-clip-text text-transparent">
@@ -108,13 +108,13 @@ export default function SettingsPage() {
       </motion.div>
 
       {/* Billing */}
-      <motion.div variants={fadeUp} className="p-6 rounded-2xl" style={{ background: 'linear-gradient(135deg, #12121a 0%, #0e0e16 100%)', border: '1px solid rgba(255,255,255,0.06)' }}>
+      <motion.div variants={fadeUp} className="p-6 rounded-2xl" style={{ background: 'linear-gradient(135deg, #1c1c2e 0%, #16162a 100%)', border: '1px solid rgba(255,255,255,0.1)' }}>
         <h3 className="text-[16px] font-bold mb-1">Upgrade Your Plan</h3>
         <p className="text-[12px] text-[#5a5a6a] mb-6">Unlock more features</p>
         <div className="grid sm:grid-cols-3 gap-4">
           {plans.map(plan => (
             <motion.div key={plan.name} whileHover={{ y: -4, scale: 1.02 }} className="relative p-5 rounded-2xl group"
-              style={{ background: profile?.plan === plan.name ? `${plan.color}08` : 'rgba(255,255,255,0.02)', border: `1px solid ${plan.popular ? `${plan.color}20` : 'rgba(255,255,255,0.06)'}` }}>
+              style={{ background: profile?.plan === plan.name ? `${plan.color}08` : 'rgba(255,255,255,0.02)', border: `1px solid ${plan.popular ? `${plan.color}20` : 'rgba(255,255,255,0.1)'}` }}>
               {plan.popular && <div className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] font-bold px-3 py-1 rounded-full text-white" style={{ background: 'linear-gradient(135deg, #a29bfe, #6c5ce7)' }}>POPULAR</div>}
               <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4" style={{ background: `${plan.color}12`, color: plan.color }}>{plan.icon}</div>
               <div className="text-[13px] font-bold capitalize mb-1" style={{ color: plan.color }}>{plan.name}</div>

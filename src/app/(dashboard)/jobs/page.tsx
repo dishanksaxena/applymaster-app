@@ -59,7 +59,7 @@ export default function JobsPage() {
       </motion.div>
 
       {/* Search */}
-      <motion.div variants={fadeUp} className="p-6 rounded-2xl" style={{ background: 'linear-gradient(135deg, #12121a 0%, #0e0e16 100%)', border: '1px solid rgba(255,255,255,0.06)' }}>
+      <motion.div variants={fadeUp} className="p-6 rounded-2xl" style={{ background: 'linear-gradient(135deg, #1c1c2e 0%, #16162a 100%)', border: '1px solid rgba(255,255,255,0.1)' }}>
         <div className="space-y-4">
           <div className="relative">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5a5a6a" strokeWidth="1.8" className="absolute left-4 top-1/2 -translate-y-1/2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
@@ -111,7 +111,7 @@ export default function JobsPage() {
             {jobs.map((job) => (
               <motion.div key={job.id} variants={fadeUp} whileHover={{ y: -2, transition: { duration: 0.2 } }}
                 className="p-5 rounded-2xl group transition-all"
-                style={{ background: 'linear-gradient(135deg, #12121a 0%, #0e0e16 100%)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                style={{ background: 'linear-gradient(135deg, #1c1c2e 0%, #16162a 100%)', border: '1px solid rgba(255,255,255,0.12)' }}>
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex gap-4 flex-1">
                     <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 text-[14px] font-bold"

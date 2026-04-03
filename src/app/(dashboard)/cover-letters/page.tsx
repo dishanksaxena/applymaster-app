@@ -74,7 +74,7 @@ export default function CoverLettersPage() {
         <div className="space-y-6">
 
           {/* Generator */}
-          <motion.div variants={fadeUp} className="p-6 rounded-2xl" style={{ background: 'linear-gradient(135deg, #12121a 0%, #0e0e16 100%)', border: '1px solid rgba(255,255,255,0.06)' }}>
+          <motion.div variants={fadeUp} className="p-6 rounded-2xl" style={{ background: 'linear-gradient(135deg, #1c1c2e 0%, #16162a 100%)', border: '1px solid rgba(255,255,255,0.1)' }}>
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-[16px] font-bold">Generate New Letter</h3>
               <span className="text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1.5" style={{ background: 'rgba(162,155,254,0.1)', color: '#a29bfe' }}>
@@ -99,7 +99,7 @@ export default function CoverLettersPage() {
                   {tones.map(t => (
                     <button key={t.id} onClick={() => setFormData({ ...formData, tone: t.id })}
                       className="p-3 rounded-xl text-center transition-all duration-300"
-                      style={formData.tone === t.id ? { background: `${t.color}10`, border: `1px solid ${t.color}30`, boxShadow: `0 0 15px ${t.color}10` } : { background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                      style={formData.tone === t.id ? { background: `${t.color}10`, border: `1px solid ${t.color}30`, boxShadow: `0 0 15px ${t.color}10` } : { background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.1)' }}>
                       <div className="text-lg mb-1">{t.icon}</div>
                       <div className="text-[11px] font-bold" style={{ color: formData.tone === t.id ? t.color : '#6a6a7a' }}>{t.label}</div>
                     </button>
@@ -123,7 +123,7 @@ export default function CoverLettersPage() {
           <AnimatePresence>
             {selectedLetter && (
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                className="rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.06)' }}>
+                className="rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.1)' }}>
                 {/* Mac-style header */}
                 <div className="flex items-center gap-2 px-5 py-3 border-b border-white/[0.04]" style={{ background: '#0d0d14' }}>
                   <div className="flex gap-1.5">
@@ -142,7 +142,7 @@ export default function CoverLettersPage() {
                   </motion.button>
                   <motion.button whileTap={{ scale: 0.95 }} onClick={copyToClipboard}
                     className="flex-1 py-2.5 rounded-xl text-[13px] font-bold transition-all"
-                    style={copied ? { background: 'rgba(0,184,148,0.1)', color: '#00b894', border: '1px solid rgba(0,184,148,0.2)' } : { background: 'rgba(255,255,255,0.04)', color: '#8a8a9a', border: '1px solid rgba(255,255,255,0.06)' }}>
+                    style={copied ? { background: 'rgba(0,184,148,0.1)', color: '#00b894', border: '1px solid rgba(0,184,148,0.2)' } : { background: 'rgba(255,255,255,0.04)', color: '#8a8a9a', border: '1px solid rgba(255,255,255,0.1)' }}>
                     {copied ? '✓ Copied!' : 'Copy'}
                   </motion.button>
                 </div>
@@ -152,7 +152,7 @@ export default function CoverLettersPage() {
         </div>
 
         {/* Sidebar */}
-        <motion.div variants={fadeUp} className="h-fit p-6 rounded-2xl" style={{ background: 'linear-gradient(135deg, #12121a 0%, #0e0e16 100%)', border: '1px solid rgba(255,255,255,0.06)' }}>
+        <motion.div variants={fadeUp} className="h-fit p-6 rounded-2xl" style={{ background: 'linear-gradient(135deg, #1c1c2e 0%, #16162a 100%)', border: '1px solid rgba(255,255,255,0.1)' }}>
           <h3 className="text-[16px] font-bold mb-5">Recent Letters</h3>
           {coverLetters.length === 0 ? (
             <div className="text-center py-10">

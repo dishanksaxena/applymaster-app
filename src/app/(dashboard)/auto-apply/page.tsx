@@ -62,12 +62,12 @@ export default function AutoApplyPage() {
       {/* Header */}
       <motion.div variants={fadeUp} className="relative overflow-hidden rounded-2xl p-8" style={{
         background: 'linear-gradient(135deg, rgba(0,184,148,0.08) 0%, rgba(253,121,168,0.06) 100%)',
-        border: `1px solid ${mode === 'autopilot' ? 'rgba(0,184,148,0.15)' : mode === 'copilot' ? 'rgba(116,185,255,0.15)' : 'rgba(255,255,255,0.06)'}`,
+        border: `1px solid ${mode === 'autopilot' ? 'rgba(0,184,148,0.15)' : mode === 'copilot' ? 'rgba(116,185,255,0.15)' : 'rgba(255,255,255,0.1)'}`,
       }}>
         <div className="absolute top-[-50%] right-[-10%] w-[300px] h-[300px] rounded-full opacity-[0.07]" style={{ background: 'radial-gradient(circle, #00b894, transparent 70%)' }} />
         <div className="relative z-10 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: mode === 'autopilot' ? 'rgba(0,184,148,0.15)' : mode === 'copilot' ? 'rgba(116,185,255,0.15)' : 'rgba(255,255,255,0.06)' }}>
+            <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: mode === 'autopilot' ? 'rgba(0,184,148,0.15)' : mode === 'copilot' ? 'rgba(116,185,255,0.15)' : 'rgba(255,255,255,0.1)' }}>
               <motion.div animate={mode !== 'off' ? { scale: [1, 1.15, 1] } : {}} transition={{ duration: 1.5, repeat: Infinity }}>
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={mode === 'autopilot' ? '#00b894' : mode === 'copilot' ? '#74b9ff' : '#5a5a6a'} strokeWidth="1.8"><polygon points="13,2 3,14 12,14 11,22 21,10 12,10"/></svg>
               </motion.div>
@@ -93,13 +93,13 @@ export default function AutoApplyPage() {
         <div className="space-y-6">
 
           {/* Mode Selection */}
-          <motion.div variants={fadeUp} className="p-6 rounded-2xl" style={{ background: 'linear-gradient(135deg, #12121a 0%, #0e0e16 100%)', border: '1px solid rgba(255,255,255,0.06)' }}>
+          <motion.div variants={fadeUp} className="p-6 rounded-2xl" style={{ background: 'linear-gradient(135deg, #1c1c2e 0%, #16162a 100%)', border: '1px solid rgba(255,255,255,0.1)' }}>
             <h3 className="text-[16px] font-bold mb-4">Operating Mode</h3>
             <div className="grid sm:grid-cols-3 gap-3">
               {modes.map(m => (
                 <motion.button key={m.id} whileHover={{ y: -3, scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => setMode(m.id)}
                   className="p-5 rounded-xl text-left transition-all duration-300"
-                  style={mode === m.id ? { background: `${m.color}10`, border: `1px solid ${m.color}30`, boxShadow: `0 0 20px ${m.color}08` } : { background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                  style={mode === m.id ? { background: `${m.color}10`, border: `1px solid ${m.color}30`, boxShadow: `0 0 20px ${m.color}08` } : { background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.1)' }}>
                   <div className="flex items-center justify-between mb-3">
                     <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${m.color}15`, color: m.color }}>{m.icon}</div>
                     {mode === m.id && <div className="w-3 h-3 rounded-full" style={{ background: m.color, boxShadow: `0 0 8px ${m.color}` }} />}
@@ -112,7 +112,7 @@ export default function AutoApplyPage() {
           </motion.div>
 
           {/* Settings */}
-          <motion.div variants={fadeUp} className="p-6 rounded-2xl" style={{ background: 'linear-gradient(135deg, #12121a 0%, #0e0e16 100%)', border: '1px solid rgba(255,255,255,0.06)' }}>
+          <motion.div variants={fadeUp} className="p-6 rounded-2xl" style={{ background: 'linear-gradient(135deg, #1c1c2e 0%, #16162a 100%)', border: '1px solid rgba(255,255,255,0.1)' }}>
             <h3 className="text-[16px] font-bold mb-6">Settings</h3>
             <div className="space-y-8">
               <div>
@@ -121,7 +121,7 @@ export default function AutoApplyPage() {
                   <span className="text-[14px] font-black text-[#fd79a8]">{dailyLimit}/day</span>
                 </div>
                 <input type="range" min="5" max="50" value={dailyLimit} onChange={e => setDailyLimit(parseInt(e.target.value))}
-                  className="w-full h-1.5 rounded-full appearance-none cursor-pointer" style={{ background: `linear-gradient(to right, #fd79a8 0%, #fd79a8 ${((dailyLimit - 5) / 45) * 100}%, rgba(255,255,255,0.06) ${((dailyLimit - 5) / 45) * 100}%, rgba(255,255,255,0.06) 100%)` }} />
+                  className="w-full h-1.5 rounded-full appearance-none cursor-pointer" style={{ background: `linear-gradient(to right, #fd79a8 0%, #fd79a8 ${((dailyLimit - 5) / 45) * 100}%, rgba(255,255,255,0.1) ${((dailyLimit - 5) / 45) * 100}%, rgba(255,255,255,0.1) 100%)` }} />
                 <div className="flex justify-between mt-2 text-[10px] text-[#3a3a4a]"><span>5</span><span>50</span></div>
               </div>
               <div>
@@ -130,14 +130,14 @@ export default function AutoApplyPage() {
                   <span className="text-[14px] font-black text-[#00b894]">{matchThreshold}%</span>
                 </div>
                 <input type="range" min="50" max="100" value={matchThreshold} onChange={e => setMatchThreshold(parseInt(e.target.value))}
-                  className="w-full h-1.5 rounded-full appearance-none cursor-pointer" style={{ background: `linear-gradient(to right, #00b894 0%, #00b894 ${((matchThreshold - 50) / 50) * 100}%, rgba(255,255,255,0.06) ${((matchThreshold - 50) / 50) * 100}%, rgba(255,255,255,0.06) 100%)` }} />
+                  className="w-full h-1.5 rounded-full appearance-none cursor-pointer" style={{ background: `linear-gradient(to right, #00b894 0%, #00b894 ${((matchThreshold - 50) / 50) * 100}%, rgba(255,255,255,0.1) ${((matchThreshold - 50) / 50) * 100}%, rgba(255,255,255,0.1) 100%)` }} />
                 <div className="flex justify-between mt-2 text-[10px] text-[#3a3a4a]"><span>50%</span><span>100%</span></div>
               </div>
             </div>
           </motion.div>
 
           {/* Sources */}
-          <motion.div variants={fadeUp} className="p-6 rounded-2xl" style={{ background: 'linear-gradient(135deg, #12121a 0%, #0e0e16 100%)', border: '1px solid rgba(255,255,255,0.06)' }}>
+          <motion.div variants={fadeUp} className="p-6 rounded-2xl" style={{ background: 'linear-gradient(135deg, #1c1c2e 0%, #16162a 100%)', border: '1px solid rgba(255,255,255,0.1)' }}>
             <h3 className="text-[16px] font-bold mb-4">Job Sources</h3>
             <div className="grid grid-cols-3 gap-3">
               {sources.map(source => {
@@ -146,7 +146,7 @@ export default function AutoApplyPage() {
                   <motion.button key={source.name} whileTap={{ scale: 0.95 }}
                     onClick={() => setActiveSources(active ? activeSources.filter(s => s !== source.name) : [...activeSources, source.name])}
                     className="p-4 rounded-xl text-center transition-all duration-300"
-                    style={active ? { background: `${source.color}10`, border: `1px solid ${source.color}30` } : { background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                    style={active ? { background: `${source.color}10`, border: `1px solid ${source.color}30` } : { background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.1)' }}>
                     <div className="w-8 h-8 rounded-lg flex items-center justify-center mx-auto mb-2 text-[11px] font-black"
                       style={{ background: active ? `${source.color}20` : 'rgba(255,255,255,0.04)', color: active ? source.color : '#5a5a6a' }}>{source.icon}</div>
                     <div className="text-[12px] font-bold" style={{ color: active ? 'white' : '#5a5a6a' }}>{source.name}</div>
@@ -164,7 +164,7 @@ export default function AutoApplyPage() {
         </div>
 
         {/* Activity Feed */}
-        <motion.div variants={fadeUp} className="h-fit rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.06)' }}>
+        <motion.div variants={fadeUp} className="h-fit rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.1)' }}>
           <div className="flex items-center gap-2 px-5 py-3 border-b border-white/[0.04]" style={{ background: '#0d0d14' }}>
             <div className="flex gap-1.5">
               <div className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]" />

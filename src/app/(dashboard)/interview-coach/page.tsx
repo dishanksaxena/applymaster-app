@@ -170,12 +170,12 @@ export default function InterviewCoachPage() {
           <motion.div key="setup" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
 
             {/* Interview Type */}
-            <motion.div variants={fadeUp} className="p-6 rounded-2xl" style={{ background: 'linear-gradient(135deg, #12121a 0%, #0e0e16 100%)', border: '1px solid rgba(255,255,255,0.06)' }}>
+            <motion.div variants={fadeUp} className="p-6 rounded-2xl" style={{ background: 'linear-gradient(135deg, #1c1c2e 0%, #16162a 100%)', border: '1px solid rgba(255,255,255,0.1)' }}>
               <h3 className="text-[16px] font-bold mb-4">Interview Type</h3>
               <div className="flex flex-wrap gap-2">
                 {interviewTypes.map(t => (
                   <button key={t} onClick={() => setType(t)} className="px-5 py-2.5 rounded-xl text-[13px] font-semibold transition-all duration-300"
-                    style={type === t ? { background: 'linear-gradient(135deg, rgba(162,155,254,0.15), rgba(253,121,168,0.1))', border: '1px solid rgba(162,155,254,0.3)', color: '#a29bfe', boxShadow: '0 0 20px rgba(162,155,254,0.1)' } : { background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', color: '#6a6a7a' }}>
+                    style={type === t ? { background: 'linear-gradient(135deg, rgba(162,155,254,0.15), rgba(253,121,168,0.1))', border: '1px solid rgba(162,155,254,0.3)', color: '#a29bfe', boxShadow: '0 0 20px rgba(162,155,254,0.1)' } : { background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.1)', color: '#6a6a7a' }}>
                     {t}
                   </button>
                 ))}
@@ -183,7 +183,7 @@ export default function InterviewCoachPage() {
             </motion.div>
 
             {/* Company & Role */}
-            <motion.div variants={fadeUp} className="p-6 rounded-2xl" style={{ background: 'linear-gradient(135deg, #12121a 0%, #0e0e16 100%)', border: '1px solid rgba(255,255,255,0.06)' }}>
+            <motion.div variants={fadeUp} className="p-6 rounded-2xl" style={{ background: 'linear-gradient(135deg, #1c1c2e 0%, #16162a 100%)', border: '1px solid rgba(255,255,255,0.1)' }}>
               <h3 className="text-[16px] font-bold mb-4">Customize Your Practice</h3>
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
@@ -219,7 +219,7 @@ export default function InterviewCoachPage() {
             </motion.div>
 
             {/* STAR Method */}
-            <motion.div variants={fadeUp} className="p-6 rounded-2xl" style={{ background: 'linear-gradient(135deg, rgba(253,121,168,0.04), rgba(162,155,254,0.04))', border: '1px solid rgba(255,255,255,0.06)' }}>
+            <motion.div variants={fadeUp} className="p-6 rounded-2xl" style={{ background: 'linear-gradient(135deg, rgba(253,121,168,0.04), rgba(162,155,254,0.04))', border: '1px solid rgba(255,255,255,0.1)' }}>
               <h3 className="text-[14px] font-bold mb-3 flex items-center gap-2">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fdcb6e" strokeWidth="2"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>
                 Pro Tip: Use the STAR Method
@@ -252,7 +252,7 @@ export default function InterviewCoachPage() {
             </div>
 
             {/* Question */}
-            <div className="p-8 rounded-2xl relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #12121a 0%, #0e0e16 100%)', border: '1px solid rgba(162,155,254,0.15)' }}>
+            <div className="p-8 rounded-2xl relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #1c1c2e 0%, #16162a 100%)', border: '1px solid rgba(162,155,254,0.15)' }}>
               <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ background: 'linear-gradient(90deg, #a29bfe, #fd79a8)' }} />
               <div className="flex items-center justify-between mb-6">
                 <span className="text-[11px] font-bold px-3 py-1 rounded-full" style={{ background: 'rgba(162,155,254,0.1)', color: '#a29bfe' }}>Question {currentQ + 1}</span>
@@ -294,7 +294,7 @@ export default function InterviewCoachPage() {
             {feedback && (
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
                 <div className="grid sm:grid-cols-3 gap-4">
-                  <div className="p-5 rounded-2xl text-center" style={{ background: 'linear-gradient(135deg, #12121a, #0e0e16)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                  <div className="p-5 rounded-2xl text-center" style={{ background: 'linear-gradient(135deg, #12121a, #0e0e16)', border: '1px solid rgba(255,255,255,0.1)' }}>
                     <div className="text-4xl font-black" style={{ color: feedback.score >= 8 ? '#00b894' : feedback.score >= 6 ? '#fdcb6e' : '#ff6b6b' }}>{feedback.score}/10</div>
                     <div className="text-[11px] text-[#5a5a6a] mt-1">Overall Score</div>
                   </div>
