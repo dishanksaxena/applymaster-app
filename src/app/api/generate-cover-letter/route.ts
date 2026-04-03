@@ -2,6 +2,8 @@ import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import Anthropic from '@anthropic-ai/sdk'
 
+export const maxDuration = 60
+
 const anthropic = new Anthropic()
 
 export async function POST(req: NextRequest) {
@@ -56,8 +58,8 @@ Summary: ${parsedResume.summary?.slice(0, 300) || ''}
     const toneText = toneInstructions[tone] || 'professional tone'
 
     const msg = await anthropic.messages.create({
-      model: 'claude-opus-4-5',
-      max_tokens: 1500,
+      model: 'claude-3-5-haiku-20241022',
+      max_tokens: 1024,
       messages: [
         {
           role: 'user',

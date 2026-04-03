@@ -2,6 +2,8 @@ import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import Anthropic from '@anthropic-ai/sdk'
 
+export const maxDuration = 60
+
 const anthropic = new Anthropic()
 
 // Detect portal type from URL
@@ -59,7 +61,7 @@ export async function POST(req: NextRequest) {
 
     // Use Claude to generate smart form answers
     const msg = await anthropic.messages.create({
-      model: 'claude-opus-4-5',
+      model: 'claude-3-5-haiku-20241022',
       max_tokens: 2000,
       messages: [
         {
