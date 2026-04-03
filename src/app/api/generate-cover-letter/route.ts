@@ -109,7 +109,11 @@ REQUIREMENTS:
       cover_letter_id: savedLetter?.id || null,
     })
   } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
     console.error('Cover letter error:', err)
-    return Response.json({ error: 'Failed to generate cover letter' }, { status: 500 })
+    const isCredits = msg.includes('credit balance') || msg.includes('billing')
+    return Response.json({
+      error: isCredits ? 'AI credits exhausted — please top up Anthropic account' : 'Failed to generate cover letter'
+    }, { status: 500 })
   }
 }

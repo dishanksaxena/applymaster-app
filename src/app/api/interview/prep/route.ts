@@ -175,6 +175,9 @@ Return ONLY valid JSON:
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
     console.error('Interview prep error:', err)
-    return Response.json({ error: 'Interview prep failed', detail: msg }, { status: 500 })
+    const isCredits = msg.includes('credit balance') || msg.includes('billing')
+    return Response.json({
+      error: isCredits ? 'AI credits exhausted — please top up Anthropic account' : 'Interview prep failed'
+    }, { status: 500 })
   }
 }
