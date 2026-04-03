@@ -79,13 +79,13 @@ Return ONLY valid JSON (no markdown):
 {
   "ats_score": <0-100 score for optimized version>,
   "original_score": <estimated original ATS score>,
-  "optimized_resume_text": "Full optimized resume as plain text, professionally formatted",
+  "tailored_resume": "Full optimized resume as plain text, professionally formatted",
   "key_changes": ["Change 1", "Change 2", "Change 3", "Change 4", "Change 5"],
   "keywords_added": ["keyword1", "keyword2", "keyword3"],
   "keywords_to_add_manually": ["keyword that requires actual experience"],
   "tailored_summary": "2-3 sentence tailored professional summary",
   "strengths": ["Strength 1", "Strength 2", "Strength 3"],
-  "gaps": ["Gap 1", "Gap 2"]
+  "improvements": ["Improvement 1", "Improvement 2"]
 }`,
         },
       ],

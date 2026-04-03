@@ -14,10 +14,18 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false)
   const [name, setName] = useState('')
   const [mounted, setMounted] = useState(false)
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark')
   const supabase = createClient()
   const router = useRouter()
 
-  useEffect(() => { setMounted(true) }, [])
+  useEffect(() => {
+    setMounted(true)
+    const saved = localStorage.getItem('theme') as 'dark' | 'light' | null
+    if (saved) {
+      setTheme(saved)
+      document.documentElement.classList.toggle('light-theme', saved === 'light')
+    }
+  }, [])
 
   useEffect(() => {
     const load = async () => {
@@ -51,6 +59,13 @@ export default function SettingsPage() {
   }
 
   const handleSignOut = async () => { await supabase.auth.signOut(); router.push('/'); router.refresh() }
+
+  const toggleTheme = () => {
+    const next = theme === 'dark' ? 'light' : 'dark'
+    setTheme(next)
+    localStorage.setItem('theme', next)
+    document.documentElement.classList.toggle('light-theme', next === 'light')
+  }
 
   if (loading) return (
     <div className="flex items-center justify-center py-20">
@@ -136,6 +151,38 @@ export default function SettingsPage() {
               </motion.button>
             </motion.div>
           ))}
+        </div>
+      </motion.div>
+
+      {/* Appearance */}
+      <motion.div variants={fadeUp} className="p-6 rounded-2xl" style={{ background: 'linear-gradient(135deg, #1c1c2e 0%, #16162a 100%)', border: '1px solid rgba(255,255,255,0.1)' }}>
+        <h3 className="text-[16px] font-bold mb-1">Appearance</h3>
+        <p className="text-[12px] text-[#5a5a6a] mb-5">Choose your preferred theme</p>
+        <div className="flex items-center justify-between p-4 rounded-xl" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: theme === 'dark' ? 'rgba(162,155,254,0.12)' : 'rgba(253,203,110,0.12)' }}>
+              {theme === 'dark' ? (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a29bfe" strokeWidth="1.8"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+              ) : (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fdcb6e" strokeWidth="1.8"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+              )}
+            </div>
+            <div>
+              <div className="text-[13px] font-semibold text-white">{theme === 'dark' ? 'Dark Mode' : 'Light Mode'}</div>
+              <div className="text-[11px] text-[#5a5a6a]">{theme === 'dark' ? 'Easy on the eyes' : 'Bright and clear'}</div>
+            </div>
+          </div>
+          <button onClick={toggleTheme} className="relative w-12 h-6 rounded-full transition-all duration-300 focus:outline-none"
+            style={{ background: theme === 'dark' ? 'rgba(162,155,254,0.3)' : 'rgba(253,203,110,0.5)', border: `1px solid ${theme === 'dark' ? 'rgba(162,155,254,0.4)' : 'rgba(253,203,110,0.5)'}` }}>
+            <span className="absolute top-0.5 w-5 h-5 rounded-full transition-all duration-300 shadow-md flex items-center justify-center"
+              style={{ left: theme === 'dark' ? '2px' : 'calc(100% - 22px)', background: theme === 'dark' ? '#a29bfe' : '#fdcb6e' }}>
+              {theme === 'dark' ? (
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="white" stroke="none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+              ) : (
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="white" stroke="none"><circle cx="12" cy="12" r="5"/></svg>
+              )}
+            </span>
+          </button>
         </div>
       </motion.div>
 

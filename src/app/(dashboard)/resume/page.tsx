@@ -628,6 +628,32 @@ export default function ResumePage() {
               </div>
             </div>
 
+            {/* ─── Next Steps Workflow Banner ─── */}
+            {resumes.length > 0 && !selectedResume && (
+              <div className="rounded-2xl p-5" style={{ background: 'linear-gradient(135deg, rgba(0,184,148,0.06), rgba(0,184,148,0.02))', border: '1px solid rgba(0,184,148,0.12)' }}>
+                <div className="flex items-center gap-2 mb-3">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00b894" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22,4 12,14.01 9,11.01"/></svg>
+                  <span className="text-[13px] font-bold text-[#00b894]">Resume uploaded! What to do next:</span>
+                </div>
+                <div className="grid sm:grid-cols-3 gap-3">
+                  {[
+                    { step: '1', label: 'Optimize Resume', desc: 'Click your resume below to select it, then enter a job title to get an AI ATS score', color: '#fd79a8', href: null },
+                    { step: '2', label: 'Search Jobs', desc: 'Find matching jobs with AI-powered search across 50+ job boards', color: '#a29bfe', href: '/jobs' },
+                    { step: '3', label: 'Generate Cover Letter', desc: 'Let AI write a personalized cover letter for each application', color: '#74b9ff', href: '/cover-letters' },
+                  ].map(s => (
+                    <div key={s.step} className="p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                      <div className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-black mb-2" style={{ background: `${s.color}18`, color: s.color }}>{s.step}</div>
+                      <div className="text-[12px] font-bold text-white mb-1">{s.label}</div>
+                      <div className="text-[11px] text-[#5a5a6a] leading-relaxed">{s.desc}</div>
+                      {s.href && (
+                        <a href={s.href} className="inline-block mt-2 text-[11px] font-bold" style={{ color: s.color }}>Go →</a>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* ─── Optimization Section ─── */}
             {selectedResume && (
               <div
@@ -799,10 +825,10 @@ export default function ResumePage() {
                       <path d="M22 11.08V12a10 10 0 11-5.93-9.14" /><polyline points="22,4 12,14.01 9,11.01" />
                     </svg>
                     Strengths
-                    <span className="ml-auto text-[10px] font-semibold text-[#3a3a4a] bg-[rgba(0,184,148,0.06)] px-2 py-0.5 rounded-md">{optimization.strengths.length} found</span>
+                    <span className="ml-auto text-[10px] font-semibold text-[#3a3a4a] bg-[rgba(0,184,148,0.06)] px-2 py-0.5 rounded-md">{(optimization.strengths ?? []).length} found</span>
                   </h4>
                   <div className="space-y-2">
-                    {optimization.strengths.map((s, i) => (
+                    {(optimization.strengths ?? []).map((s, i) => (
                       <div
                         key={i}
                         className="flex items-start gap-3 p-3 rounded-xl transition-all duration-300 hover:bg-[rgba(0,184,148,0.03)]"
@@ -836,10 +862,10 @@ export default function ResumePage() {
                       <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
                     </svg>
                     Improvements
-                    <span className="ml-auto text-[10px] font-semibold text-[#3a3a4a] bg-[rgba(253,203,110,0.06)] px-2 py-0.5 rounded-md">{optimization.improvements.length} suggested</span>
+                    <span className="ml-auto text-[10px] font-semibold text-[#3a3a4a] bg-[rgba(253,203,110,0.06)] px-2 py-0.5 rounded-md">{(optimization.improvements ?? []).length} suggested</span>
                   </h4>
                   <div className="space-y-2">
-                    {optimization.improvements.map((imp, i) => (
+                    {(optimization.improvements ?? []).map((imp, i) => (
                       <div
                         key={i}
                         className="flex items-start gap-3 p-3 rounded-xl transition-all duration-300 hover:bg-[rgba(253,203,110,0.03)]"

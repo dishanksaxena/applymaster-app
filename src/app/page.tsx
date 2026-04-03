@@ -389,6 +389,20 @@ export default function Home() {
   const [scrolled, setScrolled] = useState(false)
   const [scrollY, setScrollY] = useState(0)
   const [mobileMenu, setMobileMenu] = useState(false)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+
+  useEffect(() => {
+    // Check auth state
+    const checkAuth = async () => {
+      try {
+        const { createClient } = await import('@/lib/supabase-browser')
+        const supabase = createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) setIsLoggedIn(true)
+      } catch { /* ignore */ }
+    }
+    checkAuth()
+  }, [])
   const [billing, setBilling] = useState<'mo' | 'yr'>('mo')
   const heroRef = useRef<HTMLDivElement>(null)
 
@@ -431,8 +445,14 @@ export default function Home() {
           </div>
 
           <div className="hidden lg:flex items-center gap-4">
-            <a href="/login" className="text-[13px] font-semibold text-[#8a8a9a] hover:text-white transition-colors px-4 py-2">Log In</a>
-            <GlowButton href="/signup" size="sm">Start Free</GlowButton>
+            {isLoggedIn ? (
+              <GlowButton href="/dashboard" size="sm">Go to Dashboard →</GlowButton>
+            ) : (
+              <>
+                <a href="/login" className="text-[13px] font-semibold text-[#8a8a9a] hover:text-white transition-colors px-4 py-2">Log In</a>
+                <GlowButton href="/signup" size="sm">Start Free</GlowButton>
+              </>
+            )}
           </div>
 
           <button onClick={() => setMobileMenu(!mobileMenu)} className="lg:hidden p-2" aria-label="Menu">
@@ -448,7 +468,11 @@ export default function Home() {
             {['Features', 'How It Works', 'Pricing', 'FAQ'].map(l => (
               <a key={l} href={`#${l.toLowerCase().replace(/ /g, '-')}`} onClick={() => setMobileMenu(false)} className="block text-lg font-semibold text-[#8a8a9a] hover:text-white">{l}</a>
             ))}
-            <a href="/signup" className="block text-center px-6 py-3.5 rounded-full bg-gradient-to-r from-[#fd79a8] to-[#e84393] text-white font-bold">Start Free</a>
+            {isLoggedIn ? (
+              <a href="/dashboard" className="block text-center px-6 py-3.5 rounded-full bg-gradient-to-r from-[#fd79a8] to-[#e84393] text-white font-bold">Go to Dashboard →</a>
+            ) : (
+              <a href="/signup" className="block text-center px-6 py-3.5 rounded-full bg-gradient-to-r from-[#fd79a8] to-[#e84393] text-white font-bold">Start Free</a>
+            )}
           </div>
         )}
       </nav>
