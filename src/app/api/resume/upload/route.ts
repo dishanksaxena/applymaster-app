@@ -7,10 +7,19 @@ export const maxDuration = 60
 const anthropic = new Anthropic()
 
 async function extractTextFromPDF(buffer: Buffer): Promise<string> {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const pdfParse = require('pdf-parse')
-  const data = await pdfParse(buffer)
-  return data.text
+  const base64 = buffer.toString('base64')
+  const msg = await anthropic.messages.create({
+    model: 'claude-haiku-4-5-20251001',
+    max_tokens: 4000,
+    messages: [{
+      role: 'user',
+      content: [
+        { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: base64 } } as any,
+        { type: 'text', text: 'Extract all text content from this PDF resume. Return only the raw text, preserve structure.' }
+      ]
+    }]
+  })
+  return msg.content[0].type === 'text' ? msg.content[0].text : ''
 }
 
 async function extractTextFromDOCX(buffer: Buffer): Promise<string> {
