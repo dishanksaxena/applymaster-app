@@ -281,18 +281,11 @@ export default function ResumePage() {
     await supabase.from('resumes').update({ is_primary: true }).eq('id', id)
     await loadResumes()
   }
+
   const deleteResume = async (id: string) => {
-    try {
-      const { error } = await supabase.from('resumes').delete().eq('id', id)
-      if (error) throw error
-      if (selectedResume?.id === id) setSelectedResume(null)
-      setDeleteConfirm(null)
-      await loadResumes()
-    } catch (err) {
-      console.error('Delete error:', err)
-      setDeleteConfirm(null)
-    }
-  }
+    await supabase.from('resumes').delete().eq('id', id)
+    if (selectedResume?.id === id) setSelectedResume(null)
+    setDeleteConfirm(null)
     await loadResumes()
   }
 
