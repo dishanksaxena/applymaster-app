@@ -159,11 +159,40 @@ export default function AutoApplyPage() {
             </div>
           </motion.div>
 
-          <motion.button variants={fadeUp} whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }} onClick={saveSettings} disabled={saving}
-            className="w-full py-4 rounded-xl font-bold text-[14px] text-white disabled:opacity-30 transition-all"
-            style={{ background: saved ? 'linear-gradient(135deg, #00b894, #00a381)' : 'linear-gradient(135deg, #fd79a8, #e84393)' }}>
-            {saving ? 'Saving...' : saved ? '✓ Settings Saved!' : 'Save Settings'}
-          </motion.button>
+          <motion.div variants={fadeUp} className="space-y-3">
+            {/* Activate Engine Button */}
+            {mode !== 'off' ? (
+              <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }} onClick={saveSettings} disabled={saving}
+                className="w-full py-4 rounded-xl font-bold text-[15px] text-white disabled:opacity-30 transition-all flex items-center justify-center gap-3"
+                style={{ background: saved ? 'linear-gradient(135deg, #00b894, #00a381)' : mode === 'autopilot' ? 'linear-gradient(135deg, #00b894, #00a381)' : 'linear-gradient(135deg, #74b9ff, #0984e3)' }}>
+                {saving ? (
+                  <>
+                    <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }} className="w-4 h-4 rounded-full border-2 border-white/20 border-t-white" />
+                    Activating...
+                  </>
+                ) : saved ? (
+                  <>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    {mode === 'autopilot' ? 'Autopilot Engine Active!' : 'Copilot Mode Active!'}
+                  </>
+                ) : (
+                  <>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><polygon points="13,2 3,14 12,14 11,22 21,10 12,10"/></svg>
+                    {mode === 'autopilot' ? 'Activate Autopilot Engine' : 'Activate Copilot Mode'}
+                  </>
+                )}
+              </motion.button>
+            ) : (
+              <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }} onClick={saveSettings} disabled={saving}
+                className="w-full py-4 rounded-xl font-bold text-[14px] text-white disabled:opacity-30 transition-all"
+                style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                {saving ? 'Saving...' : saved ? '✓ Saved' : 'Save Settings (Engine Off)'}
+              </motion.button>
+            )}
+            {mode !== 'off' && !saved && (
+              <p className="text-center text-[11px] text-[#5a5a6a]">Select your mode above, configure settings, then click Activate</p>
+            )}
+          </motion.div>
 
           {/* Info Banner */}
           <motion.div variants={fadeUp} className="p-5 rounded-2xl" style={{ background: 'rgba(116,185,255,0.04)', border: '1px solid rgba(116,185,255,0.1)' }}>

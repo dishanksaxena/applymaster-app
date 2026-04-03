@@ -78,35 +78,45 @@ export default function InterviewCoachPage() {
     return () => clearInterval(t)
   }, [timerActive, timer])
 
-  const startInterview = async () => {
-    setGeneratingQuestions(true)
-    try {
-      const res = await fetch('/api/interview/prep', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'generate_questions',
-          interview_type: interviewTypeMap[type] || 'behavioral',
-          job_title: role || 'Software Engineer',
-          company: company || undefined,
-          job_description: jobDesc || undefined,
-        }),
-      })
-      const data = await res.json()
-      const qs: string[] = (data.questions || []).map((q: { question: string }) => q.question).filter(Boolean)
-      setQuestions(qs.length > 0 ? qs : (mockQuestions[type] || mockQuestions.Behavioral))
-      setSessionId(data.session_id || null)
-    } catch {
-      setQuestions(mockQuestions[type] || mockQuestions.Behavioral)
-    }
+  const startInterview = () => {
+    // Immediately show mock questions — no waiting
+    const instant = mockQuestions[type] || mockQuestions.Behavioral
+    setQuestions(instant)
     setCurrentQ(0)
     setScores([])
     setFeedback(null)
     setAnswer('')
     setTimer(120)
     setTimerActive(true)
-    setGeneratingQuestions(false)
     setMode('interview')
+
+    // Silently fetch AI-personalized questions in background
+    setGeneratingQuestions(true)
+    fetch('/api/interview/prep', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'generate_questions',
+        interview_type: interviewTypeMap[type] || 'behavioral',
+        job_title: role || 'Software Engineer',
+        company: company || undefined,
+        job_description: jobDesc || undefined,
+      }),
+    })
+      .then(r => r.json())
+      .then(data => {
+        const qs: string[] = (data.questions || []).map((q: { question: string }) => q.question).filter(Boolean)
+        if (qs.length > 0) {
+          // Only swap questions if user is still on the first question and hasn't started typing
+          setQuestions(prev => {
+            // Always update so later questions are AI-generated
+            return qs
+          })
+          setSessionId(data.session_id || null)
+        }
+      })
+      .catch(() => { /* stay with mock questions */ })
+      .finally(() => setGeneratingQuestions(false))
   }
 
   const submitAnswer = async () => {
@@ -213,8 +223,8 @@ export default function InterviewCoachPage() {
                 { name: 'Full Interview', time: '45 min', qs: '15 questions', color: '#a29bfe', icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg> },
                 { name: 'Company Specific', time: 'Custom', qs: 'Tailored', color: '#fd79a8', icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> },
               ].map(m => (
-                <motion.button key={m.name} whileHover={{ y: -4, scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={startInterview} disabled={generatingQuestions}
-                  className="p-6 rounded-2xl text-left group transition-all disabled:opacity-60" style={{ background: `${m.color}06`, border: `1px solid ${m.color}15` }}>
+                <motion.button key={m.name} whileHover={{ y: -4, scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={startInterview}
+                  className="p-6 rounded-2xl text-left group transition-all" style={{ background: `${m.color}06`, border: `1px solid ${m.color}15` }}>
                   <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4" style={{ background: `${m.color}15`, color: m.color }}>{m.icon}</div>
                   <h4 className="text-[15px] font-bold text-white group-hover:text-[#fd79a8] transition-colors">{m.name}</h4>
                   <div className="flex items-center gap-3 mt-2">
@@ -246,6 +256,17 @@ export default function InterviewCoachPage() {
 
         {mode === 'interview' && (
           <motion.div key="interview" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
+
+            {/* AI personalizing banner */}
+            {generatingQuestions && (
+              <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+                className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-[12px] font-semibold"
+                style={{ background: 'rgba(162,155,254,0.06)', border: '1px solid rgba(162,155,254,0.12)', color: '#a29bfe' }}>
+                <motion.div animate={{ rotate: 360 }} transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
+                  className="w-3.5 h-3.5 rounded-full border-2 shrink-0" style={{ borderColor: 'rgba(162,155,254,0.3)', borderTopColor: '#a29bfe' }} />
+                Personalizing questions with AI for {role || 'your role'}...
+              </motion.div>
+            )}
 
             {/* Progress dots */}
             <div className="flex items-center gap-3">

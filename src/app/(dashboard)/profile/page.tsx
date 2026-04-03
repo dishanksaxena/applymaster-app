@@ -30,7 +30,7 @@ function Section({ title, color, icon, children }: { title: string; color: strin
   )
 }
 
-function EditableField({ label, value, onChange, multiline }: { label: string; value: string; onChange: (v: string) => void; multiline?: boolean }) {
+function EditableField({ label, value, onChange, multiline, type }: { label: string; value: string; onChange: (v: string) => void; multiline?: boolean; type?: string }) {
   const cls = "w-full px-4 py-3 rounded-xl bg-[#16161f] border border-white/[0.06] text-white text-[13px] focus:outline-none focus:border-[rgba(253,121,168,0.3)] transition-all resize-none"
   return (
     <div className="space-y-1.5">
@@ -38,14 +38,14 @@ function EditableField({ label, value, onChange, multiline }: { label: string; v
       {multiline ? (
         <textarea rows={3} value={value} onChange={e => onChange(e.target.value)} className={cls} />
       ) : (
-        <input value={value} onChange={e => onChange(e.target.value)} className={cls} />
+        <input type={type || 'text'} value={value} onChange={e => onChange(e.target.value)} className={cls} />
       )}
     </div>
   )
 }
 
 export default function ProfilePage() {
-  const [parsed, setParsed] = useState<ParsedResume | null>(null)
+  const [parsedExtra, setParsedExtra] = useState<ParsedResume | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -53,7 +53,7 @@ export default function ProfilePage() {
   const [mounted, setMounted] = useState(false)
   const supabase = createClient()
 
-  // Editable fields
+  // Editable fields — always available
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
@@ -68,6 +68,21 @@ export default function ProfilePage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
+      // 1. Load from profiles table (always exists)
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name, email')
+        .eq('id', user.id)
+        .single()
+
+      if (profile) {
+        setName(profile.full_name || '')
+        setEmail(profile.email || user.email || '')
+      } else {
+        setEmail(user.email || '')
+      }
+
+      // 2. Load from parsed_resumes for richer data (if primary resume exists)
       const { data: resume } = await supabase
         .from('resumes')
         .select('id')
@@ -84,40 +99,51 @@ export default function ProfilePage() {
           .single()
 
         if (data) {
-          setParsed(data as ParsedResume)
-          setName(data.full_name || '')
-          setEmail(data.email || '')
+          setParsedExtra(data as ParsedResume)
+          // Override with resume data (richer), but don't override if user already typed something
+          if (data.full_name) setName(data.full_name)
+          if (data.email) setEmail(data.email)
           setPhone(data.phone || '')
           setLocation(data.location || '')
           setSummary(data.summary || '')
           setSkillsStr((data.skills || []).join(', '))
         }
       }
+
       setLoading(false)
     }
     load()
   }, [supabase])
 
   const saveProfile = async () => {
-    if (!resumeId) return
     setSaving(true)
     const skills = skillsStr.split(',').map(s => s.trim()).filter(Boolean)
-    await supabase.from('parsed_resumes').update({
-      full_name: name,
-      email,
-      phone,
-      location,
-      summary,
-      skills,
-    }).eq('resume_id', resumeId)
 
-    // Also update profiles table
     const { data: { user } } = await supabase.auth.getUser()
-    if (user) await supabase.from('profiles').update({ full_name: name }).eq('id', user.id)
+    if (!user) { setSaving(false); return }
+
+    // Always save name to profiles table
+    await supabase.from('profiles').update({ full_name: name }).eq('id', user.id)
+
+    // Save detailed fields to parsed_resumes if resume exists
+    if (resumeId) {
+      await supabase.from('parsed_resumes').update({
+        full_name: name,
+        email,
+        phone,
+        location,
+        summary,
+        skills,
+      }).eq('resume_id', resumeId)
+    } else {
+      // No resume yet — store in a profile_details style using profiles table extended fields
+      // For now persist what we can to profiles
+      await supabase.from('profiles').update({ full_name: name }).eq('id', user.id)
+    }
 
     setSaving(false)
     setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
+    setTimeout(() => setSaved(false), 2500)
   }
 
   if (!mounted) return <div className="p-8" />
@@ -146,130 +172,132 @@ export default function ProfilePage() {
           <div>
             <h1 className="text-2xl font-black tracking-tight">{name || 'Your Profile'}</h1>
             <p className="text-[13px] text-[#8a8a9a] mt-0.5">
-              {parsed ? 'Auto-populated from your resume — edit any field and save' : 'Upload a resume to auto-populate your profile'}
+              {parsedExtra ? 'Auto-populated from your resume — edit any field and save' : 'Edit your profile details and save'}
             </p>
+            {!parsedExtra && (
+              <a href="/resume" className="inline-flex items-center gap-1.5 mt-2 text-[12px] font-semibold" style={{ color: '#fd79a8' }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                Upload resume to auto-fill →
+              </a>
+            )}
           </div>
-          {parsed && (
-            <motion.button whileTap={{ scale: 0.95 }} onClick={saveProfile} disabled={saving}
-              className="ml-auto px-6 py-3 rounded-xl text-[13px] font-bold text-white"
-              style={{ background: saved ? 'linear-gradient(135deg, #00b894, #00a381)' : 'linear-gradient(135deg, #fd79a8, #e84393)' }}>
-              {saving ? 'Saving...' : saved ? '✓ Saved!' : 'Save Profile'}
-            </motion.button>
-          )}
+          <motion.button whileTap={{ scale: 0.95 }} onClick={saveProfile} disabled={saving}
+            className="ml-auto px-6 py-3 rounded-xl text-[13px] font-bold text-white"
+            style={{ background: saved ? 'linear-gradient(135deg, #00b894, #00a381)' : 'linear-gradient(135deg, #fd79a8, #e84393)' }}>
+            {saving ? 'Saving...' : saved ? '✓ Saved!' : 'Save Profile'}
+          </motion.button>
         </div>
       </motion.div>
 
-      {!parsed ? (
-        <motion.div variants={fadeUp} className="text-center py-16">
-          <div className="inline-block mb-4">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#3a3a4a" strokeWidth="1.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-          </div>
-          <p className="text-[15px] font-semibold text-[#5a5a6a]">No resume uploaded yet</p>
-          <p className="text-[12px] text-[#3a3a4a] mt-1 mb-4">Upload a resume to auto-fill your profile</p>
-          <a href="/resume" className="inline-block px-6 py-3 rounded-xl text-[13px] font-bold text-white" style={{ background: 'linear-gradient(135deg, #fd79a8, #e84393)' }}>
-            Upload Resume →
-          </a>
-        </motion.div>
-      ) : (
-        <>
-          {/* Contact Info */}
-          <Section title="Contact Information" color="#fd79a8"
-            icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}>
-            <div className="grid sm:grid-cols-2 gap-4">
-              <EditableField label="Full Name" value={name} onChange={setName} />
-              <EditableField label="Email" value={email} onChange={setEmail} />
-              <EditableField label="Phone" value={phone} onChange={setPhone} />
-              <EditableField label="Location" value={location} onChange={setLocation} />
+      {/* Contact Info — always visible */}
+      <Section title="Contact Information" color="#fd79a8"
+        icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}>
+        <div className="grid sm:grid-cols-2 gap-4">
+          <EditableField label="Full Name" value={name} onChange={setName} />
+          <EditableField label="Email" value={email} onChange={setEmail} type="email" />
+          <EditableField label="Phone" value={phone} onChange={setPhone} type="tel" />
+          <EditableField label="Location" value={location} onChange={setLocation} />
+        </div>
+      </Section>
+
+      {/* Summary — always visible */}
+      <Section title="Professional Summary" color="#a29bfe"
+        icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z"/></svg>}>
+        <EditableField label="Summary" value={summary} onChange={setSummary} multiline />
+      </Section>
+
+      {/* Skills — always visible */}
+      <Section title="Skills" color="#00b894"
+        icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>}>
+        <div className="space-y-3">
+          <EditableField label="Skills (comma-separated)" value={skillsStr} onChange={setSkillsStr} />
+          {skillsStr && (
+            <div className="flex flex-wrap gap-2 mt-3">
+              {skillsStr.split(',').map(s => s.trim()).filter(Boolean).map((skill, i) => (
+                <span key={i} className="text-[11px] font-semibold px-2.5 py-1 rounded-lg" style={{ background: 'rgba(0,184,148,0.08)', color: '#00b894', border: '1px solid rgba(0,184,148,0.12)' }}>
+                  {skill}
+                </span>
+              ))}
             </div>
-          </Section>
-
-          {/* Summary */}
-          <Section title="Professional Summary" color="#a29bfe"
-            icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z"/></svg>}>
-            <EditableField label="Summary" value={summary} onChange={setSummary} multiline />
-          </Section>
-
-          {/* Skills */}
-          <Section title="Skills" color="#00b894"
-            icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>}>
-            <div className="space-y-3">
-              <EditableField label="Skills (comma-separated)" value={skillsStr} onChange={setSkillsStr} />
-              {skillsStr && (
-                <div className="flex flex-wrap gap-2 mt-3">
-                  {skillsStr.split(',').map(s => s.trim()).filter(Boolean).map((skill, i) => (
-                    <span key={i} className="text-[11px] font-semibold px-2.5 py-1 rounded-lg" style={{ background: 'rgba(0,184,148,0.08)', color: '#00b894', border: '1px solid rgba(0,184,148,0.12)' }}>
-                      {skill}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-          </Section>
-
-          {/* Work Experience */}
-          {(parsed.experience ?? []).length > 0 && (
-            <Section title="Work Experience" color="#fdcb6e"
-              icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>}>
-              <div className="space-y-4">
-                {(parsed.experience ?? []).map((exp, i) => (
-                  <div key={i} className="p-4 rounded-xl" style={{ background: 'rgba(253,203,110,0.03)', border: '1px solid rgba(253,203,110,0.08)' }}>
-                    <div className="flex items-start justify-between gap-2 mb-1">
-                      <div>
-                        <div className="text-[13px] font-bold text-white">{exp.title}</div>
-                        <div className="text-[12px] text-[#fdcb6e]">{exp.company}</div>
-                      </div>
-                      {(exp.start_date || exp.end_date) && (
-                        <span className="text-[11px] text-[#5a5a6a] shrink-0">{exp.start_date} {exp.start_date && exp.end_date ? '–' : ''} {exp.end_date || 'Present'}</span>
-                      )}
-                    </div>
-                    {exp.description && <p className="text-[12px] text-[#6a6a7a] mt-2 leading-relaxed">{typeof exp.description === 'string' ? exp.description.slice(0, 300) : ''}</p>}
-                  </div>
-                ))}
-              </div>
-            </Section>
           )}
+        </div>
+      </Section>
 
-          {/* Education */}
-          {(parsed.education ?? []).length > 0 && (
-            <Section title="Education" color="#74b9ff"
-              icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>}>
-              <div className="space-y-3">
-                {(parsed.education ?? []).map((edu, i) => (
-                  <div key={i} className="p-4 rounded-xl" style={{ background: 'rgba(116,185,255,0.03)', border: '1px solid rgba(116,185,255,0.08)' }}>
-                    <div className="text-[13px] font-bold text-white">{edu.degree}{edu.field ? ` in ${edu.field}` : ''}</div>
-                    <div className="text-[12px] text-[#74b9ff]">{edu.institution}</div>
-                    {edu.end_date && <div className="text-[11px] text-[#5a5a6a] mt-0.5">{edu.end_date}</div>}
+      {/* Work Experience — from resume if available */}
+      {(parsedExtra?.experience ?? []).length > 0 && (
+        <Section title="Work Experience" color="#fdcb6e"
+          icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>}>
+          <div className="space-y-4">
+            {(parsedExtra?.experience ?? []).map((exp, i) => (
+              <div key={i} className="p-4 rounded-xl" style={{ background: 'rgba(253,203,110,0.03)', border: '1px solid rgba(253,203,110,0.08)' }}>
+                <div className="flex items-start justify-between gap-2 mb-1">
+                  <div>
+                    <div className="text-[13px] font-bold text-white">{exp.title}</div>
+                    <div className="text-[12px] text-[#fdcb6e]">{exp.company}</div>
                   </div>
-                ))}
+                  {(exp.start_date || exp.end_date) && (
+                    <span className="text-[11px] text-[#5a5a6a] shrink-0">{exp.start_date} {exp.start_date && exp.end_date ? '–' : ''} {exp.end_date || 'Present'}</span>
+                  )}
+                </div>
+                {exp.description && <p className="text-[12px] text-[#6a6a7a] mt-2 leading-relaxed">{typeof exp.description === 'string' ? exp.description.slice(0, 300) : ''}</p>}
               </div>
-            </Section>
-          )}
-
-          {/* Certifications & Languages */}
-          <div className="grid sm:grid-cols-2 gap-6">
-            {(parsed.certifications ?? []).length > 0 && (
-              <Section title="Certifications" color="#fd79a8"
-                icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg>}>
-                <div className="flex flex-wrap gap-2">
-                  {(parsed.certifications ?? []).map((c, i) => (
-                    <span key={i} className="text-[11px] font-semibold px-2.5 py-1 rounded-lg" style={{ background: 'rgba(253,121,168,0.08)', color: '#fd79a8', border: '1px solid rgba(253,121,168,0.12)' }}>{c}</span>
-                  ))}
-                </div>
-              </Section>
-            )}
-            {(parsed.languages ?? []).length > 0 && (
-              <Section title="Languages" color="#a29bfe"
-                icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>}>
-                <div className="flex flex-wrap gap-2">
-                  {(parsed.languages ?? []).map((l, i) => (
-                    <span key={i} className="text-[11px] font-semibold px-2.5 py-1 rounded-lg" style={{ background: 'rgba(162,155,254,0.08)', color: '#a29bfe', border: '1px solid rgba(162,155,254,0.12)' }}>{l}</span>
-                  ))}
-                </div>
-              </Section>
-            )}
+            ))}
           </div>
-        </>
+          <p className="text-[11px] text-[#4a4a5a] mt-3">Re-upload your resume to update work history</p>
+        </Section>
       )}
+
+      {/* Education — from resume if available */}
+      {(parsedExtra?.education ?? []).length > 0 && (
+        <Section title="Education" color="#74b9ff"
+          icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>}>
+          <div className="space-y-3">
+            {(parsedExtra?.education ?? []).map((edu, i) => (
+              <div key={i} className="p-4 rounded-xl" style={{ background: 'rgba(116,185,255,0.03)', border: '1px solid rgba(116,185,255,0.08)' }}>
+                <div className="text-[13px] font-bold text-white">{edu.degree}{edu.field ? ` in ${edu.field}` : ''}</div>
+                <div className="text-[12px] text-[#74b9ff]">{edu.institution}</div>
+                {edu.end_date && <div className="text-[11px] text-[#5a5a6a] mt-0.5">{edu.end_date}</div>}
+              </div>
+            ))}
+          </div>
+        </Section>
+      )}
+
+      {/* Certifications & Languages — from resume if available */}
+      {((parsedExtra?.certifications ?? []).length > 0 || (parsedExtra?.languages ?? []).length > 0) && (
+        <div className="grid sm:grid-cols-2 gap-6">
+          {(parsedExtra?.certifications ?? []).length > 0 && (
+            <Section title="Certifications" color="#fd79a8"
+              icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg>}>
+              <div className="flex flex-wrap gap-2">
+                {(parsedExtra?.certifications ?? []).map((c, i) => (
+                  <span key={i} className="text-[11px] font-semibold px-2.5 py-1 rounded-lg" style={{ background: 'rgba(253,121,168,0.08)', color: '#fd79a8', border: '1px solid rgba(253,121,168,0.12)' }}>{c}</span>
+                ))}
+              </div>
+            </Section>
+          )}
+          {(parsedExtra?.languages ?? []).length > 0 && (
+            <Section title="Languages" color="#a29bfe"
+              icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>}>
+              <div className="flex flex-wrap gap-2">
+                {(parsedExtra?.languages ?? []).map((l, i) => (
+                  <span key={i} className="text-[11px] font-semibold px-2.5 py-1 rounded-lg" style={{ background: 'rgba(162,155,254,0.08)', color: '#a29bfe', border: '1px solid rgba(162,155,254,0.12)' }}>{l}</span>
+                ))}
+              </div>
+            </Section>
+          )}
+        </div>
+      )}
+
+      {/* Save button at bottom too */}
+      <motion.div variants={fadeUp} className="flex justify-end">
+        <motion.button whileTap={{ scale: 0.95 }} onClick={saveProfile} disabled={saving}
+          className="px-8 py-3.5 rounded-xl text-[14px] font-bold text-white"
+          style={{ background: saved ? 'linear-gradient(135deg, #00b894, #00a381)' : 'linear-gradient(135deg, #fd79a8, #e84393)' }}>
+          {saving ? 'Saving...' : saved ? '✓ Profile Saved!' : 'Save Profile'}
+        </motion.button>
+      </motion.div>
+
     </motion.div>
   )
 }

@@ -208,7 +208,12 @@ export default function ResumePage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
     const { data } = await supabase.from('resumes').select('*').eq('user_id', user.id).order('created_at', { ascending: false })
-    if (data) setResumes(data)
+    if (data) {
+      setResumes(data)
+      // Auto-select primary resume (or first) so optimizer is immediately visible
+      const primary = data.find((r: any) => r.is_primary) || data[0]
+      if (primary) setSelectedResume(primary)
+    }
   }
 
   const handleUpload = async (file: File) => {

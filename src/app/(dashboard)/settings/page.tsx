@@ -15,6 +15,12 @@ export default function SettingsPage() {
   const [name, setName] = useState('')
   const [mounted, setMounted] = useState(false)
   const [theme, setTheme] = useState<'dark' | 'light'>('dark')
+  const [newEmail, setNewEmail] = useState('')
+  const [emailMsg, setEmailMsg] = useState('')
+  const [emailLoading, setEmailLoading] = useState(false)
+  const [resetMsg, setResetMsg] = useState('')
+  const [resetLoading, setResetLoading] = useState(false)
+  const [nameSaved, setNameSaved] = useState(false)
   const supabase = createClient()
   const router = useRouter()
 
@@ -46,6 +52,37 @@ export default function SettingsPage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (user) await supabase.from('profiles').update({ full_name: name }).eq('id', user.id)
     setSaving(false)
+    setNameSaved(true)
+    setTimeout(() => setNameSaved(false), 2000)
+  }
+
+  const updateEmail = async () => {
+    if (!newEmail || !newEmail.includes('@')) { setEmailMsg('Please enter a valid email.'); return }
+    setEmailLoading(true)
+    setEmailMsg('')
+    const { error } = await supabase.auth.updateUser({ email: newEmail })
+    setEmailLoading(false)
+    if (error) {
+      setEmailMsg(error.message)
+    } else {
+      setEmailMsg('✓ Confirmation email sent to both addresses. Check your inbox.')
+      setNewEmail('')
+    }
+  }
+
+  const sendPasswordReset = async () => {
+    if (!profile?.email) return
+    setResetLoading(true)
+    setResetMsg('')
+    const { error } = await supabase.auth.resetPasswordForEmail(profile.email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    })
+    setResetLoading(false)
+    if (error) {
+      setResetMsg(error.message)
+    } else {
+      setResetMsg('✓ Password reset email sent! Check your inbox.')
+    }
   }
 
   const handleCheckout = async (plan: string) => {
@@ -105,19 +142,64 @@ export default function SettingsPage() {
             </span>
           </div>
         </div>
-        <div className="space-y-4">
+        <div className="space-y-5">
+          {/* Display Name */}
           <div>
             <label className="block text-[12px] font-semibold text-[#6a6a7a] mb-2">Display Name</label>
             <div className="flex gap-3">
               <input value={name} onChange={e => setName(e.target.value)} className="flex-1 px-4 py-3 rounded-xl bg-[#16161f] border border-white/[0.06] text-white text-[14px] focus:outline-none focus:border-[rgba(253,121,168,0.3)] transition-all" />
-              <motion.button whileTap={{ scale: 0.95 }} onClick={saveName} disabled={saving} className="px-6 py-3 rounded-xl text-[13px] font-bold text-white" style={{ background: 'linear-gradient(135deg, #fd79a8, #e84393)' }}>
-                {saving ? 'Saving...' : 'Save'}
+              <motion.button whileTap={{ scale: 0.95 }} onClick={saveName} disabled={saving} className="px-6 py-3 rounded-xl text-[13px] font-bold text-white" style={{ background: nameSaved ? 'linear-gradient(135deg, #00b894, #00a381)' : 'linear-gradient(135deg, #fd79a8, #e84393)' }}>
+                {saving ? 'Saving...' : nameSaved ? '✓ Saved' : 'Save'}
               </motion.button>
             </div>
           </div>
+
+          {/* Current Email */}
           <div>
-            <label className="block text-[12px] font-semibold text-[#6a6a7a] mb-2">Email</label>
+            <label className="block text-[12px] font-semibold text-[#6a6a7a] mb-2">Current Email</label>
             <div className="px-4 py-3 rounded-xl bg-[#16161f] border border-white/[0.06] text-[#5a5a6a] text-[14px]">{profile?.email}</div>
+          </div>
+
+          {/* Update Email */}
+          <div>
+            <label className="block text-[12px] font-semibold text-[#6a6a7a] mb-2">Update Email Address</label>
+            <div className="flex gap-3">
+              <input
+                type="email"
+                value={newEmail}
+                onChange={e => setNewEmail(e.target.value)}
+                placeholder="Enter new email address"
+                className="flex-1 px-4 py-3 rounded-xl bg-[#16161f] border border-white/[0.06] text-white text-[14px] placeholder-[#3a3a4a] focus:outline-none focus:border-[rgba(116,185,255,0.3)] transition-all"
+              />
+              <motion.button whileTap={{ scale: 0.95 }} onClick={updateEmail} disabled={emailLoading}
+                className="px-6 py-3 rounded-xl text-[13px] font-bold text-white shrink-0"
+                style={{ background: 'linear-gradient(135deg, #74b9ff, #0984e3)' }}>
+                {emailLoading ? 'Sending...' : 'Update'}
+              </motion.button>
+            </div>
+            {emailMsg && (
+              <p className="mt-2 text-[12px]" style={{ color: emailMsg.startsWith('✓') ? '#00b894' : '#ff6b6b' }}>{emailMsg}</p>
+            )}
+            <p className="mt-1.5 text-[11px] text-[#4a4a5a]">A confirmation link will be sent to both your old and new email.</p>
+          </div>
+
+          {/* Reset Password */}
+          <div className="pt-2 border-t border-white/[0.04]">
+            <label className="block text-[12px] font-semibold text-[#6a6a7a] mb-2">Password</label>
+            <div className="flex items-center justify-between p-4 rounded-xl" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <div>
+                <p className="text-[13px] text-white font-semibold">Reset Password</p>
+                <p className="text-[11px] text-[#5a5a6a] mt-0.5">We&apos;ll send a reset link to {profile?.email}</p>
+              </div>
+              <motion.button whileTap={{ scale: 0.95 }} onClick={sendPasswordReset} disabled={resetLoading}
+                className="px-5 py-2.5 rounded-xl text-[12px] font-bold shrink-0"
+                style={{ background: 'rgba(253,121,168,0.1)', color: '#fd79a8', border: '1px solid rgba(253,121,168,0.2)' }}>
+                {resetLoading ? 'Sending...' : 'Send Reset Link'}
+              </motion.button>
+            </div>
+            {resetMsg && (
+              <p className="mt-2 text-[12px]" style={{ color: resetMsg.startsWith('✓') ? '#00b894' : '#ff6b6b' }}>{resetMsg}</p>
+            )}
           </div>
         </div>
       </motion.div>
