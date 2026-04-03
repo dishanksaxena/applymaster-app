@@ -52,6 +52,7 @@ export default function JobsPage() {
   const [loading, setLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [savedJobs, setSavedJobs] = useState<Set<string>>(new Set())
+  const [appliedJobs, setAppliedJobs] = useState<Set<string>>(new Set())
   const [mounted, setMounted] = useState(false)
   const [country, setCountry] = useState('US')
   const [city, setCity] = useState('')
@@ -75,6 +76,22 @@ export default function JobsPage() {
   }
 
   useEffect(() => { setMounted(true) }, [])
+
+  // Load saved and applied jobs from database
+  useEffect(() => {
+    const load = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      const { data } = await supabase.from('applications').select('job_id, status').eq('user_id', user.id)
+      if (data) {
+        const saved = new Set(data.filter(a => a.status === 'saved').map((a: any) => a.job_id))
+        const applied = new Set(data.filter(a => a.status === 'applied').map((a: any) => a.job_id))
+        setSavedJobs(saved)
+        setAppliedJobs(applied)
+      }
+    }
+    load()
+  }, [supabase])
 
   useEffect(() => {
     // Reset city when country changes
@@ -152,6 +169,30 @@ export default function JobsPage() {
     await supabase.from('jobs').upsert({ external_id: `${job.source}-${job.id}`, source: job.source, title: job.title, company: job.company, location: job.location, remote_type: job.remote_type, salary_min: job.salary_min, salary_max: job.salary_max, url: job.url })
     await supabase.from('applications').upsert({ user_id: user.id, job_id: job.id, status: 'saved' })
     setSavedJobs(new Set(Array.from(savedJobs).concat(job.id)))
+  }
+
+  const applyJob = async (job: Job) => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    try {
+      // Save job first
+      await supabase.from('jobs').upsert({ external_id: `${job.source}-${job.id}`, source: job.source, title: job.title, company: job.company, location: job.location, remote_type: job.remote_type, salary_min: job.salary_min, salary_max: job.salary_max, url: job.url })
+
+      // Create/update application with "applied" status
+      await supabase.from('applications').upsert({
+        user_id: user.id,
+        job_id: job.id,
+        status: 'applied',
+        job_title: job.title,
+        company: job.company,
+      })
+
+      setAppliedJobs(new Set(Array.from(appliedJobs).concat(job.id)))
+      alert(`Applied to ${job.title} at ${job.company}!`)
+    } catch (err) {
+      console.error('Apply error:', err)
+      alert('Failed to apply. Please try again.')
+    }
   }
 
   const formatPosted = (dateStr?: string) => {
@@ -308,11 +349,18 @@ export default function JobsPage() {
                       </div>
                     </div>
                   </div>
-                  <motion.button whileTap={{ scale: 0.9 }} onClick={() => saveJob(job)} disabled={savedJobs.has(job.id)}
-                    className="shrink-0 py-2.5 px-5 rounded-xl text-[12px] font-bold transition-all"
-                    style={savedJobs.has(job.id) ? { background: 'rgba(0,184,148,0.1)', color: '#00b894', border: '1px solid rgba(0,184,148,0.2)' } : { background: 'rgba(253,121,168,0.1)', color: '#fd79a8', border: '1px solid rgba(253,121,168,0.2)' }}>
-                    {savedJobs.has(job.id) ? '✓ Saved' : 'Save'}
-                  </motion.button>
+                  <div className="flex gap-2 shrink-0">
+                    <motion.button whileTap={{ scale: 0.9 }} onClick={() => saveJob(job)} disabled={savedJobs.has(job.id)}
+                      className="py-2.5 px-4 rounded-xl text-[12px] font-bold transition-all"
+                      style={savedJobs.has(job.id) ? { background: 'rgba(0,184,148,0.1)', color: '#00b894', border: '1px solid rgba(0,184,148,0.2)' } : { background: 'rgba(253,121,168,0.1)', color: '#fd79a8', border: '1px solid rgba(253,121,168,0.2)' }}>
+                      {savedJobs.has(job.id) ? '✓ Saved' : 'Save'}
+                    </motion.button>
+                    <motion.button whileTap={{ scale: 0.9 }} onClick={() => applyJob(job)} disabled={appliedJobs.has(job.id)}
+                      className="py-2.5 px-4 rounded-xl text-[12px] font-bold transition-all"
+                      style={appliedJobs.has(job.id) ? { background: 'rgba(116,185,255,0.1)', color: '#74b9ff', border: '1px solid rgba(116,185,255,0.2)' } : { background: 'rgba(0,184,148,0.1)', color: '#00b894', border: '1px solid rgba(0,184,148,0.2)' }}>
+                      {appliedJobs.has(job.id) ? '✓ Applied' : 'Apply Now'}
+                    </motion.button>
+                  </div>
                 </div>
               </motion.div>
             ))}

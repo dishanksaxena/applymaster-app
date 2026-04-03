@@ -91,24 +91,53 @@ REQUIREMENTS:
     const coverLetter = msg.content[0].type === 'text' ? msg.content[0].text : ''
 
     // Save to database
-    const { data: savedLetter } = await supabase
-      .from('cover_letters')
-      .insert({
-        user_id: user.id,
-        job_id: job_id || null,
-        title: `${job_title} at ${company}`,
-        content: coverLetter,
-        tone,
-        job_title,
-        company,
-      })
-      .select('id')
-      .single()
+    try {
+      const { data: savedLetter, error } = await supabase
+        .from('cover_letters')
+        .insert({
+          user_id: user.id,
+          job_id: job_id || null,
+          title: `${job_title} at ${company}`,
+          content: coverLetter,
+          tone,
+          job_title,
+          company,
+        })
+        .select('id')
+        .single()
 
-    return Response.json({
-      cover_letter: coverLetter,
-      cover_letter_id: savedLetter?.id || null,
-    })
+      // If title column doesn't exist, try without it
+      if (error && error.message?.includes('title')) {
+        const { data: letter } = await supabase
+          .from('cover_letters')
+          .insert({
+            user_id: user.id,
+            job_id: job_id || null,
+            content: coverLetter,
+            tone,
+            job_title,
+            company,
+          })
+          .select('id')
+          .single()
+        return Response.json({
+          cover_letter: coverLetter,
+          cover_letter_id: letter?.id || null,
+        })
+      }
+
+      return Response.json({
+        cover_letter: coverLetter,
+        cover_letter_id: savedLetter?.id || null,
+      })
+    } catch (dbErr) {
+      console.error('Database save error:', dbErr)
+      // Still return the generated letter even if DB save fails
+      return Response.json({
+        cover_letter: coverLetter,
+        cover_letter_id: null,
+      })
+    }
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
     console.error('Cover letter error:', err)
