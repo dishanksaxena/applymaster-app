@@ -167,9 +167,10 @@ export default function JobsPage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
     try {
-      // Save job with unique external_id
-      const { error: jobError } = await supabase.from('jobs').upsert({
-        external_id: `${job.source}-${job.id}`,
+      // Save job - try insert first, then update if exists
+      const externalId = `${job.source}-${job.id}`
+      const jobData = {
+        external_id: externalId,
         source: job.source,
         title: job.title,
         company: job.company,
@@ -178,20 +179,28 @@ export default function JobsPage() {
         salary_min: job.salary_min,
         salary_max: job.salary_max,
         url: job.url,
-      }, { onConflict: 'external_id' })
+      }
 
-      if (jobError) throw jobError
+      // Try upsert without onConflict first
+      const { error: jobError } = await supabase.from('jobs').upsert(jobData)
+      if (jobError) {
+        console.error('Job save error:', jobError)
+        throw jobError
+      }
 
-      // Create application with status 'saved'
+      // Create or update application with status 'saved'
       const { error: appError } = await supabase.from('applications').upsert({
         user_id: user.id,
         job_id: job.id,
         status: 'saved',
         job_title: job.title,
         company: job.company,
-      }, { onConflict: 'user_id,job_id' })
+      })
 
-      if (appError) throw appError
+      if (appError) {
+        console.error('Application save error:', appError)
+        throw appError
+      }
 
       setSavedJobs(new Set(Array.from(savedJobs).concat(job.id)))
     } catch (err) {
@@ -205,7 +214,7 @@ export default function JobsPage() {
     if (!user) return
     try {
       // Save job first
-      const { error: jobError } = await supabase.from('jobs').upsert({
+      const jobData = {
         external_id: `${job.source}-${job.id}`,
         source: job.source,
         title: job.title,
@@ -215,8 +224,9 @@ export default function JobsPage() {
         salary_min: job.salary_min,
         salary_max: job.salary_max,
         url: job.url,
-      }, { onConflict: 'external_id' })
+      }
 
+      const { error: jobError } = await supabase.from('jobs').upsert(jobData)
       if (jobError) throw jobError
 
       // Create/update application with "applied" status
@@ -226,7 +236,7 @@ export default function JobsPage() {
         status: 'applied',
         job_title: job.title,
         company: job.company,
-      }, { onConflict: 'user_id,job_id' })
+      })
 
       if (appError) throw appError
 
