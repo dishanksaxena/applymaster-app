@@ -173,7 +173,8 @@ Return ONLY valid JSON:
 
     return Response.json({ error: 'Invalid action' }, { status: 400 })
   } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
     console.error('Interview prep error:', err)
-    return Response.json({ error: 'Interview prep failed' }, { status: 500 })
+    return Response.json({ error: 'Interview prep failed', detail: msg }, { status: 500 })
   }
 }
