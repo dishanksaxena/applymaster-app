@@ -108,6 +108,7 @@ const fadeUp = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transi
 
 export default function DashboardPage() {
   const [stats, setStats] = useState({ applied: 0, interviews: 0, offers: 0, matchRate: 0 })
+  const [hasResume, setHasResume] = useState(false)
   const [recentActivity, setRecentActivity] = useState<{ action: string; details: string | null; created_at: string }[]>([])
   const [userName, setUserName] = useState('')
   const [greeting, setGreeting] = useState('Good morning')
@@ -136,6 +137,9 @@ export default function DashboardPage() {
         const matchRate = scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0
         setStats({ applied, interviews, offers, matchRate })
       }
+
+      const { data: resumes } = await supabase.from('resumes').select('id').eq('user_id', user.id).limit(1)
+      if (resumes && resumes.length > 0) setHasResume(true)
 
       const { data: logs } = await supabase.from('apply_log').select('action, details, created_at').eq('user_id', user.id).order('created_at', { ascending: false }).limit(15)
       if (logs) setRecentActivity(logs)
@@ -174,9 +178,9 @@ export default function DashboardPage() {
   ]
 
   const journeySteps = [
-    { step: 1, label: 'Upload Resume', desc: 'Get your ATS score', href: '/resume', done: stats.applied > 0 || stats.matchRate > 0, color: '#fd79a8' },
-    { step: 2, label: 'Search Jobs', desc: 'Find matching roles', href: '/jobs', done: stats.applied > 0, color: '#00b894' },
-    { step: 3, label: 'Enable Auto-Apply', desc: 'Apply on autopilot', href: '/auto-apply', done: false, color: '#a29bfe' },
+    { step: 1, label: 'Upload Resume', desc: 'Get your ATS score', href: '/resume', done: hasResume, color: '#fd79a8' },
+    { step: 2, label: 'Search Jobs', desc: 'Find matching roles', href: '/jobs', done: hasResume, color: '#00b894' },
+    { step: 3, label: 'Enable Auto-Apply', desc: 'Apply on autopilot', href: '/auto-apply', done: stats.applied > 0, color: '#a29bfe' },
     { step: 4, label: 'Ace Interviews', desc: 'Practice with AI coach', href: '/interview-coach', done: stats.interviews > 0, color: '#fdcb6e' },
   ]
 
