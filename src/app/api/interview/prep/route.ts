@@ -177,8 +177,7 @@ Return ONLY valid JSON:
     console.error('Interview prep error:', err)
     const isCredits = msg.includes('credit balance') || msg.includes('billing')
     return Response.json({
-      error: isCredits ? 'AI credits exhausted — please top up Anthropic account' : 'Interview prep failed',
-      detail: msg
+      error: isCredits ? 'AI credits exhausted — please top up Anthropic account' : 'Interview prep failed'
     }, { status: 500 })
   }
 }
