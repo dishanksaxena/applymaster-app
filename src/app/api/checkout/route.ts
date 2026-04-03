@@ -14,8 +14,8 @@ export async function POST(request: Request) {
 
     const productId = products[plan]
     const storeId = process.env.LEMONSQUEEZY_STORE_ID || '326546'
-    const successUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard?plan=${plan}`
-    const cancelUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/settings`
+    const successUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://applymaster.ai'}/dashboard?plan=${plan}`
+    const cancelUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://applymaster.ai'}/settings`
 
     // Lemonsqueezy checkout URL format
     const checkoutUrl = `https://checkout.lemonsqueezy.com/buy/${storeId}/${productId}?checkout[email]=${encodeURIComponent(email)}&checkout[custom][user_id]=${encodeURIComponent(user_id)}`
