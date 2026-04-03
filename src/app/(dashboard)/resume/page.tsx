@@ -342,6 +342,18 @@ export default function ResumePage() {
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: pageStyles }} />
+      {deleteConfirm && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50" onClick={() => setDeleteConfirm(null)}>
+          <div className="bg-[#12121a] border border-[rgba(255,107,107,0.2)] rounded-2xl p-6 max-w-sm w-full mx-4" onClick={e => e.stopPropagation()}>
+            <h3 className="text-lg font-bold text-white mb-2">Delete Resume?</h3>
+            <p className="text-[#8a8a9a] text-sm mb-6">This action cannot be undone.</p>
+            <div className="flex gap-3">
+              <button onClick={() => setDeleteConfirm(null)} className="flex-1 px-4 py-2.5 rounded-xl border border-[rgba(255,255,255,0.1)] text-white font-semibold hover:bg-white/5 transition-colors">Cancel</button>
+              <button onClick={() => deleteResume(deleteConfirm)} className="flex-1 px-4 py-2.5 rounded-xl bg-[#ff6b6b] text-white font-semibold hover:bg-[#ff5252] transition-colors">Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="space-y-8">
         {/* Header */}
