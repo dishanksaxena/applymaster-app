@@ -7,21 +7,50 @@ export const maxDuration = 60
 const anthropic = new Anthropic()
 
 async function extractTextFromPDF(buffer: Buffer): Promise<string> {
+  // Try pdf-parse first with timeout
   try {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const pdfParse = require('pdf-parse')
 
-    const data = await pdfParse(buffer)
+    // Wrap with timeout (5 seconds max)
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('PDF parsing timeout')), 5000)
+    )
 
-    if (!data || !data.text) {
-      return ''
+    const data = await Promise.race([
+      pdfParse(buffer),
+      timeoutPromise
+    ])
+
+    if (data && data.text) {
+      return data.text
     }
-
-    return data.text
   } catch (err) {
-    console.error('PDF extraction failed:', err instanceof Error ? err.message : String(err))
-    throw new Error(`Failed to read file contents`)
+    console.error('pdf-parse failed:', err instanceof Error ? err.message : String(err))
+    // Fall through to Claude API
   }
+
+  // Fallback to Claude API if pdf-parse fails
+  try {
+    const base64 = buffer.toString('base64')
+    const msg = await anthropic.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 4000,
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: base64 } } as any,
+          { type: 'text', text: 'Extract all text from this PDF. Return only the text content.' }
+        ]
+      }]
+    })
+    const text = msg.content[0].type === 'text' ? msg.content[0].text : ''
+    if (text) return text
+  } catch (err) {
+    console.error('Claude API fallback failed:', err instanceof Error ? err.message : String(err))
+  }
+
+  throw new Error('Failed to read file contents')
 }
 
 async function extractTextFromDOCX(buffer: Buffer): Promise<string> {
