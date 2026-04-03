@@ -75,7 +75,7 @@ Return ONLY valid JSON array:
   }
 ]
 
-Make questions specific to the role and company. Include realistic, commonly-asked questions.`,
+Make questions highly specific to this exact role and company. Avoid generic questions. Use variety — different scenarios, skills, and situations. Seed: ${Math.random().toString(36).slice(2,8)}`,
           },
         ],
       })

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { createClient } from '@/lib/supabase-browser'
 
-interface CoverLetter { id: string; title: string; content: string; tone: string; created_at: string }
+interface CoverLetter { id: string; title: string; content: string; tone: string; job_title: string; company: string; created_at: string }
 
 const tones = [
   { id: 'professional', label: 'Professional', icon: '🎯', desc: 'Formal and polished', color: '#74b9ff' },
@@ -13,7 +13,6 @@ const tones = [
   { id: 'confident', label: 'Confident', icon: '💪', desc: 'Bold and assertive', color: '#fd79a8' },
 ]
 
-const container = { hidden: {}, show: { transition: { staggerChildren: 0.08 } } }
 const fadeUp = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] as const } } }
 
 export default function CoverLettersPage() {
@@ -21,37 +20,85 @@ export default function CoverLettersPage() {
   const [generating, setGenerating] = useState(false)
   const [selectedLetter, setSelectedLetter] = useState<CoverLetter | null>(null)
   const [copied, setCopied] = useState(false)
+  const [error, setError] = useState('')
   const [formData, setFormData] = useState({ jobTitle: '', company: '', tone: 'professional' })
   const [mounted, setMounted] = useState(false)
   const supabase = createClient()
 
   useEffect(() => { setMounted(true) }, [])
 
-  const generateCoverLetter = async () => {
-    if (!formData.jobTitle || !formData.company) { alert('Please fill in all fields'); return }
-    setGenerating(true)
-    try {
-      const response = await fetch('/api/generate-cover-letter', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ job_title: formData.jobTitle, company: formData.company, tone: formData.tone }) })
-      const data = await response.json()
-      if (!data.cover_letter) { alert('Failed to generate cover letter'); return }
-      // API already saves to DB — just load from DB to refresh
+  // Load existing letters on mount
+  useEffect(() => {
+    const load = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
-      const { data: latest } = await supabase.from('cover_letters').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1).single()
-      if (latest) { setCoverLetters([latest, ...coverLetters]); setSelectedLetter(latest) }
+      const { data } = await supabase
+        .from('cover_letters')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(20)
+      if (data && data.length > 0) {
+        setCoverLetters(data)
+        setSelectedLetter(data[0])
+      }
+    }
+    load()
+  }, [supabase])
+
+  const generateCoverLetter = async () => {
+    if (!formData.jobTitle || !formData.company) { setError('Please fill in Job Title and Company'); return }
+    setError('')
+    setGenerating(true)
+    try {
+      const response = await fetch('/api/generate-cover-letter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ job_title: formData.jobTitle, company: formData.company, tone: formData.tone })
+      })
+      const data = await response.json()
+
+      if (data.error) { setError(data.error); setGenerating(false); return }
+      if (!data.cover_letter) { setError('Failed to generate cover letter. Please try again.'); setGenerating(false); return }
+
+      // Reload letters from DB to get the saved one with correct id/title
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      const { data: latest } = await supabase
+        .from('cover_letters')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single()
+
+      if (latest) {
+        setCoverLetters(prev => [latest, ...prev])
+        setSelectedLetter(latest)
+      }
       setFormData({ jobTitle: '', company: '', tone: 'professional' })
-    } catch { alert('Failed to generate') }
+    } catch {
+      setError('Network error. Please try again.')
+    }
     setGenerating(false)
   }
 
   const copyToClipboard = () => {
-    if (selectedLetter) { navigator.clipboard.writeText(selectedLetter.content); setCopied(true); setTimeout(() => setCopied(false), 2000) }
+    if (selectedLetter) {
+      navigator.clipboard.writeText(selectedLetter.content)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
+
+  const getLetterTitle = (letter: CoverLetter) => {
+    return letter.title || `${letter.job_title || 'Cover Letter'} at ${letter.company || ''}`
   }
 
   if (!mounted) return <div className="p-8" />
 
   return (
-    <motion.div variants={container} initial="hidden" animate="show" className="space-y-8 max-w-[1200px] mx-auto">
+    <motion.div initial="hidden" animate="show" variants={{ hidden: {}, show: { transition: { staggerChildren: 0.08 } } }} className="space-y-8 max-w-[1200px] mx-auto">
 
       {/* Header */}
       <motion.div variants={fadeUp} className="relative overflow-hidden rounded-2xl p-8" style={{
@@ -82,16 +129,25 @@ export default function CoverLettersPage() {
                 Powered by Claude AI
               </span>
             </div>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-[12px] font-semibold text-[#6a6a7a] mb-2">Job Title</label>
-                <input value={formData.jobTitle} onChange={e => setFormData({ ...formData, jobTitle: e.target.value })} placeholder="e.g., Senior Full Stack Engineer"
-                  className="w-full px-4 py-3.5 rounded-xl bg-[#16161f] border border-white/[0.06] text-white text-[14px] placeholder-[#3a3a4a] focus:outline-none focus:border-[rgba(162,155,254,0.3)] transition-all" />
+
+            {error && (
+              <div className="mb-4 px-4 py-3 rounded-xl text-[13px] font-semibold" style={{ background: 'rgba(255,107,107,0.08)', border: '1px solid rgba(255,107,107,0.2)', color: '#ff6b6b' }}>
+                {error}
               </div>
-              <div>
-                <label className="block text-[12px] font-semibold text-[#6a6a7a] mb-2">Company Name</label>
-                <input value={formData.company} onChange={e => setFormData({ ...formData, company: e.target.value })} placeholder="e.g., Google"
-                  className="w-full px-4 py-3.5 rounded-xl bg-[#16161f] border border-white/[0.06] text-white text-[14px] placeholder-[#3a3a4a] focus:outline-none focus:border-[rgba(162,155,254,0.3)] transition-all" />
+            )}
+
+            <div className="space-y-4">
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[12px] font-semibold text-[#6a6a7a] mb-2">Job Title <span className="text-[#ff6b6b]">*</span></label>
+                  <input value={formData.jobTitle} onChange={e => setFormData({ ...formData, jobTitle: e.target.value })} placeholder="e.g., Senior Full Stack Engineer"
+                    className="w-full px-4 py-3.5 rounded-xl bg-[#16161f] border border-white/[0.06] text-white text-[14px] placeholder-[#3a3a4a] focus:outline-none focus:border-[rgba(162,155,254,0.3)] transition-all" />
+                </div>
+                <div>
+                  <label className="block text-[12px] font-semibold text-[#6a6a7a] mb-2">Company Name <span className="text-[#ff6b6b]">*</span></label>
+                  <input value={formData.company} onChange={e => setFormData({ ...formData, company: e.target.value })} placeholder="e.g., Google"
+                    className="w-full px-4 py-3.5 rounded-xl bg-[#16161f] border border-white/[0.06] text-white text-[14px] placeholder-[#3a3a4a] focus:outline-none focus:border-[rgba(162,155,254,0.3)] transition-all" />
+                </div>
               </div>
               <div>
                 <label className="block text-[12px] font-semibold text-[#6a6a7a] mb-3">Tone</label>
@@ -124,26 +180,22 @@ export default function CoverLettersPage() {
             {selectedLetter && (
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
                 className="rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.1)' }}>
-                {/* Mac-style header */}
                 <div className="flex items-center gap-2 px-5 py-3 border-b border-white/[0.04]" style={{ background: '#0d0d14' }}>
                   <div className="flex gap-1.5">
                     <div className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]" />
                     <div className="w-2.5 h-2.5 rounded-full bg-[#febc2e]" />
                     <div className="w-2.5 h-2.5 rounded-full bg-[#28c840]" />
                   </div>
-                  <span className="text-[11px] font-mono text-[#4a4a5a] ml-2 truncate">{selectedLetter.title}</span>
+                  <span className="text-[11px] font-mono text-[#4a4a5a] ml-2 truncate">{getLetterTitle(selectedLetter)}</span>
                 </div>
-                <div className="p-6 max-h-[400px] overflow-y-auto" style={{ background: 'linear-gradient(180deg, #12121a, #0e0e16)' }}>
+                <div className="p-6 max-h-[500px] overflow-y-auto" style={{ background: 'linear-gradient(180deg, #12121a, #0e0e16)' }}>
                   <p className="text-[14px] text-[#b0b0c0] leading-[1.8] whitespace-pre-wrap">{selectedLetter.content}</p>
                 </div>
                 <div className="flex gap-3 p-4 border-t border-white/[0.04]" style={{ background: '#0d0d14' }}>
-                  <motion.button whileTap={{ scale: 0.95 }} className="flex-1 py-2.5 rounded-xl text-[13px] font-bold" style={{ background: 'rgba(253,121,168,0.1)', color: '#fd79a8', border: '1px solid rgba(253,121,168,0.2)' }}>
-                    Download PDF
-                  </motion.button>
                   <motion.button whileTap={{ scale: 0.95 }} onClick={copyToClipboard}
                     className="flex-1 py-2.5 rounded-xl text-[13px] font-bold transition-all"
                     style={copied ? { background: 'rgba(0,184,148,0.1)', color: '#00b894', border: '1px solid rgba(0,184,148,0.2)' } : { background: 'rgba(255,255,255,0.04)', color: '#8a8a9a', border: '1px solid rgba(255,255,255,0.1)' }}>
-                    {copied ? '✓ Copied!' : 'Copy'}
+                    {copied ? '✓ Copied!' : '📋 Copy to Clipboard'}
                   </motion.button>
                 </div>
               </motion.div>
@@ -153,7 +205,7 @@ export default function CoverLettersPage() {
 
         {/* Sidebar */}
         <motion.div variants={fadeUp} className="h-fit p-6 rounded-2xl" style={{ background: 'linear-gradient(135deg, #1c1c2e 0%, #16162a 100%)', border: '1px solid rgba(255,255,255,0.1)' }}>
-          <h3 className="text-[16px] font-bold mb-5">Recent Letters</h3>
+          <h3 className="text-[16px] font-bold mb-5">Recent Letters <span className="text-[12px] font-normal text-[#4a4a5a]">({coverLetters.length})</span></h3>
           {coverLetters.length === 0 ? (
             <div className="text-center py-10">
               <motion.div animate={{ y: [0, -6, 0] }} transition={{ duration: 3, repeat: Infinity }}>
@@ -163,12 +215,13 @@ export default function CoverLettersPage() {
               <p className="text-[11px] text-[#3a3a4a] mt-1">Generate your first cover letter above</p>
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-2 max-h-[600px] overflow-y-auto">
               {coverLetters.map(letter => (
                 <motion.button key={letter.id} whileHover={{ x: 4 }} onClick={() => setSelectedLetter(letter)}
                   className="w-full text-left p-3.5 rounded-xl transition-all"
                   style={selectedLetter?.id === letter.id ? { background: 'rgba(162,155,254,0.08)', border: '1px solid rgba(162,155,254,0.2)' } : { background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)' }}>
-                  <div className="text-[12px] font-semibold text-white truncate">{letter.title}</div>
+                  <div className="text-[12px] font-semibold text-white truncate">{letter.job_title || 'Cover Letter'}</div>
+                  <div className="text-[11px] text-[#a29bfe] truncate">{letter.company}</div>
                   <div className="flex items-center gap-2 mt-1.5">
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-full capitalize" style={{ background: 'rgba(162,155,254,0.08)', color: '#a29bfe' }}>{letter.tone}</span>
                     <span className="text-[10px] text-[#3a3a4a]">{new Date(letter.created_at).toLocaleDateString()}</span>

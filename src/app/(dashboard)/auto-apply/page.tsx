@@ -23,6 +23,7 @@ export default function AutoApplyPage() {
   const [activeSources, setActiveSources] = useState(['LinkedIn', 'Indeed', 'Glassdoor'])
   const [logs, setLogs] = useState<any[]>([])
   const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
   const [mounted, setMounted] = useState(false)
   const supabase = createClient()
 
@@ -46,6 +47,8 @@ export default function AutoApplyPage() {
     if (!user) return
     await supabase.from('job_preferences').upsert({ user_id: user.id, auto_apply_mode: mode, daily_apply_limit: dailyLimit, match_threshold: matchThreshold })
     setSaving(false)
+    setSaved(true)
+    setTimeout(() => setSaved(false), 3000)
   }
 
   const modes = [
@@ -157,10 +160,25 @@ export default function AutoApplyPage() {
           </motion.div>
 
           <motion.button variants={fadeUp} whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }} onClick={saveSettings} disabled={saving}
-            className="w-full py-4 rounded-xl font-bold text-[14px] text-white disabled:opacity-30"
-            style={{ background: 'linear-gradient(135deg, #fd79a8, #e84393)' }}>
-            {saving ? 'Saving...' : 'Save Settings'}
+            className="w-full py-4 rounded-xl font-bold text-[14px] text-white disabled:opacity-30 transition-all"
+            style={{ background: saved ? 'linear-gradient(135deg, #00b894, #00a381)' : 'linear-gradient(135deg, #fd79a8, #e84393)' }}>
+            {saving ? 'Saving...' : saved ? '✓ Settings Saved!' : 'Save Settings'}
           </motion.button>
+
+          {/* Info Banner */}
+          <motion.div variants={fadeUp} className="p-5 rounded-2xl" style={{ background: 'rgba(116,185,255,0.04)', border: '1px solid rgba(116,185,255,0.1)' }}>
+            <div className="flex items-start gap-3">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#74b9ff" strokeWidth="2" className="shrink-0 mt-0.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              <div>
+                <div className="text-[13px] font-bold text-[#74b9ff] mb-1">How Auto-Apply Works</div>
+                <div className="text-[12px] text-[#5a5a6a] leading-relaxed space-y-1">
+                  <p>• <strong className="text-[#8a8a9a]">Copilot:</strong> AI finds matching jobs and queues them for your review — you approve before each send.</p>
+                  <p>• <strong className="text-[#8a8a9a]">Autopilot:</strong> AI applies automatically to jobs above your match threshold (Elite plan feature).</p>
+                  <p>• Activity logs will appear here once applications start processing.</p>
+                </div>
+              </div>
+            </div>
+          </motion.div>
         </div>
 
         {/* Activity Feed */}

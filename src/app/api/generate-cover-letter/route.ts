@@ -96,6 +96,7 @@ REQUIREMENTS:
       .insert({
         user_id: user.id,
         job_id: job_id || null,
+        title: `${job_title} at ${company}`,
         content: coverLetter,
         tone,
         job_title,

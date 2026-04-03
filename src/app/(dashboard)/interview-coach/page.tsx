@@ -57,6 +57,7 @@ export default function InterviewCoachPage() {
   const [mode, setMode] = useState<'setup' | 'interview' | 'review'>('setup')
   const [company, setCompany] = useState('')
   const [role, setRole] = useState('')
+  const [jobDesc, setJobDesc] = useState('')
   const [currentQ, setCurrentQ] = useState(0)
   const [answer, setAnswer] = useState('')
   const [feedback, setFeedback] = useState<{ score: number; strengths: string[]; improvements: string[]; example: string } | null>(null)
@@ -88,6 +89,7 @@ export default function InterviewCoachPage() {
           interview_type: interviewTypeMap[type] || 'behavioral',
           job_title: role || 'Software Engineer',
           company: company || undefined,
+          job_description: jobDesc || undefined,
         }),
       })
       const data = await res.json()
@@ -196,6 +198,11 @@ export default function InterviewCoachPage() {
                   <input value={role} onChange={e => setRole(e.target.value)} placeholder="e.g., Senior Engineer"
                     className="w-full px-4 py-3 rounded-xl bg-[#16161f] border border-white/[0.06] text-white text-[14px] placeholder-[#3a3a4a] focus:outline-none focus:border-[rgba(162,155,254,0.3)] transition-all" />
                 </div>
+              </div>
+              <div>
+                <label className="block text-[12px] font-semibold text-[#6a6a7a] mb-2">Job Description (optional — makes questions more specific)</label>
+                <textarea value={jobDesc} onChange={e => setJobDesc(e.target.value)} rows={3} placeholder="Paste job description here for tailored interview questions..."
+                  className="w-full px-4 py-3 rounded-xl bg-[#16161f] border border-white/[0.06] text-white text-[13px] placeholder-[#3a3a4a] focus:outline-none focus:border-[rgba(162,155,254,0.3)] transition-all resize-none" />
               </div>
             </motion.div>
 
