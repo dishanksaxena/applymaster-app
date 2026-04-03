@@ -17,17 +17,21 @@ interface AdzunaJob {
   contract_time?: string
 }
 
-async function searchAdzuna(query: string, location: string, country: string, page = 1) {
+const COUNTRY_CODE_MAP: Record<string, string> = {
+  US: 'us', IN: 'in', GB: 'gb', CA: 'ca', AU: 'au', DE: 'de', SG: 'sg', AE: 'ae',
+}
+
+async function searchAdzuna(query: string, location: string, country: string, page = 1, maxDaysOld = 30) {
   if (!ADZUNA_APP_ID || !ADZUNA_APP_KEY) return []
 
-  const countryCode = country === 'IN' ? 'in' : 'us'
+  const countryCode = COUNTRY_CODE_MAP[country] || 'us'
   const params = new URLSearchParams({
     app_id: ADZUNA_APP_ID,
     app_key: ADZUNA_APP_KEY,
     results_per_page: '20',
     what: query,
     sort_by: 'date',
-    max_days_old: '30',
+    max_days_old: String(maxDaysOld || 30),
     'content-type': 'application/json',
   })
   const skipLocationTerms = ['remote', 'united states', 'india', 'us', 'usa', 'in', '']
@@ -103,14 +107,14 @@ async function searchRemoteOK(query: string) {
 
 export async function POST(req: NextRequest) {
   try {
-    const { query, location, country = 'US', remote, page = 1 } = await req.json()
+    const { query, location, country = 'US', remote, page = 1, maxDaysOld = 30 } = await req.json()
 
     if (!query) {
       return Response.json({ error: 'Search query required' }, { status: 400 })
     }
 
     const searches: Promise<unknown[]>[] = [
-      searchAdzuna(query, location || '', country, page),
+      searchAdzuna(query, location || '', country, page, maxDaysOld),
     ]
 
     // Add RemoteOK for remote searches
