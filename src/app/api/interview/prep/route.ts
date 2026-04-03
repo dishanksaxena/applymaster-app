@@ -89,20 +89,24 @@ Make questions specific to the role and company. Include realistic, commonly-ask
         questions = match ? JSON.parse(match[0]) : []
       }
 
-      // Save session
-      const { data: session } = await supabase
-        .from('interview_sessions')
-        .insert({
-          user_id: user.id,
-          interview_type: interview_type || 'behavioral',
-          questions,
-          answers: [],
-          feedback: [],
-        })
-        .select('id')
-        .single()
+      // Save session (non-fatal if table missing)
+      let sessionId = null
+      try {
+        const { data: session } = await supabase
+          .from('interview_sessions')
+          .insert({
+            user_id: user.id,
+            interview_type: interview_type || 'behavioral',
+            questions,
+            answers: [],
+            feedback: [],
+          })
+          .select('id')
+          .single()
+        sessionId = session?.id
+      } catch { /* table may not exist yet */ }
 
-      return Response.json({ questions, session_id: session?.id })
+      return Response.json({ questions, session_id: sessionId })
     }
 
     // ACTION: Score an answer
@@ -147,24 +151,21 @@ Return ONLY valid JSON:
         feedback = match ? JSON.parse(match[0]) : { score: 70, verdict: 'good' }
       }
 
-      // Save answer and feedback to session
+      // Save answer and feedback to session (non-fatal)
       if (session_id) {
-        const { data: session } = await supabase
-          .from('interview_sessions')
-          .select('answers, feedback')
-          .eq('id', session_id)
-          .eq('user_id', user.id)
-          .single()
-
-        if (session) {
-          const answers = [...(session.answers || []), { question, answer, timestamp: new Date().toISOString() }]
-          const feedbackArr = [...(session.feedback || []), feedback]
-
-          await supabase
+        try {
+          const { data: session } = await supabase
             .from('interview_sessions')
-            .update({ answers, feedback: feedbackArr })
+            .select('answers, feedback')
             .eq('id', session_id)
-        }
+            .eq('user_id', user.id)
+            .single()
+          if (session) {
+            const answers = [...(session.answers || []), { question, answer, timestamp: new Date().toISOString() }]
+            const feedbackArr = [...(session.feedback || []), feedback]
+            await supabase.from('interview_sessions').update({ answers, feedback: feedbackArr }).eq('id', session_id)
+          }
+        } catch { /* non-fatal */ }
       }
 
       return Response.json(feedback)
