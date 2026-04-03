@@ -219,10 +219,10 @@ export default function ResumePage() {
     // Simulate progress while API processes
     const progressInterval = setInterval(() => {
       setUploadProgress(prev => {
-        if (prev >= 95) { clearInterval(progressInterval); return 95 }
-        return prev + Math.random() * 8
+        if (prev >= 85) { clearInterval(progressInterval); return 85 }
+        return prev + Math.random() * 10
       })
-    }, 400)
+    }, 300)
 
     try {
       const formData = new FormData()
