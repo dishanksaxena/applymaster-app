@@ -219,7 +219,7 @@ export default function ResumePage() {
     // Simulate progress while API processes
     const progressInterval = setInterval(() => {
       setUploadProgress(prev => {
-        if (prev >= 85) { clearInterval(progressInterval); return 85 }
+        if (prev >= 95) { clearInterval(progressInterval); return 85 }
         return prev + Math.random() * 10
       })
     }, 300)
@@ -283,10 +283,16 @@ export default function ResumePage() {
   }
 
   const deleteResume = async (id: string) => {
-    await supabase.from('resumes').delete().eq('id', id)
-    if (selectedResume?.id === id) setSelectedResume(null)
-    setDeleteConfirm(null)
-    await loadResumes()
+    try {
+      const { error } = await supabase.from('resumes').delete().eq('id', id)
+      if (error) throw error
+      if (selectedResume?.id === id) setSelectedResume(null)
+      setDeleteConfirm(null)
+      await loadResumes()
+    } catch (err) {
+      console.error("Delete error:", err)
+      setDeleteConfirm(null)
+    }
   }
 
   const optimizeResume = async () => {
@@ -558,19 +564,9 @@ export default function ResumePage() {
                               </button>
                             )}
                             <button
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                if (deleteConfirm === r.id) deleteResume(r.id)
-                                else setDeleteConfirm(r.id)
-                              }}
-                              className="p-2 rounded-lg transition-all duration-200"
-                              style={{
-                                color: deleteConfirm === r.id ? '#ff6b6b' : '#5a5a6a',
-                                background: deleteConfirm === r.id ? 'rgba(255,107,107,0.1)' : 'transparent',
-                              }}
-                              onMouseEnter={e => { if (deleteConfirm !== r.id) { e.currentTarget.style.color = '#ff6b6b'; e.currentTarget.style.background = 'rgba(255,107,107,0.08)' } }}
-                              onMouseLeave={e => { if (deleteConfirm !== r.id) { e.currentTarget.style.color = '#5a5a6a'; e.currentTarget.style.background = 'transparent' }; setDeleteConfirm(null) }}
-                              title={deleteConfirm === r.id ? 'Click again to confirm' : 'Delete'}
+                              onClick={(e) => { e.stopPropagation(); setDeleteConfirm(r.id) }}
+                              className="p-2 rounded-lg text-[#5a5a6a] hover:text-[#ff6b6b] hover:bg-[rgba(255,107,107,0.08)] transition-all duration-200"
+                              title="Delete"
                             >
                               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                 <polyline points="3,6 5,6 21,6" /><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
