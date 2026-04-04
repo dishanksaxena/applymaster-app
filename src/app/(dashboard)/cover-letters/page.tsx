@@ -105,28 +105,32 @@ export default function CoverLettersPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          jobTitle: job.job.title,
+          job_title: job.job.title,
           company: job.job.company,
-          description: job.job.description,
+          job_description: job.job.description,
+          job_id: job.job_id,
           tone: 'professional',
         }),
       })
 
-      if (!response.ok) throw new Error('Failed to generate')
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to generate')
+      }
       const data = await response.json()
 
       // Open editor with generated content
       setEditingLetter({
         id: '',
         title: `${job.job.title} at ${job.job.company}`,
-        content: data.content,
+        content: data.cover_letter || data.content || '',
         tone: 'professional',
         created_at: new Date().toISOString(),
         job_id: job.job_id,
       })
     } catch (err) {
       console.error('Generate error:', err)
-      alert('Failed to generate cover letter. Try typing one manually.')
+      alert(`Failed to generate cover letter: ${err instanceof Error ? err.message : 'Unknown error'}. Try typing one manually.`)
     } finally {
       setGeneratingJobId(null)
     }

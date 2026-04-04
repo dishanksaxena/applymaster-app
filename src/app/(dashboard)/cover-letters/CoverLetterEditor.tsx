@@ -95,21 +95,26 @@ export default function CoverLetterEditor({ initialLetter, onClose, onSave }: Co
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Not authenticated')
 
+      // Extract job title and company from the title (format: "Job Title at Company")
+      const parts = title.split(' at ')
+      const jobTitle = parts[0] || title
+      const company = parts[1] || ''
+
       const response = await fetch('/api/generate-cover-letter', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          jobTitle: title,
+          job_title: jobTitle,
+          company,
           tone,
-          useCurrentContent: true,
-          currentContent: content,
+          job_id: initialLetter?.job_id || null,
         }),
       })
 
       if (!response.ok) throw new Error('Failed to regenerate')
       const data = await response.json()
 
-      setContent(data.content)
+      setContent(data.cover_letter || data.content || '')
       setIsDirty(true)
     } catch (err: any) {
       console.error('Regenerate error:', err)
