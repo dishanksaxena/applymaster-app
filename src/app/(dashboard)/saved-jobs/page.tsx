@@ -57,7 +57,7 @@ export default function SavedJobsPage() {
       setLoading(false)
     }
     load()
-  }, [supabase])
+  }, [])
 
   const removeJob = async (jobId: string) => {
     const { data: { user } } = await supabase.auth.getUser()
