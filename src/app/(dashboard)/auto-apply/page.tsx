@@ -62,6 +62,7 @@ export default function AutoApplyPage() {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [testingAuto, setTestingAuto] = useState(false)
   const supabase = createClient()
 
   useEffect(() => { setMounted(true) }, [])
@@ -121,6 +122,32 @@ export default function AutoApplyPage() {
     setSaving(false)
     setSaved(true)
     setTimeout(() => setSaved(false), 3000)
+  }
+
+  const testAutoApply = async () => {
+    setTestingAuto(true)
+    try {
+      const response = await fetch('/api/cron/auto-apply', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_CRON_SECRET || 'test-secret-change-in-production'}`
+        }
+      })
+
+      const data = await response.json()
+      if (response.ok) {
+        alert(`✅ Auto-apply test completed!\n\nProcessed: ${data.processed} applications\nUsers: ${data.users_processed}\n\nCheck the Activity Feed below for results.`)
+        // Reload logs
+        const { data: logData } = await supabase.from('apply_log').select('*').order('created_at', { ascending: false }).limit(20)
+        if (logData) setLogs(logData)
+      } else {
+        alert(`❌ Error: ${data.error}`)
+      }
+    } catch (err) {
+      alert(`❌ Failed to test auto-apply: ${err instanceof Error ? err.message : 'Unknown error'}`)
+    } finally {
+      setTestingAuto(false)
+    }
   }
 
   const modes = [
@@ -305,6 +332,25 @@ export default function AutoApplyPage() {
             )}
             {mode !== 'off' && !saved && (
               <p className="text-center text-[11px] text-[#5a5a6a]">Select your mode above, configure settings, then click Activate</p>
+            )}
+
+            {/* Test Auto-Apply Button */}
+            {saved && mode !== 'off' && (
+              <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }} onClick={testAutoApply} disabled={testingAuto}
+                className="w-full py-3 rounded-xl font-bold text-[13px] text-white disabled:opacity-30 transition-all flex items-center justify-center gap-2"
+                style={{ background: 'rgba(116,185,255,0.1)', border: '1px solid rgba(116,185,255,0.2)' }}>
+                {testingAuto ? (
+                  <>
+                    <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }} className="w-3 h-3 rounded-full border-2 border-[#74b9ff]/20 border-t-[#74b9ff]" />
+                    Testing...
+                  </>
+                ) : (
+                  <>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M23 12a11.05 11.05 0 0 1-22 0m22 0a11.05 11.05 0 0 0-22 0m22 0H0m11.5 7a3.5 3.5 0 0 1 0-7M9 21H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-5"/></svg>
+                    Test Auto-Apply Now
+                  </>
+                )}
+              </motion.button>
             )}
           </motion.div>
 
