@@ -32,29 +32,39 @@ export default function SavedJobsPage() {
 
   useEffect(() => {
     const load = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-
-      // Load applications with status 'saved'
-      const { data: apps } = await supabase
-        .from('applications')
-        .select('job_id')
-        .eq('user_id', user.id)
-        .eq('status', 'saved')
-        .order('created_at', { ascending: false })
-
-      if (apps && apps.length > 0) {
-        const jobIds = apps.map(a => a.job_id)
-        const { data: jobsData } = await supabase
-          .from('jobs')
-          .select('*')
-          .in('id', jobIds)
-
-        if (jobsData) {
-          setJobs(jobsData as SavedJob[])
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) {
+          setLoading(false)
+          return
         }
+
+        // Load applications with status 'saved'
+        const { data: apps, error: appsError } = await supabase
+          .from('applications')
+          .select('job_id')
+          .eq('user_id', user.id)
+          .eq('status', 'saved')
+          .order('created_at', { ascending: false })
+
+        if (apps && apps.length > 0) {
+          const jobIds = apps.map(a => a.job_id).filter(Boolean)
+          if (jobIds.length > 0) {
+            const { data: jobsData, error: jobsError } = await supabase
+              .from('jobs')
+              .select('*')
+              .in('id', jobIds)
+
+            if (jobsData && jobsData.length > 0) {
+              setJobs(jobsData as SavedJob[])
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Error loading saved jobs:', err)
+      } finally {
+        setLoading(false)
       }
-      setLoading(false)
     }
     load()
   }, [])
