@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { createClient } from '@/lib/supabase-browser'
 import ApplicationSourceChart from './ApplicationSourceChart'
 import TrendLineChart from './TrendLineChart'
@@ -63,21 +63,22 @@ export default function AutoApplyPage() {
   const [saved, setSaved] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [testingAuto, setTestingAuto] = useState(false)
+  const [isInitialized, setIsInitialized] = useState(false)
   const supabase = createClient()
 
   useEffect(() => { setMounted(true) }, [])
 
+  // Load initial data only once
   useEffect(() => {
+    if (!mounted || isInitialized) return
+
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
       // Load preferences
-      const { data, error } = await supabase.from('job_preferences').select('*').eq('user_id', user.id).single()
-      if (error) {
-        console.log('No preferences found, using defaults')
-      } else if (data) {
-        console.log('Loaded preferences:', data)
+      const { data } = await supabase.from('job_preferences').select('*').eq('user_id', user.id).single()
+      if (data) {
         setMode(data.auto_apply_mode || 'off')
         setDailyLimit(data.daily_apply_limit || 10)
         setMatchThreshold(data.match_threshold || 80)
@@ -87,38 +88,15 @@ export default function AutoApplyPage() {
       const { data: logData } = await supabase.from('apply_log').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(20)
       if (logData) setLogs(logData)
 
-      // Load applications for analytics
+      // Load applications
       const { data: appData } = await supabase.from('applications').select('*, job:jobs(*)').eq('user_id', user.id)
       if (appData) setApplications(appData)
+
+      setIsInitialized(true)
     }
+
     load()
-
-    // Subscribe to preference changes
-    const channel = supabase
-      .channel('job_preferences_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'job_preferences',
-        },
-        (payload: any) => {
-          console.log('Preferences updated:', payload.new)
-          const data = payload.new
-          setMode(data.auto_apply_mode || 'off')
-          setDailyLimit(data.daily_apply_limit || 10)
-          setMatchThreshold(data.match_threshold || 80)
-          setSaved(true)
-          setTimeout(() => setSaved(false), 3000)
-        }
-      )
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(channel)
-    }
-  }, [supabase])
+  }, [mounted, isInitialized, supabase])
 
   // Compute analytics data
   const analytics = useMemo(() => {
@@ -149,6 +127,7 @@ export default function AutoApplyPage() {
 
   const saveSettings = async () => {
     setSaving(true)
+    setSaved(false)
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
@@ -156,7 +135,6 @@ export default function AutoApplyPage() {
         return
       }
 
-      // Upsert with explicit conflict handling
       const { error } = await supabase.from('job_preferences').upsert(
         {
           user_id: user.id,
@@ -168,16 +146,13 @@ export default function AutoApplyPage() {
         { onConflict: 'user_id' }
       )
 
-      if (error) {
-        console.error('Error saving settings:', error)
-        setSaving(false)
-        alert('Failed to save settings: ' + error.message)
-        return
-      }
-
       setSaving(false)
-      setSaved(true)
-      setTimeout(() => setSaved(false), 3000)
+      if (!error) {
+        setSaved(true)
+        setTimeout(() => setSaved(false), 3000)
+      } else {
+        alert('Failed to save: ' + error.message)
+      }
     } catch (err) {
       console.error('Save error:', err)
       setSaving(false)
@@ -188,7 +163,6 @@ export default function AutoApplyPage() {
   const testAutoApply = async () => {
     setTestingAuto(true)
     try {
-      // Call a server action to test auto-apply
       const response = await fetch('/api/auto-apply/test', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
@@ -196,15 +170,20 @@ export default function AutoApplyPage() {
 
       const data = await response.json()
       if (response.ok) {
-        alert(`✅ Auto-apply test completed!\n\nProcessed: ${data.processed} applications\nUsers: ${data.users_processed}\n\nCheck the Activity Feed below for results.`)
-        // Reload logs
-        const { data: logData } = await supabase.from('apply_log').select('*').order('created_at', { ascending: false }).limit(20)
+        // Reload logs in real-time
+        const { data: logData } = await supabase
+          .from('apply_log')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(20)
         if (logData) setLogs(logData)
+
+        alert(`✅ Auto-apply test completed!\n\nProcessed: ${data.processed} applications`)
       } else {
         alert(`❌ Error: ${data.error}`)
       }
     } catch (err) {
-      alert(`❌ Failed to test auto-apply: ${err instanceof Error ? err.message : 'Unknown error'}`)
+      alert(`❌ Failed: ${err instanceof Error ? err.message : 'Unknown error'}`)
     } finally {
       setTestingAuto(false)
     }
