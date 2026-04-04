@@ -173,7 +173,7 @@ export default function JobsPage() {
 
   const saveJob = async (job: Job) => {
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+    if (!user) return alert('Please log in first')
     try {
       // Save job with proper upsert conflict handling
       const externalId = `${job.source}-${job.id}`
@@ -183,39 +183,41 @@ export default function JobsPage() {
         title: job.title,
         company: job.company,
         location: job.location,
-        remote_type: job.remote_type,
-        salary_min: job.salary_min,
-        salary_max: job.salary_max,
+        remote_type: job.remote_type || null,
+        salary_min: job.salary_min || null,
+        salary_max: job.salary_max || null,
         url: job.url,
       }
 
       // First try to find existing job
-      let { data: existingJob } = await supabase
+      const { data: existingJobs, error: selectError } = await supabase
         .from('jobs')
         .select('id')
         .eq('external_id', externalId)
         .eq('source', job.source)
-        .single()
+
+      if (selectError) throw new Error(`Job lookup failed: ${selectError.message}`)
 
       let jobId: string
 
-      if (existingJob) {
+      if (existingJobs && existingJobs.length > 0) {
         // Update existing job
-        jobId = existingJob.id
+        jobId = existingJobs[0].id
         const { error: updateError } = await supabase
           .from('jobs')
           .update(jobData)
           .eq('id', jobId)
-        if (updateError) throw updateError
+        if (updateError) throw new Error(`Job update failed: ${updateError.message}`)
       } else {
         // Insert new job
         const { data: newJob, error: insertError } = await supabase
           .from('jobs')
-          .insert(jobData)
+          .insert([jobData])
           .select()
-          .single()
-        if (insertError) throw insertError
-        jobId = newJob.id
+
+        if (insertError) throw new Error(`Job insert failed: ${insertError.message}`)
+        if (!newJob || newJob.length === 0) throw new Error('Job insert succeeded but no data returned')
+        jobId = newJob[0].id
       }
 
       // Create or update application with status 'saved'
@@ -226,20 +228,20 @@ export default function JobsPage() {
       })
 
       if (appError) {
-        console.error('Application save error:', appError)
-        throw appError
+        throw new Error(`Application save failed: ${appError.message}`)
       }
 
       setSavedJobs(new Set(Array.from(savedJobs).concat(job.id)))
-    } catch (err) {
+      alert('✓ Job saved!')
+    } catch (err: any) {
       console.error('Save job error:', err)
-      alert('Failed to save job. Please try again.')
+      alert(`Failed to save job: ${err?.message || 'Please try again.'}`)
     }
   }
 
   const applyJob = async (job: Job) => {
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+    if (!user) return alert('Please log in first')
     try {
       // Save job first
       const externalId = `${job.source}-${job.id}`
@@ -249,39 +251,41 @@ export default function JobsPage() {
         title: job.title,
         company: job.company,
         location: job.location,
-        remote_type: job.remote_type,
-        salary_min: job.salary_min,
-        salary_max: job.salary_max,
+        remote_type: job.remote_type || null,
+        salary_min: job.salary_min || null,
+        salary_max: job.salary_max || null,
         url: job.url,
       }
 
       // First try to find existing job
-      let { data: existingJob } = await supabase
+      const { data: existingJobs, error: selectError } = await supabase
         .from('jobs')
         .select('id')
         .eq('external_id', externalId)
         .eq('source', job.source)
-        .single()
+
+      if (selectError) throw new Error(`Job lookup failed: ${selectError.message}`)
 
       let jobId: string
 
-      if (existingJob) {
+      if (existingJobs && existingJobs.length > 0) {
         // Update existing job
-        jobId = existingJob.id
+        jobId = existingJobs[0].id
         const { error: updateError } = await supabase
           .from('jobs')
           .update(jobData)
           .eq('id', jobId)
-        if (updateError) throw updateError
+        if (updateError) throw new Error(`Job update failed: ${updateError.message}`)
       } else {
         // Insert new job
         const { data: newJob, error: insertError } = await supabase
           .from('jobs')
-          .insert(jobData)
+          .insert([jobData])
           .select()
-          .single()
-        if (insertError) throw insertError
-        jobId = newJob.id
+
+        if (insertError) throw new Error(`Job insert failed: ${insertError.message}`)
+        if (!newJob || newJob.length === 0) throw new Error('Job insert succeeded but no data returned')
+        jobId = newJob[0].id
       }
 
       // Create/update application with "applied" status
@@ -291,13 +295,13 @@ export default function JobsPage() {
         status: 'applied',
       })
 
-      if (appError) throw appError
+      if (appError) throw new Error(`Application save failed: ${appError.message}`)
 
       setAppliedJobs(new Set(Array.from(appliedJobs).concat(job.id)))
       alert(`✓ Applied to ${job.title} at ${job.company}!`)
-    } catch (err) {
+    } catch (err: any) {
       console.error('Apply error:', err)
-      alert('Failed to apply. Please try again.')
+      alert(`Failed to apply: ${err?.message || 'Please try again.'}`)
     }
   }
 
