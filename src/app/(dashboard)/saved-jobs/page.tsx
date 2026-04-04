@@ -48,7 +48,7 @@ export default function SavedJobsPage() {
         const { data: jobsData } = await supabase
           .from('jobs')
           .select('*')
-          .in('external_id', jobIds.map((jid: string) => `*-${jid}`))
+          .in('id', jobIds)
 
         if (jobsData) {
           setJobs(jobsData as SavedJob[])
