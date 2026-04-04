@@ -19,18 +19,29 @@ export default function ActivityFeed() {
 
   useEffect(() => {
     const loadActivities = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return
 
-      const { data } = await supabase
-        .from('apply_log')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(15)
+        const { data, error } = await supabase
+          .from('apply_log')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(15)
 
-      if (data) setActivities(data as ActivityItem[])
-      setLoading(false)
+        if (error) {
+          console.error('Error loading activities:', error)
+          setLoading(false)
+          return
+        }
+
+        if (data) setActivities(data as ActivityItem[])
+        setLoading(false)
+      } catch (err) {
+        console.error('Activity feed error:', err)
+        setLoading(false)
+      }
     }
 
     loadActivities()

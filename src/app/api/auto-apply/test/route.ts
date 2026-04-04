@@ -23,9 +23,21 @@ export async function POST(req: NextRequest) {
     const response = await fetch(`${baseUrl}/api/cron/auto-apply`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${cronSecret}`
+        'Authorization': `Bearer ${cronSecret}`,
+        'Content-Type': 'application/json'
       }
     })
+
+    // Check if response is JSON
+    const contentType = response.headers.get('content-type')
+    if (!contentType || !contentType.includes('application/json')) {
+      const text = await response.text()
+      console.error('Non-JSON response:', text)
+      return NextResponse.json(
+        { error: 'Invalid response from cron endpoint', details: text.substring(0, 200) },
+        { status: 500 }
+      )
+    }
 
     const data = await response.json()
     return NextResponse.json(data, { status: response.status })
