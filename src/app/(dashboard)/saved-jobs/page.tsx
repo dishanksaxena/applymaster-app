@@ -35,6 +35,7 @@ export default function SavedJobsPage() {
       try {
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) {
+          console.log('No user')
           setLoading(false)
           return
         }
@@ -47,15 +48,22 @@ export default function SavedJobsPage() {
           .eq('status', 'saved')
           .order('created_at', { ascending: false })
 
+        console.log('Apps found:', apps?.length, 'Error:', appsError)
+
         if (apps && apps.length > 0) {
           const jobIds = apps.map(a => a.job_id).filter(Boolean)
+          console.log('Job IDs:', jobIds)
+
           if (jobIds.length > 0) {
             const { data: jobsData, error: jobsError } = await supabase
               .from('jobs')
               .select('*')
               .in('id', jobIds)
 
+            console.log('Jobs found:', jobsData?.length, 'Error:', jobsError)
+
             if (jobsData && jobsData.length > 0) {
+              console.log('Setting jobs:', jobsData)
               setJobs(jobsData as SavedJob[])
             }
           }
