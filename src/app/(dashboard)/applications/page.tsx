@@ -140,6 +140,9 @@ export default function ApplicationsPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'match'>('newest')
   const [mounted, setMounted] = useState(false)
+  const [canScrollLeft, setCanScrollLeft] = useState(false)
+  const [canScrollRight, setCanScrollRight] = useState(true)
+  const kanbanScrollRef = useRef<HTMLDivElement>(null)
   const supabase = createClient()
 
   useEffect(() => { setMounted(true) }, [])
@@ -147,6 +150,30 @@ export default function ApplicationsPage() {
   useEffect(() => {
     loadApplications()
   }, [])
+
+  // Check scroll position for arrow visibility
+  const checkScroll = useCallback(() => {
+    if (!kanbanScrollRef.current) return
+    const { scrollLeft, scrollWidth, clientWidth } = kanbanScrollRef.current
+    setCanScrollLeft(scrollLeft > 0)
+    setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10)
+  }, [])
+
+  useEffect(() => {
+    checkScroll()
+    window.addEventListener('resize', checkScroll)
+    return () => window.removeEventListener('resize', checkScroll)
+  }, [checkScroll])
+
+  const scroll = (direction: 'left' | 'right') => {
+    if (!kanbanScrollRef.current) return
+    const scrollAmount = 350
+    kanbanScrollRef.current.scrollBy({
+      left: direction === 'left' ? -scrollAmount : scrollAmount,
+      behavior: 'smooth',
+    })
+    setTimeout(checkScroll, 300)
+  }
 
   const loadApplications = async () => {
     const { data: { user } } = await supabase.auth.getUser()
@@ -489,8 +516,39 @@ export default function ApplicationsPage() {
 
           {/* ─── Kanban Board ────────────────────────────────────── */}
           {view === 'kanban' && (
-            <div className="overflow-x-auto pb-6" style={{ animation: 'floatUp 0.4s ease 0.35s both' }}>
-              <div className="flex gap-5 min-w-max">
+            <div className="relative" style={{ animation: 'floatUp 0.4s ease 0.35s both' }}>
+              {/* Left Arrow */}
+              {canScrollLeft && (
+                <button
+                  onClick={() => scroll('left')}
+                  className="absolute left-0 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-[rgba(253,121,168,0.2)] to-[rgba(162,155,254,0.2)] border border-[rgba(255,255,255,0.1)] hover:border-[rgba(253,121,168,0.3)] transition-all hover:scale-110 active:scale-95 group"
+                  title="Scroll left"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-[#fd79a8] group-hover:text-[#ff9abf] transition-colors">
+                    <polyline points="15 18 9 12 15 6" />
+                  </svg>
+                </button>
+              )}
+
+              {/* Right Arrow */}
+              {canScrollRight && (
+                <button
+                  onClick={() => scroll('right')}
+                  className="absolute right-0 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-[rgba(162,155,254,0.2)] to-[rgba(116,185,255,0.2)] border border-[rgba(255,255,255,0.1)] hover:border-[rgba(116,185,255,0.3)] transition-all hover:scale-110 active:scale-95 group"
+                  title="Scroll right"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-[#74b9ff] group-hover:text-[#99d5ff] transition-colors">
+                    <polyline points="9 18 15 12 9 6" />
+                  </svg>
+                </button>
+              )}
+
+              <div
+                ref={kanbanScrollRef}
+                onScroll={checkScroll}
+                className="overflow-x-auto pb-6 scroll-smooth"
+              >
+                <div className="flex gap-5 min-w-max">
                 {statuses.map((status, colIndex) => {
                   const apps = applications.get(status) || []
                   const config = statusConfig[status]
@@ -627,6 +685,7 @@ export default function ApplicationsPage() {
                     </div>
                   )
                 })}
+              </div>
               </div>
             </div>
           )}
