@@ -84,10 +84,25 @@ export default function JobsPage() {
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
-      const { data } = await supabase.from('applications').select('job_id, status').eq('user_id', user.id)
+      // Join applications with jobs to get external_id for proper matching
+      const { data } = await supabase
+        .from('applications')
+        .select('job_id, status, jobs(external_id)')
+        .eq('user_id', user.id)
+
       if (data) {
-        const saved = new Set(data.filter(a => a.status === 'saved').map((a: any) => a.job_id))
-        const applied = new Set(data.filter(a => a.status === 'applied').map((a: any) => a.job_id))
+        const saved = new Set(
+          data
+            .filter(a => a.status === 'saved')
+            .map((a: any) => a.jobs?.external_id || a.job_id)
+            .filter(Boolean)
+        )
+        const applied = new Set(
+          data
+            .filter(a => a.status === 'applied')
+            .map((a: any) => a.jobs?.external_id || a.job_id)
+            .filter(Boolean)
+        )
         setSavedJobs(saved)
         setAppliedJobs(applied)
       }
