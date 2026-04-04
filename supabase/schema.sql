@@ -117,6 +117,7 @@ create table public.applications (
   notes text,
   follow_up_date date,
   interview_date timestamptz,
+  position integer not null default 0,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   unique(user_id, job_id)
@@ -127,6 +128,7 @@ create policy "Users can manage own applications" on public.applications for all
 
 create index idx_applications_user on public.applications(user_id);
 create index idx_applications_status on public.applications(user_id, status);
+create index idx_applications_position on public.applications(user_id, status, position);
 
 -- Cover Letters
 create table public.cover_letters (
