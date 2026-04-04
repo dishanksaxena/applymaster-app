@@ -18,22 +18,31 @@ interface CoverLetter {
 
 const fadeUp = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] as const } } }
 
+interface SavedJob {
+  id: string
+  job_id: string
+  job: any
+}
+
 export default function CoverLettersPage() {
   const [coverLetters, setCoverLetters] = useState<CoverLetter[]>([])
+  const [savedJobs, setSavedJobs] = useState<SavedJob[]>([])
   const [editingLetter, setEditingLetter] = useState<CoverLetter | null>(null)
   const [isCreating, setIsCreating] = useState(false)
+  const [generatingJobId, setGeneratingJobId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [mounted, setMounted] = useState(false)
   const supabase = createClient()
 
   useEffect(() => { setMounted(true) }, [])
 
-  // Load cover letters
+  // Load cover letters and saved jobs
   useEffect(() => {
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
+      // Load cover letters
       const { data: letters } = await supabase
         .from('cover_letters')
         .select('*')
@@ -41,6 +50,26 @@ export default function CoverLettersPage() {
         .order('created_at', { ascending: false })
 
       if (letters) setCoverLetters(letters)
+
+      // Load saved jobs (applications with status 'saved')
+      const { data: savedApps } = await supabase
+        .from('applications')
+        .select('id, job_id, job:jobs(id, title, company, description)')
+        .eq('user_id', user.id)
+        .eq('status', 'saved')
+        .order('created_at', { ascending: false })
+
+      if (savedApps) {
+        const normalized = savedApps.map(app => {
+          const job = Array.isArray(app.job) ? app.job[0] : app.job
+          return {
+            id: app.id,
+            job_id: app.job_id,
+            job: job as any,
+          }
+        })
+        setSavedJobs(normalized as SavedJob[])
+      }
       setLoading(false)
     }
     load()
@@ -67,6 +96,40 @@ export default function CoverLettersPage() {
     if (!confirm('Delete this cover letter?')) return
     await supabase.from('cover_letters').delete().eq('id', id)
     setCoverLetters(coverLetters.filter(l => l.id !== id))
+  }
+
+  const generateFromJob = async (job: SavedJob) => {
+    setGeneratingJobId(job.job_id)
+    try {
+      const response = await fetch('/api/generate-cover-letter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jobTitle: job.job.title,
+          company: job.job.company,
+          description: job.job.description,
+          tone: 'professional',
+        }),
+      })
+
+      if (!response.ok) throw new Error('Failed to generate')
+      const data = await response.json()
+
+      // Open editor with generated content
+      setEditingLetter({
+        id: '',
+        title: `${job.job.title} at ${job.job.company}`,
+        content: data.content,
+        tone: 'professional',
+        created_at: new Date().toISOString(),
+        job_id: job.job_id,
+      })
+    } catch (err) {
+      console.error('Generate error:', err)
+      alert('Failed to generate cover letter. Try typing one manually.')
+    } finally {
+      setGeneratingJobId(null)
+    }
   }
 
   if (!mounted) return <div className="p-8" />
@@ -111,6 +174,37 @@ export default function CoverLettersPage() {
           </PremiumButton>
         </div>
       </motion.div>
+
+      {/* Saved Jobs - Quick Generate */}
+      {!loading && savedJobs.length > 0 && (
+        <motion.div variants={fadeInUp} className="space-y-4">
+          <h2 className="text-lg font-bold text-white">📌 Quick Generate from Saved Jobs</h2>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {savedJobs.map((job, idx) => (
+              <motion.div
+                key={job.id}
+                variants={fadeInUp}
+                className="p-4 rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#0d0d15] hover:border-[rgba(253,121,168,0.2)] transition-all"
+              >
+                <div className="mb-3">
+                  <h3 className="text-[13px] font-bold text-white line-clamp-2">{job.job.title}</h3>
+                  <p className="text-[12px] text-[#6a6a7a] mt-1">{job.job.company}</p>
+                </div>
+                <PremiumButton
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => generateFromJob(job)}
+                  disabled={generatingJobId === job.job_id}
+                  loading={generatingJobId === job.job_id}
+                  className="w-full"
+                >
+                  {generatingJobId === job.job_id ? 'Generating...' : 'Generate'}
+                </PremiumButton>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+      )}
 
       {/* Letters Grid */}
       {loading ? (

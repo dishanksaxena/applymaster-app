@@ -191,7 +191,7 @@ export default function ApplicationsPage() {
       .from('applications')
       .select('*, job:jobs(*)')
       .eq('user_id', user.id)
-      .order('status')
+      .order('status', { ascending: true })
       .order('position', { ascending: true })
 
     const grouped = new Map<string, Application[]>()
