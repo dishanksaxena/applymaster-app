@@ -199,8 +199,8 @@ export default function JobsPage() {
         company: job.company,
         location: job.location,
         remote_type: job.remote_type || null,
-        salary_min: job.salary_min || null,
-        salary_max: job.salary_max || null,
+        salary_min: job.salary_min ? Math.round(job.salary_min) : null,
+        salary_max: job.salary_max ? Math.round(job.salary_max) : null,
         url: job.url,
       }
 
@@ -267,8 +267,8 @@ export default function JobsPage() {
         company: job.company,
         location: job.location,
         remote_type: job.remote_type || null,
-        salary_min: job.salary_min || null,
-        salary_max: job.salary_max || null,
+        salary_min: job.salary_min ? Math.round(job.salary_min) : null,
+        salary_max: job.salary_max ? Math.round(job.salary_max) : null,
         url: job.url,
       }
 
