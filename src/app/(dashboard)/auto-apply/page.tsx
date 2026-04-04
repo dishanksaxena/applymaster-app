@@ -73,8 +73,15 @@ export default function AutoApplyPage() {
       if (!user) return
 
       // Load preferences
-      const { data } = await supabase.from('job_preferences').select('*').eq('user_id', user.id).single()
-      if (data) { setMode(data.auto_apply_mode); setDailyLimit(data.daily_apply_limit); setMatchThreshold(data.match_threshold) }
+      const { data, error } = await supabase.from('job_preferences').select('*').eq('user_id', user.id).single()
+      if (error) {
+        console.log('No preferences found, using defaults')
+      } else if (data) {
+        console.log('Loaded preferences:', data)
+        setMode(data.auto_apply_mode || 'off')
+        setDailyLimit(data.daily_apply_limit || 10)
+        setMatchThreshold(data.match_threshold || 80)
+      }
 
       // Load activity logs
       const { data: logData } = await supabase.from('apply_log').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(20)
@@ -85,6 +92,32 @@ export default function AutoApplyPage() {
       if (appData) setApplications(appData)
     }
     load()
+
+    // Subscribe to preference changes
+    const channel = supabase
+      .channel('job_preferences_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'job_preferences',
+        },
+        (payload: any) => {
+          console.log('Preferences updated:', payload.new)
+          const data = payload.new
+          setMode(data.auto_apply_mode || 'off')
+          setDailyLimit(data.daily_apply_limit || 10)
+          setMatchThreshold(data.match_threshold || 80)
+          setSaved(true)
+          setTimeout(() => setSaved(false), 3000)
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [supabase])
 
   // Compute analytics data
@@ -116,12 +149,40 @@ export default function AutoApplyPage() {
 
   const saveSettings = async () => {
     setSaving(true)
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-    await supabase.from('job_preferences').upsert({ user_id: user.id, auto_apply_mode: mode, daily_apply_limit: dailyLimit, match_threshold: matchThreshold })
-    setSaving(false)
-    setSaved(true)
-    setTimeout(() => setSaved(false), 3000)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        setSaving(false)
+        return
+      }
+
+      // Upsert with explicit conflict handling
+      const { error } = await supabase.from('job_preferences').upsert(
+        {
+          user_id: user.id,
+          auto_apply_mode: mode,
+          daily_apply_limit: dailyLimit,
+          match_threshold: matchThreshold,
+          updated_at: new Date().toISOString()
+        },
+        { onConflict: 'user_id' }
+      )
+
+      if (error) {
+        console.error('Error saving settings:', error)
+        setSaving(false)
+        alert('Failed to save settings: ' + error.message)
+        return
+      }
+
+      setSaving(false)
+      setSaved(true)
+      setTimeout(() => setSaved(false), 3000)
+    } catch (err) {
+      console.error('Save error:', err)
+      setSaving(false)
+      alert('Error saving settings')
+    }
   }
 
   const testAutoApply = async () => {
