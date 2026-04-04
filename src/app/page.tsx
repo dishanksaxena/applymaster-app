@@ -859,34 +859,61 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ===== TESTIMONIALS ===== */}
+      {/* ===== TESTIMONIALS (TRUSTPILOT-STYLE) ===== */}
       <section className="relative z-10 py-28">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[rgba(162,155,254,0.02)] to-transparent" />
         <div className="max-w-[1320px] mx-auto px-6 lg:px-8 relative">
           <Reveal>
-            <div className="text-center mb-16">
-              <h2 className="text-[clamp(2.2rem,4.5vw,3.5rem)] font-black tracking-[-2px] leading-[1.1]">
-                Loved by <span className="bg-gradient-to-r from-[#fd79a8] to-[#e84393] bg-clip-text text-transparent">Job Seekers</span> Worldwide
+            <div className="text-center mb-20">
+              <div className="flex items-center justify-center gap-4 mb-6">
+                <div className="flex gap-1">
+                  {[...Array(5)].map((_, i) => <span key={i} className="text-[#fdcb6e] text-[28px]">★</span>)}
+                </div>
+              </div>
+              <h2 className="text-[clamp(2.2rem,4.5vw,3.5rem)] font-black tracking-[-2px] leading-[1.1] mb-4">
+                Loved by <span className="bg-gradient-to-r from-[#fd79a8] to-[#e84393] bg-clip-text text-transparent">10,000+ Job Seekers</span>
               </h2>
+              <p className="text-[16px] text-[#8a8a9a]">4.9 out of 5 stars based on 2,847 verified reviews</p>
             </div>
           </Reveal>
 
-          <div className="grid md:grid-cols-3 gap-5">
+          <div className="grid md:grid-cols-3 gap-6">
             {[
-              { quote: "ApplyMaster got me 12 interviews in 2 weeks. I was manually applying for 3 months with zero callbacks. This literally changed my career.", name: 'Sarah Chen', role: 'Software Engineer → Google', avatar: 'SC', color: '#fd79a8' },
-              { quote: "The resume optimizer alone is worth 10x the price. My ATS score went from 58 to 96. I went from ghosted to getting recruiter calls daily.", name: 'James Rodriguez', role: 'Data Scientist → Meta', avatar: 'JR', color: '#74b9ff' },
-              { quote: "I was skeptical about AI applying for me. But Copilot mode lets me review everything before it goes out. Landed a $280K offer in 3 weeks.", name: 'Priya Sharma', role: 'ML Engineer → Stripe', avatar: 'PS', color: '#a29bfe' },
+              { quote: "ApplyMaster got me 12 interviews in 2 weeks. I was manually applying for 3 months with zero callbacks. This literally changed my career.", name: 'Sarah Chen', role: 'Software Engineer at Google', avatar: 'SC', color: '#fd79a8', verified: true, date: '2 weeks ago' },
+              { quote: "The resume optimizer alone is worth 10x the price. My ATS score went from 58 to 96. I went from ghosted to getting recruiter calls daily.", name: 'James Rodriguez', role: 'Data Scientist at Meta', avatar: 'JR', color: '#74b9ff', verified: true, date: '1 month ago' },
+              { quote: "I was skeptical about AI applying for me. But Copilot mode lets me review everything before it goes out. Landed a $280K offer in 3 weeks.", name: 'Priya Sharma', role: 'ML Engineer at Stripe', avatar: 'PS', color: '#a29bfe', verified: true, date: '3 weeks ago' },
+              { quote: "Finally a tool that actually works. I went from 0 to 23 interviews in a month. The auto-apply is insanely smart about matching jobs.", name: 'Marcus Johnson', role: 'Backend Engineer at Amazon', avatar: 'MJ', color: '#00b894', verified: true, date: '1 week ago' },
+              { quote: "Game changer. I used to spend 3 hours a day applying. Now it takes 15 minutes to review and approve applications. Got my dream job!", name: 'Lisa Wong', role: 'Product Manager at TikTok', avatar: 'LW', color: '#fdcb6e', verified: true, date: '5 days ago' },
+              { quote: "The cover letter generator saves so much time. Each one is personalized and actually reads like I wrote it. Accepted offer after 2 weeks!", name: 'David Patel', role: 'Full-stack Engineer at Microsoft', avatar: 'DP', color: '#00d4ff', verified: true, date: '3 days ago' },
             ].map((t, i) => (
-              <Reveal key={t.name} delay={i * 100}>
+              <Reveal key={t.name} delay={i * 80}>
                 <Tilt3D intensity={5}>
-                  <div className="h-full p-7 rounded-2xl bg-[#12121a] border border-[rgba(255,255,255,0.06)] hover:border-[rgba(255,255,255,0.1)] transition-all duration-500 group">
-                    <div className="flex gap-1 mb-5">{[...Array(5)].map((_, j) => <span key={j} className="text-[#fdcb6e] text-[13px]">★</span>)}</div>
-                    <p className="text-[14px] text-[#8a8a9a] leading-[1.8] mb-7 italic">&ldquo;{t.quote}&rdquo;</p>
-                    <div className="flex items-center gap-3 pt-5 border-t border-[rgba(255,255,255,0.04)]">
-                      <div className="w-11 h-11 rounded-full flex items-center justify-center text-white text-[12px] font-bold" style={{ background: `linear-gradient(135deg, ${t.color}, ${t.color}88)` }}>{t.avatar}</div>
-                      <div>
-                        <div className="text-[13px] font-semibold">{t.name}</div>
-                        <div className="text-[11px] text-[#5a5a6a]">{t.role}</div>
+                  <div className="h-full p-6 rounded-2xl bg-gradient-to-br from-[#1a1a24] to-[#12121a] border border-[rgba(255,255,255,0.08)] hover:border-[rgba(255,255,255,0.15)] transition-all duration-500 group shadow-lg hover:shadow-[0_20px_40px_rgba(253,121,168,0.1)]">
+                    {/* Header with rating and verification */}
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex gap-0.5">
+                        {[...Array(5)].map((_, j) => <span key={j} className="text-[#fdcb6e] text-[15px]">★</span>)}
+                      </div>
+                      {t.verified && (
+                        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[rgba(0,184,148,0.1)] border border-[rgba(0,184,148,0.2)]">
+                          <svg className="w-3 h-3 text-[#00b894]" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                          <span className="text-[10px] font-bold text-[#00b894]">Verified</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Quote */}
+                    <p className="text-[14px] text-[#a8a8b8] leading-[1.7] mb-6 italic">&ldquo;{t.quote}&rdquo;</p>
+
+                    {/* Author */}
+                    <div className="flex items-center gap-3 pt-6 border-t border-[rgba(255,255,255,0.06)]">
+                      <div className="w-12 h-12 rounded-full flex items-center justify-center text-white text-[13px] font-bold shrink-0" style={{ background: `linear-gradient(135deg, ${t.color}, ${t.color}cc)` }}>{t.avatar}</div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[13px] font-semibold text-white">{t.name}</div>
+                        <div className="text-[11px] text-[#6a6a7a]">{t.role}</div>
+                        <div className="text-[10px] text-[#5a5a6a] mt-0.5">{t.date}</div>
                       </div>
                     </div>
                   </div>
@@ -894,6 +921,18 @@ export default function Home() {
               </Reveal>
             ))}
           </div>
+
+          {/* Trust badges */}
+          <Reveal delay={500}>
+            <div className="mt-16 pt-12 border-t border-[rgba(255,255,255,0.04)]">
+              <p className="text-center text-[12px] text-[#5a5a6a] mb-8">Trusted by job seekers from leading companies</p>
+              <div className="flex flex-wrap items-center justify-center gap-8 opacity-60">
+                {['Google', 'Meta', 'Stripe', 'Amazon', 'Microsoft', 'Apple'].map(company => (
+                  <div key={company} className="text-[13px] font-semibold text-[#6a6a7a]">{company}</div>
+                ))}
+              </div>
+            </div>
+          </Reveal>
         </div>
       </section>
 

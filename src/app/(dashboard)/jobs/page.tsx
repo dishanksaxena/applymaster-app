@@ -169,7 +169,7 @@ export default function JobsPage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
     try {
-      // Save job - try insert first, then update if exists
+      // Save job with proper upsert conflict handling
       const externalId = `${job.source}-${job.id}`
       const jobData = {
         external_id: externalId,
@@ -183,8 +183,11 @@ export default function JobsPage() {
         url: job.url,
       }
 
-      // Try upsert without onConflict first
-      const { error: jobError } = await supabase.from('jobs').upsert(jobData)
+      // Upsert job with proper conflict resolution
+      const { data: jobResult, error: jobError } = await supabase.from('jobs').upsert(jobData, {
+        onConflict: 'external_id,source',
+      }).select().single()
+
       if (jobError) {
         console.error('Job save error:', jobError)
         throw jobError
@@ -193,10 +196,10 @@ export default function JobsPage() {
       // Create or update application with status 'saved'
       const { error: appError } = await supabase.from('applications').upsert({
         user_id: user.id,
-        job_id: job.id,
+        job_id: jobResult.id,
         status: 'saved',
-        job_title: job.title,
-        company: job.company,
+      }, {
+        onConflict: 'user_id,job_id',
       })
 
       if (appError) {
@@ -215,7 +218,7 @@ export default function JobsPage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
     try {
-      // Save job first
+      // Save job first with proper upsert conflict handling
       const jobData = {
         external_id: `${job.source}-${job.id}`,
         source: job.source,
@@ -228,16 +231,19 @@ export default function JobsPage() {
         url: job.url,
       }
 
-      const { error: jobError } = await supabase.from('jobs').upsert(jobData)
+      const { data: jobResult, error: jobError } = await supabase.from('jobs').upsert(jobData, {
+        onConflict: 'external_id,source',
+      }).select().single()
+
       if (jobError) throw jobError
 
       // Create/update application with "applied" status
       const { error: appError } = await supabase.from('applications').upsert({
         user_id: user.id,
-        job_id: job.id,
+        job_id: jobResult.id,
         status: 'applied',
-        job_title: job.title,
-        company: job.company,
+      }, {
+        onConflict: 'user_id,job_id',
       })
 
       if (appError) throw appError

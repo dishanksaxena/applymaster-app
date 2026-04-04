@@ -21,14 +21,14 @@ const COUNTRY_CODE_MAP: Record<string, string> = {
   US: 'us', IN: 'in', GB: 'gb', CA: 'ca', AU: 'au', DE: 'de', SG: 'sg', AE: 'ae',
 }
 
-async function searchAdzuna(query: string, location: string, country: string, page = 1, maxDaysOld = 30) {
+async function searchAdzuna(query: string, location: string, country: string, page = 1, maxDaysOld = 30, remote?: string) {
   if (!ADZUNA_APP_ID || !ADZUNA_APP_KEY) return []
 
   const countryCode = COUNTRY_CODE_MAP[country] || 'us'
   const params = new URLSearchParams({
     app_id: ADZUNA_APP_ID,
     app_key: ADZUNA_APP_KEY,
-    results_per_page: '20',
+    results_per_page: '30',
     what: query,
     sort_by: 'date',
     max_days_old: String(maxDaysOld || 30),
@@ -36,6 +36,12 @@ async function searchAdzuna(query: string, location: string, country: string, pa
   })
   const skipLocationTerms = ['remote', 'united states', 'india', 'us', 'usa', 'in', '']
   if (location && !skipLocationTerms.includes(location.toLowerCase())) params.set('where', location)
+
+  // Add remote filter if specified
+  if (remote === 'remote') {
+    params.set('full_time', 'true')
+    params.set('tag_id', 'tag_rmt')
+  }
 
   try {
     const res = await fetch(
@@ -114,7 +120,7 @@ export async function POST(req: NextRequest) {
     }
 
     const searches: Promise<unknown[]>[] = [
-      searchAdzuna(query, location || '', country, page, maxDaysOld),
+      searchAdzuna(query, location || '', country, page, maxDaysOld, remote),
     ]
 
     // Add RemoteOK for remote searches
