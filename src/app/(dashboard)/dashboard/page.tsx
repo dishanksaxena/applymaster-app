@@ -4,6 +4,8 @@ import { useEffect, useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { createClient } from '@/lib/supabase-browser'
 import Link from 'next/link'
+import { PremiumCard, PremiumButton } from '@/components/premium'
+import { staggerContainer, fadeInUp } from '@/lib/animations'
 
 /* ─── Animated Counter ─── */
 function AnimatedNumber({ value, suffix = '' }: { value: number; suffix?: string }) {
@@ -103,8 +105,6 @@ function LiveTerminal({ activities }: { activities: { action: string; details: s
   )
 }
 
-const container = { hidden: {}, show: { transition: { staggerChildren: 0.08 } } }
-const fadeUp = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] as const } } }
 
 export default function DashboardPage() {
   const [stats, setStats] = useState({ applied: 0, interviews: 0, offers: 0, matchRate: 0 })
@@ -187,10 +187,10 @@ export default function DashboardPage() {
   if (!mounted) return <div className="p-8" />
 
   return (
-    <motion.div variants={container} initial="hidden" animate="show" className="space-y-8 max-w-[1400px] mx-auto">
+    <motion.div variants={staggerContainer} initial="hidden" animate="show" className="space-y-8 max-w-[1400px] mx-auto">
 
       {/* ─── Welcome Banner ─── */}
-      <motion.div variants={fadeUp} className="relative overflow-hidden rounded-2xl p-8" style={{
+      <motion.div variants={fadeInUp} className="relative overflow-hidden rounded-2xl p-8" style={{
         background: 'linear-gradient(135deg, rgba(253,121,168,0.08) 0%, rgba(162,155,254,0.06) 50%, rgba(0,184,148,0.04) 100%)',
         border: '1px solid rgba(253,121,168,0.1)',
       }}>
@@ -208,95 +208,108 @@ export default function DashboardPage() {
         </div>
       </motion.div>
 
-      {/* ─── Stats Grid ─── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {statCards.map((s) => (
-          <motion.div key={s.label} variants={fadeUp} whileHover={{ y: -4, transition: { duration: 0.2 } }}
-            className="relative group p-5 rounded-2xl overflow-hidden"
-            style={{ background: 'linear-gradient(135deg, #1c1c2e 0%, #16162a 100%)', border: '1px solid rgba(255,255,255,0.1)' }}>
-            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
-              style={{ background: `radial-gradient(circle at 50% 50%, ${s.color}08, transparent 70%)` }} />
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${s.color}12`, color: s.color }}>{s.icon}</div>
-              <Sparkline data={s.sparkData} color={s.color} height={32} />
-            </div>
-            <div className="text-3xl font-black tracking-tight" style={{ color: s.color }}>
-              <AnimatedNumber value={typeof s.value === 'number' ? s.value : 0} suffix={s.suffix} />
-            </div>
-            <div className="text-[12px] text-[#5a5a6a] mt-1 font-medium">{s.label}</div>
-            <div className="absolute bottom-0 left-0 right-0 h-[2px] opacity-0 group-hover:opacity-100 transition-opacity"
-              style={{ background: `linear-gradient(90deg, transparent, ${s.color}40, transparent)` }} />
+      {/* ─── Stats Grid with Premium Cards ─── */}
+      <motion.div variants={staggerContainer} className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {statCards.map((s, index) => (
+          <motion.div key={s.label} variants={fadeInUp}>
+            <PremiumCard
+              accent={
+                s.label.includes('Applications') ? 'pink' :
+                s.label.includes('Interviews') ? 'green' :
+                s.label.includes('Offers') ? 'purple' :
+                'yellow'
+              }
+              glowEffect={true}
+              animationDelay={index * 0.1}
+            >
+              <div className="p-5">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${s.color}12`, color: s.color }}>{s.icon}</div>
+                  <Sparkline data={s.sparkData} color={s.color} height={32} />
+                </div>
+                <div className="text-3xl font-black tracking-tight" style={{ color: s.color }}>
+                  <AnimatedNumber value={typeof s.value === 'number' ? s.value : 0} suffix={s.suffix} />
+                </div>
+                <div className="text-[12px] text-[#5a5a6a] mt-1 font-medium">{s.label}</div>
+              </div>
+            </PremiumCard>
           </motion.div>
         ))}
-      </div>
+      </motion.div>
 
       {/* ─── Getting Started Journey ─── */}
-      <motion.div variants={fadeUp} className="p-6 rounded-2xl" style={{
-        background: 'linear-gradient(135deg, #1c1c2e 0%, #16162a 100%)', border: '1px solid rgba(255,255,255,0.1)',
-      }}>
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h3 className="text-[16px] font-bold">Your Journey</h3>
-            <p className="text-[12px] text-[#5a5a6a] mt-1">Follow these steps to land your next role</p>
+      <motion.div variants={fadeInUp}>
+        <PremiumCard accent="pink" hover={false}>
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-[16px] font-bold text-white">Your Journey</h3>
+                <p className="text-[12px] text-[#5a5a6a] mt-1">Follow these steps to land your next role</p>
+              </div>
+              <div className="text-[12px] font-bold px-3 py-1 rounded-full" style={{ background: 'rgba(253,121,168,0.08)', color: '#fd79a8' }}>
+                {journeySteps.filter(s => s.done).length}/{journeySteps.length} completed
+              </div>
+            </div>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              {journeySteps.map((step, i) => (
+                <Link key={step.step} href={step.href}>
+                  <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}
+                    whileHover={{ y: -3, scale: 1.02 }} className="relative p-5 rounded-xl cursor-pointer group transition-all duration-300"
+                    style={{ background: step.done ? `${step.color}08` : 'rgba(255,255,255,0.02)', border: `1px solid ${step.done ? `${step.color}20` : 'rgba(255,255,255,0.1)'}` }}>
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-bold mb-3" style={{
+                      background: step.done ? `${step.color}20` : 'rgba(255,255,255,0.04)', color: step.done ? step.color : '#5a5a6a',
+                      boxShadow: step.done ? `0 0 12px ${step.color}20` : 'none',
+                    }}>
+                      {step.done ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M20 6L9 17L4 12"/></svg> : step.step}
+                    </div>
+                    <div className="text-[13px] font-bold text-white group-hover:text-[#fd79a8] transition-colors">{step.label}</div>
+                    <div className="text-[11px] text-[#5a5a6a] mt-1">{step.desc}</div>
+                    <div className="absolute top-1/2 right-4 -translate-y-1/2 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 text-[#5a5a6a]">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    </div>
+                  </motion.div>
+                </Link>
+              ))}
+            </div>
           </div>
-          <div className="text-[12px] font-bold px-3 py-1 rounded-full" style={{ background: 'rgba(253,121,168,0.08)', color: '#fd79a8' }}>
-            {journeySteps.filter(s => s.done).length}/{journeySteps.length} completed
-          </div>
-        </div>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {journeySteps.map((step) => (
-            <Link key={step.step} href={step.href}>
-              <motion.div whileHover={{ y: -3, scale: 1.02 }} className="relative p-5 rounded-xl cursor-pointer group transition-all duration-300"
-                style={{ background: step.done ? `${step.color}08` : 'rgba(255,255,255,0.02)', border: `1px solid ${step.done ? `${step.color}20` : 'rgba(255,255,255,0.1)'}` }}>
-                <div className="w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-bold mb-3" style={{
-                  background: step.done ? `${step.color}20` : 'rgba(255,255,255,0.04)', color: step.done ? step.color : '#5a5a6a',
-                  boxShadow: step.done ? `0 0 12px ${step.color}20` : 'none',
-                }}>
-                  {step.done ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M20 6L9 17L4 12"/></svg> : step.step}
-                </div>
-                <div className="text-[13px] font-bold text-white group-hover:text-[#fd79a8] transition-colors">{step.label}</div>
-                <div className="text-[11px] text-[#5a5a6a] mt-1">{step.desc}</div>
-                <div className="absolute top-1/2 right-4 -translate-y-1/2 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 text-[#5a5a6a]">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                </div>
-              </motion.div>
-            </Link>
-          ))}
-        </div>
+        </PremiumCard>
       </motion.div>
 
       {/* ─── Main Grid ─── */}
-      <div className="grid lg:grid-cols-[1fr_420px] gap-6">
-        <motion.div variants={fadeUp} className="p-6 rounded-2xl" style={{
-          background: 'linear-gradient(135deg, #1c1c2e 0%, #16162a 100%)', border: '1px solid rgba(255,255,255,0.1)',
-        }}>
-          <h3 className="text-[16px] font-bold mb-1">Quick Actions</h3>
-          <p className="text-[12px] text-[#5a5a6a] mb-6">Jump right into any workflow</p>
-          <div className="grid sm:grid-cols-2 gap-3">
-            {quickActions.map((a) => (
-              <Link key={a.label} href={a.href}>
-                <motion.div whileHover={{ y: -3, scale: 1.01 }} whileTap={{ scale: 0.98 }}
-                  className="relative p-5 rounded-xl cursor-pointer group overflow-hidden"
-                  style={{ background: `${a.color}06`, border: '1px solid rgba(255,255,255,0.04)' }}>
-                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                    style={{ background: `radial-gradient(circle at 30% 30%, ${a.color}10, transparent 70%)` }} />
-                  <div className="relative z-10">
-                    <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-4" style={{ background: `${a.color}15`, color: a.color }}>{a.icon}</div>
-                    <div className="text-[14px] font-bold text-white group-hover:text-[#fd79a8] transition-colors">{a.label}</div>
-                    <div className="text-[12px] text-[#5a5a6a] mt-1 leading-relaxed">{a.desc}</div>
-                  </div>
-                  <div className="absolute top-5 right-5 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 -translate-x-2 transition-all duration-300" style={{ color: a.color }}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                  </div>
-                </motion.div>
-              </Link>
-            ))}
-          </div>
+      <motion.div variants={staggerContainer} className="grid lg:grid-cols-[1fr_420px] gap-6">
+        <motion.div variants={fadeInUp}>
+          <PremiumCard accent="pink" hover={false}>
+            <div className="p-6">
+              <h3 className="text-[16px] font-bold text-white mb-1">Quick Actions</h3>
+              <p className="text-[12px] text-[#5a5a6a] mb-6">Jump right into any workflow</p>
+              <div className="grid sm:grid-cols-2 gap-3">
+                {quickActions.map((a, i) => (
+                  <Link key={a.label} href={a.href}>
+                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
+                      whileHover={{ y: -3, scale: 1.01 }} whileTap={{ scale: 0.98 }}
+                      className="relative p-5 rounded-xl cursor-pointer group overflow-hidden"
+                      style={{ background: `${a.color}06`, border: '1px solid rgba(255,255,255,0.04)' }}>
+                      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                        style={{ background: `radial-gradient(circle at 30% 30%, ${a.color}10, transparent 70%)` }} />
+                      <div className="relative z-10">
+                        <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-4" style={{ background: `${a.color}15`, color: a.color }}>{a.icon}</div>
+                        <div className="text-[14px] font-bold text-white group-hover:text-[#fd79a8] transition-colors">{a.label}</div>
+                        <div className="text-[12px] text-[#5a5a6a] mt-1 leading-relaxed">{a.desc}</div>
+                      </div>
+                      <div className="absolute top-5 right-5 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 -translate-x-2 transition-all duration-300" style={{ color: a.color }}>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                      </div>
+                    </motion.div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </PremiumCard>
         </motion.div>
-        <motion.div variants={fadeUp}>
+        <motion.div variants={fadeInUp}>
           <LiveTerminal activities={recentActivity} />
         </motion.div>
-      </div>
+      </motion.div>
     </motion.div>
   )
 }

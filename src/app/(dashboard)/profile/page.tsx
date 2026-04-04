@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { createClient } from '@/lib/supabase-browser'
-
-const fadeUp = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] as const } } }
+import { PremiumCard, PremiumButton } from '@/components/premium'
+import { fadeInUp, staggerContainer } from '@/lib/animations'
 
 interface ParsedResume {
   full_name: string | null
@@ -19,13 +19,17 @@ interface ParsedResume {
   languages: string[]
 }
 
-function Section({ title, color, icon, children }: { title: string; color: string; icon: React.ReactNode; children: React.ReactNode }) {
+function Section({ title, color, icon, children, accent }: { title: string; color: string; icon: React.ReactNode; children: React.ReactNode; accent?: 'pink' | 'purple' | 'blue' | 'green' | 'yellow' | 'none' }) {
   return (
-    <motion.div variants={fadeUp} className="p-6 rounded-2xl" style={{ background: 'linear-gradient(135deg, #1c1c2e 0%, #16162a 100%)', border: `1px solid ${color}18` }}>
-      <h3 className="text-[14px] font-bold mb-4 flex items-center gap-2" style={{ color }}>
-        {icon}{title}
-      </h3>
-      {children}
+    <motion.div variants={fadeInUp}>
+      <PremiumCard accent={accent || 'pink'} glowEffect={false}>
+        <div className="p-6">
+          <h3 className="text-[14px] font-bold mb-4 flex items-center gap-2 text-white">
+            {icon}{title}
+          </h3>
+          {children}
+        </div>
+      </PremiumCard>
     </motion.div>
   )
 }
@@ -156,10 +160,10 @@ export default function ProfilePage() {
   )
 
   return (
-    <motion.div initial="hidden" animate="show" variants={{ hidden: {}, show: { transition: { staggerChildren: 0.07 } } }} className="space-y-6 max-w-[900px] mx-auto">
+    <motion.div initial="hidden" animate="show" variants={staggerContainer} className="space-y-6 max-w-[900px] mx-auto">
 
       {/* Header */}
-      <motion.div variants={fadeUp} className="relative overflow-hidden rounded-2xl p-8" style={{
+      <motion.div variants={fadeInUp} className="relative overflow-hidden rounded-2xl p-8" style={{
         background: 'linear-gradient(135deg, rgba(253,121,168,0.08) 0%, rgba(162,155,254,0.06) 100%)',
         border: '1px solid rgba(253,121,168,0.1)',
       }}>
@@ -181,16 +185,18 @@ export default function ProfilePage() {
               </a>
             )}
           </div>
-          <motion.button whileTap={{ scale: 0.95 }} onClick={saveProfile} disabled={saving}
-            className="ml-auto px-6 py-3 rounded-xl text-[13px] font-bold text-white"
-            style={{ background: saved ? 'linear-gradient(135deg, #00b894, #00a381)' : 'linear-gradient(135deg, #fd79a8, #e84393)' }}>
+          <PremiumButton
+            variant={saved ? 'success' : 'primary'}
+            onClick={saveProfile}
+            disabled={saving}
+            loading={saving}>
             {saving ? 'Saving...' : saved ? '✓ Saved!' : 'Save Profile'}
-          </motion.button>
+          </PremiumButton>
         </div>
       </motion.div>
 
       {/* Contact Info — always visible */}
-      <Section title="Contact Information" color="#fd79a8"
+      <Section title="Contact Information" color="#fd79a8" accent="pink"
         icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}>
         <div className="grid sm:grid-cols-2 gap-4">
           <EditableField label="Full Name" value={name} onChange={setName} />
@@ -201,13 +207,13 @@ export default function ProfilePage() {
       </Section>
 
       {/* Summary — always visible */}
-      <Section title="Professional Summary" color="#a29bfe"
+      <Section title="Professional Summary" color="#a29bfe" accent="purple"
         icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z"/></svg>}>
         <EditableField label="Summary" value={summary} onChange={setSummary} multiline />
       </Section>
 
       {/* Skills — always visible */}
-      <Section title="Skills" color="#00b894"
+      <Section title="Skills" color="#00b894" accent="green"
         icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>}>
         <div className="space-y-3">
           <EditableField label="Skills (comma-separated)" value={skillsStr} onChange={setSkillsStr} />
@@ -225,7 +231,7 @@ export default function ProfilePage() {
 
       {/* Work Experience — from resume if available */}
       {(parsedExtra?.experience ?? []).length > 0 && (
-        <Section title="Work Experience" color="#fdcb6e"
+        <Section title="Work Experience" color="#fdcb6e" accent="yellow"
           icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>}>
           <div className="space-y-4">
             {(parsedExtra?.experience ?? []).map((exp, i) => (
@@ -249,7 +255,7 @@ export default function ProfilePage() {
 
       {/* Education — from resume if available */}
       {(parsedExtra?.education ?? []).length > 0 && (
-        <Section title="Education" color="#74b9ff"
+        <Section title="Education" color="#74b9ff" accent="blue"
           icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>}>
           <div className="space-y-3">
             {(parsedExtra?.education ?? []).map((edu, i) => (
@@ -267,7 +273,7 @@ export default function ProfilePage() {
       {((parsedExtra?.certifications ?? []).length > 0 || (parsedExtra?.languages ?? []).length > 0) && (
         <div className="grid sm:grid-cols-2 gap-6">
           {(parsedExtra?.certifications ?? []).length > 0 && (
-            <Section title="Certifications" color="#fd79a8"
+            <Section title="Certifications" color="#fd79a8" accent="pink"
               icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg>}>
               <div className="flex flex-wrap gap-2">
                 {(parsedExtra?.certifications ?? []).map((c, i) => (
@@ -277,7 +283,7 @@ export default function ProfilePage() {
             </Section>
           )}
           {(parsedExtra?.languages ?? []).length > 0 && (
-            <Section title="Languages" color="#a29bfe"
+            <Section title="Languages" color="#a29bfe" accent="purple"
               icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>}>
               <div className="flex flex-wrap gap-2">
                 {(parsedExtra?.languages ?? []).map((l, i) => (
@@ -290,12 +296,15 @@ export default function ProfilePage() {
       )}
 
       {/* Save button at bottom too */}
-      <motion.div variants={fadeUp} className="flex justify-end">
-        <motion.button whileTap={{ scale: 0.95 }} onClick={saveProfile} disabled={saving}
-          className="px-8 py-3.5 rounded-xl text-[14px] font-bold text-white"
-          style={{ background: saved ? 'linear-gradient(135deg, #00b894, #00a381)' : 'linear-gradient(135deg, #fd79a8, #e84393)' }}>
+      <motion.div variants={fadeInUp} className="flex justify-end">
+        <PremiumButton
+          variant={saved ? 'success' : 'primary'}
+          size="lg"
+          onClick={saveProfile}
+          disabled={saving}
+          loading={saving}>
           {saving ? 'Saving...' : saved ? '✓ Profile Saved!' : 'Save Profile'}
-        </motion.button>
+        </PremiumButton>
       </motion.div>
 
     </motion.div>

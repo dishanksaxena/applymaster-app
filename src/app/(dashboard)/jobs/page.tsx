@@ -3,6 +3,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { createClient } from '@/lib/supabase-browser'
+import { PremiumCard, PremiumButton } from '@/components/premium'
+import { staggerContainer, fadeInUp } from '@/lib/animations'
 
 interface Job { id: string; title: string; company: string; location: string; remote_type: string | null; salary_min: number | null; salary_max: number | null; source: string; url: string; posted_at?: string; salary_currency?: string }
 
@@ -274,23 +276,24 @@ export default function JobsPage() {
   const selectCls = `${inputCls} cursor-pointer`
 
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="space-y-8 max-w-[1200px] mx-auto">
+    <motion.div variants={staggerContainer} initial="hidden" animate="show" className="space-y-8 max-w-[1200px] mx-auto">
 
       {/* Header */}
-      <div className="relative overflow-hidden rounded-2xl p-8" style={{
+      <motion.div variants={fadeInUp} className="relative overflow-hidden rounded-2xl p-8" style={{
         background: 'linear-gradient(135deg, rgba(253,121,168,0.08) 0%, rgba(116,185,255,0.06) 100%)',
         border: '1px solid rgba(253,121,168,0.1)',
       }}>
         <div className="absolute top-[-50%] right-[-10%] w-[300px] h-[300px] rounded-full opacity-[0.07]" style={{ background: 'radial-gradient(circle, #74b9ff, transparent 70%)' }} />
         <div className="relative z-10">
-          <h1 className="text-2xl lg:text-3xl font-black tracking-tight mb-2">Job Search</h1>
+          <h1 className="text-2xl lg:text-3xl font-black tracking-tight mb-2 text-white">Job Search</h1>
           <p className="text-[14px] text-[#8a8a9a]">Search across 50+ job portals with AI-powered matching</p>
         </div>
-      </div>
+      </motion.div>
 
       {/* Search */}
-      <div className="p-6 rounded-2xl" style={{ background: 'linear-gradient(135deg, #252545 0%, #1e1e3a 100%)', border: '1px solid rgba(255,255,255,0.15)' }}>
-        <div className="space-y-4">
+      <motion.div variants={fadeInUp}>
+        <PremiumCard accent="blue" hover={false}>
+          <div className="p-6 space-y-4">
           {/* Keyword */}
           <div className="relative">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5a5a6a" strokeWidth="1.8" className="absolute left-4 top-1/2 -translate-y-1/2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
@@ -345,79 +348,79 @@ export default function JobsPage() {
             </select>
           </div>
 
-          <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }} onClick={searchJobs} disabled={loading || !searchTerm}
-            className="w-full py-4 rounded-xl font-bold text-[14px] text-white disabled:opacity-30 transition-all"
-            style={{ background: 'linear-gradient(135deg, #fd79a8, #e84393)' }}>
-            {loading ? (
-              <span className="flex items-center justify-center gap-2">
-                <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }} className="w-4 h-4 rounded-full border-2 border-white/20 border-t-white" />
-                Searching...
-              </span>
-            ) : 'Search Jobs'}
-          </motion.button>
-        </div>
-      </div>
+            <PremiumButton variant="primary" size="lg" onClick={searchJobs} disabled={loading || !searchTerm} fullWidth loading={loading}>
+              {loading ? 'Searching...' : 'Search Jobs'}
+            </PremiumButton>
+          </div>
+        </PremiumCard>
+      </motion.div>
 
       {/* Results */}
       <AnimatePresence>
         {jobs.length === 0 && !loading ? (
-          <div className="text-center py-16">
+          <motion.div variants={fadeInUp} className="text-center py-16">
             <motion.div animate={{ y: [0, -8, 0] }} transition={{ duration: 3, repeat: Infinity }} className="inline-block mb-4">
               <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#3a3a4a" strokeWidth="1.5"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
             </motion.div>
             <p className="text-[15px] font-semibold text-[#5a5a6a]">Search for your dream job</p>
             <p className="text-[12px] text-[#3a3a4a] mt-1">Supports US, India, UK, Canada and more</p>
-          </div>
+          </motion.div>
         ) : (
-          <div className="space-y-3">
+          <motion.div variants={staggerContainer} initial="hidden" animate="show" className="space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-[13px] font-semibold text-[#5a5a6a]">{jobs.length} jobs found</span>
             </div>
             {jobs.map((job, i) => (
-              <motion.div key={job.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: Math.min(i * 0.04, 0.6) }} whileHover={{ y: -2, transition: { duration: 0.2 } }}
-                className="p-5 rounded-2xl group transition-all"
-                style={{ background: 'linear-gradient(135deg, #252545 0%, #1e1e3a 100%)', border: '1px solid rgba(255,255,255,0.18)' }}>
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex gap-4 flex-1">
-                    <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 text-[14px] font-bold"
-                      style={{ background: 'linear-gradient(135deg, rgba(253,121,168,0.1), rgba(162,155,254,0.1))', color: '#fd79a8' }}>
-                      {job.company[0]}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <a href={job.url} target="_blank" rel="noopener noreferrer" className="text-[15px] font-bold text-white hover:text-[#fd79a8] transition-colors">{job.title}</a>
-                      <div className="text-[13px] text-[#6a6a7a] mt-0.5">{job.company} · {job.location}</div>
-                      {formatSalary(job) && (
-                        <div className="text-[13px] font-semibold text-[#00b894] mt-1">{formatSalary(job)}</div>
-                      )}
-                      <div className="flex flex-wrap gap-2 mt-3">
-                        {job.remote_type && (
-                          <span className="text-[11px] font-bold px-2.5 py-1 rounded-lg" style={{ background: 'rgba(0,184,148,0.08)', color: '#00b894' }}>
-                            {job.remote_type}
-                          </span>
-                        )}
-                        <span className="text-[11px] font-bold px-2.5 py-1 rounded-lg" style={{ background: 'rgba(116,185,255,0.08)', color: '#74b9ff' }}>{job.source}</span>
-                        {job.posted_at && (
-                          <span className="text-[11px] text-[#5a5a6a]">{formatPosted(job.posted_at)}</span>
-                        )}
+              <motion.div key={job.id} variants={fadeInUp}>
+                <PremiumCard accent="purple" glowEffect={true} animationDelay={Math.min(i * 0.05, 0.4)}>
+                  <div className="p-5">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex gap-4 flex-1">
+                        <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 text-[14px] font-bold"
+                          style={{ background: 'linear-gradient(135deg, rgba(253,121,168,0.1), rgba(162,155,254,0.1))', color: '#fd79a8' }}>
+                          {job.company[0]}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <a href={job.url} target="_blank" rel="noopener noreferrer" className="text-[15px] font-bold text-white hover:text-[#fd79a8] transition-colors">{job.title}</a>
+                          <div className="text-[13px] text-[#6a6a7a] mt-0.5">{job.company} · {job.location}</div>
+                          {formatSalary(job) && (
+                            <div className="text-[13px] font-semibold text-[#00b894] mt-1">{formatSalary(job)}</div>
+                          )}
+                          <div className="flex flex-wrap gap-2 mt-3">
+                            {job.remote_type && (
+                              <span className="text-[11px] font-bold px-2.5 py-1 rounded-lg" style={{ background: 'rgba(0,184,148,0.08)', color: '#00b894' }}>
+                                {job.remote_type}
+                              </span>
+                            )}
+                            <span className="text-[11px] font-bold px-2.5 py-1 rounded-lg" style={{ background: 'rgba(116,185,255,0.08)', color: '#74b9ff' }}>{job.source}</span>
+                            {job.posted_at && (
+                              <span className="text-[11px] text-[#5a5a6a]">{formatPosted(job.posted_at)}</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex gap-2 shrink-0">
+                        <PremiumButton
+                          variant={savedJobs.has(job.id) ? 'success' : 'secondary'}
+                          size="sm"
+                          onClick={() => saveJob(job)}
+                          disabled={savedJobs.has(job.id)}>
+                          {savedJobs.has(job.id) ? '✓ Saved' : 'Save'}
+                        </PremiumButton>
+                        <PremiumButton
+                          variant={appliedJobs.has(job.id) ? 'secondary' : 'primary'}
+                          size="sm"
+                          onClick={() => applyJob(job)}
+                          disabled={appliedJobs.has(job.id)}>
+                          {appliedJobs.has(job.id) ? '✓ Applied' : 'Apply Now'}
+                        </PremiumButton>
                       </div>
                     </div>
                   </div>
-                  <div className="flex gap-2 shrink-0">
-                    <motion.button whileTap={{ scale: 0.9 }} onClick={() => saveJob(job)} disabled={savedJobs.has(job.id)}
-                      className="py-2.5 px-4 rounded-xl text-[12px] font-bold transition-all"
-                      style={savedJobs.has(job.id) ? { background: 'rgba(0,184,148,0.1)', color: '#00b894', border: '1px solid rgba(0,184,148,0.2)' } : { background: 'rgba(253,121,168,0.1)', color: '#fd79a8', border: '1px solid rgba(253,121,168,0.2)' }}>
-                      {savedJobs.has(job.id) ? '✓ Saved' : 'Save'}
-                    </motion.button>
-                    <motion.button whileTap={{ scale: 0.9 }} onClick={() => applyJob(job)} disabled={appliedJobs.has(job.id)}
-                      className="py-2.5 px-4 rounded-xl text-[12px] font-bold transition-all"
-                      style={appliedJobs.has(job.id) ? { background: 'rgba(116,185,255,0.1)', color: '#74b9ff', border: '1px solid rgba(116,185,255,0.2)' } : { background: 'rgba(0,184,148,0.1)', color: '#00b894', border: '1px solid rgba(0,184,148,0.2)' }}>
-                      {appliedJobs.has(job.id) ? '✓ Applied' : 'Apply Now'}
-                    </motion.button>
-                  </div>
-                </div>
+                </PremiumCard>
               </motion.div>
             ))}
-          </div>
+          </motion.div>
         )}
       </AnimatePresence>
     </motion.div>
