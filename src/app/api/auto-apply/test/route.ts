@@ -74,8 +74,17 @@ function detectExperienceLevel(title: string, description: string): string {
   return 'mid'
 }
 
+// Helper to log activity with delay for realistic streaming
+async function logActivity(supabase: any, userId: string, action: string, details: string) {
+  return supabase.from('apply_log').insert({
+    user_id: userId,
+    action,
+    details
+  })
+}
+
 // This endpoint handles the test call from the UI
-// It directly runs auto-apply logic for the current user
+// It directly runs auto-apply logic for the current user with detailed logging
 export async function POST(req: NextRequest) {
   try {
     const supabase = createClient()
@@ -96,6 +105,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'User preferences not configured' }, { status: 400 })
     }
 
+    // Log: Starting scan
+    await logActivity(supabase, user.id, 'scanning', `Scanning for ${userPref.target_roles?.join(', ') || 'all'} roles...`)
+
     // Check daily limit
     const today = new Date()
     today.setHours(0, 0, 0, 0)
@@ -108,6 +120,7 @@ export async function POST(req: NextRequest) {
 
     const appsToday = todayApps?.length || 0
     if (appsToday >= userPref.daily_apply_limit) {
+      await logActivity(supabase, user.id, 'scanning', `Daily limit reached (${appsToday}/${userPref.daily_apply_limit})`)
       return NextResponse.json({
         message: 'Daily limit reached',
         processed: 0,
@@ -123,6 +136,7 @@ export async function POST(req: NextRequest) {
       .gt('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
 
     if (!availableJobs || availableJobs.length === 0) {
+      await logActivity(supabase, user.id, 'scanning', 'No jobs found in database')
       return NextResponse.json({
         message: 'No jobs available',
         processed: 0,
@@ -138,25 +152,50 @@ export async function POST(req: NextRequest) {
       .eq('user_id', user.id)
 
     const appliedIds = new Set(appliedJobIds?.map(a => a.job_id) || [])
+    const unappliedJobs = availableJobs.filter(job => !appliedIds.has(job.id))
+
+    await logActivity(supabase, user.id, 'scanning', `Found ${unappliedJobs.length} unapplied jobs to analyze...`)
 
     // Score and filter jobs
-    const candidates = availableJobs
-      .filter(job => !appliedIds.has(job.id))
-      .map(job => ({
-        ...job,
-        score: calculateMatchScore(job, userPref)
-      }))
+    const scoredJobs = unappliedJobs.map(job => ({
+      ...job,
+      score: calculateMatchScore(job, userPref)
+    }))
+
+    const candidates = scoredJobs
       .filter(job => job.score >= userPref.match_threshold)
       .sort((a, b) => b.score - a.score)
       .slice(0, userPref.daily_apply_limit - appsToday)
 
     if (candidates.length === 0) {
+      await logActivity(supabase, user.id, 'scanning', `No matches above ${userPref.match_threshold}% threshold`)
       return NextResponse.json({
         message: 'No matching jobs',
         processed: 0,
         users_processed: 1,
         results: [{ user_id: user.id, status: 'no_matches' }]
       })
+    }
+
+    // Log: Found matches
+    await logActivity(
+      supabase,
+      user.id,
+      'matched',
+      `Found ${candidates.length} new matches above ${userPref.match_threshold}% threshold`
+    )
+
+    // Log: Analyzing top matches
+    for (let i = 0; i < Math.min(3, candidates.length); i++) {
+      const job = candidates[i]
+      await logActivity(
+        supabase,
+        user.id,
+        'analyzing',
+        `Analyzing: ${job.title} at ${job.company} – Match: ${Math.round(job.score)}%`
+      )
+      // Small delay between log entries for realistic feel
+      await new Promise(resolve => setTimeout(resolve, 200))
     }
 
     // Create applications for each match
@@ -173,13 +212,14 @@ export async function POST(req: NextRequest) {
       .insert(newApps)
       .select('id')
 
-    // Log activity
+    // Log final result
     if (created && created.length > 0) {
-      await supabase.from('apply_log').insert({
-        user_id: user.id,
-        action: userPref.auto_apply_mode === 'copilot' ? 'queued_applications' : 'auto_applied',
-        details: `${created.length} job(s) ${userPref.auto_apply_mode === 'copilot' ? 'queued for review' : 'automatically applied'}`
-      })
+      await logActivity(
+        supabase,
+        user.id,
+        userPref.auto_apply_mode === 'copilot' ? 'queued_applications' : 'auto_applied',
+        `${created.length} application(s) ${userPref.auto_apply_mode === 'copilot' ? 'queued for review' : 'automatically sent'}`
+      )
     }
 
     return NextResponse.json({
