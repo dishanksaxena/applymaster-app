@@ -127,11 +127,10 @@ export default function AutoApplyPage() {
   const testAutoApply = async () => {
     setTestingAuto(true)
     try {
-      const response = await fetch('/api/cron/auto-apply', {
+      // Call a server action to test auto-apply
+      const response = await fetch('/api/auto-apply/test', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_CRON_SECRET || 'test-secret-change-in-production'}`
-        }
+        headers: { 'Content-Type': 'application/json' }
       })
 
       const data = await response.json()
