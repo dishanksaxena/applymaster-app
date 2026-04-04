@@ -35,35 +35,28 @@ export default function SavedJobsPage() {
       try {
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) {
-          console.log('No user')
           setLoading(false)
           return
         }
 
         // Load applications with status 'saved'
-        const { data: apps, error: appsError } = await supabase
+        const { data: apps } = await supabase
           .from('applications')
           .select('job_id')
           .eq('user_id', user.id)
           .eq('status', 'saved')
           .order('created_at', { ascending: false })
 
-        console.log('Apps found:', apps?.length, 'Error:', appsError)
-
         if (apps && apps.length > 0) {
           const jobIds = apps.map(a => a.job_id).filter(Boolean)
-          console.log('Job IDs:', jobIds)
 
           if (jobIds.length > 0) {
-            const { data: jobsData, error: jobsError } = await supabase
+            const { data: jobsData } = await supabase
               .from('jobs')
               .select('*')
               .in('id', jobIds)
 
-            console.log('Jobs found:', jobsData?.length, 'Error:', jobsError)
-
             if (jobsData && jobsData.length > 0) {
-              console.log('Setting jobs:', jobsData)
               setJobs(jobsData as SavedJob[])
             }
           }
@@ -121,10 +114,6 @@ export default function SavedJobsPage() {
     j => j.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
          j.company.toLowerCase().includes(searchTerm.toLowerCase())
   )
-
-  useEffect(() => {
-    console.log('Jobs state updated:', jobs.length, 'Filtered:', filteredJobs.length, 'Loading:', loading)
-  }, [jobs, filteredJobs, loading])
 
   if (!mounted) return <div className="p-8" />
 
