@@ -63,6 +63,7 @@ export interface Application {
   job_id: string
   status: 'saved' | 'queued' | 'applied' | 'screening' | 'interview' | 'offer' | 'rejected' | 'withdrawn'
   match_score: number | null
+  position: number
   resume_id: string | null
   cover_letter_id: string | null
   applied_at: string | null

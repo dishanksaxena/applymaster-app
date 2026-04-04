@@ -145,6 +145,14 @@ export default function ApplicationsPage() {
   const kanbanScrollRef = useRef<HTMLDivElement>(null)
   const supabase = createClient()
 
+  // Drag and drop state
+  const [draggedCardId, setDraggedCardId] = useState<string | null>(null)
+  const [draggedFromStatus, setDraggedFromStatus] = useState<string | null>(null)
+  const [dragSourcePos, setDragSourcePos] = useState<number | null>(null)
+  const [dropTargetStatus, setDropTargetStatus] = useState<string | null>(null)
+  const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null)
+  const [isSwappingCard, setIsSwappingCard] = useState(false)
+
   useEffect(() => { setMounted(true) }, [])
 
   useEffect(() => {
@@ -183,7 +191,8 @@ export default function ApplicationsPage() {
       .from('applications')
       .select('*, job:jobs(*)')
       .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
+      .order('status')
+      .order('position', { ascending: true })
 
     const grouped = new Map<string, Application[]>()
     statuses.forEach(s => grouped.set(s, []))
@@ -202,9 +211,104 @@ export default function ApplicationsPage() {
   }
 
   const updateStatus = async (appId: string, newStatus: string) => {
-    await supabase.from('applications').update({ status: newStatus }).eq('id', appId)
+    await supabase.from('applications').update({ status: newStatus, position: 0 }).eq('id', appId)
     await loadApplications()
   }
+
+  const updatePosition = async (appId: string, newPosition: number) => {
+    await supabase.from('applications').update({ position: newPosition }).eq('id', appId)
+    await loadApplications()
+  }
+
+  const askConfirmation = (title: string, message: string): boolean => {
+    return confirm(`${title}\n\n${message}`)
+  }
+
+  // Drag and drop handlers
+  const handleDragStart = useCallback((e: React.DragEvent, appId: string, fromStatus: string, fromPosition: number) => {
+    setDraggedCardId(appId)
+    setDraggedFromStatus(fromStatus)
+    setDragSourcePos(fromPosition)
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('appId', appId)
+    e.dataTransfer.setData('fromStatus', fromStatus)
+  }, [])
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+  }, [])
+
+  const handleDragEnterColumn = useCallback((status: string) => {
+    setDropTargetStatus(status)
+  }, [])
+
+  const handleDragLeaveColumn = useCallback(() => {
+    setDropTargetStatus(null)
+    setDropTargetIndex(null)
+  }, [])
+
+  const handleDropOnColumn = useCallback(async (e: React.DragEvent, toStatus: string) => {
+    e.preventDefault()
+    const appId = e.dataTransfer.getData('appId')
+    const fromStatus = e.dataTransfer.getData('fromStatus')
+
+    if (!appId || !draggedCardId) {
+      setDropTargetStatus(null)
+      setDropTargetIndex(null)
+      return
+    }
+
+    // Cross-column move (status change)
+    if (fromStatus !== toStatus) {
+      // Check for critical moves that need confirmation
+      const criticalMoves = [
+        ['screening', 'offer'],
+        ['interview', 'offer'],
+        ['interview', 'rejected'],
+      ]
+
+      const isCritical = criticalMoves.some(
+        ([from, to]) => (from === fromStatus && to === toStatus)
+      )
+
+      if (isCritical) {
+        const confirmed = askConfirmation(
+          'Confirm Status Change',
+          `Move this application from ${statusConfig[fromStatus as Status].label} to ${statusConfig[toStatus as Status].label}?`
+        )
+        if (!confirmed) {
+          setDropTargetStatus(null)
+          setDropTargetIndex(null)
+          return
+        }
+      }
+
+      setIsSwappingCard(true)
+      await updateStatus(appId, toStatus)
+      setIsSwappingCard(false)
+    } else {
+      // Same column - just reorder
+      // Position will be recalculated based on drop index
+      setIsSwappingCard(true)
+      await updatePosition(appId, dropTargetIndex ?? dragSourcePos ?? 0)
+      setIsSwappingCard(false)
+    }
+
+    setDraggedCardId(null)
+    setDraggedFromStatus(null)
+    setDragSourcePos(null)
+    setDropTargetStatus(null)
+    setDropTargetIndex(null)
+  }, [draggedCardId, dragSourcePos, dropTargetIndex, askConfirmation])
+
+  const handleDragEnd = useCallback(() => {
+    setDraggedCardId(null)
+    setDraggedFromStatus(null)
+    setDragSourcePos(null)
+    setDropTargetStatus(null)
+    setDropTargetIndex(null)
+  }, [])
 
   // ─── Computed Stats ─────────────────────────────────────────────────────
   const stats = useMemo(() => {
@@ -559,7 +663,13 @@ export default function ApplicationsPage() {
                       style={{ animation: `floatUp 0.4s ease ${0.35 + colIndex * 0.05}s both` }}
                     >
                       {/* Column Header */}
-                      <div className="relative mb-4 rounded-xl overflow-hidden">
+                      <div
+                        className="relative mb-4 rounded-xl overflow-hidden transition-all"
+                        style={{
+                          borderBottom: dropTargetStatus === status ? `2px solid ${config.color}` : 'none',
+                          opacity: dropTargetStatus && dropTargetStatus !== status ? 0.5 : 1,
+                        }}
+                      >
                         <div className="absolute inset-0 opacity-[0.07]" style={{ background: `linear-gradient(180deg, ${config.color}, transparent)` }} />
                         <div className="relative flex items-center gap-2.5 px-4 py-3">
                           <div
@@ -577,15 +687,38 @@ export default function ApplicationsPage() {
                           >
                             {apps.length}
                           </span>
+                          {dropTargetStatus === status && draggedFromStatus && draggedFromStatus !== status && (
+                            <div className="absolute right-2 -bottom-1 text-[10px] text-[#4a4a5a]">
+                              Drop to move →
+                            </div>
+                          )}
                         </div>
                       </div>
 
                       {/* Cards */}
-                      <div className="space-y-3">
+                      <div
+                        className="space-y-3"
+                        onDragOver={handleDragOver}
+                        onDragEnter={() => handleDragEnterColumn(status)}
+                        onDragLeave={handleDragLeaveColumn}
+                        onDrop={(e) => handleDropOnColumn(e, status)}
+                        style={{
+                          backgroundColor: dropTargetStatus === status ? 'rgba(255,255,255,0.05)' : 'transparent',
+                          borderRadius: '0.75rem',
+                          padding: '0.75rem',
+                          transition: 'background-color 0.2s ease',
+                          minHeight: apps.length === 0 ? '180px' : 'auto',
+                        }}
+                      >
                         {apps.map((app, cardIndex) => (
                           <div
                             key={app.id}
-                            className="card-hover relative rounded-2xl border border-[rgba(255,255,255,0.06)] p-4 cursor-default group"
+                            draggable={!isSwappingCard}
+                            onDragStart={(e) => handleDragStart(e, app.id, status, app.position || cardIndex)}
+                            onDragEnd={handleDragEnd}
+                            className={`card-hover relative rounded-2xl border border-[rgba(255,255,255,0.06)] p-4 cursor-grab active:cursor-grabbing group transition-all ${
+                              draggedCardId === app.id ? 'opacity-50 scale-95' : 'opacity-100 scale-100'
+                            }`}
                             style={{
                               background: 'linear-gradient(135deg, rgba(18,18,28,0.9), rgba(13,13,21,0.95))',
                               backdropFilter: 'blur(20px)',

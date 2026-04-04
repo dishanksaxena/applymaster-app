@@ -13,7 +13,7 @@ interface CoverLetterEditorProps {
     title: string
     content: string
     tone: string
-    job_id?: string
+    job_id?: string | null
   }
   onClose?: () => void
   onSave?: (letter: any) => void
