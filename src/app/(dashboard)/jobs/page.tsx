@@ -130,7 +130,7 @@ export default function JobsPage() {
     if (!searchTerm) return
     setLoading(true)
     try {
-      const salaryMin = salaryRanges[salaryIdx]?.min || 0
+      const selectedSalary = salaryRanges[salaryIdx]
       const response = await fetch('/api/search-jobs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -139,7 +139,7 @@ export default function JobsPage() {
           location: city || '',
           remote,
           country,
-          minSalary: salaryMin,
+          minSalary: selectedSalary?.min || 0,
           maxDaysOld: daysOld || 30,
         })
       })
@@ -155,9 +155,15 @@ export default function JobsPage() {
         })
       }
 
-      // Client-side salary filter
-      if (salaryMin > 0) {
-        results = results.filter((j: Job) => !j.salary_min || j.salary_min >= salaryMin)
+      // Client-side salary filter - check range overlap
+      if (selectedSalary?.min && selectedSalary.min > 0) {
+        results = results.filter((j: Job) => {
+          if (!j.salary_min) return true // Include jobs with no salary info
+          const jobSalaryMax = j.salary_max || j.salary_min
+          const selectedMax = selectedSalary.max || selectedSalary.min
+          // Check if ranges overlap: job_max >= selected_min AND job_min <= selected_max
+          return jobSalaryMax >= selectedSalary.min && j.salary_min <= selectedMax
+        })
       }
 
       setJobs(results)
@@ -183,23 +189,40 @@ export default function JobsPage() {
         url: job.url,
       }
 
-      // Upsert job with proper conflict resolution
-      const { data: jobResult, error: jobError } = await supabase.from('jobs').upsert(jobData, {
-        onConflict: 'external_id,source',
-      }).select().single()
+      // First try to find existing job
+      let { data: existingJob } = await supabase
+        .from('jobs')
+        .select('id')
+        .eq('external_id', externalId)
+        .eq('source', job.source)
+        .single()
 
-      if (jobError) {
-        console.error('Job save error:', jobError)
-        throw jobError
+      let jobId: string
+
+      if (existingJob) {
+        // Update existing job
+        jobId = existingJob.id
+        const { error: updateError } = await supabase
+          .from('jobs')
+          .update(jobData)
+          .eq('id', jobId)
+        if (updateError) throw updateError
+      } else {
+        // Insert new job
+        const { data: newJob, error: insertError } = await supabase
+          .from('jobs')
+          .insert(jobData)
+          .select()
+          .single()
+        if (insertError) throw insertError
+        jobId = newJob.id
       }
 
       // Create or update application with status 'saved'
       const { error: appError } = await supabase.from('applications').upsert({
         user_id: user.id,
-        job_id: jobResult.id,
+        job_id: jobId,
         status: 'saved',
-      }, {
-        onConflict: 'user_id,job_id',
       })
 
       if (appError) {
@@ -218,9 +241,10 @@ export default function JobsPage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
     try {
-      // Save job first with proper upsert conflict handling
+      // Save job first
+      const externalId = `${job.source}-${job.id}`
       const jobData = {
-        external_id: `${job.source}-${job.id}`,
+        external_id: externalId,
         source: job.source,
         title: job.title,
         company: job.company,
@@ -231,19 +255,40 @@ export default function JobsPage() {
         url: job.url,
       }
 
-      const { data: jobResult, error: jobError } = await supabase.from('jobs').upsert(jobData, {
-        onConflict: 'external_id,source',
-      }).select().single()
+      // First try to find existing job
+      let { data: existingJob } = await supabase
+        .from('jobs')
+        .select('id')
+        .eq('external_id', externalId)
+        .eq('source', job.source)
+        .single()
 
-      if (jobError) throw jobError
+      let jobId: string
+
+      if (existingJob) {
+        // Update existing job
+        jobId = existingJob.id
+        const { error: updateError } = await supabase
+          .from('jobs')
+          .update(jobData)
+          .eq('id', jobId)
+        if (updateError) throw updateError
+      } else {
+        // Insert new job
+        const { data: newJob, error: insertError } = await supabase
+          .from('jobs')
+          .insert(jobData)
+          .select()
+          .single()
+        if (insertError) throw insertError
+        jobId = newJob.id
+      }
 
       // Create/update application with "applied" status
       const { error: appError } = await supabase.from('applications').upsert({
         user_id: user.id,
-        job_id: jobResult.id,
+        job_id: jobId,
         status: 'applied',
-      }, {
-        onConflict: 'user_id,job_id',
       })
 
       if (appError) throw appError
