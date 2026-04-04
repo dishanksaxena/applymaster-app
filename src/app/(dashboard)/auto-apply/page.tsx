@@ -190,48 +190,7 @@ export default function AutoApplyPage() {
         </div>
       </motion.div>
 
-      {/* Analytics Cards - Today, This Week, This Month */}
-      {applications.length > 0 && (
-        <motion.div variants={fadeUp} className="grid sm:grid-cols-3 gap-4">
-          {[
-            { period: 'Today', apps: analytics.today.apps, rate: analytics.today.success, color: '#74b9ff' },
-            { period: 'This Week', apps: analytics.thisWeek.apps, rate: analytics.thisWeek.success, color: '#fd79a8' },
-            { period: 'This Month', apps: analytics.thisMonth.apps, rate: analytics.thisMonth.success, color: '#a78bfa' },
-          ].map((stat, i) => (
-            <div
-              key={stat.period}
-              className="rounded-2xl border border-[rgba(255,255,255,0.06)] bg-[#0d0d15] p-6"
-              style={{ animation: `floatUp 0.5s ease ${i * 0.1}s both` }}
-            >
-              <div className="text-[12px] font-bold uppercase tracking-wider text-[#5a5a6a] mb-3">{stat.period}</div>
-              <div className="space-y-4">
-                <div>
-                  <div className="text-[13px] text-[#8a8a9a] mb-1">Applications</div>
-                  <div className="text-3xl font-black text-white">
-                    <AnimatedNumber value={stat.apps} delay={i * 150} />
-                  </div>
-                </div>
-                <div>
-                  <div className="text-[13px] text-[#8a8a9a] mb-1">Success Rate</div>
-                  <div className="text-3xl font-black" style={{ color: stat.color }}>
-                    <AnimatedNumber value={stat.rate} delay={i * 150 + 100} />%
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </motion.div>
-      )}
-
-      {/* Charts Section */}
-      {applications.length > 0 && (
-        <motion.div variants={fadeUp} className="grid lg:grid-cols-3 gap-6">
-          <ApplicationSourceChart applications={applications} />
-          <TrendLineChart applications={applications} />
-          <SuccessDonutChart applications={applications} />
-        </motion.div>
-      )}
-
+      {/* ── Configuration + Activity Feed (always visible at top) ── */}
       <div className="grid lg:grid-cols-[1fr_380px] gap-6">
         <div className="space-y-6">
 
@@ -374,6 +333,48 @@ export default function AutoApplyPage() {
           <ActivityFeed />
         </motion.div>
       </div>
+
+      {/* Analytics Cards - Today, This Week, This Month */}
+      {applications.length > 0 && (
+        <motion.div variants={fadeUp} className="grid sm:grid-cols-3 gap-4">
+          {[
+            { period: 'Today', apps: analytics.today.apps, rate: analytics.today.success, color: '#74b9ff' },
+            { period: 'This Week', apps: analytics.thisWeek.apps, rate: analytics.thisWeek.success, color: '#fd79a8' },
+            { period: 'This Month', apps: analytics.thisMonth.apps, rate: analytics.thisMonth.success, color: '#a78bfa' },
+          ].map((stat, i) => (
+            <div
+              key={stat.period}
+              className="rounded-2xl border border-[rgba(255,255,255,0.06)] bg-[#0d0d15] p-6"
+              style={{ animation: `floatUp 0.5s ease ${i * 0.1}s both` }}
+            >
+              <div className="text-[12px] font-bold uppercase tracking-wider text-[#5a5a6a] mb-3">{stat.period}</div>
+              <div className="space-y-4">
+                <div>
+                  <div className="text-[13px] text-[#8a8a9a] mb-1">Applications</div>
+                  <div className="text-3xl font-black text-white">
+                    <AnimatedNumber value={stat.apps} delay={i * 150} />
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[13px] text-[#8a8a9a] mb-1">Success Rate</div>
+                  <div className="text-3xl font-black" style={{ color: stat.color }}>
+                    <AnimatedNumber value={stat.rate} delay={i * 150 + 100} />%
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </motion.div>
+      )}
+
+      {/* Charts Section */}
+      {applications.length > 0 && (
+        <motion.div variants={fadeUp} className="grid lg:grid-cols-3 gap-6">
+          <ApplicationSourceChart applications={applications} />
+          <TrendLineChart applications={applications} />
+          <SuccessDonutChart applications={applications} />
+        </motion.div>
+      )}
     </motion.div>
   )
 }
