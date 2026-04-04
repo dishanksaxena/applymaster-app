@@ -1,11 +1,47 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { createClient } from '@/lib/supabase-browser'
+import ApplicationSourceChart from './ApplicationSourceChart'
+import TrendLineChart from './TrendLineChart'
+import SuccessDonutChart from './SuccessDonutChart'
+import ActivityFeed from './ActivityFeed'
 
 const container = { hidden: {}, show: { transition: { staggerChildren: 0.08 } } }
 const fadeUp = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] as const } } }
+
+// Animated number counter
+function AnimatedNumber({ value, delay = 0 }: { value: number; delay?: number }) {
+  const [displayed, setDisplayed] = useState(0)
+  const [started, setStarted] = useState(false)
+
+  useEffect(() => {
+    const t = setTimeout(() => setStarted(true), delay)
+    return () => clearTimeout(t)
+  }, [delay])
+
+  useEffect(() => {
+    if (!started) return
+    if (value === 0) { setDisplayed(0); return }
+    const duration = 600
+    const steps = 20
+    const increment = value / steps
+    let current = 0
+    const interval = setInterval(() => {
+      current += increment
+      if (current >= value) {
+        setDisplayed(value)
+        clearInterval(interval)
+      } else {
+        setDisplayed(Math.floor(current))
+      }
+    }, duration / steps)
+    return () => clearInterval(interval)
+  }, [value, started])
+
+  return <>{displayed}</>
+}
 
 const sources = [
   { name: 'LinkedIn', color: '#0077b5', icon: 'in' },
@@ -22,6 +58,7 @@ export default function AutoApplyPage() {
   const [matchThreshold, setMatchThreshold] = useState(80)
   const [activeSources, setActiveSources] = useState(['LinkedIn', 'Indeed', 'Glassdoor'])
   const [logs, setLogs] = useState<any[]>([])
+  const [applications, setApplications] = useState<any[]>([])
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [mounted, setMounted] = useState(false)
@@ -33,13 +70,48 @@ export default function AutoApplyPage() {
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
+
+      // Load preferences
       const { data } = await supabase.from('job_preferences').select('*').eq('user_id', user.id).single()
       if (data) { setMode(data.auto_apply_mode); setDailyLimit(data.daily_apply_limit); setMatchThreshold(data.match_threshold) }
+
+      // Load activity logs
       const { data: logData } = await supabase.from('apply_log').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(20)
       if (logData) setLogs(logData)
+
+      // Load applications for analytics
+      const { data: appData } = await supabase.from('applications').select('*, job:jobs(*)').eq('user_id', user.id)
+      if (appData) setApplications(appData)
     }
     load()
   }, [supabase])
+
+  // Compute analytics data
+  const analytics = useMemo(() => {
+    const now = new Date()
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    const weekStart = new Date(today)
+    weekStart.setDate(weekStart.getDate() - today.getDay())
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+
+    const appsToday = applications.filter(a => a.applied_at && new Date(a.applied_at) >= today).length
+    const appsThisWeek = applications.filter(a => a.applied_at && new Date(a.applied_at) >= weekStart).length
+    const appsThisMonth = applications.filter(a => a.applied_at && new Date(a.applied_at) >= monthStart).length
+
+    const successToday = applications.filter(a => a.applied_at && new Date(a.applied_at) >= today && ['interview', 'offer'].includes(a.status)).length
+    const successThisWeek = applications.filter(a => a.applied_at && new Date(a.applied_at) >= weekStart && ['interview', 'offer'].includes(a.status)).length
+    const successThisMonth = applications.filter(a => a.applied_at && new Date(a.applied_at) >= monthStart && ['interview', 'offer'].includes(a.status)).length
+
+    const successRateToday = appsToday > 0 ? Math.round((successToday / appsToday) * 100) : 0
+    const successRateThisWeek = appsThisWeek > 0 ? Math.round((successThisWeek / appsThisWeek) * 100) : 0
+    const successRateThisMonth = appsThisMonth > 0 ? Math.round((successThisMonth / appsThisMonth) * 100) : 0
+
+    return {
+      today: { apps: appsToday, success: successRateToday },
+      thisWeek: { apps: appsThisWeek, success: successRateThisWeek },
+      thisMonth: { apps: appsThisMonth, success: successRateThisMonth },
+    }
+  }, [applications])
 
   const saveSettings = async () => {
     setSaving(true)
@@ -91,6 +163,48 @@ export default function AutoApplyPage() {
           )}
         </div>
       </motion.div>
+
+      {/* Analytics Cards - Today, This Week, This Month */}
+      {applications.length > 0 && (
+        <motion.div variants={fadeUp} className="grid sm:grid-cols-3 gap-4">
+          {[
+            { period: 'Today', apps: analytics.today.apps, rate: analytics.today.success, color: '#74b9ff' },
+            { period: 'This Week', apps: analytics.thisWeek.apps, rate: analytics.thisWeek.success, color: '#fd79a8' },
+            { period: 'This Month', apps: analytics.thisMonth.apps, rate: analytics.thisMonth.success, color: '#a78bfa' },
+          ].map((stat, i) => (
+            <div
+              key={stat.period}
+              className="rounded-2xl border border-[rgba(255,255,255,0.06)] bg-[#0d0d15] p-6"
+              style={{ animation: `floatUp 0.5s ease ${i * 0.1}s both` }}
+            >
+              <div className="text-[12px] font-bold uppercase tracking-wider text-[#5a5a6a] mb-3">{stat.period}</div>
+              <div className="space-y-4">
+                <div>
+                  <div className="text-[13px] text-[#8a8a9a] mb-1">Applications</div>
+                  <div className="text-3xl font-black text-white">
+                    <AnimatedNumber value={stat.apps} delay={i * 150} />
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[13px] text-[#8a8a9a] mb-1">Success Rate</div>
+                  <div className="text-3xl font-black" style={{ color: stat.color }}>
+                    <AnimatedNumber value={stat.rate} delay={i * 150 + 100} />%
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </motion.div>
+      )}
+
+      {/* Charts Section */}
+      {applications.length > 0 && (
+        <motion.div variants={fadeUp} className="grid lg:grid-cols-3 gap-6">
+          <ApplicationSourceChart applications={applications} />
+          <TrendLineChart applications={applications} />
+          <SuccessDonutChart applications={applications} />
+        </motion.div>
+      )}
 
       <div className="grid lg:grid-cols-[1fr_380px] gap-6">
         <div className="space-y-6">
@@ -210,47 +324,9 @@ export default function AutoApplyPage() {
           </motion.div>
         </div>
 
-        {/* Activity Feed */}
-        <motion.div variants={fadeUp} className="h-fit rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.1)' }}>
-          <div className="flex items-center gap-2 px-5 py-3 border-b border-white/[0.04]" style={{ background: '#0d0d14' }}>
-            <div className="flex gap-1.5">
-              <div className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]" />
-              <div className="w-2.5 h-2.5 rounded-full bg-[#febc2e]" />
-              <div className="w-2.5 h-2.5 rounded-full bg-[#28c840]" />
-            </div>
-            <span className="text-[10px] font-mono text-[#4a4a5a] ml-2">auto-apply — activity</span>
-            {mode !== 'off' && (
-              <div className="ml-auto flex items-center gap-1.5">
-                <span className="relative flex h-1.5 w-1.5">
-                  <span className="absolute inline-flex h-full w-full rounded-full bg-[#00b894] opacity-60 animate-ping" />
-                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#00b894]" />
-                </span>
-                <span className="text-[9px] font-mono text-[#00b894]">LIVE</span>
-              </div>
-            )}
-          </div>
-          <div className="p-4 max-h-[500px] overflow-y-auto font-mono text-[11px] space-y-3" style={{ background: 'linear-gradient(180deg, #0d0d14, #0a0a10)' }}>
-            {logs.length === 0 ? (
-              <div className="text-center py-10">
-                <motion.div animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 2, repeat: Infinity }} className="text-[#4a4a5a]">
-                  No activity yet...
-                </motion.div>
-                <p className="text-[#3a3a4a] text-[10px] mt-2">Enable Copilot or Autopilot to start</p>
-              </div>
-            ) : (
-              logs.map((log, i) => (
-                <motion.div key={i} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.03 }}
-                  className="pb-3 border-b border-white/[0.03] last:border-0">
-                  <div className="flex items-start gap-2">
-                    <span className="text-[#3a3a4a] shrink-0">{new Date(log.created_at).toLocaleTimeString('en-US', { hour12: false })}</span>
-                    <span className="text-[#00b894]">$</span>
-                    <span className="text-[#e0e0e8]">{log.action}</span>
-                  </div>
-                  {log.details && <div className="ml-[100px] text-[#5a5a6a] text-[10px] mt-0.5">{log.details}</div>}
-                </motion.div>
-              ))
-            )}
-          </div>
+        {/* Activity Feed - Real-time Updates */}
+        <motion.div variants={fadeUp} className="h-fit">
+          <ActivityFeed />
         </motion.div>
       </div>
     </motion.div>
