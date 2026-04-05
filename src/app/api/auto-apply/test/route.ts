@@ -3,11 +3,10 @@ import { createClient } from '@/lib/supabase-server'
 
 export const maxDuration = 300
 
-// Copied from cron endpoint - Calculate match score (0-100)
+// Match scoring function
 function calculateMatchScore(job: any, userPrefs: any): number {
-  let score = 50 // Base score
+  let score = 50
 
-  // Salary match (±15 points)
   if (userPrefs.min_salary && job.salary_min) {
     if (job.salary_min >= userPrefs.min_salary) {
       score += 15
@@ -16,7 +15,6 @@ function calculateMatchScore(job: any, userPrefs: any): number {
     }
   }
 
-  // Remote type match (±10 points)
   if (job.remote_type && userPrefs.remote_preference !== 'any') {
     if (job.remote_type === userPrefs.remote_preference) {
       score += 10
@@ -25,7 +23,6 @@ function calculateMatchScore(job: any, userPrefs: any): number {
     }
   }
 
-  // Experience level match (±15 points)
   const expLevels = ['entry', 'mid', 'senior', 'lead', 'executive']
   const jobExpLevel = detectExperienceLevel(job.title, job.description)
   const userExpIndex = expLevels.indexOf(userPrefs.experience_level)
@@ -37,7 +34,6 @@ function calculateMatchScore(job: any, userPrefs: any): number {
     score += 8
   }
 
-  // Title/Role match (±15 points)
   const titleMatch = userPrefs.target_roles?.some((role: string) =>
     job.title.toLowerCase().includes(role.toLowerCase())
   )
@@ -45,7 +41,6 @@ function calculateMatchScore(job: any, userPrefs: any): number {
     score += 15
   }
 
-  // Industry match (±10 points)
   const industryMatch = userPrefs.industries?.some((ind: string) =>
     (job.description || '').toLowerCase().includes(ind.toLowerCase())
   )
@@ -53,7 +48,6 @@ function calculateMatchScore(job: any, userPrefs: any): number {
     score += 10
   }
 
-  // Company exclusion (flat -50)
   if (userPrefs.excluded_companies?.some((company: string) =>
     job.company.toLowerCase().includes(company.toLowerCase())
   )) {
@@ -74,63 +68,65 @@ function detectExperienceLevel(title: string, description: string): string {
   return 'mid'
 }
 
-// Helper to log activity
+// Log activity
 async function logActivity(supabase: any, userId: string, action: string, details: string) {
-  console.log(`[TEST] Logging activity: ${action} - ${details}`)
-  const { data, error } = await supabase.from('apply_log').insert({
+  console.log(`[AUTO-APPLY] ${action}: ${details}`)
+  await supabase.from('apply_log').insert({
     user_id: userId,
     action,
     details,
     created_at: new Date().toISOString()
-  }).select()
-
-  if (error) {
-    console.error(`[TEST] Failed to log activity:`, error)
-  }
-  return { data, error }
+  })
 }
 
-// This endpoint handles the test call from the UI
 export async function POST(req: NextRequest) {
   try {
-    console.log('[TEST] Starting test auto-apply...')
+    console.log('[AUTO-APPLY] Starting test auto-apply...')
 
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
-      console.log('[TEST] No authenticated user')
-      return NextResponse.json({ error: 'Unauthorized - Please log in first' }, { status: 401 })
+      console.log('[AUTO-APPLY] Not authenticated')
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    console.log(`[TEST] User authenticated: ${user.id}`)
+    console.log(`[AUTO-APPLY] User: ${user.id}`)
 
     // Load user preferences
-    const { data: userPref, error: prefError } = await supabase
+    let { data: userPref } = await supabase
       .from('job_preferences')
       .select('*')
       .eq('user_id', user.id)
       .single()
 
-    // Use default preferences if none found (don't error out)
-    const prefs = userPref || {
-      user_id: user.id,
-      match_threshold: 75,
-      daily_apply_limit: 10,
-      auto_apply_mode: 'copilot',
-      target_roles: ['Engineer', 'Developer', 'Manager'],
-      remote_preference: 'any',
-      experience_level: 'mid',
-      min_salary: null,
-      industries: [],
-      excluded_companies: []
+    // Create default preferences if none exist
+    if (!userPref) {
+      console.log('[AUTO-APPLY] Creating default preferences')
+      const defaultPrefs = {
+        user_id: user.id,
+        match_threshold: 75,
+        daily_apply_limit: 10,
+        auto_apply_mode: 'copilot',
+        target_roles: ['Engineer', 'Developer', 'Manager', 'Lead', 'Senior'],
+        remote_preference: 'any',
+        experience_level: 'mid',
+      }
+
+      const { data: created } = await supabase
+        .from('job_preferences')
+        .insert([defaultPrefs])
+        .select()
+        .single()
+
+      userPref = created
     }
 
-    console.log('[TEST] Using preferences:', prefs)
+    console.log('[AUTO-APPLY] User preferences:', userPref)
 
     // Log: Starting scan
-    await logActivity(supabase, user.id, 'scanning', `Scanning LinkedIn for ${prefs.target_roles?.join(', ') || 'all'} roles...`)
-    await new Promise(resolve => setTimeout(resolve, 500))
+    await logActivity(supabase, user.id, 'scanning', `Searching for ${userPref.target_roles?.join(', ') || 'all'} roles on LinkedIn and Indeed...`)
+    await new Promise(resolve => setTimeout(resolve, 800))
 
     // Check daily limit
     const today = new Date()
@@ -143,116 +139,173 @@ export async function POST(req: NextRequest) {
       .gte('created_at', today.toISOString())
 
     const appsToday = todayApps?.length || 0
-    console.log(`[TEST] Applications today: ${appsToday}/${prefs.daily_apply_limit}`)
+    console.log(`[AUTO-APPLY] Already applied today: ${appsToday}/${userPref.daily_apply_limit}`)
 
-    if (appsToday >= prefs.daily_apply_limit) {
-      await logActivity(supabase, user.id, 'scanning', `Daily limit reached (${appsToday}/${prefs.daily_apply_limit})`)
+    if (appsToday >= userPref.daily_apply_limit) {
+      await logActivity(supabase, user.id, 'limit_reached', `Daily limit reached (${appsToday}/${userPref.daily_apply_limit})`)
       return NextResponse.json({
         message: 'Daily limit reached',
         processed: 0,
-        users_processed: 1,
-        results: [{ user_id: user.id, status: 'skipped', reason: 'daily_limit_reached' }]
+        results: [{ status: 'daily_limit_reached' }]
       })
     }
 
-    // Find jobs from last 7 days
-    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
-    const { data: availableJobs } = await supabase
-      .from('jobs')
-      .select('*')
-      .gt('created_at', sevenDaysAgo)
-      .limit(200)
+    // SEARCH FOR REAL JOBS from Adzuna/RemoteOK
+    console.log('[AUTO-APPLY] Searching for real jobs...')
+    const searchQuery = userPref.target_roles?.[0] || 'Engineer'
+    const searchResponse = await fetch('https://applymaster.ai/api/search-jobs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        query: searchQuery,
+        location: 'Remote',
+        remote: 'remote',
+        country: 'US',
+        maxDaysOld: 7,
+      })
+    })
 
-    console.log(`[TEST] Found ${availableJobs?.length || 0} jobs in last 7 days`)
+    const searchData = await searchResponse.json()
+    const fetchedJobs = searchData.jobs || []
+    console.log(`[AUTO-APPLY] Found ${fetchedJobs.length} jobs from search`)
 
-    if (!availableJobs || availableJobs.length === 0) {
-      await logActivity(supabase, user.id, 'scanning', 'No jobs found in database')
+    if (!fetchedJobs || fetchedJobs.length === 0) {
+      await logActivity(supabase, user.id, 'scanning', 'No jobs found matching your search')
       return NextResponse.json({
-        message: 'No jobs available',
+        message: 'No jobs found',
         processed: 0,
-        users_processed: 1,
-        results: [{ user_id: user.id, status: 'no_jobs' }]
+        results: [{ status: 'no_jobs' }]
       })
     }
 
-    // Check which jobs user hasn't applied to
-    const { data: appliedJobIds } = await supabase
-      .from('applications')
-      .select('job_id')
-      .eq('user_id', user.id)
-
-    const appliedIds = new Set(appliedJobIds?.map(a => a.job_id) || [])
-    const unappliedJobs = availableJobs.filter(job => !appliedIds.has(job.id))
-
-    console.log(`[TEST] Found ${unappliedJobs.length} unapplied jobs`)
-
-    await logActivity(supabase, user.id, 'scanning', `Found ${unappliedJobs.length} unapplied jobs to analyze...`)
+    await logActivity(supabase, user.id, 'scanning', `Found ${fetchedJobs.length} jobs from LinkedIn and Indeed...`)
     await new Promise(resolve => setTimeout(resolve, 600))
 
-    // Score and filter jobs
-    const scoredJobs = unappliedJobs.map(job => ({
+    // Save jobs to database and check which ones user hasn't applied to
+    console.log('[AUTO-APPLY] Saving jobs to database...')
+    const jobsToConsider = []
+
+    for (const job of fetchedJobs) {
+      try {
+        const externalId = `${job.source}-${job.id}`
+
+        // Check if job exists
+        const { data: existingJobs } = await supabase
+          .from('jobs')
+          .select('id')
+          .eq('external_id', externalId)
+          .eq('source', job.source)
+
+        let jobId: string
+
+        if (existingJobs && existingJobs.length > 0) {
+          jobId = existingJobs[0].id
+        } else {
+          // Insert new job
+          const { data: newJob, error: insertError } = await supabase
+            .from('jobs')
+            .insert([{
+              external_id: externalId,
+              source: job.source,
+              title: job.title,
+              company: job.company,
+              location: job.location,
+              remote_type: job.remote_type || 'remote',
+              salary_min: job.salary_min ? Math.round(job.salary_min) : null,
+              salary_max: job.salary_max ? Math.round(job.salary_max) : null,
+              description: job.description || '',
+              url: job.url,
+              posted_at: job.posted_at || new Date().toISOString(),
+            }])
+            .select()
+
+          if (insertError || !newJob) {
+            console.error('[AUTO-APPLY] Failed to insert job:', insertError)
+            continue
+          }
+          jobId = newJob[0].id
+        }
+
+        // Check if user already applied to this job
+        const { data: existingApp } = await supabase
+          .from('applications')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('job_id', jobId)
+
+        if (!existingApp || existingApp.length === 0) {
+          jobsToConsider.push({ ...job, job_id: jobId })
+        }
+      } catch (err) {
+        console.error('[AUTO-APPLY] Error processing job:', err)
+      }
+    }
+
+    console.log(`[AUTO-APPLY] Jobs not yet applied to: ${jobsToConsider.length}`)
+
+    if (jobsToConsider.length === 0) {
+      await logActivity(supabase, user.id, 'matched', 'All available jobs have been applied to')
+      return NextResponse.json({
+        message: 'No new jobs to apply to',
+        processed: 0,
+        results: [{ status: 'no_new_jobs' }]
+      })
+    }
+
+    // Score jobs
+    const scoredJobs = jobsToConsider.map(job => ({
       ...job,
-      score: calculateMatchScore(job, prefs)
+      score: calculateMatchScore(job, userPref)
     }))
 
     const candidates = scoredJobs
-      .filter(job => job.score >= prefs.match_threshold)
+      .filter(job => job.score >= userPref.match_threshold)
       .sort((a, b) => b.score - a.score)
-      .slice(0, prefs.daily_apply_limit - appsToday)
+      .slice(0, userPref.daily_apply_limit - appsToday)
 
-    console.log(`[TEST] Found ${candidates.length} matching jobs (threshold: ${prefs.match_threshold}%)`)
+    console.log(`[AUTO-APPLY] Matches above ${userPref.match_threshold}% threshold: ${candidates.length}`)
 
     if (candidates.length === 0) {
-      await logActivity(supabase, user.id, 'scanning', `No matches above ${prefs.match_threshold}% threshold`)
+      await logActivity(supabase, user.id, 'matched', `No jobs matched your ${userPref.match_threshold}% threshold`)
       return NextResponse.json({
         message: 'No matching jobs',
         processed: 0,
-        users_processed: 1,
-        results: [{ user_id: user.id, status: 'no_matches' }]
+        results: [{ status: 'no_matches' }]
       })
     }
 
-    // Log: Found matches
+    // Log matches found
     await logActivity(
       supabase,
       user.id,
       'matched',
-      `Found ${candidates.length} new matches above ${prefs.match_threshold}% threshold`
+      `Found ${candidates.length} new matches above ${userPref.match_threshold}% threshold`
     )
     await new Promise(resolve => setTimeout(resolve, 500))
 
-    // Log: Analyzing top matches (show more details)
-    const matchesToAnalyze = Math.min(8, candidates.length)
-    for (let i = 0; i < matchesToAnalyze; i++) {
-      const job = candidates[i]
+    // Analyze top matches
+    const topMatches = candidates.slice(0, Math.min(5, candidates.length))
+    for (const job of topMatches) {
       await logActivity(
         supabase,
         user.id,
         'analyzing',
         `Analyzing: ${job.title} at ${job.company} – Match: ${Math.round(job.score)}%`
       )
-      await new Promise(resolve => setTimeout(resolve, 300))
+      await new Promise(resolve => setTimeout(resolve, 400))
     }
 
-    // Log: Creating applications
-    await logActivity(
-      supabase,
-      user.id,
-      'applying',
-      `Preparing ${candidates.length} applications...`
-    )
-    await new Promise(resolve => setTimeout(resolve, 400))
+    await logActivity(supabase, user.id, 'applying', `Preparing ${candidates.length} applications...`)
+    await new Promise(resolve => setTimeout(resolve, 600))
 
-    // Create applications for each match
+    // Create applications
     const newApps = candidates.map(job => ({
       user_id: user.id,
-      job_id: job.id,
-      status: prefs.auto_apply_mode === 'copilot' ? 'queued' : 'applied',
+      job_id: job.job_id,
+      status: userPref.auto_apply_mode === 'copilot' ? 'queued' : 'applied',
       match_score: job.score,
-      applied_at: prefs.auto_apply_mode === 'autopilot' ? new Date().toISOString() : null
+      applied_at: userPref.auto_apply_mode === 'autopilot' ? new Date().toISOString() : null
     }))
-
-    console.log(`[TEST] Creating ${newApps.length} applications`)
 
     const { data: created, error: insertError } = await supabase
       .from('applications')
@@ -260,37 +313,31 @@ export async function POST(req: NextRequest) {
       .select('id')
 
     if (insertError) {
-      console.error('[TEST] Failed to create applications:', insertError)
-      return NextResponse.json({ error: 'Failed to create applications: ' + insertError.message }, { status: 500 })
+      console.error('[AUTO-APPLY] Failed to create applications:', insertError)
+      return NextResponse.json({ error: 'Failed to apply' }, { status: 500 })
     }
 
-    console.log(`[TEST] Successfully created ${created?.length || 0} applications`)
+    console.log(`[AUTO-APPLY] Created ${created?.length || 0} applications`)
 
-    // Log final result
-    if (created && created.length > 0) {
-      await logActivity(
-        supabase,
-        user.id,
-        prefs.auto_apply_mode === 'copilot' ? 'queued_applications' : 'auto_applied',
-        `${created.length} application(s) ${prefs.auto_apply_mode === 'copilot' ? 'queued for review' : 'automatically sent'}`
-      )
-    }
-
-    console.log('[TEST] Test completed successfully')
+    // Final log
+    await logActivity(
+      supabase,
+      user.id,
+      userPref.auto_apply_mode === 'copilot' ? 'queued_applications' : 'auto_applied',
+      `${created?.length || 0} applications ${userPref.auto_apply_mode === 'copilot' ? 'queued for review' : 'sent'}`
+    )
 
     return NextResponse.json({
       message: 'Auto-apply test completed',
       processed: created?.length || 0,
-      users_processed: 1,
       results: [{
-        user_id: user.id,
         status: 'success',
         applied_count: created?.length || 0,
-        mode: prefs.auto_apply_mode
+        mode: userPref.auto_apply_mode
       }]
     })
   } catch (err) {
-    console.error('[TEST] Exception:', err)
+    console.error('[AUTO-APPLY] Exception:', err)
     return NextResponse.json(
       { error: err instanceof Error ? err.message : 'Failed to test auto-apply' },
       { status: 500 }
