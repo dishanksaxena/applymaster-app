@@ -175,6 +175,34 @@ export default function AutoApplyPage() {
     }
   }
 
+  // ── Queued apps for review ──────────────────────────────────────
+  const queuedApps = applications.filter((a: any) => a.status === 'queued')
+  const [reviewLoading, setReviewLoading] = useState<string | null>(null)
+
+  const approveApp = async (appId: string) => {
+    if (!supabase) return
+    setReviewLoading(appId)
+    await supabase.from('applications').update({ status: 'applied', applied_at: new Date().toISOString() }).eq('id', appId)
+    setApplications((prev: any[]) => prev.map((a: any) => a.id === appId ? { ...a, status: 'applied', applied_at: new Date().toISOString() } : a))
+    setReviewLoading(null)
+  }
+
+  const dismissApp = async (appId: string) => {
+    if (!supabase) return
+    setReviewLoading(appId)
+    await supabase.from('applications').update({ status: 'rejected' }).eq('id', appId)
+    setApplications((prev: any[]) => prev.map((a: any) => a.id === appId ? { ...a, status: 'rejected' } : a))
+    setReviewLoading(null)
+  }
+
+  const refreshApplications = async () => {
+    if (!supabase) return
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    const { data } = await supabase.from('applications').select('*, job:jobs(*)').eq('user_id', user.id)
+    if (data) setApplications(data)
+  }
+
   const testAutoApply = async () => {
     setTestingAuto(true)
     setTestResult(null)
@@ -185,7 +213,9 @@ export default function AutoApplyPage() {
       })
       const data = await response.json()
       if (response.ok) {
-        setTestResult(`✅ Done — ${data.processed} application(s) ${data.mode === 'autopilot' ? 'sent' : 'queued'}`)
+        setTestResult(`✅ Done — ${data.processed} application(s) ${data.mode === 'autopilot' ? 'sent' : 'queued for review'}`)
+        // Refresh applications so the review queue populates immediately
+        await refreshApplications()
       } else {
         setTestResult(`❌ Error: ${data.error}`)
       }
@@ -236,6 +266,112 @@ export default function AutoApplyPage() {
           )}
         </div>
       </motion.div>
+
+      {/* ── Review Queue: shown when copilot has queued applications ── */}
+      {queuedApps.length > 0 && (
+        <motion.div variants={fadeUp} className="rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(240,180,41,0.25)', background: 'linear-gradient(135deg, rgba(240,180,41,0.06) 0%, rgba(240,180,41,0.02) 100%)' }}>
+          {/* Header */}
+          <div className="flex items-center justify-between px-6 py-4 border-b border-[rgba(240,180,41,0.12)]">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(240,180,41,0.15)' }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f0b429" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              </div>
+              <div>
+                <div className="text-[14px] font-bold text-white">Review Queue</div>
+                <div className="text-[11px] text-[#8a8a9a]">{queuedApps.length} application{queuedApps.length !== 1 ? 's' : ''} waiting for your approval</div>
+              </div>
+            </div>
+            <button onClick={refreshApplications} className="text-[11px] text-[#5a5a6a] hover:text-[#8a8a9a] transition-colors px-3 py-1.5 rounded-lg" style={{ border: '1px solid rgba(255,255,255,0.06)' }}>
+              ↻ Refresh
+            </button>
+          </div>
+
+          {/* Queue items */}
+          <div className="divide-y divide-[rgba(255,255,255,0.04)]">
+            {queuedApps.map((app: any) => (
+              <div key={app.id} className="flex items-center gap-4 px-6 py-4">
+                {/* Company avatar */}
+                <div className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center text-[13px] font-black text-white" style={{ background: 'linear-gradient(135deg, rgba(240,180,41,0.3), rgba(240,180,41,0.1))' }}>
+                  {(app.job?.company || 'C')[0].toUpperCase()}
+                </div>
+
+                {/* Job info */}
+                <div className="flex-1 min-w-0">
+                  <div className="text-[13px] font-bold text-white truncate">{app.job?.title || 'Job Title'}</div>
+                  <div className="text-[11px] text-[#6a6a7a] truncate">
+                    {app.job?.company || 'Company'}
+                    {app.job?.location ? ` · ${app.job.location}` : ''}
+                    {app.job?.remote_type ? ` · ${app.job.remote_type}` : ''}
+                  </div>
+                </div>
+
+                {/* Match score */}
+                {app.match_score != null && (
+                  <div className="flex-shrink-0 text-center hidden sm:block">
+                    <div className="text-[16px] font-black" style={{ color: app.match_score >= 75 ? '#00b894' : app.match_score >= 60 ? '#f0b429' : '#ff7675' }}>{app.match_score}%</div>
+                    <div className="text-[9px] text-[#5a5a6a] uppercase tracking-wider">match</div>
+                  </div>
+                )}
+
+                {/* Salary if present */}
+                {app.job?.salary_min && (
+                  <div className="flex-shrink-0 text-center hidden lg:block">
+                    <div className="text-[12px] font-bold text-[#a78bfa]">${(app.job.salary_min / 1000).toFixed(0)}k+</div>
+                    <div className="text-[9px] text-[#5a5a6a]">salary</div>
+                  </div>
+                )}
+
+                {/* Action buttons */}
+                <div className="flex-shrink-0 flex items-center gap-2">
+                  {reviewLoading === app.id ? (
+                    <div className="w-4 h-4 rounded-full border-2 border-[#f0b429]/20 border-t-[#f0b429] animate-spin" />
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => approveApp(app.id)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-bold text-white transition-all hover:scale-105 active:scale-95"
+                        style={{ background: 'linear-gradient(135deg, #00b894, #00a381)' }}
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                        Approve
+                      </button>
+                      <button
+                        onClick={() => dismissApp(app.id)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-bold transition-all hover:scale-105 active:scale-95"
+                        style={{ background: 'rgba(255,100,100,0.1)', border: '1px solid rgba(255,100,100,0.2)', color: '#ff7675' }}
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        Dismiss
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Footer */}
+          <div className="px-6 py-3 border-t border-[rgba(240,180,41,0.08)] flex items-center justify-between">
+            <span className="text-[11px] text-[#5a5a6a]">Approving marks the application as sent and moves it to Applied.</span>
+            <div className="flex gap-2">
+              <button
+                onClick={async () => { for (const app of queuedApps) await approveApp(app.id) }}
+                className="text-[11px] font-bold px-3 py-1.5 rounded-lg transition-all hover:opacity-80"
+                style={{ background: 'rgba(0,184,148,0.15)', color: '#00b894', border: '1px solid rgba(0,184,148,0.2)' }}
+              >
+                ✓ Approve All
+              </button>
+              <button
+                onClick={async () => { for (const app of queuedApps) await dismissApp(app.id) }}
+                className="text-[11px] font-bold px-3 py-1.5 rounded-lg transition-all hover:opacity-80"
+                style={{ background: 'rgba(255,100,100,0.08)', color: '#ff7675', border: '1px solid rgba(255,100,100,0.15)' }}
+              >
+                ✗ Dismiss All
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      )}
 
       {/* ── Configuration + Activity Feed (always visible at top) ── */}
       <div className="grid lg:grid-cols-[1fr_380px] gap-6">
