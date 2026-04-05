@@ -148,6 +148,7 @@ const animationStyles = `
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null)
+  const [loading, setLoading] = useState(true)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
   const pathname = usePathname()
@@ -166,13 +167,34 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   useEffect(() => {
     const fetchProfile = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-      const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-      if (data) setProfile(data as Profile)
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) {
+          setLoading(false)
+          return
+        }
+        const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+        if (data) {
+          const profileData = data as Profile
+          setProfile(profileData)
+
+          // Check onboarding status and redirect if needed
+          if (pathname === '/onboarding' && profileData.onboarding_complete) {
+            // User completed onboarding, redirect to dashboard
+            console.log('[ONBOARDING] User already completed onboarding, redirecting to dashboard')
+            router.push('/dashboard')
+          } else if (pathname !== '/onboarding' && !profileData.onboarding_complete) {
+            // User hasn't completed onboarding, redirect to onboarding
+            console.log('[ONBOARDING] Redirecting to onboarding - onboarding_complete is false')
+            router.push('/onboarding')
+          }
+        }
+      } finally {
+        setLoading(false)
+      }
     }
     fetchProfile()
-  }, [supabase])
+  }, [supabase, pathname, router])
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
@@ -191,6 +213,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const planLabel = profile?.plan?.toUpperCase() || 'FREE'
   const isPremiumPlan = planLabel === 'PRO' || planLabel === 'ELITE'
+
+  // Show blank screen while checking auth status
+  if (loading) {
+    return <div className="min-h-screen bg-[#0a0a0f]" />
+  }
 
   // Onboarding page gets its own minimal layout
   if (pathname === '/onboarding') {
