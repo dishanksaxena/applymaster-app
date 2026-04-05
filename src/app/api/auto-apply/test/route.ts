@@ -119,21 +119,28 @@ export async function POST(req: NextRequest) {
       prefs = data
     }
 
-    // Check daily limit
+    // Check plan — lifetime/elite users have no daily cap
+    const { data: profile } = await supabase.from('profiles').select('plan').eq('id', user.id).single()
+    const isUnlimited = profile?.plan === 'lifetime' || profile?.plan === 'elite'
+
+    // Check daily limit (skip for unlimited plans)
     const today = new Date(); today.setHours(0, 0, 0, 0)
     const { data: todayApps } = await supabase
       .from('applications').select('id')
       .eq('user_id', user.id)
       .gte('created_at', today.toISOString())
     const appsToday = todayApps?.length || 0
+    const effectiveLimit = isUnlimited ? 999 : prefs.daily_apply_limit
 
-    if (appsToday >= prefs.daily_apply_limit) {
-      await log(supabase, user.id, 'limit_reached', `Daily limit reached (${appsToday}/${prefs.daily_apply_limit})`)
+    if (!isUnlimited && appsToday >= effectiveLimit) {
+      await log(supabase, user.id, 'limit_reached', `Daily limit reached (${appsToday}/${effectiveLimit})`)
       return NextResponse.json({ message: 'Daily limit reached', processed: 0 })
     }
 
-    const roles = prefs.target_roles || ['Software Engineer']
-    const primaryRole = roles[0]
+    const roles = (prefs.target_roles && prefs.target_roles.length > 0)
+      ? prefs.target_roles
+      : ['Software Engineer']
+    const primaryRole = roles[0] || 'Software Engineer'
 
     await log(supabase, user.id, 'scanning', `Searching LinkedIn & Indeed for "${primaryRole}" roles...`)
 
@@ -165,7 +172,7 @@ export async function POST(req: NextRequest) {
       .map((j: any) => ({ ...j, score: calculateMatchScore(j, prefs) }))
       .filter((j: any) => j.score >= prefs.match_threshold)
       .sort((a: any, b: any) => b.score - a.score)
-      .slice(0, prefs.daily_apply_limit - appsToday)
+      .slice(0, effectiveLimit - appsToday)
 
     if (!scored.length) {
       await log(supabase, user.id, 'matched', `No jobs met your ${prefs.match_threshold}% match threshold`)
