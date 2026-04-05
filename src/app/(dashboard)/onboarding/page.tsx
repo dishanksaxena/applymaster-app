@@ -219,6 +219,42 @@ export default function OnboardingPage() {
     return [...new Set(foundSkills)].slice(0, 8) // Limit to 8
   }
 
+  const parseResumeDetails = (text: string) => {
+    const extracted: any = {}
+
+    // Extract name (usually first few lines, before email/phone)
+    const nameMatch = text.match(/^[\s]*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/m)
+    if (nameMatch) extracted.name = nameMatch[1].trim()
+
+    // Extract email
+    const emailMatch = text.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/i)
+    if (emailMatch) extracted.email = emailMatch[1]
+
+    // Extract phone
+    const phoneMatch = text.match(/(\+?1?\s*)?(\([0-9]{3}\)|[0-9]{3})[-.\s]?([0-9]{3})[-.\s]?([0-9]{4})/);
+    if (phoneMatch) extracted.phone = phoneMatch[0]
+
+    // Extract experience level from keywords
+    let expLevel = 'mid'
+    if (/senior|lead|principal|manager|director|vp|vice president/i.test(text)) expLevel = 'senior'
+    if (/executive|c-level|ceo|cto|cfo|head of/i.test(text)) expLevel = 'executive'
+    if (/junior|entry[- ]level|graduate|associate/i.test(text)) expLevel = 'entry'
+    extracted.experienceLevel = expLevel
+
+    // Extract job titles (look for common patterns)
+    const jobTitlePattern = /(?:current|previous|experience|role).*?:?\s*([A-Z][a-z\s&]+(?:Engineer|Manager|Developer|Designer|Analyst|Architect|Lead|Director|Officer))/gi
+    const titleMatches = [...text.matchAll(jobTitlePattern)]
+    if (titleMatches.length > 0) {
+      extracted.jobTitles = titleMatches.map(m => m[1].trim()).slice(0, 3)
+    }
+
+    // Extract years of experience
+    const expMatch = text.match(/(\d+)\+?\s*(?:years?|yrs?)?\s*(?:of\s+)?(?:professional\s+)?experience/i)
+    if (expMatch) extracted.yearsExp = parseInt(expMatch[1])
+
+    return extracted
+  }
+
   const extractTextFromResume = async (file: File): Promise<string> => {
     try {
       if (file.name.endsWith('.txt')) {
@@ -273,14 +309,28 @@ export default function OnboardingPage() {
         await supabase.from('resumes').update({ is_primary: false }).eq('user_id', user.id)
         // Insert new resume as primary
         await supabase.from('resumes').insert({ user_id: user.id, name: resumeFile.name, file_url: publicUrl, is_primary: true })
-        // Save to profile
-        await supabase.from('profiles').update({ resume_url: publicUrl, resume_name: resumeFile.name }).eq('id', user.id)
 
-        // Extract text and parse skills
+        // Extract text and parse details
         const resumeText = await extractTextFromResume(resumeFile)
+        const details = parseResumeDetails(resumeText)
         const parsedSkills = extractSkillsFromText(resumeText)
+
+        // Update profile with extracted details
+        const profileUpdate: any = { resume_url: publicUrl, resume_name: resumeFile.name }
+        if (details.name) profileUpdate.full_name = details.name
+        if (details.email) profileUpdate.email = details.email
+
+        await supabase.from('profiles').update(profileUpdate).eq('id', user.id)
+
+        // Auto-fill form fields
+        if (details.experienceLevel && details.experienceLevel !== 'mid') {
+          setExperienceLevel(details.experienceLevel)
+        }
         if (parsedSkills.length > 0) {
           setSelectedSkills(prev => [...new Set([...prev, ...parsedSkills])].slice(0, 8))
+        }
+        if (details.jobTitles?.[0]) {
+          setDesiredJobTitle(details.jobTitles[0])
         }
 
         // Reload resumes list
