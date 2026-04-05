@@ -28,24 +28,41 @@ function LoginForm() {
     setLoading(true)
     setError('')
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) {
-      setError(error.message)
+    try {
+      // Force logout any existing session first (single-user only)
+      await supabase.auth.signOut({ scope: 'global' }).catch(() => {})
+
+      // Now log in with new credentials
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
+      if (error) {
+        setError(error.message)
+        setLoading(false)
+      } else {
+        router.push(next)
+        router.refresh()
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Login failed')
       setLoading(false)
-    } else {
-      router.push(next)
-      router.refresh()
     }
   }
 
   const handleGoogleLogin = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    })
-    if (error) setError(error.message)
+    try {
+      // Force logout any existing session first (single-user only)
+      await supabase.auth.signOut({ scope: 'global' }).catch(() => {})
+
+      // Now proceed with OAuth
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      })
+      if (error) setError(error.message)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Google login failed')
+    }
   }
 
   return (
