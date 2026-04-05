@@ -133,6 +133,7 @@ export default function AutoApplyPage() {
   const saveSettings = async () => {
     if (!supabase) return
     setSaving(true)
+    setSaved(false)
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
@@ -156,16 +157,15 @@ export default function AutoApplyPage() {
 
       console.log('[AUTO-APPLY] Save response:', { data, error })
 
+      setSaving(false)
+
       if (error) {
         console.error('[AUTO-APPLY] Save failed:', error)
         alert('Failed to save: ' + error.message)
-        setSaving(false)
       } else {
-        // Only set saved to true if upsert was successful
         setSaved(true)
-        console.log('[AUTO-APPLY] Settings saved successfully')
-        setTimeout(() => setSaved(false), 3000)
-        setSaving(false)
+        console.log('[AUTO-APPLY] Settings saved successfully - mode is now:', mode)
+        // Keep saved state - don't timeout
       }
     } catch (err) {
       console.error('[AUTO-APPLY] Save exception:', err)
