@@ -126,6 +126,8 @@ export default function OnboardingPage() {
   const [mounted, setMounted] = useState(false)
   const [completing, setCompleting] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [resumes, setResumes] = useState<any[]>([])
+  const [primaryResume, setPrimaryResume] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
   const supabase = createClient()
@@ -171,6 +173,9 @@ export default function OnboardingPage() {
           setLoadedResumeName(profile.resume_name)
         }
 
+        // Load all resumes
+        loadResumes()
+
         // Load job preferences
         const { data: prefs } = await supabase.from('job_preferences').select('*').eq('user_id', user.id).single()
         if (prefs) {
@@ -205,6 +210,48 @@ export default function OnboardingPage() {
     else if (!max || arr.length < max) setArr([...arr, val])
   }
 
+  const extractSkillsFromText = (text: string): string[] => {
+    const textLower = text.toLowerCase()
+    const foundSkills: string[] = []
+    SKILLS.forEach(skill => {
+      if (textLower.includes(skill.toLowerCase())) foundSkills.push(skill)
+    })
+    return [...new Set(foundSkills)].slice(0, 8) // Limit to 8
+  }
+
+  const extractTextFromResume = async (file: File): Promise<string> => {
+    try {
+      if (file.name.endsWith('.txt')) {
+        return await file.text()
+      }
+      if (file.name.endsWith('.docx')) {
+        const arrayBuffer = await file.arrayBuffer()
+        const JSZip = (await import('jszip')).default
+        const zip = new JSZip()
+        await zip.loadAsync(arrayBuffer)
+        const xmlContent = await zip.file('word/document.xml')?.async('text')
+        if (!xmlContent) return ''
+        return xmlContent.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ')
+      }
+      if (file.name.endsWith('.pdf')) {
+        const pdfjs = await import('pdfjs-dist')
+        pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`
+        const arrayBuffer = await file.arrayBuffer()
+        const pdf = await pdfjs.getDocument(arrayBuffer).promise
+        let text = ''
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i)
+          const content = await page.getTextContent()
+          text += content.items.map((item: any) => item.str).join(' ')
+        }
+        return text
+      }
+    } catch (err) {
+      console.error('Error extracting resume text:', err)
+    }
+    return ''
+  }
+
   const onDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault(); setDragging(false)
     const file = e.dataTransfer.files[0]
@@ -222,12 +269,73 @@ export default function OnboardingPage() {
       const { error } = await supabase.storage.from('resumes').upload(path, resumeFile)
       if (!error) {
         const { data: { publicUrl } } = supabase.storage.from('resumes').getPublicUrl(path)
+        // Mark previous resumes as not primary
+        await supabase.from('resumes').update({ is_primary: false }).eq('user_id', user.id)
+        // Insert new resume as primary
         await supabase.from('resumes').insert({ user_id: user.id, name: resumeFile.name, file_url: publicUrl, is_primary: true })
-        // Also save to profile
+        // Save to profile
         await supabase.from('profiles').update({ resume_url: publicUrl, resume_name: resumeFile.name }).eq('id', user.id)
+
+        // Extract text and parse skills
+        const resumeText = await extractTextFromResume(resumeFile)
+        const parsedSkills = extractSkillsFromText(resumeText)
+        if (parsedSkills.length > 0) {
+          setSelectedSkills(prev => [...new Set([...prev, ...parsedSkills])].slice(0, 8))
+        }
+
+        // Reload resumes list
+        loadResumes()
       }
-    } catch { }
+    } catch (err) { console.error('Resume upload error:', err) }
     setUploading(false); goTo(1)
+  }
+
+  const loadResumes = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      const { data } = await supabase.from('resumes').select('*').eq('user_id', user.id).order('created_at', { ascending: false })
+      setResumes(data || [])
+      const primary = data?.find(r => r.is_primary)
+      if (primary) setPrimaryResume(primary.id)
+    } catch (err) { console.error('Error loading resumes:', err) }
+  }
+
+  const setResumePrimary = async (resumeId: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      // Mark all as not primary
+      await supabase.from('resumes').update({ is_primary: false }).eq('user_id', user.id)
+      // Mark selected as primary
+      await supabase.from('resumes').update({ is_primary: true }).eq('id', resumeId)
+      const resumeData = resumes.find(r => r.id === resumeId)
+      if (resumeData) {
+        await supabase.from('profiles').update({ resume_url: resumeData.file_url, resume_name: resumeData.name }).eq('id', user.id)
+      }
+      setPrimaryResume(resumeId)
+      loadResumes()
+    } catch (err) { console.error('Error setting primary resume:', err) }
+  }
+
+  const deleteResume = async (resumeId: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      const resume = resumes.find(r => r.id === resumeId)
+      if (!resume) return
+      // Delete from storage
+      const path = resume.file_url.split('/').pop()
+      if (path) await supabase.storage.from('resumes').remove([`${user.id}/${path}`])
+      // Delete from DB
+      await supabase.from('resumes').delete().eq('id', resumeId)
+      // If was primary, set another as primary
+      if (resume.is_primary && resumes.length > 1) {
+        const nextResume = resumes.find(r => r.id !== resumeId)
+        if (nextResume) await setResumePrimary(nextResume.id)
+      }
+      loadResumes()
+    } catch (err) { console.error('Error deleting resume:', err) }
   }
 
   const canProceedStep2 = selectedRoles.length > 0 && minSalary > 0 && maxSalary > minSalary
@@ -366,24 +474,64 @@ export default function OnboardingPage() {
                   <motion.div key="step-0" custom={direction} variants={slideVariants} initial="enter" animate="center" exit="exit" className="space-y-6">
                     <div>
                       <h2 className="text-2xl font-black text-white mb-2">Upload Your Resume</h2>
-                      <p className="text-[13px] text-[#8a8a9a]">We'll analyze your experience to find better matches</p>
+                      <p className="text-[13px] text-[#8a8a9a]">We'll analyze your experience to find better matches (up to 5 resumes)</p>
                     </div>
-                    <div onDrop={onDrop} onDragOver={e => { e.preventDefault(); setDragging(true) }} onDragLeave={() => setDragging(false)}
-                      onClick={() => fileRef.current?.click()}
-                      className="border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer select-none"
-                      style={{ borderColor: dragging ? 'rgba(253,121,168,0.5)' : 'rgba(255,255,255,0.1)', background: dragging ? 'rgba(253,121,168,0.05)' : 'rgba(255,255,255,0.01)' }}>
-                      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="mx-auto mb-3 text-[#fd79a8]">
-                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" />
-                      </svg>
-                      <p className="text-white font-semibold mb-1">Drag & drop your resume</p>
-                      <p className="text-[12px] text-[#5a5a6a] mb-3">PDF or DOCX</p>
-                      <input type="file" ref={fileRef} onChange={e => e.target.files && setResumeFile(e.target.files[0])} className="hidden" accept=".pdf,.docx" onClick={e => e.stopPropagation()} />
-                      <span className="text-[12px] px-3 py-1.5 rounded-lg bg-[rgba(253,121,168,0.1)] text-[#fd79a8] pointer-events-none inline-block">
-                        Or browse
-                      </span>
-                    </div>
-                    {resumeFile && <p className="text-[12px] text-[#00b894]">✓ {resumeFile.name} selected (new)</p>}
-                    {!resumeFile && loadedResumeName && <p className="text-[12px] text-[#00b894]">✓ {loadedResumeName} (uploaded)</p>}
+
+                    {/* Resume List */}
+                    {resumes.length > 0 && (
+                      <div className="space-y-2">
+                        <label className="block text-[12px] font-bold text-[#fd79a8]">YOUR RESUMES ({resumes.length}/5)</label>
+                        <div className="space-y-2">
+                          {resumes.map(resume => (
+                            <div key={resume.id} className="flex items-center justify-between p-3 rounded-lg bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)]">
+                              <div className="flex-1">
+                                <p className="text-[12px] text-white font-medium">{resume.name}</p>
+                                <p className="text-[11px] text-[#5a5a6a]">{new Date(resume.created_at).toLocaleDateString()}</p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                {resume.is_primary ? (
+                                  <span className="text-[10px] px-2 py-1 rounded bg-[rgba(253,121,168,0.2)] text-[#fd79a8] font-semibold">PRIMARY</span>
+                                ) : (
+                                  <button onClick={() => setResumePrimary(resume.id)} className="text-[10px] px-2 py-1 rounded bg-[rgba(255,255,255,0.04)] text-[#8a8a9a] hover:bg-[rgba(255,255,255,0.08)] transition-all">
+                                    Set Primary
+                                  </button>
+                                )}
+                                <button onClick={() => deleteResume(resume.id)} className="text-[10px] px-2 py-1 rounded bg-[rgba(255,0,0,0.1)] text-[#ff6b6b] hover:bg-[rgba(255,0,0,0.2)] transition-all">
+                                  Delete
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Upload New Resume */}
+                    {resumes.length < 5 ? (
+                      <>
+                        <div onDrop={onDrop} onDragOver={e => { e.preventDefault(); setDragging(true) }} onDragLeave={() => setDragging(false)}
+                          onClick={() => fileRef.current?.click()}
+                          className="border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer select-none"
+                          style={{ borderColor: dragging ? 'rgba(253,121,168,0.5)' : 'rgba(255,255,255,0.1)', background: dragging ? 'rgba(253,121,168,0.05)' : 'rgba(255,255,255,0.01)' }}>
+                          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="mx-auto mb-3 text-[#fd79a8]">
+                            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" />
+                          </svg>
+                          <p className="text-white font-semibold mb-1">Drag & drop your resume</p>
+                          <p className="text-[12px] text-[#5a5a6a] mb-3">PDF, DOCX, or TXT</p>
+                          <input type="file" ref={fileRef} onChange={e => e.target.files && setResumeFile(e.target.files[0])} className="hidden" accept=".pdf,.docx,.txt" onClick={e => e.stopPropagation()} />
+                          <span className="text-[12px] px-3 py-1.5 rounded-lg bg-[rgba(253,121,168,0.1)] text-[#fd79a8] pointer-events-none inline-block">
+                            Or browse
+                          </span>
+                        </div>
+                        {resumeFile && <p className="text-[12px] text-[#00b894]">✓ {resumeFile.name} selected (new)</p>}
+                        {!resumeFile && loadedResumeName && resumes.length === 0 && <p className="text-[12px] text-[#00b894]">✓ {loadedResumeName} (uploaded)</p>}
+                      </>
+                    ) : (
+                      <div className="p-4 rounded-lg bg-[rgba(255,0,0,0.1)] border border-[rgba(255,0,0,0.2)]">
+                        <p className="text-[12px] text-[#ff6b6b] font-semibold">⚠️ Resume limit reached (5/5)</p>
+                        <p className="text-[11px] text-[#ff6b6b] mt-1">Delete a resume to upload another</p>
+                      </div>
+                    )}
                     <div className="flex gap-3 pt-4">
                       <MagneticButton onClick={() => goTo(1)} className="flex-1 h-11">Skip</MagneticButton>
                       <MagneticButton onClick={handleResumeUpload} disabled={uploading} className="flex-1 h-11" variant="primary">
