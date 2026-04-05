@@ -153,17 +153,36 @@ export async function POST(req: NextRequest) {
     // SEARCH FOR REAL JOBS from Adzuna/RemoteOK
     console.log('[AUTO-APPLY] Searching for real jobs...')
     const searchQuery = userPref.target_roles?.[0] || 'Engineer'
-    const searchResponse = await fetch('https://applymaster.ai/api/search-jobs', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        query: searchQuery,
-        location: 'Remote',
-        remote: 'remote',
-        country: 'US',
-        maxDaysOld: 7,
+    const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3002'
+
+    console.log(`[AUTO-APPLY] Calling search endpoint at: ${baseUrl}/api/search-jobs`)
+
+    let searchResponse: Response
+    try {
+      searchResponse = await fetch(`${baseUrl}/api/search-jobs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: searchQuery,
+          location: 'Remote',
+          remote: 'remote',
+          country: 'US',
+          maxDaysOld: 7,
+        })
       })
-    })
+    } catch (fetchErr) {
+      console.error('[AUTO-APPLY] Failed to fetch search endpoint:', fetchErr)
+      await logActivity(supabase, user.id, 'error', `Failed to search jobs: ${fetchErr instanceof Error ? fetchErr.message : String(fetchErr)}`)
+      return NextResponse.json({ error: 'Failed to search jobs' }, { status: 500 })
+    }
+
+    if (!searchResponse.ok) {
+      console.error(`[AUTO-APPLY] Search endpoint returned ${searchResponse.status}`)
+      const errorText = await searchResponse.text()
+      console.error('[AUTO-APPLY] Error response:', errorText)
+      await logActivity(supabase, user.id, 'error', `Job search failed: ${searchResponse.status}`)
+      return NextResponse.json({ error: 'Job search failed' }, { status: 500 })
+    }
 
     const searchData = await searchResponse.json()
     const fetchedJobs = searchData.jobs || []
