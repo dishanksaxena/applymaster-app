@@ -248,10 +248,10 @@ export default function ProfilePage() {
           {workExperience.map((exp, i) => (
             <div key={i} className="p-4 rounded-lg bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.08)]">
               <div className="grid sm:grid-cols-2 gap-3 mb-3">
-                <EditField label="Company" value={exp.company} onChange={c => { exp.company = c; setWorkExperience([...workExperience]) }} />
-                <EditField label="Job Title" value={exp.title} onChange={t => { exp.title = t; setWorkExperience([...workExperience]) }} />
+                <EditField label="Company" value={exp.company} onChange={(c: string) => { exp.company = c; setWorkExperience([...workExperience]) }} />
+                <EditField label="Job Title" value={exp.title} onChange={(t: string) => { exp.title = t; setWorkExperience([...workExperience]) }} />
               </div>
-              <EditField label="Description" value={exp.description} onChange={d => { exp.description = d; setWorkExperience([...workExperience]) }} multiline />
+              <EditField label="Description" value={exp.description} onChange={(d: string) => { exp.description = d; setWorkExperience([...workExperience]) }} multiline />
             </div>
           ))}
           <button onClick={() => setWorkExperience([...workExperience, { company: '', title: '', startDate: '', endDate: '', description: '' }])}
@@ -266,8 +266,8 @@ export default function ProfilePage() {
           {education.map((edu, i) => (
             <div key={i} className="p-4 rounded-lg bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.08)]">
               <div className="grid sm:grid-cols-2 gap-3">
-                <EditField label="School" value={edu.school} onChange={s => { edu.school = s; setEducation([...education]) }} />
-                <EditField label="Degree" value={edu.degree} onChange={d => { edu.degree = d; setEducation([...education]) }} />
+                <EditField label="School" value={edu.school} onChange={(s: string) => { edu.school = s; setEducation([...education]) }} />
+                <EditField label="Degree" value={edu.degree} onChange={(d: string) => { edu.degree = d; setEducation([...education]) }} />
               </div>
             </div>
           ))}
@@ -282,7 +282,7 @@ export default function ProfilePage() {
         <div className="space-y-2">
           {certifications.map((cert, i) => (
             <div key={i} className="flex gap-2">
-              <input value={cert} onChange={c => { certifications[i] = c; setCertifications([...certifications]) }}
+              <input value={cert} onChange={(c: React.ChangeEvent<HTMLInputElement>) => { certifications[i] = c.target.value; setCertifications([...certifications]) }}
                 className="flex-1 px-3 py-2 rounded-lg bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] text-white text-[12px] outline-none" />
               <button onClick={() => setCertifications(certifications.filter((_, idx) => idx !== i))}
                 className="px-2 py-1 rounded bg-[rgba(255,0,0,0.1)] text-[#ff6b6b] text-[11px]">Delete</button>
