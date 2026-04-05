@@ -159,18 +159,43 @@ export default function OnboardingPage() {
 
   useEffect(() => {
     setMounted(true)
-    // Load existing resume from profile
-    const loadResume = async () => {
+    // Load existing resume from profile and job preferences
+    const loadSavedData = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) return
-        const { data } = await supabase.from('profiles').select('resume_name').eq('id', user.id).single()
-        if (data?.resume_name) {
-          setLoadedResumeName(data.resume_name)
+
+        // Load resume
+        const { data: profile } = await supabase.from('profiles').select('resume_name').eq('id', user.id).single()
+        if (profile?.resume_name) {
+          setLoadedResumeName(profile.resume_name)
         }
-      } catch (err) { console.error('Error loading resume:', err) }
+
+        // Load job preferences
+        const { data: prefs } = await supabase.from('job_preferences').select('*').eq('user_id', user.id).single()
+        if (prefs) {
+          if (prefs.target_roles?.length) setSelectedRoles(prefs.target_roles)
+          if (prefs.min_salary) setMinSalary(prefs.min_salary)
+          if (prefs.max_salary) setMaxSalary(prefs.max_salary)
+          if (prefs.experience_level) setExperienceLevel(prefs.experience_level)
+          if (prefs.remote_preference) setRemotePreference(prefs.remote_preference)
+          if (prefs.employment_type) setWorkType(prefs.employment_type)
+          if (prefs.work_authorization) setWorkAuth(prefs.work_authorization)
+          if (prefs.current_employment_status) setEmploymentStatus(prefs.current_employment_status)
+          if (prefs.desired_job_title) setDesiredJobTitle(prefs.desired_job_title)
+          if (prefs.available_start_date) setAvailableStartDate(prefs.available_start_date)
+          if (prefs.willing_to_relocate !== null) setWillingToRelocate(prefs.willing_to_relocate)
+          if (prefs.country_preference) setSelectedCountry(prefs.country_preference)
+          if (prefs.city_preferences?.length) setSelectedCities(prefs.city_preferences)
+          if (prefs.ethnicity) setEthnicity(prefs.ethnicity)
+          if (prefs.industries?.length) setSelectedIndustries(prefs.industries)
+          if (prefs.key_skills?.length) setSelectedSkills(prefs.key_skills)
+          if (prefs.company_size_preference) setCompanySize(prefs.company_size_preference)
+          if (prefs.interview_strength) setInterviewStyle(prefs.interview_strength)
+        }
+      } catch (err) { console.error('Error loading saved data:', err) }
     }
-    loadResume()
+    loadSavedData()
   }, [])
 
   const goTo = (next: number) => { setDirection(next > step ? 1 : -1); setStep(next) }
