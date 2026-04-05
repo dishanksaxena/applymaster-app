@@ -147,6 +147,12 @@ function MagneticButton({ children, onClick, disabled = false, variant = 'primar
 const ROLES = ['Software Engineer', 'Product Manager', 'Data Scientist', 'Designer', 'DevOps Engineer', 'Full Stack Dev', 'Frontend Dev', 'Backend Dev', 'ML Engineer', 'Mobile Dev']
 const LOCATIONS = ['Remote', 'San Francisco', 'New York', 'Seattle', 'Austin', 'London', 'Berlin', 'Singapore', 'Toronto', 'Bangalore']
 
+// ─── Questionnaire Data ───
+const SKILLS_OPTIONS = ['Python', 'JavaScript', 'TypeScript', 'React', 'Node.js', 'SQL', 'AWS', 'GCP', 'Docker', 'Kubernetes', 'Machine Learning', 'Data Analysis', 'UI/UX Design', 'Product Strategy', 'Leadership']
+const COMPANY_SIZES = ['Startup (<50)', 'Small (50-200)', 'Medium (200-1000)', 'Large (1000+)', 'No preference']
+const JOB_TYPE = ['Full-time', 'Contract', 'Part-time', 'No preference']
+const INTERVIEW_STYLE = ['Behavioral', 'Coding/Technical', 'Case Studies', 'Design/System', 'No preference']
+
 const plans = [
   { name: 'free', label: 'Free', price: '$0', period: 'forever', color: '#8a8a9a', gradient: 'from-[#3a3a4a] to-[#2a2a3a]',
     features: ['10 applications/month', 'Basic job matching', 'Resume upload'],
@@ -178,6 +184,10 @@ export default function OnboardingPage() {
   const [customRole, setCustomRole] = useState('')
   const [preferences, setPreferences] = useState({ remote_preference: 'any', experience_level: 'mid', min_salary: '' })
   const [selectedPlan, setSelectedPlan] = useState('free')
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([])
+  const [selectedCompanySize, setSelectedCompanySize] = useState('No preference')
+  const [selectedJobType, setSelectedJobType] = useState('Full-time')
+  const [interviewPreference, setInterviewPreference] = useState('No preference')
   const [saving, setSaving] = useState(false)
   const [completing, setCompleting] = useState(false)
   const [mounted, setMounted] = useState(false)
@@ -222,12 +232,19 @@ export default function OnboardingPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
       await supabase.from('job_preferences').upsert({
-        user_id: user.id, target_roles: selectedRoles, target_locations: selectedLocations,
-        remote_preference: preferences.remote_preference, experience_level: preferences.experience_level,
+        user_id: user.id,
+        target_roles: selectedRoles,
+        target_locations: selectedLocations,
+        remote_preference: preferences.remote_preference,
+        experience_level: preferences.experience_level,
         min_salary: preferences.min_salary ? parseInt(preferences.min_salary) : null,
+        key_skills: selectedSkills,
+        company_size_preference: selectedCompanySize,
+        employment_type: selectedJobType,
+        interview_strength: interviewPreference,
       })
     } catch { /* continue */ }
-    setSaving(false); goTo(2)
+    setSaving(false); goTo(3)
   }
 
   const handleComplete = async () => {
@@ -238,7 +255,7 @@ export default function OnboardingPage() {
     router.push('/dashboard'); router.refresh()
   }
 
-  const stepLabels = ['Resume', 'Preferences', 'Launch']
+  const stepLabels = ['Resume', 'Preferences', 'Questionnaire', 'Launch']
 
   if (!mounted) return null
 
@@ -647,8 +664,146 @@ export default function OnboardingPage() {
                   </motion.div>
                 )}
 
-                {/* ═══════ STEP 2: PLAN & LAUNCH ═══════ */}
+                {/* ═══════ STEP 2: QUESTIONNAIRE ═══════ */}
                 {step === 2 && (
+                  <motion.div key="s2q" custom={direction} variants={slideVariants} initial="enter" animate="center" exit="exit">
+                    <div className="text-center mb-8">
+                      <motion.div
+                        initial={{ scale: 0, rotate: -180 }}
+                        animate={{ scale: 1, rotate: 0 }}
+                        transition={{ type: 'spring', stiffness: 200, damping: 12, delay: 0.1 }}
+                        className="inline-flex w-20 h-20 rounded-3xl items-center justify-center mb-6 relative">
+                        <div className="absolute inset-0 rounded-3xl" style={{ background: 'linear-gradient(135deg, rgba(0,184,148,0.12), rgba(0,184,148,0.03))', border: '1px solid rgba(0,184,148,0.12)' }} />
+                        <motion.div className="absolute -inset-3 rounded-3xl opacity-40"
+                          animate={{ scale: [1, 1.15, 1], opacity: [0.2, 0.4, 0.2] }}
+                          transition={{ duration: 3, repeat: Infinity }}
+                          style={{ background: 'radial-gradient(circle, rgba(0,184,148,0.2), transparent 70%)' }} />
+                        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#00b894" strokeWidth="1.4">
+                          <circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/><path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z"/>
+                        </svg>
+                      </motion.div>
+                      <RevealText delay={0.15} className="text-[28px] sm:text-[32px] font-black tracking-tight text-white block">
+                        Fine-tune Your Profile
+                      </RevealText>
+                      <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
+                        className="text-[14px] text-[#555570] mt-3 leading-relaxed">
+                        Help us match you with <span className="text-[#00b894] font-semibold">the right opportunities</span>
+                      </motion.p>
+                    </div>
+
+                    <div className="space-y-6">
+                      {/* Skills */}
+                      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+                        <label className="block text-[11px] font-black text-[#555570] mb-3 uppercase tracking-[0.2em]">
+                          Key Skills (select up to 8)
+                        </label>
+                        <div className="flex flex-wrap gap-2">
+                          {SKILLS_OPTIONS.map((skill, i) => {
+                            const selected = selectedSkills.includes(skill)
+                            return (
+                              <motion.button key={skill}
+                                initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
+                                transition={{ delay: 0.35 + i * 0.03, type: 'spring', stiffness: 300 }}
+                                onClick={() => {
+                                  if (selected) {
+                                    setSelectedSkills(selectedSkills.filter(s => s !== skill))
+                                  } else if (selectedSkills.length < 8) {
+                                    setSelectedSkills([...selectedSkills, skill])
+                                  }
+                                }}
+                                whileHover={{ scale: 1.05, y: -1 }} whileTap={{ scale: 0.92 }}
+                                className="px-3 py-2 rounded-lg text-[11px] font-semibold transition-all duration-300"
+                                style={selected
+                                  ? { background: 'rgba(0,184,148,0.12)', color: '#00b894', border: '1px solid rgba(0,184,148,0.35)' }
+                                  : { background: 'rgba(255,255,255,0.02)', color: '#555570', border: '1px solid rgba(255,255,255,0.06)' }}>
+                                {selected && '✓ '}{skill}
+                              </motion.button>
+                            )
+                          })}
+                        </div>
+                        <p className="text-[10px] text-[#3a3a4a] mt-2">{selectedSkills.length}/8 selected</p>
+                      </motion.div>
+
+                      {/* Company Size */}
+                      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+                        <label className="block text-[11px] font-black text-[#555570] mb-3 uppercase tracking-[0.2em]">
+                          Preferred Company Size
+                        </label>
+                        <div className="grid grid-cols-2 gap-2">
+                          {COMPANY_SIZES.map((size, i) => (
+                            <motion.button key={size}
+                              initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
+                              transition={{ delay: 0.45 + i * 0.05, type: 'spring', stiffness: 300 }}
+                              onClick={() => setSelectedCompanySize(size)}
+                              className="px-3 py-2.5 rounded-lg text-[11px] font-semibold transition-all duration-300"
+                              style={selectedCompanySize === size
+                                ? { background: 'rgba(116,185,255,0.12)', color: '#74b9ff', border: '1px solid rgba(116,185,255,0.35)' }
+                                : { background: 'rgba(255,255,255,0.02)', color: '#555570', border: '1px solid rgba(255,255,255,0.06)' }}>
+                              {size}
+                            </motion.button>
+                          ))}
+                        </div>
+                      </motion.div>
+
+                      {/* Job Type */}
+                      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
+                        <label className="block text-[11px] font-black text-[#555570] mb-3 uppercase tracking-[0.2em]">
+                          Employment Type
+                        </label>
+                        <div className="grid grid-cols-2 gap-2">
+                          {JOB_TYPE.map((type, i) => (
+                            <motion.button key={type}
+                              initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
+                              transition={{ delay: 0.55 + i * 0.05, type: 'spring', stiffness: 300 }}
+                              onClick={() => setSelectedJobType(type)}
+                              className="px-3 py-2.5 rounded-lg text-[11px] font-semibold transition-all duration-300"
+                              style={selectedJobType === type
+                                ? { background: 'rgba(253,203,94,0.12)', color: '#fdcb6e', border: '1px solid rgba(253,203,94,0.35)' }
+                                : { background: 'rgba(255,255,255,0.02)', color: '#555570', border: '1px solid rgba(255,255,255,0.06)' }}>
+                              {type}
+                            </motion.button>
+                          ))}
+                        </div>
+                      </motion.div>
+
+                      {/* Interview Preference */}
+                      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
+                        <label className="block text-[11px] font-black text-[#555570] mb-3 uppercase tracking-[0.2em]">
+                          Interview Style You're Best At
+                        </label>
+                        <div className="grid grid-cols-2 gap-2">
+                          {INTERVIEW_STYLE.map((style, i) => (
+                            <motion.button key={style}
+                              initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
+                              transition={{ delay: 0.65 + i * 0.05, type: 'spring', stiffness: 300 }}
+                              onClick={() => setInterviewPreference(style)}
+                              className="px-3 py-2.5 rounded-lg text-[11px] font-semibold transition-all duration-300"
+                              style={interviewPreference === style
+                                ? { background: 'rgba(162,155,254,0.12)', color: '#a29bfe', border: '1px solid rgba(162,155,254,0.35)' }
+                                : { background: 'rgba(255,255,255,0.02)', color: '#555570', border: '1px solid rgba(255,255,255,0.06)' }}>
+                              {style}
+                            </motion.button>
+                          ))}
+                        </div>
+                      </motion.div>
+                    </div>
+
+                    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.75 }}
+                      className="flex gap-3 mt-8">
+                      <MagneticButton variant="secondary" onClick={() => goTo(1)} className="py-4 px-6 rounded-2xl">
+                        ← Back
+                      </MagneticButton>
+                      <MagneticButton variant="primary" onClick={() => goTo(3)}
+                        className="flex-1 py-4 rounded-2xl text-[14px]"
+                        style={{ boxShadow: '0 12px 50px rgba(0,184,148,0.3)' } as React.CSSProperties}>
+                        Continue →
+                      </MagneticButton>
+                    </motion.div>
+                  </motion.div>
+                )}
+
+                {/* ═══════ STEP 3: PLAN & LAUNCH ═══════ */}
+                {step === 3 && (
                   <motion.div key="s2" custom={direction} variants={slideVariants} initial="enter" animate="center" exit="exit">
                     <div className="text-center mb-8">
                       <motion.div
@@ -759,7 +914,7 @@ export default function OnboardingPage() {
 
                     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }}
                       className="flex gap-3">
-                      <MagneticButton variant="secondary" onClick={() => goTo(1)} className="py-4 px-6 rounded-2xl">
+                      <MagneticButton variant="secondary" onClick={() => goTo(2)} className="py-4 px-6 rounded-2xl">
                         ← Back
                       </MagneticButton>
                       <MagneticButton variant="primary" onClick={handleComplete} disabled={completing}
