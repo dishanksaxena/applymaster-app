@@ -155,8 +155,23 @@ export default function OnboardingPage() {
   const [interviewStyle, setInterviewStyle] = useState('No preference')
 
   const [selectedPlan, setSelectedPlan] = useState('free')
+  const [loadedResumeName, setLoadedResumeName] = useState<string | null>(null)
 
-  useEffect(() => { setMounted(true) }, [])
+  useEffect(() => {
+    setMounted(true)
+    // Load existing resume from profile
+    const loadResume = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return
+        const { data } = await supabase.from('profiles').select('resume_name').eq('id', user.id).single()
+        if (data?.resume_name) {
+          setLoadedResumeName(data.resume_name)
+        }
+      } catch (err) { console.error('Error loading resume:', err) }
+    }
+    loadResume()
+  }, [])
 
   const goTo = (next: number) => { setDirection(next > step ? 1 : -1); setStep(next) }
 
@@ -183,6 +198,8 @@ export default function OnboardingPage() {
       if (!error) {
         const { data: { publicUrl } } = supabase.storage.from('resumes').getPublicUrl(path)
         await supabase.from('resumes').insert({ user_id: user.id, name: resumeFile.name, file_url: publicUrl, is_primary: true })
+        // Also save to profile
+        await supabase.from('profiles').update({ resume_url: publicUrl, resume_name: resumeFile.name }).eq('id', user.id)
       }
     } catch { }
     setUploading(false); goTo(1)
@@ -340,7 +357,8 @@ export default function OnboardingPage() {
                         Or browse
                       </span>
                     </div>
-                    {resumeFile && <p className="text-[12px] text-[#00b894]">✓ {resumeFile.name} selected</p>}
+                    {resumeFile && <p className="text-[12px] text-[#00b894]">✓ {resumeFile.name} selected (new)</p>}
+                    {!resumeFile && loadedResumeName && <p className="text-[12px] text-[#00b894]">✓ {loadedResumeName} (uploaded)</p>}
                     <div className="flex gap-3 pt-4">
                       <MagneticButton onClick={() => goTo(1)} className="flex-1 h-11">Skip</MagneticButton>
                       <MagneticButton onClick={handleResumeUpload} disabled={uploading} className="flex-1 h-11" variant="primary">
