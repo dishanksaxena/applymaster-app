@@ -220,55 +220,73 @@ export default function OnboardingPage() {
   }
 
   const parseResumeDetails = (text: string) => {
-    const extracted: any = {}
+    const extracted: any = { education: [], certifications: [], workExperience: [] }
 
-    // Extract name
-    const nameMatch = text.match(/^[\s]*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/m)
-    if (nameMatch) extracted.name = nameMatch[1].trim()
+    // Extract name (first line with capitals)
+    const nameMatch = text.match(/^[\s]*([A-Z][a-zA-Z\s]{2,50}?)(?:\n|$)/m)
+    if (nameMatch) extracted.name = nameMatch[1].trim().split('\n')[0]
 
     // Extract email
     const emailMatch = text.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/i)
     if (emailMatch) extracted.email = emailMatch[1]
 
     // Extract phone
-    const phoneMatch = text.match(/(\+?1?\s*)?(\([0-9]{3}\)|[0-9]{3})[-.\s]?([0-9]{3})[-.\s]?([0-9]{4})/)
+    const phoneMatch = text.match(/[\+]?1?\s*[\(]?[0-9]{3}[\)]?\s*[\-\.]?[0-9]{3}[\-\.]?[0-9]{4}/)
     if (phoneMatch) extracted.phone = phoneMatch[0]
 
     // Extract experience level
     let expLevel = 'mid'
-    if (/senior|lead|principal|manager|director|vp|vice president/i.test(text)) expLevel = 'senior'
-    if (/executive|c-level|ceo|cto|cfo|head of/i.test(text)) expLevel = 'executive'
-    if (/junior|entry[- ]level|graduate|associate/i.test(text)) expLevel = 'entry'
+    if (/senior|lead|principal|manager|director|vp|vice president|staff/i.test(text)) expLevel = 'senior'
+    if (/executive|c-level|ceo|cto|cfo|cio|chief|head of/i.test(text)) expLevel = 'executive'
+    if (/junior|entry[- ]?level|graduate|entry|associate|intern/i.test(text)) expLevel = 'entry'
     extracted.experienceLevel = expLevel
 
-    // Extract job titles
-    const jobTitlePattern = /(?:current|previous|experience|role).*?:?\s*([A-Z][a-z\s&]+(?:Engineer|Manager|Developer|Designer|Analyst|Architect|Lead|Director|Officer))/gi
-    const titleMatches = Array.from(text.matchAll(jobTitlePattern))
-    if (titleMatches.length > 0) {
-      extracted.jobTitles = titleMatches.map((m: any) => m[1].trim()).slice(0, 3)
+    // Extract professional summary (first substantial paragraph or after keywords)
+    const summaryMatch = text.match(/(?:professional summary|objective|summary|about|profile)[:\s]*\n?([^\n]{30,300})/i)
+    if (summaryMatch) {
+      extracted.summary = summaryMatch[1].trim().substring(0, 300)
     }
 
-    // Extract professional summary (look for objective, summary, or intro paragraphs)
-    const summaryMatch = text.match(/(?:professional summary|objective|summary|about)[:\s]*([^\n]{50,300})/i)
-    if (summaryMatch) extracted.summary = summaryMatch[1].trim().substring(0, 300)
+    // Extract education (look for degree keywords anywhere in resume)
+    const degreeKeywords = ['bachelor', 'master', 'phd', 'b.s', 'm.s', 'b.a', 'm.a', 'associate', 'diploma']
+    degreeKeywords.forEach(degree => {
+      const pattern = new RegExp(`([^\\n]*${degree}[^\\n]*)`, 'gi')
+      const matches = Array.from(text.matchAll(pattern))
+      matches.forEach(m => {
+        const line = m[1].trim().substring(0, 100)
+        if (line.length > 5 && !extracted.education.find((e: any) => e.degree === line)) {
+          extracted.education.push({ school: '', degree: line, field: '', endDate: '' })
+        }
+      })
+    })
+    extracted.education = extracted.education.slice(0, 3)
 
-    // Extract education
-    const educationPattern = /(?:education|degree)[:\s]*([^\n]*(?:bachelor|master|phd|b\.s\.|m\.s\.|b\.a\.|m\.a\.|associate)[^\n]*)/gi
-    const eduMatches = Array.from(text.matchAll(educationPattern))
-    extracted.education = eduMatches.map((m: any) => ({ school: '', degree: m[1].trim(), field: '', endDate: '' })).slice(0, 3)
+    // Extract certifications (look for cert keywords)
+    const certKeywords = ['certification', 'certified', 'credential', 'license']
+    certKeywords.forEach(keyword => {
+      const pattern = new RegExp(`[^\\n]*${keyword}[^\\n]*`, 'gi')
+      const matches = Array.from(text.matchAll(pattern))
+      matches.forEach(m => {
+        const cert = m[0].trim().substring(0, 100)
+        if (cert.length > 3 && !extracted.certifications.includes(cert)) {
+          extracted.certifications.push(cert)
+        }
+      })
+    })
+    extracted.certifications = extracted.certifications.slice(0, 5)
 
-    // Extract certifications
-    const certPattern = /(?:certification|certified|cert)[:\s]*([^\n]{10,100})/gi
-    const certMatches = Array.from(text.matchAll(certPattern))
-    extracted.certifications = certMatches.map((m: any) => m[1].trim()).slice(0, 5)
-
-    // Extract work experience
-    const expPattern = /(?:work experience|experience|employment)[:\s]*([^\n]*)/gi
-    const expMatches = Array.from(text.matchAll(expPattern))
-    extracted.workExperience = expMatches.map((m: any) => ({ company: '', title: '', startDate: '', endDate: '', description: m[1].trim() })).slice(0, 3)
+    // Extract work experience (look for common patterns)
+    const expLines = text.split('\n').filter((line: string) => {
+      return /(?:engineer|manager|developer|designer|analyst|specialist|architect|lead|director|officer)/i.test(line) && line.length > 10
+    })
+    expLines.forEach((line: string) => {
+      if (extracted.workExperience.length < 3) {
+        extracted.workExperience.push({ company: '', title: line.trim().substring(0, 100), startDate: '', endDate: '', description: '' })
+      }
+    })
 
     // Extract years of experience
-    const yearsMatch = text.match(/(\d+)\+?\s*(?:years?|yrs?)?\s*(?:of\s+)?(?:professional\s+)?experience/i)
+    const yearsMatch = text.match(/(\d+)\+?\s*(?:years?|yrs?)\s*(?:of\s+)?(?:experience|exp)/i)
     if (yearsMatch) extracted.yearsExp = parseInt(yearsMatch[1])
 
     return extracted
