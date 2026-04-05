@@ -49,12 +49,17 @@ function SectionCard({ title, icon, children }: { title: string; icon: React.Rea
   )
 }
 
-function EditField({ label, value, onChange, type = 'text' }: any) {
+function EditField({ label, value, onChange, type = 'text', multiline }: any) {
   return (
     <div className="space-y-1">
       <label className="text-[11px] font-bold text-[#fd79a8] uppercase">{label}</label>
-      <input type={type} value={value} onChange={e => onChange(e.target.value)}
-        className="w-full px-3 py-2 rounded-lg bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] text-white text-[12px] focus:border-[rgba(253,121,168,0.3)] outline-none" />
+      {multiline ? (
+        <textarea value={value} onChange={e => onChange(e.target.value)} rows={3}
+          className="w-full px-3 py-2 rounded-lg bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] text-white text-[12px] focus:border-[rgba(253,121,168,0.3)] outline-none resize-none" />
+      ) : (
+        <input type={type} value={value} onChange={e => onChange(e.target.value)}
+          className="w-full px-3 py-2 rounded-lg bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] text-white text-[12px] focus:border-[rgba(253,121,168,0.3)] outline-none" />
+      )}
     </div>
   )
 }
@@ -102,6 +107,12 @@ export default function ProfilePage() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
 
+  // Professional Summary & Details
+  const [summary, setSummary] = useState('')
+  const [education, setEducation] = useState<any[]>([])
+  const [certifications, setCertifications] = useState<any[]>([])
+  const [workExperience, setWorkExperience] = useState<any[]>([])
+
   // Career Preferences
   const [selectedRoles, setSelectedRoles] = useState<string[]>([])
   const [minSalary, setMinSalary] = useState(50000)
@@ -138,6 +149,10 @@ export default function ProfilePage() {
         if (profile) {
           setName(profile.full_name || '')
           setEmail(profile.email || user.email || '')
+          setSummary(profile.professional_summary || '')
+          setEducation(profile.education || [])
+          setCertifications(profile.certifications || [])
+          setWorkExperience(profile.work_experience || [])
         } else {
           setEmail(user.email || '')
         }
@@ -175,7 +190,13 @@ export default function ProfilePage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
-      await supabase.from('profiles').update({ full_name: name }).eq('id', user.id)
+      await supabase.from('profiles').update({
+        full_name: name,
+        professional_summary: summary,
+        education,
+        certifications,
+        work_experience: workExperience
+      }).eq('id', user.id)
 
       await supabase.from('job_preferences').upsert({
         user_id: user.id,
@@ -218,10 +239,65 @@ export default function ProfilePage() {
         </div>
       </SectionCard>
 
-      <SectionCard title="Career Preferences" icon={<span>💼</span>}>
+      <SectionCard title="Professional Summary" icon={<span>📝</span>}>
+        <EditField label="Professional Summary" value={summary} onChange={setSummary} multiline />
+      </SectionCard>
+
+      <SectionCard title="Work Experience" icon={<span>💼</span>}>
+        <div className="space-y-4">
+          {workExperience.map((exp, i) => (
+            <div key={i} className="p-4 rounded-lg bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.08)]">
+              <div className="grid sm:grid-cols-2 gap-3 mb-3">
+                <EditField label="Company" value={exp.company} onChange={c => { exp.company = c; setWorkExperience([...workExperience]) }} />
+                <EditField label="Job Title" value={exp.title} onChange={t => { exp.title = t; setWorkExperience([...workExperience]) }} />
+              </div>
+              <EditField label="Description" value={exp.description} onChange={d => { exp.description = d; setWorkExperience([...workExperience]) }} multiline />
+            </div>
+          ))}
+          <button onClick={() => setWorkExperience([...workExperience, { company: '', title: '', startDate: '', endDate: '', description: '' }])}
+            className="px-3 py-2 rounded-lg text-[12px] font-medium bg-[rgba(253,121,168,0.1)] text-[#fd79a8] hover:bg-[rgba(253,121,168,0.2)]">
+            + Add Experience
+          </button>
+        </div>
+      </SectionCard>
+
+      <SectionCard title="Education" icon={<span>🎓</span>}>
+        <div className="space-y-4">
+          {education.map((edu, i) => (
+            <div key={i} className="p-4 rounded-lg bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.08)]">
+              <div className="grid sm:grid-cols-2 gap-3">
+                <EditField label="School" value={edu.school} onChange={s => { edu.school = s; setEducation([...education]) }} />
+                <EditField label="Degree" value={edu.degree} onChange={d => { edu.degree = d; setEducation([...education]) }} />
+              </div>
+            </div>
+          ))}
+          <button onClick={() => setEducation([...education, { school: '', degree: '', field: '', endDate: '' }])}
+            className="px-3 py-2 rounded-lg text-[12px] font-medium bg-[rgba(253,121,168,0.1)] text-[#fd79a8] hover:bg-[rgba(253,121,168,0.2)]">
+            + Add Education
+          </button>
+        </div>
+      </SectionCard>
+
+      <SectionCard title="Certifications" icon={<span>🏆</span>}>
+        <div className="space-y-2">
+          {certifications.map((cert, i) => (
+            <div key={i} className="flex gap-2">
+              <input value={cert} onChange={c => { certifications[i] = c; setCertifications([...certifications]) }}
+                className="flex-1 px-3 py-2 rounded-lg bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] text-white text-[12px] outline-none" />
+              <button onClick={() => setCertifications(certifications.filter((_, idx) => idx !== i))}
+                className="px-2 py-1 rounded bg-[rgba(255,0,0,0.1)] text-[#ff6b6b] text-[11px]">Delete</button>
+            </div>
+          ))}
+          <button onClick={() => setCertifications([...certifications, ''])}
+            className="px-3 py-2 rounded-lg text-[12px] font-medium bg-[rgba(253,121,168,0.1)] text-[#fd79a8] hover:bg-[rgba(253,121,168,0.2)]">
+            + Add Certification
+          </button>
+        </div>
+      </SectionCard>
+
+      <SectionCard title="Career Preferences" icon={<span>🎯</span>}>
         <div className="space-y-4">
           <ChipSelector label="Target Roles (up to 5)" selected={selectedRoles} options={ROLES} onChange={setSelectedRoles} max={5} />
-
           <div className="space-y-2">
             <label className="text-[11px] font-bold text-[#fd79a8] uppercase">Annual Salary Range</label>
             <div className="flex gap-4">
@@ -237,7 +313,6 @@ export default function ProfilePage() {
               </div>
             </div>
           </div>
-
           <div className="grid sm:grid-cols-2 gap-4">
             <SelectField label="Experience Level" value={experienceLevel} onChange={setExperienceLevel} options={['entry', 'mid', 'senior', 'lead', 'executive']} />
             <SelectField label="Remote Preference" value={remotePreference} onChange={setRemotePreference} options={['remote', 'hybrid', 'onsite', 'any']} />
@@ -254,7 +329,6 @@ export default function ProfilePage() {
             <EditField label="Desired Job Title" value={desiredJobTitle} onChange={setDesiredJobTitle} />
             <SelectField label="Available Start Date" value={availableStartDate} onChange={setAvailableStartDate} options={START_DATES} />
           </div>
-
           <div className="space-y-2">
             <label className="text-[11px] font-bold text-[#fd79a8] uppercase block">Willing to Relocate?</label>
             <div className="flex gap-2">
@@ -268,7 +342,6 @@ export default function ProfilePage() {
               </button>
             </div>
           </div>
-
           <div className="grid sm:grid-cols-2 gap-4">
             <SelectField label="Country Preference" value={selectedCountry} onChange={(c: string) => { setSelectedCountry(c); setSelectedCities([]) }} options={Object.keys(CITIES_BY_COUNTRY)} />
             {selectedCountry && <ChipSelector label={`Cities (up to 3)`} selected={selectedCities} options={citiesForCountry} onChange={setSelectedCities} max={3} />}

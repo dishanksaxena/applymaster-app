@@ -222,7 +222,7 @@ export default function OnboardingPage() {
   const parseResumeDetails = (text: string) => {
     const extracted: any = {}
 
-    // Extract name (usually first few lines, before email/phone)
+    // Extract name
     const nameMatch = text.match(/^[\s]*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/m)
     if (nameMatch) extracted.name = nameMatch[1].trim()
 
@@ -231,26 +231,45 @@ export default function OnboardingPage() {
     if (emailMatch) extracted.email = emailMatch[1]
 
     // Extract phone
-    const phoneMatch = text.match(/(\+?1?\s*)?(\([0-9]{3}\)|[0-9]{3})[-.\s]?([0-9]{3})[-.\s]?([0-9]{4})/);
+    const phoneMatch = text.match(/(\+?1?\s*)?(\([0-9]{3}\)|[0-9]{3})[-.\s]?([0-9]{3})[-.\s]?([0-9]{4})/)
     if (phoneMatch) extracted.phone = phoneMatch[0]
 
-    // Extract experience level from keywords
+    // Extract experience level
     let expLevel = 'mid'
     if (/senior|lead|principal|manager|director|vp|vice president/i.test(text)) expLevel = 'senior'
     if (/executive|c-level|ceo|cto|cfo|head of/i.test(text)) expLevel = 'executive'
     if (/junior|entry[- ]level|graduate|associate/i.test(text)) expLevel = 'entry'
     extracted.experienceLevel = expLevel
 
-    // Extract job titles (look for common patterns)
+    // Extract job titles
     const jobTitlePattern = /(?:current|previous|experience|role).*?:?\s*([A-Z][a-z\s&]+(?:Engineer|Manager|Developer|Designer|Analyst|Architect|Lead|Director|Officer))/gi
-    const titleMatches = [...text.matchAll(jobTitlePattern)]
+    const titleMatches = Array.from(text.matchAll(jobTitlePattern))
     if (titleMatches.length > 0) {
-      extracted.jobTitles = titleMatches.map(m => m[1].trim()).slice(0, 3)
+      extracted.jobTitles = titleMatches.map((m: any) => m[1].trim()).slice(0, 3)
     }
 
+    // Extract professional summary (look for objective, summary, or intro paragraphs)
+    const summaryMatch = text.match(/(?:professional summary|objective|summary|about)[:\s]*([^\n]{50,300})/i)
+    if (summaryMatch) extracted.summary = summaryMatch[1].trim().substring(0, 300)
+
+    // Extract education
+    const educationPattern = /(?:education|degree)[:\s]*([^\n]*(?:bachelor|master|phd|b\.s\.|m\.s\.|b\.a\.|m\.a\.|associate)[^\n]*)/gi
+    const eduMatches = Array.from(text.matchAll(educationPattern))
+    extracted.education = eduMatches.map((m: any) => ({ school: '', degree: m[1].trim(), field: '', endDate: '' })).slice(0, 3)
+
+    // Extract certifications
+    const certPattern = /(?:certification|certified|cert)[:\s]*([^\n]{10,100})/gi
+    const certMatches = Array.from(text.matchAll(certPattern))
+    extracted.certifications = certMatches.map((m: any) => m[1].trim()).slice(0, 5)
+
+    // Extract work experience
+    const expPattern = /(?:work experience|experience|employment)[:\s]*([^\n]*)/gi
+    const expMatches = Array.from(text.matchAll(expPattern))
+    extracted.workExperience = expMatches.map((m: any) => ({ company: '', title: '', startDate: '', endDate: '', description: m[1].trim() })).slice(0, 3)
+
     // Extract years of experience
-    const expMatch = text.match(/(\d+)\+?\s*(?:years?|yrs?)?\s*(?:of\s+)?(?:professional\s+)?experience/i)
-    if (expMatch) extracted.yearsExp = parseInt(expMatch[1])
+    const yearsMatch = text.match(/(\d+)\+?\s*(?:years?|yrs?)?\s*(?:of\s+)?(?:professional\s+)?experience/i)
+    if (yearsMatch) extracted.yearsExp = parseInt(yearsMatch[1])
 
     return extracted
   }
@@ -310,13 +329,20 @@ export default function OnboardingPage() {
         // Insert new resume as primary
         await supabase.from('resumes').insert({ user_id: user.id, name: resumeFile.name, file_url: publicUrl, is_primary: true })
 
-        // Extract text and parse details
+        // Extract text and parse all details
         const resumeText = await extractTextFromResume(resumeFile)
         const details = parseResumeDetails(resumeText)
         const parsedSkills = extractSkillsFromText(resumeText)
 
-        // Update profile with extracted details
-        const profileUpdate: any = { resume_url: publicUrl, resume_name: resumeFile.name }
+        // Update profile with ALL extracted details
+        const profileUpdate: any = {
+          resume_url: publicUrl,
+          resume_name: resumeFile.name,
+          professional_summary: details.summary || null,
+          education: details.education || [],
+          certifications: details.certifications || [],
+          work_experience: details.workExperience || []
+        }
         if (details.name) profileUpdate.full_name = details.name
         if (details.email) profileUpdate.email = details.email
 
