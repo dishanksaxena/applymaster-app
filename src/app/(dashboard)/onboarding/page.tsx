@@ -272,17 +272,18 @@ export default function OnboardingPage() {
                       <p className="text-[13px] text-[#8a8a9a]">We'll analyze your experience to find better matches</p>
                     </div>
                     <div onDrop={onDrop} onDragOver={e => { e.preventDefault(); setDragging(true) }} onDragLeave={() => setDragging(false)}
-                      className="border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer"
+                      onClick={() => fileRef.current?.click()}
+                      className="border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer select-none"
                       style={{ borderColor: dragging ? 'rgba(253,121,168,0.5)' : 'rgba(255,255,255,0.1)', background: dragging ? 'rgba(253,121,168,0.05)' : 'rgba(255,255,255,0.01)' }}>
                       <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="mx-auto mb-3 text-[#fd79a8]">
                         <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" />
                       </svg>
                       <p className="text-white font-semibold mb-1">Drag & drop your resume</p>
                       <p className="text-[12px] text-[#5a5a6a] mb-3">PDF or DOCX</p>
-                      <input type="file" ref={fileRef} onChange={e => e.target.files && setResumeFile(e.target.files[0])} className="hidden" accept=".pdf,.docx" />
-                      <button onClick={() => fileRef.current?.click()} className="text-[12px] px-3 py-1.5 rounded-lg bg-[rgba(253,121,168,0.1)] text-[#fd79a8] hover:bg-[rgba(253,121,168,0.2)] transition-all">
+                      <input type="file" ref={fileRef} onChange={e => e.target.files && setResumeFile(e.target.files[0])} className="hidden" accept=".pdf,.docx" onClick={e => e.stopPropagation()} />
+                      <span className="text-[12px] px-3 py-1.5 rounded-lg bg-[rgba(253,121,168,0.1)] text-[#fd79a8] pointer-events-none inline-block">
                         Or browse
-                      </button>
+                      </span>
                     </div>
                     {resumeFile && <p className="text-[12px] text-[#00b894]">✓ {resumeFile.name} selected</p>}
                     <div className="flex gap-3 pt-4">
