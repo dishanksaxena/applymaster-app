@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { createClient } from '@/lib/supabase-browser'
 import ApplicationSourceChart from './ApplicationSourceChart'
@@ -64,13 +64,18 @@ export default function AutoApplyPage() {
   const [mounted, setMounted] = useState(false)
   const [testingAuto, setTestingAuto] = useState(false)
   const [isInitialized, setIsInitialized] = useState(false)
-  const supabase = createClient()
+  const supabaseRef = useRef<any>(null)
 
-  useEffect(() => { setMounted(true) }, [])
+  useEffect(() => {
+    setMounted(true)
+    supabaseRef.current = createClient()
+  }, [])
+
+  const supabase = supabaseRef.current
 
   // Load initial data only once
   useEffect(() => {
-    if (!mounted || isInitialized) return
+    if (!mounted || isInitialized || !supabase) return
 
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser()
@@ -96,7 +101,7 @@ export default function AutoApplyPage() {
     }
 
     load()
-  }, [mounted, isInitialized, supabase])
+  }, [mounted, isInitialized])
 
   // Compute analytics data
   const analytics = useMemo(() => {
@@ -126,16 +131,19 @@ export default function AutoApplyPage() {
   }, [applications])
 
   const saveSettings = async () => {
+    if (!supabase) return
     setSaving(true)
-    setSaved(false)
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
+        alert('Not authenticated. Please log in first.')
         setSaving(false)
         return
       }
 
-      const { error } = await supabase.from('job_preferences').upsert(
+      console.log('[AUTO-APPLY] Saving settings:', { mode, dailyLimit, matchThreshold, userId: user.id })
+
+      const { data, error } = await supabase.from('job_preferences').upsert(
         {
           user_id: user.id,
           auto_apply_mode: mode,
@@ -144,19 +152,25 @@ export default function AutoApplyPage() {
           updated_at: new Date().toISOString()
         },
         { onConflict: 'user_id' }
-      )
+      ).select()
 
-      setSaving(false)
-      if (!error) {
-        setSaved(true)
-        setTimeout(() => setSaved(false), 3000)
-      } else {
+      console.log('[AUTO-APPLY] Save response:', { data, error })
+
+      if (error) {
+        console.error('[AUTO-APPLY] Save failed:', error)
         alert('Failed to save: ' + error.message)
+        setSaving(false)
+      } else {
+        // Only set saved to true if upsert was successful
+        setSaved(true)
+        console.log('[AUTO-APPLY] Settings saved successfully')
+        setTimeout(() => setSaved(false), 3000)
+        setSaving(false)
       }
     } catch (err) {
-      console.error('Save error:', err)
+      console.error('[AUTO-APPLY] Save exception:', err)
       setSaving(false)
-      alert('Error saving settings')
+      alert('Error saving settings: ' + (err instanceof Error ? err.message : 'Unknown error'))
     }
   }
 
