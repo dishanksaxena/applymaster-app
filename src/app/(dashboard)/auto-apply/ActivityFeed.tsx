@@ -35,31 +35,37 @@ export default function ActivityFeed() {
           return
         }
 
+        console.log('[ActivityFeed] Loading activities for user:', user.id)
+
         // Load recent activity logs
         const { data, error } = await supabase
           .from('apply_log')
           .select('*')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false })
-          .limit(20)
+          .limit(50)
 
         if (error) {
-          console.error('Activity feed error:', error)
+          console.error('[ActivityFeed] Error loading:', error)
           setLoading(false)
           return
         }
 
         if (data) {
+          console.log('[ActivityFeed] Loaded', data.length, 'activities')
           setActivities(data)
         }
         setLoading(false)
       } catch (err) {
-        console.error('Activity load error:', err)
+        console.error('[ActivityFeed] Exception:', err)
         setLoading(false)
       }
     }
 
     loadActivities()
+
+    // Reload activities every 3 seconds to see new logs
+    const interval = setInterval(loadActivities, 3000)
 
     // Real-time subscription
     const channel = supabase
@@ -72,13 +78,15 @@ export default function ActivityFeed() {
           table: 'apply_log',
         },
         (payload: any) => {
+          console.log('[ActivityFeed] New log received:', payload.new)
           const newLog = payload.new as ActivityLog
-          setActivities((prev) => [newLog, ...prev.slice(0, 19)])
+          setActivities((prev) => [newLog, ...prev.slice(0, 49)])
         }
       )
       .subscribe()
 
     return () => {
+      clearInterval(interval)
       supabase.removeChannel(channel)
     }
   }, [supabase])
