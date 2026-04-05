@@ -63,6 +63,7 @@ export default function AutoApplyPage() {
   const [saved, setSaved] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [testingAuto, setTestingAuto] = useState(false)
+  const [testResult, setTestResult] = useState<string | null>(null)
   const [isInitialized, setIsInitialized] = useState(false)
   const supabaseRef = useRef<any>(null)
 
@@ -176,28 +177,20 @@ export default function AutoApplyPage() {
 
   const testAutoApply = async () => {
     setTestingAuto(true)
+    setTestResult(null)
     try {
       const response = await fetch('/api/auto-apply/test', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       })
-
       const data = await response.json()
       if (response.ok) {
-        // Reload logs in real-time
-        const { data: logData } = await supabase
-          .from('apply_log')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(20)
-        if (logData) setLogs(logData)
-
-        alert(`✅ Auto-apply test completed!\n\nProcessed: ${data.processed} applications`)
+        setTestResult(`✅ Done — ${data.processed} application(s) ${data.mode === 'autopilot' ? 'sent' : 'queued'}`)
       } else {
-        alert(`❌ Error: ${data.error}`)
+        setTestResult(`❌ Error: ${data.error}`)
       }
     } catch (err) {
-      alert(`❌ Failed: ${err instanceof Error ? err.message : 'Unknown error'}`)
+      setTestResult(`❌ Failed: ${err instanceof Error ? err.message : 'Unknown error'}`)
     } finally {
       setTestingAuto(false)
     }
@@ -348,20 +341,26 @@ export default function AutoApplyPage() {
 
             {/* Test Auto-Apply Button - Always Available */}
             <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }} onClick={testAutoApply} disabled={testingAuto}
-              className="w-full py-3 rounded-xl font-bold text-[13px] text-white disabled:opacity-30 transition-all flex items-center justify-center gap-2"
+              className="w-full py-3 rounded-xl font-bold text-[13px] text-white disabled:opacity-50 transition-all flex items-center justify-center gap-2"
               style={{ background: 'rgba(116,185,255,0.1)', border: '1px solid rgba(116,185,255,0.2)' }}>
               {testingAuto ? (
                 <>
                   <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }} className="w-3 h-3 rounded-full border-2 border-[#74b9ff]/20 border-t-[#74b9ff]" />
-                  Testing Auto-Apply...
+                  Searching &amp; matching jobs...
                 </>
               ) : (
                 <>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M23 12a11.05 11.05 0 0 1-22 0m22 0a11.05 11.05 0 0 0-22 0m22 0H0m11.5 7a3.5 3.5 0 0 1 0-7M9 21H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-5"/></svg>
-                  Test Auto-Apply Now
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="13,2 3,14 12,14 11,22 21,10 12,10"/></svg>
+                  Run Auto-Apply Now
                 </>
               )}
             </motion.button>
+            {testResult && (
+              <div className="text-center text-[12px] font-medium py-2 px-4 rounded-lg"
+                style={{ background: testResult.startsWith('✅') ? 'rgba(0,184,148,0.1)' : 'rgba(255,100,100,0.1)', color: testResult.startsWith('✅') ? '#00b894' : '#ff6b6b' }}>
+                {testResult}
+              </div>
+            )}
           </motion.div>
 
           {/* Info Banner */}
