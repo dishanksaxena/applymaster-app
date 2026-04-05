@@ -72,10 +72,10 @@ export default function ProfilePage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
-      // 1. Load from profiles table (always exists)
+      // 1. Load from profiles table
       const { data: profile } = await supabase
         .from('profiles')
-        .select('full_name, email')
+        .select('*')
         .eq('id', user.id)
         .single()
 
@@ -86,7 +86,32 @@ export default function ProfilePage() {
         setEmail(user.email || '')
       }
 
-      // 2. Load from parsed_resumes for richer data (if primary resume exists)
+      // 2. Load from job_preferences for resume data
+      const { data: prefs } = await supabase
+        .from('job_preferences')
+        .select('*')
+        .eq('user_id', user.id)
+        .single()
+
+      if (prefs) {
+        // Build a ParsedResume object from job_preferences
+        const resumeData: ParsedResume = {
+          full_name: profile?.full_name || null,
+          email: profile?.email || null,
+          phone: null, // Not stored yet, can be added to onboarding
+          location: null, // Not stored yet
+          summary: null, // Not stored yet
+          skills: prefs.key_skills || [],
+          experience: [],
+          education: [],
+          certifications: [],
+          languages: [],
+        }
+        setParsedExtra(resumeData)
+        setSkillsStr((prefs.key_skills || []).join(', '))
+      }
+
+      // 3. Check if primary resume exists
       const { data: resume } = await supabase
         .from('resumes')
         .select('id')
@@ -96,22 +121,6 @@ export default function ProfilePage() {
 
       if (resume) {
         setResumeId(resume.id)
-        const { data } = await supabase
-          .from('parsed_resumes')
-          .select('*')
-          .eq('resume_id', resume.id)
-          .single()
-
-        if (data) {
-          setParsedExtra(data as ParsedResume)
-          // Override with resume data (richer), but don't override if user already typed something
-          if (data.full_name) setName(data.full_name)
-          if (data.email) setEmail(data.email)
-          setPhone(data.phone || '')
-          setLocation(data.location || '')
-          setSummary(data.summary || '')
-          setSkillsStr((data.skills || []).join(', '))
-        }
       }
 
       setLoading(false)
@@ -126,23 +135,13 @@ export default function ProfilePage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setSaving(false); return }
 
-    // Always save name to profiles table
+    // Save name to profiles table
     await supabase.from('profiles').update({ full_name: name }).eq('id', user.id)
 
-    // Save detailed fields to parsed_resumes if resume exists
-    if (resumeId) {
-      await supabase.from('parsed_resumes').update({
-        full_name: name,
-        email,
-        phone,
-        location,
-        summary,
-        skills,
-      }).eq('resume_id', resumeId)
-    } else {
-      // No resume yet — store in a profile_details style using profiles table extended fields
-      // For now persist what we can to profiles
-      await supabase.from('profiles').update({ full_name: name }).eq('id', user.id)
+    // Save skills to job_preferences
+    const { data: prefs } = await supabase.from('job_preferences').select('id').eq('user_id', user.id).single()
+    if (prefs) {
+      await supabase.from('job_preferences').update({ key_skills: skills }).eq('user_id', user.id)
     }
 
     setSaving(false)
