@@ -216,7 +216,7 @@ export default function OnboardingPage() {
     SKILLS.forEach(skill => {
       if (textLower.includes(skill.toLowerCase())) foundSkills.push(skill)
     })
-    return Array.from(new Set(foundSkills)].slice(0, 8) // Limit to 8
+    return Array.from(new Set(foundSkills)).slice(0, 8) // Limit to 8
   }
 
   const parseResumeDetails = (text: string) => {
@@ -327,7 +327,7 @@ export default function OnboardingPage() {
           setExperienceLevel(details.experienceLevel)
         }
         if (parsedSkills.length > 0) {
-          setSelectedSkills(prev => Array.from(new Set([...prev, ...parsedSkills])].slice(0, 8))
+          setSelectedSkills(prev => Array.from(new Set([...prev, ...parsedSkills])).slice(0, 8))
         }
         if (details.jobTitles?.[0]) {
           setDesiredJobTitle(details.jobTitles[0])
