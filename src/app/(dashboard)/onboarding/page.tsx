@@ -80,8 +80,26 @@ const ROLES = ['Software Engineer', 'Product Manager', 'Data Scientist', 'Design
 const INDUSTRIES = ['Technology/IT', 'Finance', 'Healthcare', 'E-commerce', 'SaaS', 'Consulting', 'Manufacturing', 'Real Estate', 'Education', 'Media & Entertainment', 'Telecommunications', 'Automotive', 'Food & Beverage', 'Travel & Tourism', 'Logistics', 'Retail', 'Banking', 'Insurance', 'Government', 'Energy', 'Agriculture', 'Construction', 'Nonprofits', 'Legal Services', 'Recruiting', 'Marketing', 'Biotech/Pharma', 'Gaming', 'Fintech', 'Sustainability']
 const WORK_AUTH = ['Citizen', 'Permanent Resident', 'Work Visa (Can Work)', 'Need Sponsorship', 'No Restrictions']
 const EMPLOYMENT = ['Employed (Actively Looking)', 'Employed (Passive)', 'Unemployed', 'Student', 'Recently Laid Off', 'Self-Employed']
-const START_DATES = ['Immediately', '2 Weeks', '1 Month', '2 Months', '3 Months', 'Flexible']
-const ALL_CITIES = ['San Francisco', 'New York', 'Seattle', 'Austin', 'Boston', 'Denver', 'Chicago', 'Los Angeles', 'Miami', 'Portland', 'Toronto', 'Vancouver', 'Montreal', 'London', 'Manchester', 'Edinburgh', 'Singapore', 'Sydney', 'Melbourne', 'Amsterdam', 'Berlin', 'Paris', 'Madrid', 'Bangalore', 'Tokyo', 'Dubai', 'Hong Kong']
+const START_DATES = ['Immediately', 'Within 2 Weeks', 'Within 1 Month', 'Within 2 Months', 'Within 3 Months', '3–6 Months', 'More than 6 Months', 'Flexible / Not Sure']
+const ETHNICITIES = ['Prefer not to say', 'Asian or Pacific Islander', 'Black or African American', 'Hispanic or Latino', 'Middle Eastern or North African', 'Native American or Alaska Native', 'White or Caucasian', 'Two or more races', 'Other']
+const CITIES_BY_COUNTRY: Record<string, string[]> = {
+  'United States': ['New York', 'San Francisco', 'Los Angeles', 'Seattle', 'Austin', 'Boston', 'Chicago', 'Denver', 'Miami', 'Portland', 'Atlanta', 'Dallas', 'Washington DC'],
+  'Canada': ['Toronto', 'Vancouver', 'Montreal', 'Calgary', 'Ottawa', 'Edmonton'],
+  'United Kingdom': ['London', 'Manchester', 'Edinburgh', 'Birmingham', 'Bristol', 'Leeds'],
+  'Australia': ['Sydney', 'Melbourne', 'Brisbane', 'Perth', 'Adelaide'],
+  'India': ['Bangalore', 'Mumbai', 'Delhi', 'Hyderabad', 'Chennai', 'Pune', 'Ahmedabad'],
+  'Germany': ['Berlin', 'Munich', 'Hamburg', 'Frankfurt', 'Cologne'],
+  'Netherlands': ['Amsterdam', 'Rotterdam', 'The Hague', 'Utrecht'],
+  'France': ['Paris', 'Lyon', 'Marseille', 'Bordeaux'],
+  'Spain': ['Madrid', 'Barcelona', 'Valencia', 'Seville'],
+  'Japan': ['Tokyo', 'Osaka', 'Yokohama', 'Kyoto'],
+  'Singapore': ['Singapore'],
+  'UAE': ['Dubai', 'Abu Dhabi', 'Sharjah'],
+  'Hong Kong': ['Hong Kong'],
+  'Ireland': ['Dublin', 'Cork', 'Galway'],
+  'Sweden': ['Stockholm', 'Gothenburg', 'Malmö'],
+  'Remote / Any': ['Open to Any Location'],
+}
 const SKILLS = ['Python', 'JavaScript', 'TypeScript', 'React', 'Node.js', 'SQL', 'AWS', 'GCP', 'Docker', 'Kubernetes', 'Machine Learning', 'Data Analysis', 'UI/UX Design', 'Product Strategy', 'Leadership', 'Communication', 'Problem Solving', 'Project Management']
 const COMPANY_SIZES = ['Startup (<50)', 'Small (50-200)', 'Medium (200-1000)', 'Large (1000+)', 'No preference']
 const JOB_TYPES = ['Full-time', 'Part-time', 'Contract', 'No preference']
@@ -126,8 +144,9 @@ export default function OnboardingPage() {
   const [desiredJobTitle, setDesiredJobTitle] = useState('')
   const [availableStartDate, setAvailableStartDate] = useState('Immediately')
   const [willingToRelocate, setWillingToRelocate] = useState(true)
+  const [selectedCountry, setSelectedCountry] = useState('')
   const [selectedCities, setSelectedCities] = useState<string[]>([])
-  const [ethnicity, setEthnicity] = useState('')
+  const [ethnicity, setEthnicity] = useState('Prefer not to say')
 
   // Step 4: Skills
   const [selectedIndustries, setSelectedIndustries] = useState<string[]>([])
@@ -170,8 +189,44 @@ export default function OnboardingPage() {
   }
 
   const canProceedStep2 = selectedRoles.length > 0 && minSalary > 0 && maxSalary > minSalary
-  const canProceedStep3 = desiredJobTitle.trim().length > 0 && selectedCities.length > 0
+  const canProceedStep3 = desiredJobTitle.trim().length > 0 && selectedCountry.length > 0 && selectedCities.length > 0
   const canProceedStep4 = selectedIndustries.length > 0 && selectedSkills.length > 0
+
+  const saveStep2 = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      await supabase.from('job_preferences').upsert({
+        user_id: user.id,
+        target_roles: selectedRoles,
+        experience_level: experienceLevel,
+        min_salary: minSalary,
+        max_salary: maxSalary,
+        remote_preference: remotePreference,
+        employment_type: workType,
+      })
+    } catch (err) { console.error('saveStep2:', err) }
+    goTo(2)
+  }
+
+  const saveStep3 = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      await supabase.from('job_preferences').upsert({
+        user_id: user.id,
+        work_authorization: workAuth,
+        current_employment_status: employmentStatus,
+        desired_job_title: desiredJobTitle,
+        available_start_date: availableStartDate,
+        willing_to_relocate: willingToRelocate,
+        country_preference: selectedCountry,
+        city_preferences: selectedCities,
+        ethnicity: ethnicity || null,
+      })
+    } catch (err) { console.error('saveStep3:', err) }
+    goTo(3)
+  }
 
   const handleSavePreferences = async () => {
     if (!canProceedStep4) return
@@ -179,7 +234,6 @@ export default function OnboardingPage() {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
-
       await supabase.from('job_preferences').upsert({
         user_id: user.id,
         target_roles: selectedRoles.length > 0 ? selectedRoles : ['Software Engineer'],
@@ -194,6 +248,7 @@ export default function OnboardingPage() {
         desired_job_title: desiredJobTitle,
         available_start_date: availableStartDate,
         willing_to_relocate: willingToRelocate,
+        country_preference: selectedCountry,
         city_preferences: selectedCities,
         ethnicity: ethnicity || null,
         key_skills: selectedSkills,
@@ -375,7 +430,7 @@ export default function OnboardingPage() {
 
                     <div className="flex gap-3 pt-4">
                       <MagneticButton onClick={() => goTo(0)} variant="secondary" className="flex-1 h-11">Back</MagneticButton>
-                      <MagneticButton onClick={() => goTo(2)} disabled={!canProceedStep2} className="flex-1 h-11" variant="primary">
+                      <MagneticButton onClick={saveStep2} disabled={!canProceedStep2} className="flex-1 h-11" variant="primary">
                         Next {!canProceedStep2 && '(Select roles & salary)'}
                       </MagneticButton>
                     </div>
@@ -394,8 +449,9 @@ export default function OnboardingPage() {
                     <div>
                       <label className="block text-[12px] font-bold text-[#fd79a8] mb-2">EMPLOYMENT STATUS *</label>
                       <select value={employmentStatus} onChange={e => setEmploymentStatus(e.target.value)}
-                        className="w-full px-4 py-2.5 rounded-lg bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] text-white text-[13px] focus:border-[rgba(253,121,168,0.3)] focus:outline-none transition-all cursor-pointer">
-                        {EMPLOYMENT.map(e => <option key={e} value={e}>{e}</option>)}
+                        className="w-full px-4 py-2.5 rounded-lg border border-[rgba(255,255,255,0.08)] text-white text-[13px] focus:border-[rgba(253,121,168,0.3)] focus:outline-none transition-all cursor-pointer"
+                        style={{ background: '#13131f' }}>
+                        {EMPLOYMENT.map(e => <option key={e} value={e} style={{ background: '#13131f', color: 'white' }}>{e}</option>)}
                       </select>
                     </div>
 
@@ -403,8 +459,9 @@ export default function OnboardingPage() {
                     <div>
                       <label className="block text-[12px] font-bold text-[#fd79a8] mb-2">WORK AUTHORIZATION *</label>
                       <select value={workAuth} onChange={e => setWorkAuth(e.target.value)}
-                        className="w-full px-4 py-2.5 rounded-lg bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] text-white text-[13px] focus:border-[rgba(253,121,168,0.3)] focus:outline-none transition-all cursor-pointer">
-                        {WORK_AUTH.map(auth => <option key={auth} value={auth}>{auth}</option>)}
+                        className="w-full px-4 py-2.5 rounded-lg border border-[rgba(255,255,255,0.08)] text-white text-[13px] focus:border-[rgba(253,121,168,0.3)] focus:outline-none transition-all cursor-pointer"
+                        style={{ background: '#13131f' }}>
+                        {WORK_AUTH.map(auth => <option key={auth} value={auth} style={{ background: '#13131f', color: 'white' }}>{auth}</option>)}
                       </select>
                     </div>
 
@@ -420,8 +477,9 @@ export default function OnboardingPage() {
                     <div>
                       <label className="block text-[12px] font-bold text-[#fd79a8] mb-2">WHEN CAN YOU START? *</label>
                       <select value={availableStartDate} onChange={e => setAvailableStartDate(e.target.value)}
-                        className="w-full px-4 py-2.5 rounded-lg bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] text-white text-[13px] focus:border-[rgba(253,121,168,0.3)] focus:outline-none transition-all cursor-pointer">
-                        {START_DATES.map(date => <option key={date} value={date}>{date}</option>)}
+                        className="w-full px-4 py-2.5 rounded-lg border border-[rgba(255,255,255,0.08)] text-white text-[13px] focus:border-[rgba(253,121,168,0.3)] focus:outline-none transition-all cursor-pointer"
+                        style={{ background: '#13131f' }}>
+                        {START_DATES.map(date => <option key={date} value={date} style={{ background: '#13131f', color: 'white' }}>{date}</option>)}
                       </select>
                     </div>
 
@@ -440,30 +498,48 @@ export default function OnboardingPage() {
                       </div>
                     </div>
 
-                    {/* Top 3 Cities */}
+                    {/* Country Preference */}
                     <div>
-                      <label className="block text-[12px] font-bold text-[#fd79a8] mb-2">TOP 3 CITY PREFERENCES *</label>
-                      <div className="grid grid-cols-2 gap-2 max-h-[240px] overflow-y-auto pr-2">
-                        {ALL_CITIES.map(city => (
-                          <button key={city} onClick={() => toggleChip(selectedCities, setSelectedCities, city, 3)}
-                            className={`px-3 py-2 rounded-lg text-[12px] font-medium transition-all text-left ${selectedCities.includes(city) ? 'bg-[rgba(253,121,168,0.15)] text-[#fd79a8] border border-[rgba(253,121,168,0.3)]' : 'bg-[rgba(255,255,255,0.04)] text-[#8a8a9a] hover:bg-[rgba(255,255,255,0.08)]'}`}>
-                            {city}
-                          </button>
-                        ))}
-                      </div>
-                      {selectedCities.length === 0 && <p className="text-[11px] text-[#ff6b6b] mt-2">❌ Select 3 cities</p>}
+                      <label className="block text-[12px] font-bold text-[#fd79a8] mb-2">PREFERRED COUNTRY *</label>
+                      <select value={selectedCountry} onChange={e => { setSelectedCountry(e.target.value); setSelectedCities([]) }}
+                        className="w-full px-4 py-2.5 rounded-lg border border-[rgba(255,255,255,0.08)] text-[13px] focus:border-[rgba(253,121,168,0.3)] focus:outline-none transition-all cursor-pointer"
+                        style={{ background: '#13131f', color: selectedCountry ? 'white' : '#5a5a6a' }}>
+                        <option value="" style={{ background: '#13131f', color: '#5a5a6a' }}>Select a country...</option>
+                        {Object.keys(CITIES_BY_COUNTRY).map(c => <option key={c} value={c} style={{ background: '#13131f', color: 'white' }}>{c}</option>)}
+                      </select>
+                      {!selectedCountry && <p className="text-[11px] text-[#ff6b6b] mt-1">❌ Required</p>}
                     </div>
+
+                    {/* Top 3 Cities — only shown once country is selected */}
+                    {selectedCountry && (
+                      <div>
+                        <label className="block text-[12px] font-bold text-[#fd79a8] mb-2">TOP CITY PREFERENCES (up to 3) *</label>
+                        <div className="grid grid-cols-2 gap-2 max-h-[220px] overflow-y-auto pr-2">
+                          {CITIES_BY_COUNTRY[selectedCountry].map(city => (
+                            <button key={city} onClick={() => toggleChip(selectedCities, setSelectedCities, city, 3)}
+                              className={`px-3 py-2 rounded-lg text-[12px] font-medium transition-all text-left ${selectedCities.includes(city) ? 'bg-[rgba(253,121,168,0.15)] text-[#fd79a8] border border-[rgba(253,121,168,0.3)]' : 'bg-[rgba(255,255,255,0.04)] text-[#8a8a9a] hover:bg-[rgba(255,255,255,0.08)]'}`}>
+                              {city}
+                            </button>
+                          ))}
+                        </div>
+                        {selectedCities.length === 0 && <p className="text-[11px] text-[#ff6b6b] mt-2">❌ Select at least 1 city</p>}
+                        {selectedCities.length > 0 && <p className="text-[11px] text-[#00b894] mt-2">✓ {selectedCities.join(', ')}</p>}
+                      </div>
+                    )}
 
                     {/* Ethnicity */}
                     <div>
                       <label className="block text-[12px] font-bold text-[#8a8a9a] mb-2">ETHNICITY (Optional)</label>
-                      <input type="text" value={ethnicity} onChange={e => setEthnicity(e.target.value)} placeholder="Not required"
-                        className="w-full px-4 py-2.5 rounded-lg bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] text-white placeholder-[#3a3a4a] text-[13px] focus:border-[rgba(253,121,168,0.3)] focus:outline-none transition-all" />
+                      <select value={ethnicity} onChange={e => setEthnicity(e.target.value)}
+                        className="w-full px-4 py-2.5 rounded-lg border border-[rgba(255,255,255,0.08)] text-white text-[13px] focus:border-[rgba(253,121,168,0.3)] focus:outline-none transition-all cursor-pointer"
+                        style={{ background: '#13131f' }}>
+                        {ETHNICITIES.map(e => <option key={e} value={e} style={{ background: '#13131f', color: 'white' }}>{e}</option>)}
+                      </select>
                     </div>
 
                     <div className="flex gap-3 pt-4">
                       <MagneticButton onClick={() => goTo(1)} variant="secondary" className="flex-1 h-11">Back</MagneticButton>
-                      <MagneticButton onClick={() => goTo(3)} disabled={!canProceedStep3} className="flex-1 h-11" variant="primary">
+                      <MagneticButton onClick={saveStep3} disabled={!canProceedStep3} className="flex-1 h-11" variant="primary">
                         Next {!canProceedStep3 && '(Complete fields)'}
                       </MagneticButton>
                     </div>
