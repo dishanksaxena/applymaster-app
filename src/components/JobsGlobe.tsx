@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import * as THREE from 'three'
 
+// ─── City coordinate database ───
 const CITY_COORDS: Record<string, [number, number]> = {
   'new york': [40.7128, -74.006], 'san francisco': [37.7749, -122.4194],
   'seattle': [47.6062, -122.3321], 'austin': [30.2672, -97.7431],
@@ -99,6 +100,12 @@ function latLngToVector3(lat: number, lng: number, radius: number): THREE.Vector
   return new THREE.Vector3(x, y, z)
 }
 
+function hexToRgb(hex: string): [number, number, number] {
+  const h = hex.replace('#', '')
+  return [parseInt(h.substr(0, 2), 16), parseInt(h.substr(2, 2), 16), parseInt(h.substr(4, 2), 16)]
+}
+
+// ─── Job detail card ───
 function JobCard({ job, onClose, onSave, onApply, isSaved, isApplied }: any) {
   return (
     <motion.div initial={{ opacity: 0, x: 30, scale: 0.94 }} animate={{ opacity: 1, x: 0, scale: 1 }} exit={{ opacity: 0, x: 30, scale: 0.94 }} transition={{ type: 'spring', stiffness: 320, damping: 28 }} className="absolute top-4 right-4 z-30 w-[320px]">
@@ -125,22 +132,167 @@ function JobCard({ job, onClose, onSave, onApply, isSaved, isApplied }: any) {
   )
 }
 
+// ─── Create marker glow texture ───
+function createMarkerTexture(color: string, size = 128): THREE.CanvasTexture {
+  const canvas = document.createElement('canvas')
+  canvas.width = size
+  canvas.height = size
+  const ctx = canvas.getContext('2d')!
+  const [r, g, b] = hexToRgb(color)
+  const cx = size / 2
+
+  // Outer glow
+  const outerGlow = ctx.createRadialGradient(cx, cx, 0, cx, cx, cx)
+  outerGlow.addColorStop(0, `rgba(${r},${g},${b},0)`)
+  outerGlow.addColorStop(0.2, `rgba(${r},${g},${b},0)`)
+  outerGlow.addColorStop(0.4, `rgba(${r},${g},${b},0.05)`)
+  outerGlow.addColorStop(0.7, `rgba(${r},${g},${b},0.02)`)
+  outerGlow.addColorStop(1, `rgba(${r},${g},${b},0)`)
+  ctx.fillStyle = outerGlow
+  ctx.fillRect(0, 0, size, size)
+
+  // Inner bright core
+  const innerGlow = ctx.createRadialGradient(cx, cx, 0, cx, cx, cx * 0.35)
+  innerGlow.addColorStop(0, `rgba(255,255,255,1)`)
+  innerGlow.addColorStop(0.3, `rgba(${Math.min(255, r + 80)},${Math.min(255, g + 80)},${Math.min(255, b + 80)},0.95)`)
+  innerGlow.addColorStop(0.6, `rgba(${r},${g},${b},0.6)`)
+  innerGlow.addColorStop(1, `rgba(${r},${g},${b},0)`)
+  ctx.fillStyle = innerGlow
+  ctx.fillRect(0, 0, size, size)
+
+  return new THREE.CanvasTexture(canvas)
+}
+
+// ─── Create pulse ring texture ───
+function createPulseRingTexture(color: string): THREE.CanvasTexture {
+  const size = 128
+  const canvas = document.createElement('canvas')
+  canvas.width = size
+  canvas.height = size
+  const ctx = canvas.getContext('2d')!
+  const [r, g, b] = hexToRgb(color)
+  const cx = size / 2
+
+  ctx.beginPath()
+  ctx.arc(cx, cx, cx * 0.85, 0, Math.PI * 2)
+  ctx.strokeStyle = `rgba(${r},${g},${b},0.6)`
+  ctx.lineWidth = 2
+  ctx.stroke()
+
+  ctx.beginPath()
+  ctx.arc(cx, cx, cx * 0.6, 0, Math.PI * 2)
+  ctx.strokeStyle = `rgba(${r},${g},${b},0.3)`
+  ctx.lineWidth = 1.5
+  ctx.stroke()
+
+  return new THREE.CanvasTexture(canvas)
+}
+
+// ─── Create globe grid lines (lat/lng) ───
+function createGlobeGrid(radius: number): THREE.LineSegments {
+  const positions: number[] = []
+
+  // Latitude lines
+  for (let lat = -80; lat <= 80; lat += 20) {
+    const phi = (90 - lat) * (Math.PI / 180)
+    for (let lng = -180; lng < 180; lng += 2) {
+      const theta1 = (lng + 180) * (Math.PI / 180)
+      const theta2 = (lng + 2 + 180) * (Math.PI / 180)
+
+      positions.push(
+        -(radius * Math.sin(phi) * Math.cos(theta1)),
+        radius * Math.cos(phi),
+        radius * Math.sin(phi) * Math.sin(theta1),
+        -(radius * Math.sin(phi) * Math.cos(theta2)),
+        radius * Math.cos(phi),
+        radius * Math.sin(phi) * Math.sin(theta2)
+      )
+    }
+  }
+
+  // Longitude lines
+  for (let lng = -180; lng < 180; lng += 30) {
+    const theta = (lng + 180) * (Math.PI / 180)
+    for (let lat = -90; lat < 90; lat += 2) {
+      const phi1 = (90 - lat) * (Math.PI / 180)
+      const phi2 = (90 - lat - 2) * (Math.PI / 180)
+
+      positions.push(
+        -(radius * Math.sin(phi1) * Math.cos(theta)),
+        radius * Math.cos(phi1),
+        radius * Math.sin(phi1) * Math.sin(theta),
+        -(radius * Math.sin(phi2) * Math.cos(theta)),
+        radius * Math.cos(phi2),
+        radius * Math.sin(phi2) * Math.sin(theta)
+      )
+    }
+  }
+
+  const geometry = new THREE.BufferGeometry()
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3))
+
+  const material = new THREE.LineBasicMaterial({
+    color: 0x1a3a5c,
+    transparent: true,
+    opacity: 0.12,
+    blending: THREE.AdditiveBlending,
+  })
+
+  return new THREE.LineSegments(geometry, material)
+}
+
+// ─── Create arc between two points ───
+function createArc(
+  start: THREE.Vector3,
+  end: THREE.Vector3,
+  radius: number,
+  color: number,
+  opacity: number
+): THREE.Line {
+  const mid = new THREE.Vector3().addVectors(start, end).multiplyScalar(0.5)
+  const dist = start.clone().sub(end).length()
+  const arcHeight = radius + dist * 0.25
+
+  mid.normalize().multiplyScalar(arcHeight)
+
+  const curve = new THREE.QuadraticBezierCurve3(start, mid, end)
+  const curvePoints = curve.getPoints(48)
+  const geometry = new THREE.BufferGeometry().setFromPoints(curvePoints)
+
+  const material = new THREE.LineBasicMaterial({
+    color,
+    transparent: true,
+    opacity,
+    blending: THREE.AdditiveBlending,
+    linewidth: 1,
+  })
+
+  return new THREE.Line(geometry, material)
+}
+
+// ─── Stars background ───
 const STARS = Array.from({ length: 200 }, (_, i) => ({
   id: i, x: Math.random() * 100, y: Math.random() * 100,
   size: Math.random() * 2 + 0.5, opacity: Math.random() * 0.5 + 0.3,
 }))
 
+
+// ═══════════════════════════════════════════════════════════════════
+// ─── MAIN GLOBE COMPONENT ───
+// ═══════════════════════════════════════════════════════════════════
 export default function JobsGlobe({ jobs, onSave, onApply, savedJobs, appliedJobs }: JobsGlobeProps) {
   const containerRef = useRef<HTMLDivElement>(null)
-  const sceneRef = useRef<THREE.Scene | null>(null)
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null)
   const earthGroupRef = useRef<THREE.Group | null>(null)
   const markersRef = useRef<THREE.Sprite[]>([])
+  const pulseRingsRef = useRef<THREE.Sprite[]>([])
+  const arcsRef = useRef<THREE.Line[]>([])
   const mouseRef = useRef({ x: 0, y: 0 })
   const dragRef = useRef({ active: false, x: 0, y: 0, vx: 0, vy: 0 })
+  const clockRef = useRef<THREE.Clock | null>(null)
 
   const [selectedJob, setSelectedJob] = useState<Job | null>(null)
-  const [hoveredJobId, setHoveredJobId] = useState<string | null>(null)
+  const [, setHoveredJobId] = useState<string | null>(null)
 
   const points = useMemo(() => {
     return jobs
@@ -172,105 +324,291 @@ export default function JobsGlobe({ jobs, onSave, onApply, savedJobs, appliedJob
 
     const width = containerRef.current.offsetWidth
     const height = containerRef.current.offsetHeight
+    const GLOBE_RADIUS = 100
 
+    // ─── Clock for animations ───
+    const clock = new THREE.Clock()
+    clockRef.current = clock
+
+    // ─── Scene ───
     const scene = new THREE.Scene()
-    sceneRef.current = scene
 
+    // ─── Camera ───
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 10000)
-    camera.position.set(0, 0, 260)
+    camera.position.set(0, 20, 280)
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
+    // ─── Renderer ───
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: true,
+      powerPreference: 'high-performance',
+    })
     renderer.setSize(width, height)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     renderer.outputColorSpace = THREE.SRGBColorSpace
+    renderer.toneMapping = THREE.ACESFilmicToneMapping
+    renderer.toneMappingExposure = 1.2
     containerRef.current.appendChild(renderer.domElement)
     rendererRef.current = renderer
 
+    // ─── Earth group ───
     const earthGroup = new THREE.Group()
     earthGroupRef.current = earthGroup
     scene.add(earthGroup)
 
-    // Lighting
-    scene.add(new THREE.AmbientLight(0xffffff, 1.4))
-    const sunLight = new THREE.DirectionalLight(0xffffff, 1.2)
-    sunLight.position.set(100, 100, 100)
-    scene.add(sunLight)
+    // ─── Lighting — cinematic setup ───
+    const ambientLight = new THREE.AmbientLight(0x1a2a4a, 0.8)
+    scene.add(ambientLight)
 
-    // Load textures
+    const keyLight = new THREE.DirectionalLight(0x4488ff, 1.8)
+    keyLight.position.set(150, 100, 100)
+    scene.add(keyLight)
+
+    const rimLight = new THREE.DirectionalLight(0x0044ff, 1.2)
+    rimLight.position.set(-150, -50, -100)
+    scene.add(rimLight)
+
+    const topLight = new THREE.PointLight(0x6688ff, 1.5, 500)
+    topLight.position.set(0, 200, 0)
+    scene.add(topLight)
+
+    // ─── Load textures ───
     const textureLoader = new THREE.TextureLoader()
     const nightTexture = textureLoader.load('//unpkg.com/three-globe/example/img/earth-night.jpg')
     const bumpTexture = textureLoader.load('//unpkg.com/three-globe/example/img/earth-topology.png')
 
-    // Earth - OPAQUE, VISIBLE
-    const earthGeom = new THREE.SphereGeometry(100, 128, 128)
+    // ─── Earth sphere — dark, detailed ───
+    const earthGeom = new THREE.SphereGeometry(GLOBE_RADIUS, 128, 128)
     const earthMat = new THREE.MeshPhongMaterial({
       map: nightTexture,
       bumpMap: bumpTexture,
-      bumpScale: 3,
-      specular: new THREE.Color(0x222222),
-      shininess: 10,
+      bumpScale: 4.5,
+      specular: new THREE.Color(0x111133),
+      shininess: 15,
+      emissive: new THREE.Color(0x050510),
+      emissiveIntensity: 0.3,
     })
     const earth = new THREE.Mesh(earthGeom, earthMat)
     earthGroup.add(earth)
 
-    // Atmosphere glow
-    const atmosGeom = new THREE.SphereGeometry(100, 64, 64)
-    const atmosMat = new THREE.ShaderMaterial({
-      vertexShader: `varying vec3 vNormal; void main() { vNormal = normalize(normalMatrix * normal); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
-      fragmentShader: `varying vec3 vNormal; void main() { float intensity = pow(0.7 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.0); gl_FragColor = vec4(0.3, 0.6, 1.0, 1.0) * intensity; }`,
+    // ─── Grid overlay on globe surface ───
+    const grid = createGlobeGrid(GLOBE_RADIUS + 0.3)
+    earthGroup.add(grid)
+
+    // ─── Inner atmosphere (subtle blue haze on surface) ───
+    const innerAtmosGeom = new THREE.SphereGeometry(GLOBE_RADIUS + 0.5, 64, 64)
+    const innerAtmosMat = new THREE.ShaderMaterial({
+      vertexShader: `
+        varying vec3 vNormal;
+        varying vec3 vPosition;
+        void main() {
+          vNormal = normalize(normalMatrix * normal);
+          vPosition = (modelViewMatrix * vec4(position, 1.0)).xyz;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: `
+        varying vec3 vNormal;
+        varying vec3 vPosition;
+        void main() {
+          float intensity = pow(0.65 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.5);
+          vec3 color = vec3(0.15, 0.4, 1.0);
+          gl_FragColor = vec4(color, intensity * 0.4);
+        }
+      `,
+      blending: THREE.AdditiveBlending,
+      side: THREE.FrontSide,
+      transparent: true,
+      depthWrite: false,
+    })
+    const innerAtmosphere = new THREE.Mesh(innerAtmosGeom, innerAtmosMat)
+    earthGroup.add(innerAtmosphere)
+
+    // ─── Outer atmosphere glow — DRAMATIC ───
+    const outerAtmosGeom = new THREE.SphereGeometry(GLOBE_RADIUS, 64, 64)
+    const outerAtmosMat = new THREE.ShaderMaterial({
+      vertexShader: `
+        varying vec3 vNormal;
+        void main() {
+          vNormal = normalize(normalMatrix * normal);
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: `
+        varying vec3 vNormal;
+        void main() {
+          float intensity = pow(0.75 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 3.0);
+          vec3 color = mix(vec3(0.1, 0.3, 1.0), vec3(0.3, 0.6, 1.0), intensity);
+          gl_FragColor = vec4(color, intensity * 1.5);
+        }
+      `,
       blending: THREE.AdditiveBlending,
       side: THREE.BackSide,
       transparent: true,
+      depthWrite: false,
     })
-    const atmosphere = new THREE.Mesh(atmosGeom, atmosMat)
-    atmosphere.scale.set(1.15, 1.15, 1.15)
-    earthGroup.add(atmosphere)
+    const outerAtmosphere = new THREE.Mesh(outerAtmosGeom, outerAtmosMat)
+    outerAtmosphere.scale.set(1.22, 1.22, 1.22)
+    earthGroup.add(outerAtmosphere)
 
-    // Add markers
-    const updateMarkers = () => {
-      markersRef.current.forEach(m => earthGroup.remove(m))
-      markersRef.current = []
+    // ─── Second glow layer (softer, wider) ───
+    const outerGlow2Geom = new THREE.SphereGeometry(GLOBE_RADIUS, 32, 32)
+    const outerGlow2Mat = new THREE.ShaderMaterial({
+      vertexShader: `
+        varying vec3 vNormal;
+        void main() {
+          vNormal = normalize(normalMatrix * normal);
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: `
+        varying vec3 vNormal;
+        void main() {
+          float intensity = pow(0.6 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.0);
+          gl_FragColor = vec4(0.15, 0.35, 0.9, intensity * 0.5);
+        }
+      `,
+      blending: THREE.AdditiveBlending,
+      side: THREE.BackSide,
+      transparent: true,
+      depthWrite: false,
+    })
+    const outerGlow2 = new THREE.Mesh(outerGlow2Geom, outerGlow2Mat)
+    outerGlow2.scale.set(1.35, 1.35, 1.35)
+    earthGroup.add(outerGlow2)
 
-      points.forEach(p => {
-        const pos = latLngToVector3(p.lat, p.lng, 102)
+    // ─── Add markers with pulse rings ───
+    markersRef.current = []
+    pulseRingsRef.current = []
 
-        // Create glowing marker
-        const canvas = document.createElement('canvas')
-        canvas.width = 48
-        canvas.height = 48
-        const ctx = canvas.getContext('2d')!
+    points.forEach(p => {
+      const pos = latLngToVector3(p.lat, p.lng, GLOBE_RADIUS + 1.5)
 
-        const hex = p.color.replace('#', '')
-        const r = parseInt(hex.substr(0, 2), 16)
-        const g = parseInt(hex.substr(2, 2), 16)
-        const b = parseInt(hex.substr(4, 2), 16)
-
-        const gradient = ctx.createRadialGradient(24, 24, 0, 24, 24, 24)
-        gradient.addColorStop(0, `rgba(255,255,255,1)`)
-        gradient.addColorStop(0.4, `rgba(${r},${g},${b},0.8)`)
-        gradient.addColorStop(1, `rgba(${r},${g},${b},0)`)
-        ctx.fillStyle = gradient
-        ctx.fillRect(0, 0, 48, 48)
-
-        const texture = new THREE.CanvasTexture(canvas)
-        const spriteMat = new THREE.SpriteMaterial({ map: texture, blending: THREE.AdditiveBlending, depthWrite: false })
-        const sprite = new THREE.Sprite(spriteMat)
-        sprite.position.copy(pos)
-        sprite.scale.set(4, 4, 1)
-        sprite.userData = { job: p.job, jobId: p.job.id }
-
-        earthGroup.add(sprite)
-        markersRef.current.push(sprite)
+      // Main marker sprite
+      const markerTex = createMarkerTexture(p.color)
+      const spriteMat = new THREE.SpriteMaterial({
+        map: markerTex,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
       })
+      const sprite = new THREE.Sprite(spriteMat)
+      sprite.position.copy(pos)
+      sprite.scale.set(7, 7, 1)
+      sprite.userData = { job: p.job, jobId: p.job.id }
+      earthGroup.add(sprite)
+      markersRef.current.push(sprite)
+
+      // Pulse ring 1
+      const ringTex = createPulseRingTexture(p.color)
+      const ringMat = new THREE.SpriteMaterial({
+        map: ringTex,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        opacity: 0.6,
+      })
+      const ring = new THREE.Sprite(ringMat)
+      ring.position.copy(pos)
+      ring.scale.set(5, 5, 1)
+      ring.userData = { phase: Math.random() * Math.PI * 2, speed: 0.8 + Math.random() * 0.4 }
+      earthGroup.add(ring)
+      pulseRingsRef.current.push(ring)
+
+      // Pulse ring 2 (offset phase)
+      const ring2Mat = new THREE.SpriteMaterial({
+        map: ringTex,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        opacity: 0.3,
+      })
+      const ring2 = new THREE.Sprite(ring2Mat)
+      ring2.position.copy(pos)
+      ring2.scale.set(5, 5, 1)
+      ring2.userData = { phase: Math.random() * Math.PI * 2 + Math.PI, speed: 0.6 + Math.random() * 0.3 }
+      earthGroup.add(ring2)
+      pulseRingsRef.current.push(ring2)
+    })
+
+    // ─── Network arcs between job locations ───
+    arcsRef.current = []
+    const arcColors = [0x2266ff, 0x4488ff, 0x3377ff, 0x5599ff, 0x1155ee]
+
+    if (points.length > 1) {
+      // Connect jobs that are in different locations with glowing arcs
+      const usedPairs = new Set<string>()
+      const maxArcs = Math.min(points.length * 2, 40)
+      let arcCount = 0
+
+      for (let i = 0; i < points.length && arcCount < maxArcs; i++) {
+        // Connect each point to 1-3 others
+        const connections = Math.min(3, points.length - 1)
+        for (let c = 0; c < connections && arcCount < maxArcs; c++) {
+          const j = (i + 1 + Math.floor(Math.random() * (points.length - 1))) % points.length
+          if (i === j) continue
+
+          const pairKey = [Math.min(i, j), Math.max(i, j)].join('-')
+          if (usedPairs.has(pairKey)) continue
+          usedPairs.add(pairKey)
+
+          const startPos = latLngToVector3(points[i].lat, points[i].lng, GLOBE_RADIUS + 1)
+          const endPos = latLngToVector3(points[j].lat, points[j].lng, GLOBE_RADIUS + 1)
+
+          const arcColor = arcColors[Math.floor(Math.random() * arcColors.length)]
+          const opacity = 0.15 + Math.random() * 0.2
+
+          const arc = createArc(startPos, endPos, GLOBE_RADIUS, arcColor, opacity)
+          arc.userData = { phase: Math.random() * Math.PI * 2 }
+          earthGroup.add(arc)
+          arcsRef.current.push(arc)
+          arcCount++
+        }
+      }
     }
 
-    updateMarkers()
+    // ─── Floating particles around globe ───
+    const particleCount = 300
+    const particlePositions = new Float32Array(particleCount * 3)
+    for (let i = 0; i < particleCount; i++) {
+      const r = GLOBE_RADIUS + 5 + Math.random() * 40
+      const theta = Math.random() * Math.PI * 2
+      const phi = Math.random() * Math.PI
+      particlePositions[i * 3] = r * Math.sin(phi) * Math.cos(theta)
+      particlePositions[i * 3 + 1] = r * Math.cos(phi)
+      particlePositions[i * 3 + 2] = r * Math.sin(phi) * Math.sin(theta)
+    }
+    const particleGeom = new THREE.BufferGeometry()
+    particleGeom.setAttribute('position', new THREE.Float32BufferAttribute(Array.from(particlePositions), 3))
 
-    // Mouse events
+    const particleCanvas = document.createElement('canvas')
+    particleCanvas.width = 32
+    particleCanvas.height = 32
+    const pctx = particleCanvas.getContext('2d')!
+    const pgrd = pctx.createRadialGradient(16, 16, 0, 16, 16, 16)
+    pgrd.addColorStop(0, 'rgba(100,150,255,0.8)')
+    pgrd.addColorStop(0.5, 'rgba(100,150,255,0.2)')
+    pgrd.addColorStop(1, 'rgba(100,150,255,0)')
+    pctx.fillStyle = pgrd
+    pctx.fillRect(0, 0, 32, 32)
+
+    const particleTex = new THREE.CanvasTexture(particleCanvas)
+    const particleMat = new THREE.PointsMaterial({
+      size: 1.2,
+      map: particleTex,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      transparent: true,
+      opacity: 0.5,
+    })
+    const particles = new THREE.Points(particleGeom, particleMat)
+    earthGroup.add(particles)
+
+    // ─── Mouse event handlers ───
     const onMouseDown = (e: MouseEvent) => {
       dragRef.current.active = true
       dragRef.current.x = e.clientX
       dragRef.current.y = e.clientY
+      dragRef.current.vx = 0
+      dragRef.current.vy = 0
+      renderer.domElement.style.cursor = 'grabbing'
     }
 
     const onMouseMove = (e: MouseEvent) => {
@@ -279,8 +617,8 @@ export default function JobsGlobe({ jobs, onSave, onApply, savedJobs, appliedJob
       mouseRef.current.y = -((e.clientY - rect.top) / rect.height) * 2 + 1
 
       if (dragRef.current.active) {
-        dragRef.current.vx = (e.clientX - dragRef.current.x) * 0.003
-        dragRef.current.vy = (e.clientY - dragRef.current.y) * 0.003
+        dragRef.current.vx = (e.clientX - dragRef.current.x) * 0.004
+        dragRef.current.vy = (e.clientY - dragRef.current.y) * 0.004
         dragRef.current.x = e.clientX
         dragRef.current.y = e.clientY
       }
@@ -288,6 +626,7 @@ export default function JobsGlobe({ jobs, onSave, onApply, savedJobs, appliedJob
 
     const onMouseUp = () => {
       dragRef.current.active = false
+      renderer.domElement.style.cursor = 'grab'
     }
 
     const onClick = (e: MouseEvent) => {
@@ -299,7 +638,6 @@ export default function JobsGlobe({ jobs, onSave, onApply, savedJobs, appliedJob
       const raycaster = new THREE.Raycaster()
       raycaster.setFromCamera(mouse, camera)
       const intersects = raycaster.intersectObjects(markersRef.current)
-
       if (intersects.length > 0) {
         const job = (intersects[0].object as any).userData?.job
         if (job) setSelectedJob(job)
@@ -309,51 +647,111 @@ export default function JobsGlobe({ jobs, onSave, onApply, savedJobs, appliedJob
     renderer.domElement.addEventListener('mousedown', onMouseDown)
     renderer.domElement.addEventListener('mousemove', onMouseMove)
     renderer.domElement.addEventListener('mouseup', onMouseUp)
+    renderer.domElement.addEventListener('mouseleave', onMouseUp)
     renderer.domElement.addEventListener('click', onClick)
+    renderer.domElement.style.cursor = 'grab'
 
+    // Touch events for mobile
+    const onTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 1) {
+        dragRef.current.active = true
+        dragRef.current.x = e.touches[0].clientX
+        dragRef.current.y = e.touches[0].clientY
+        dragRef.current.vx = 0
+        dragRef.current.vy = 0
+      }
+    }
+    const onTouchMove = (e: TouchEvent) => {
+      if (e.touches.length === 1 && dragRef.current.active) {
+        e.preventDefault()
+        dragRef.current.vx = (e.touches[0].clientX - dragRef.current.x) * 0.004
+        dragRef.current.vy = (e.touches[0].clientY - dragRef.current.y) * 0.004
+        dragRef.current.x = e.touches[0].clientX
+        dragRef.current.y = e.touches[0].clientY
+      }
+    }
+    const onTouchEnd = () => { dragRef.current.active = false }
+
+    renderer.domElement.addEventListener('touchstart', onTouchStart, { passive: true })
+    renderer.domElement.addEventListener('touchmove', onTouchMove, { passive: false })
+    renderer.domElement.addEventListener('touchend', onTouchEnd)
+
+    // Zoom
     renderer.domElement.addEventListener('wheel', (e) => {
       e.preventDefault()
-      camera.position.z += e.deltaY * 0.15
-      camera.position.z = Math.max(150, Math.min(500, camera.position.z))
+      camera.position.z += e.deltaY * 0.12
+      camera.position.z = Math.max(160, Math.min(500, camera.position.z))
     }, { passive: false } as any)
 
-    // Animation loop
+
+    // ═══════════════════════════════════════════
+    // ─── Animation loop ───
+    // ═══════════════════════════════════════════
     let animId: number
     const animate = () => {
       animId = requestAnimationFrame(animate)
+      const elapsed = clock.getElapsedTime()
 
-      // Apply drag rotation
+      // ── Drag rotation with inertia ──
       if (dragRef.current.active) {
         earthGroup.rotation.y += dragRef.current.vx
         earthGroup.rotation.x += dragRef.current.vy
+        // Clamp vertical rotation
+        earthGroup.rotation.x = Math.max(-Math.PI / 3, Math.min(Math.PI / 3, earthGroup.rotation.x))
       } else {
-        earthGroup.rotation.y += dragRef.current.vx * 0.92
-        earthGroup.rotation.x += dragRef.current.vy * 0.92
-        dragRef.current.vx *= 0.92
-        dragRef.current.vy *= 0.92
+        earthGroup.rotation.y += dragRef.current.vx * 0.94
+        earthGroup.rotation.x += dragRef.current.vy * 0.94
+        earthGroup.rotation.x = Math.max(-Math.PI / 3, Math.min(Math.PI / 3, earthGroup.rotation.x))
+        dragRef.current.vx *= 0.94
+        dragRef.current.vy *= 0.94
       }
 
-      // Auto rotate when not dragging
+      // Auto-rotate when idle
       if (!dragRef.current.active && Math.abs(dragRef.current.vx) < 0.0001 && Math.abs(dragRef.current.vy) < 0.0001) {
-        earthGroup.rotation.y += 0.0002
+        earthGroup.rotation.y += 0.0008
       }
 
-      // Hover detection
-      const raycaster = new THREE.Raycaster()
-      raycaster.setFromCamera(mouseRef.current, camera)
-      const intersects = raycaster.intersectObjects(markersRef.current)
+      // ── Animate pulse rings ──
+      pulseRingsRef.current.forEach(ring => {
+        const data = ring.userData
+        const t = (elapsed * data.speed + data.phase) % (Math.PI * 2)
+        const pulseScale = 5 + Math.sin(t) * 6
+        const pulseOpacity = 0.5 * (1 - Math.abs(Math.sin(t)))
+        ring.scale.set(pulseScale, pulseScale, 1)
+        ;(ring.material as any).opacity = pulseOpacity
+      })
 
-      if (intersects.length > 0) {
-        const jobId = (intersects[0].object as any).userData?.jobId
-        setHoveredJobId(jobId || null)
-      } else {
-        setHoveredJobId(null)
+      // ── Animate arc opacity (breathing effect) ──
+      arcsRef.current.forEach(arc => {
+        const phase = arc.userData.phase || 0
+        const breath = 0.1 + Math.abs(Math.sin(elapsed * 0.5 + phase)) * 0.25
+        ;(arc.material as any).opacity = breath
+      })
+
+      // ── Animate particles (slow orbit) ──
+      particles.rotation.y += 0.0003
+      particles.rotation.x += 0.0001
+
+      // ── Hover detection (throttled) ──
+      if (Math.floor(elapsed * 10) % 2 === 0) {
+        const raycaster = new THREE.Raycaster()
+        raycaster.setFromCamera(mouseRef.current as any, camera)
+        const intersects = raycaster.intersectObjects(markersRef.current)
+        if (intersects.length > 0) {
+          const jobId = (intersects[0].object as any).userData?.jobId
+          setHoveredJobId(jobId || null)
+          renderer.domElement.style.cursor = dragRef.current.active ? 'grabbing' : 'pointer'
+        } else {
+          setHoveredJobId(null)
+          if (!dragRef.current.active) renderer.domElement.style.cursor = 'grab'
+        }
       }
 
       renderer.render(scene, camera)
     }
     animate()
 
+    // ─── Resize handler ───
     const handleResize = () => {
       const w = containerRef.current?.offsetWidth || width
       const h = containerRef.current?.offsetHeight || height
@@ -363,44 +761,106 @@ export default function JobsGlobe({ jobs, onSave, onApply, savedJobs, appliedJob
     }
     window.addEventListener('resize', handleResize)
 
+    // ─── Cleanup ───
     return () => {
       window.removeEventListener('resize', handleResize)
       renderer.domElement.removeEventListener('mousedown', onMouseDown)
       renderer.domElement.removeEventListener('mousemove', onMouseMove)
       renderer.domElement.removeEventListener('mouseup', onMouseUp)
+      renderer.domElement.removeEventListener('mouseleave', onMouseUp)
       renderer.domElement.removeEventListener('click', onClick)
+      renderer.domElement.removeEventListener('touchstart', onTouchStart)
+      renderer.domElement.removeEventListener('touchmove', onTouchMove)
+      renderer.domElement.removeEventListener('touchend', onTouchEnd)
       cancelAnimationFrame(animId)
       renderer.dispose()
-      containerRef.current?.removeChild(renderer.domElement)
+      if (containerRef.current && renderer.domElement.parentNode === containerRef.current) {
+        containerRef.current.removeChild(renderer.domElement)
+      }
     }
   }, [points])
 
   return (
-    <div ref={containerRef} className="relative w-full h-full overflow-hidden" style={{ background: 'radial-gradient(ellipse at 50% 50%, #0c0c28 0%, #050510 70%, #000000 100%)' }}>
+    <div ref={containerRef} className="relative w-full h-full overflow-hidden" style={{
+      background: 'radial-gradient(ellipse at 50% 50%, #080820 0%, #040410 50%, #000005 100%)',
+    }}>
+      {/* Star field */}
       <div className="absolute inset-0 pointer-events-none">
         {STARS.map(s => (
-          <motion.div key={s.id} className="absolute rounded-full bg-white" style={{ width: s.size, height: s.size, left: `${s.x}%`, top: `${s.y}%`, opacity: s.opacity }} animate={{ opacity: [s.opacity, s.opacity * 2, s.opacity] }} transition={{ duration: 3 + Math.random() * 2, repeat: Infinity }} />
+          <motion.div key={s.id} className="absolute rounded-full bg-white" style={{ width: s.size, height: s.size, left: `${s.x}%`, top: `${s.y}%`, opacity: s.opacity }} animate={{ opacity: [s.opacity, s.opacity * 1.8, s.opacity] }} transition={{ duration: 3 + Math.random() * 2, repeat: Infinity }} />
         ))}
       </div>
 
-      <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-6 px-6 py-3 rounded-2xl" style={{ background: 'rgba(8,8,20,0.92)', border: '1px solid rgba(162,155,254,0.2)', backdropFilter: 'blur(20px)' }}>
-        {[{ label: 'Pinned', value: points.length }, { label: 'Total', value: jobs.length }, { label: 'Top City', value: topCity }, { label: 'Avg Salary', value: avgSalary ? `$${Math.round(avgSalary / 1000)}K` : 'N/A' }].map((s, i) => (
-          <div key={s.label} className="flex items-center gap-6">{i > 0 && <div className="w-px h-4 bg-white/10" />}<div className="text-center"><div className="text-[15px] font-bold text-white">{s.value}</div><div className="text-[9px] text-[#4a4a6a] font-medium uppercase tracking-wider">{s.label}</div></div></div>
+      {/* Top stats bar */}
+      <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-6 px-6 py-3 rounded-2xl" style={{ background: 'rgba(5,5,18,0.95)', border: '1px solid rgba(60,80,180,0.25)', backdropFilter: 'blur(20px)', boxShadow: '0 4px 30px rgba(30,60,180,0.08)' }}>
+        {[
+          { label: 'Pinned', value: points.length, color: '#74b9ff' },
+          { label: 'Total', value: jobs.length, color: '#a29bfe' },
+          { label: 'Top City', value: topCity, color: '#fd79a8' },
+          { label: 'Avg Salary', value: avgSalary ? `$${Math.round(avgSalary / 1000)}K` : 'N/A', color: '#ffd700' },
+        ].map((s, i) => (
+          <div key={s.label} className="flex items-center gap-6">
+            {i > 0 && <div className="w-px h-4" style={{ background: 'rgba(60,80,180,0.2)' }} />}
+            <div className="text-center">
+              <div className="text-[15px] font-bold" style={{ color: s.color }}>{s.value}</div>
+              <div className="text-[9px] text-[#3a4a7a] font-medium uppercase tracking-wider">{s.label}</div>
+            </div>
+          </div>
         ))}
       </motion.div>
 
-      <motion.div initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5 }} className="absolute bottom-6 left-5 z-20 rounded-xl p-4" style={{ background: 'rgba(8,8,20,0.92)', border: '1px solid rgba(162,155,254,0.2)', backdropFilter: 'blur(20px)' }}>
-        <p className="text-[9px] font-bold tracking-widest uppercase text-[#4a4a6a] mb-3">Salary</p>
-        {[{ color: '#ffd700', label: '$150K+' }, { color: '#fd79a8', label: '$100K–150K' }, { color: '#a29bfe', label: '$60K–100K' }, { color: '#74b9ff', label: '$30K–60K' }, { color: '#55efc4', label: 'Below $30K' }].map(t => (
-          <div key={t.label} className="flex items-center gap-2 mb-2"><motion.div className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: t.color, boxShadow: `0 0 8px ${t.color}` }} animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 2, repeat: Infinity, delay: Math.random() }} /><span className="text-[10px] text-white/70">{t.label}</span></div>
+      {/* Salary legend */}
+      <motion.div initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5 }} className="absolute bottom-6 left-5 z-20 rounded-xl p-4" style={{ background: 'rgba(5,5,18,0.95)', border: '1px solid rgba(60,80,180,0.2)', backdropFilter: 'blur(20px)', boxShadow: '0 4px 30px rgba(30,60,180,0.06)' }}>
+        <p className="text-[9px] font-bold tracking-widest uppercase text-[#3a4a7a] mb-3">Salary Range</p>
+        {[
+          { color: '#ffd700', label: '$150K+' },
+          { color: '#fd79a8', label: '$100K–150K' },
+          { color: '#a29bfe', label: '$60K–100K' },
+          { color: '#74b9ff', label: '$30K–60K' },
+          { color: '#55efc4', label: 'Below $30K' },
+        ].map(t => (
+          <div key={t.label} className="flex items-center gap-2.5 mb-2">
+            <motion.div
+              className="w-3 h-3 rounded-full flex-shrink-0"
+              style={{ background: t.color, boxShadow: `0 0 10px ${t.color}80, 0 0 20px ${t.color}40` }}
+              animate={{ scale: [1, 1.3, 1], boxShadow: [`0 0 10px ${t.color}80`, `0 0 16px ${t.color}AA`, `0 0 10px ${t.color}80`] }}
+              transition={{ duration: 2, repeat: Infinity, delay: Math.random() }}
+            />
+            <span className="text-[10px] text-white/60">{t.label}</span>
+          </div>
         ))}
       </motion.div>
 
-      {points.length > 0 && !selectedJob && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2 }} className="absolute bottom-6 right-5 z-20 text-right pointer-events-none"><p className="text-[10px] text-[#3a3a5a]">Drag to rotate · Scroll to zoom · Click pin for details</p></motion.div>
+      {/* Network label */}
+      {points.length > 1 && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.5 }} className="absolute top-4 right-5 z-20 px-4 py-2.5 rounded-xl" style={{ background: 'rgba(5,5,18,0.95)', border: '1px solid rgba(60,80,180,0.2)', backdropFilter: 'blur(20px)' }}>
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: '#4488ff', boxShadow: '0 0 8px #4488ff' }} />
+            <span className="text-[10px] text-[#6688cc] font-medium">{arcsRef.current.length || '—'} Network Links</span>
+          </div>
+        </motion.div>
       )}
 
-      <AnimatePresence>{selectedJob && <JobCard job={selectedJob} onClose={() => setSelectedJob(null)} onSave={() => onSave(selectedJob)} onApply={() => onApply(selectedJob)} isSaved={savedJobs.has(selectedJob.id)} isApplied={appliedJobs.has(selectedJob.id)} />}</AnimatePresence>
+      {/* Help text */}
+      {points.length > 0 && !selectedJob && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2.5 }} className="absolute bottom-6 right-5 z-20 text-right pointer-events-none">
+          <p className="text-[10px] text-[#2a3a5a]">Drag to rotate · Scroll to zoom · Click marker for details</p>
+        </motion.div>
+      )}
+
+      {/* Selected job card */}
+      <AnimatePresence>
+        {selectedJob && (
+          <JobCard
+            job={selectedJob}
+            onClose={() => setSelectedJob(null)}
+            onSave={() => onSave(selectedJob)}
+            onApply={() => onApply(selectedJob)}
+            isSaved={savedJobs.has(selectedJob.id)}
+            isApplied={appliedJobs.has(selectedJob.id)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   )
 }
