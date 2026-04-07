@@ -141,21 +141,19 @@ function createMarkerTexture(color: string, size = 128): THREE.CanvasTexture {
   const [r, g, b] = hexToRgb(color)
   const cx = size / 2
 
-  // Outer glow
+  // Wide soft glow (outer)
   const outerGlow = ctx.createRadialGradient(cx, cx, 0, cx, cx, cx)
-  outerGlow.addColorStop(0, `rgba(${r},${g},${b},0)`)
-  outerGlow.addColorStop(0.2, `rgba(${r},${g},${b},0)`)
-  outerGlow.addColorStop(0.4, `rgba(${r},${g},${b},0.05)`)
-  outerGlow.addColorStop(0.7, `rgba(${r},${g},${b},0.02)`)
+  outerGlow.addColorStop(0, `rgba(${r},${g},${b},0.9)`)
+  outerGlow.addColorStop(0.25, `rgba(${r},${g},${b},0.5)`)
+  outerGlow.addColorStop(0.55, `rgba(${r},${g},${b},0.15)`)
   outerGlow.addColorStop(1, `rgba(${r},${g},${b},0)`)
   ctx.fillStyle = outerGlow
   ctx.fillRect(0, 0, size, size)
 
-  // Inner bright core
-  const innerGlow = ctx.createRadialGradient(cx, cx, 0, cx, cx, cx * 0.35)
+  // Bright white center dot
+  const innerGlow = ctx.createRadialGradient(cx, cx, 0, cx, cx, cx * 0.2)
   innerGlow.addColorStop(0, `rgba(255,255,255,1)`)
-  innerGlow.addColorStop(0.3, `rgba(${Math.min(255, r + 80)},${Math.min(255, g + 80)},${Math.min(255, b + 80)},0.95)`)
-  innerGlow.addColorStop(0.6, `rgba(${r},${g},${b},0.6)`)
+  innerGlow.addColorStop(0.5, `rgba(255,255,255,0.9)`)
   innerGlow.addColorStop(1, `rgba(${r},${g},${b},0)`)
   ctx.fillStyle = innerGlow
   ctx.fillRect(0, 0, size, size)
@@ -356,37 +354,32 @@ export default function JobsGlobe({ jobs, onSave, onApply, savedJobs, appliedJob
     earthGroupRef.current = earthGroup
     scene.add(earthGroup)
 
-    // ─── Lighting — cinematic setup ───
-    const ambientLight = new THREE.AmbientLight(0x1a2a4a, 0.8)
+    // ─── Lighting — balanced for night earth visibility ───
+    // Enough ambient to see continents, directional for depth
+    const ambientLight = new THREE.AmbientLight(0x223355, 2.5)
     scene.add(ambientLight)
 
-    const keyLight = new THREE.DirectionalLight(0x4488ff, 1.8)
-    keyLight.position.set(150, 100, 100)
+    const keyLight = new THREE.DirectionalLight(0x6699ff, 0.8)
+    keyLight.position.set(200, 80, 100)
     scene.add(keyLight)
 
-    const rimLight = new THREE.DirectionalLight(0x0044ff, 1.2)
-    rimLight.position.set(-150, -50, -100)
-    scene.add(rimLight)
-
-    const topLight = new THREE.PointLight(0x6688ff, 1.5, 500)
-    topLight.position.set(0, 200, 0)
-    scene.add(topLight)
+    const fillLight = new THREE.DirectionalLight(0x334488, 0.4)
+    fillLight.position.set(-150, -60, -80)
+    scene.add(fillLight)
 
     // ─── Load textures ───
     const textureLoader = new THREE.TextureLoader()
     const nightTexture = textureLoader.load('//unpkg.com/three-globe/example/img/earth-night.jpg')
     const bumpTexture = textureLoader.load('//unpkg.com/three-globe/example/img/earth-topology.png')
 
-    // ─── Earth sphere — dark, detailed ───
+    // ─── Earth sphere — city lights clearly visible ───
     const earthGeom = new THREE.SphereGeometry(GLOBE_RADIUS, 128, 128)
     const earthMat = new THREE.MeshPhongMaterial({
       map: nightTexture,
       bumpMap: bumpTexture,
-      bumpScale: 4.5,
-      specular: new THREE.Color(0x111133),
-      shininess: 15,
-      emissive: new THREE.Color(0x050510),
-      emissiveIntensity: 0.3,
+      bumpScale: 2,
+      specular: new THREE.Color(0x0a0a1a),
+      shininess: 5,
     })
     const earth = new THREE.Mesh(earthGeom, earthMat)
     earthGroup.add(earth)
@@ -395,38 +388,9 @@ export default function JobsGlobe({ jobs, onSave, onApply, savedJobs, appliedJob
     const grid = createGlobeGrid(GLOBE_RADIUS + 0.3)
     earthGroup.add(grid)
 
-    // ─── Inner atmosphere (subtle blue haze on surface) ───
-    const innerAtmosGeom = new THREE.SphereGeometry(GLOBE_RADIUS + 0.5, 64, 64)
-    const innerAtmosMat = new THREE.ShaderMaterial({
-      vertexShader: `
-        varying vec3 vNormal;
-        varying vec3 vPosition;
-        void main() {
-          vNormal = normalize(normalMatrix * normal);
-          vPosition = (modelViewMatrix * vec4(position, 1.0)).xyz;
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-      `,
-      fragmentShader: `
-        varying vec3 vNormal;
-        varying vec3 vPosition;
-        void main() {
-          float intensity = pow(0.65 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.5);
-          vec3 color = vec3(0.15, 0.4, 1.0);
-          gl_FragColor = vec4(color, intensity * 0.4);
-        }
-      `,
-      blending: THREE.AdditiveBlending,
-      side: THREE.FrontSide,
-      transparent: true,
-      depthWrite: false,
-    })
-    const innerAtmosphere = new THREE.Mesh(innerAtmosGeom, innerAtmosMat)
-    earthGroup.add(innerAtmosphere)
-
-    // ─── Outer atmosphere glow — DRAMATIC ───
-    const outerAtmosGeom = new THREE.SphereGeometry(GLOBE_RADIUS, 64, 64)
-    const outerAtmosMat = new THREE.ShaderMaterial({
+    // ─── Atmosphere — thin edge glow only, not a bloated ring ───
+    const atmosGeom = new THREE.SphereGeometry(GLOBE_RADIUS, 64, 64)
+    const atmosMat = new THREE.ShaderMaterial({
       vertexShader: `
         varying vec3 vNormal;
         void main() {
@@ -437,9 +401,11 @@ export default function JobsGlobe({ jobs, onSave, onApply, savedJobs, appliedJob
       fragmentShader: `
         varying vec3 vNormal;
         void main() {
-          float intensity = pow(0.75 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 3.0);
-          vec3 color = mix(vec3(0.1, 0.3, 1.0), vec3(0.3, 0.6, 1.0), intensity);
-          gl_FragColor = vec4(color, intensity * 1.5);
+          // Sharp edge falloff — only glows at the limb, not the whole sphere
+          float edge = dot(vNormal, vec3(0.0, 0.0, 1.0));
+          float intensity = pow(max(0.0, 1.0 - abs(edge) * 1.4), 3.5);
+          vec3 color = vec3(0.2, 0.5, 1.0);
+          gl_FragColor = vec4(color, intensity * 0.9);
         }
       `,
       blending: THREE.AdditiveBlending,
@@ -447,35 +413,10 @@ export default function JobsGlobe({ jobs, onSave, onApply, savedJobs, appliedJob
       transparent: true,
       depthWrite: false,
     })
-    const outerAtmosphere = new THREE.Mesh(outerAtmosGeom, outerAtmosMat)
-    outerAtmosphere.scale.set(1.22, 1.22, 1.22)
-    earthGroup.add(outerAtmosphere)
-
-    // ─── Second glow layer (softer, wider) ───
-    const outerGlow2Geom = new THREE.SphereGeometry(GLOBE_RADIUS, 32, 32)
-    const outerGlow2Mat = new THREE.ShaderMaterial({
-      vertexShader: `
-        varying vec3 vNormal;
-        void main() {
-          vNormal = normalize(normalMatrix * normal);
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-      `,
-      fragmentShader: `
-        varying vec3 vNormal;
-        void main() {
-          float intensity = pow(0.6 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.0);
-          gl_FragColor = vec4(0.15, 0.35, 0.9, intensity * 0.5);
-        }
-      `,
-      blending: THREE.AdditiveBlending,
-      side: THREE.BackSide,
-      transparent: true,
-      depthWrite: false,
-    })
-    const outerGlow2 = new THREE.Mesh(outerGlow2Geom, outerGlow2Mat)
-    outerGlow2.scale.set(1.35, 1.35, 1.35)
-    earthGroup.add(outerGlow2)
+    const atmosphere = new THREE.Mesh(atmosGeom, atmosMat)
+    // Only 8% larger — thin rim, not a massive ring
+    atmosphere.scale.set(1.08, 1.08, 1.08)
+    earthGroup.add(atmosphere)
 
     // ─── Add markers with pulse rings ───
     markersRef.current = []
@@ -493,7 +434,7 @@ export default function JobsGlobe({ jobs, onSave, onApply, savedJobs, appliedJob
       })
       const sprite = new THREE.Sprite(spriteMat)
       sprite.position.copy(pos)
-      sprite.scale.set(7, 7, 1)
+      sprite.scale.set(10, 10, 1)
       sprite.userData = { job: p.job, jobId: p.job.id }
       earthGroup.add(sprite)
       markersRef.current.push(sprite)
@@ -530,16 +471,14 @@ export default function JobsGlobe({ jobs, onSave, onApply, savedJobs, appliedJob
 
     // ─── Network arcs between job locations ───
     arcsRef.current = []
-    const arcColors = [0x2266ff, 0x4488ff, 0x3377ff, 0x5599ff, 0x1155ee]
+    const arcColors = [0x3399ff, 0x55aaff, 0x4488ee, 0x66bbff, 0x2277dd]
 
     if (points.length > 1) {
-      // Connect jobs that are in different locations with glowing arcs
       const usedPairs = new Set<string>()
       const maxArcs = Math.min(points.length * 2, 40)
       let arcCount = 0
 
       for (let i = 0; i < points.length && arcCount < maxArcs; i++) {
-        // Connect each point to 1-3 others
         const connections = Math.min(3, points.length - 1)
         for (let c = 0; c < connections && arcCount < maxArcs; c++) {
           const j = (i + 1 + Math.floor(Math.random() * (points.length - 1))) % points.length
@@ -553,10 +492,11 @@ export default function JobsGlobe({ jobs, onSave, onApply, savedJobs, appliedJob
           const endPos = latLngToVector3(points[j].lat, points[j].lng, GLOBE_RADIUS + 1)
 
           const arcColor = arcColors[Math.floor(Math.random() * arcColors.length)]
-          const opacity = 0.15 + Math.random() * 0.2
+          // Higher base opacity so arcs are actually visible
+          const opacity = 0.45 + Math.random() * 0.3
 
           const arc = createArc(startPos, endPos, GLOBE_RADIUS, arcColor, opacity)
-          arc.userData = { phase: Math.random() * Math.PI * 2 }
+          arc.userData = { phase: Math.random() * Math.PI * 2, baseOpacity: opacity }
           earthGroup.add(arc)
           arcsRef.current.push(arc)
           arcCount++
@@ -721,10 +661,11 @@ export default function JobsGlobe({ jobs, onSave, onApply, savedJobs, appliedJob
         ;(ring.material as any).opacity = pulseOpacity
       })
 
-      // ── Animate arc opacity (breathing effect) ──
+      // ── Animate arc opacity (gentle breathing, stays visible) ──
       arcsRef.current.forEach(arc => {
         const phase = arc.userData.phase || 0
-        const breath = 0.1 + Math.abs(Math.sin(elapsed * 0.5 + phase)) * 0.25
+        const base = arc.userData.baseOpacity || 0.5
+        const breath = base * (0.7 + Math.abs(Math.sin(elapsed * 0.6 + phase)) * 0.3)
         ;(arc.material as any).opacity = breath
       })
 
