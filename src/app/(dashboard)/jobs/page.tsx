@@ -5,6 +5,17 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { createClient } from '@/lib/supabase-browser'
 import { PremiumCard, PremiumButton } from '@/components/premium'
 import { staggerContainer, fadeInUp } from '@/lib/animations'
+import dynamic from 'next/dynamic'
+
+const JobsGlobe = dynamic(() => import('@/components/JobsGlobe'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-full flex flex-col items-center justify-center gap-3 bg-[#0a0a1a]">
+      <div className="animate-spin w-8 h-8 border-2 border-[#a29bfe] border-t-transparent rounded-full" />
+      <p className="text-[#5a5a6a] text-sm">Loading 3D globe...</p>
+    </div>
+  ),
+})
 
 interface Job { id: string; title: string; company: string; location: string; remote_type: string | null; salary_min: number | null; salary_max: number | null; source: string; url: string; posted_at?: string; salary_currency?: string }
 
@@ -63,6 +74,7 @@ export default function JobsPage() {
   const [remote, setRemote] = useState('any')
   const [salaryIdx, setSalaryIdx] = useState(0)
   const [daysOld, setDaysOld] = useState(0)
+  const [viewMode, setViewMode] = useState<'list' | 'globe'>('list')
   const cityRef = useRef<HTMLDivElement>(null)
   const supabase = createClient()
 
@@ -240,7 +252,7 @@ export default function JobsPage() {
         user_id: user.id,
         job_id: jobId,
         status: 'saved',
-      })
+      }, { onConflict: 'user_id,job_id' })
 
       if (appError) {
         throw new Error(`Application save failed: ${appError.message}`)
@@ -308,7 +320,7 @@ export default function JobsPage() {
         user_id: user.id,
         job_id: jobId,
         status: 'applied',
-      })
+      }, { onConflict: 'user_id,job_id' })
 
       if (appError) throw new Error(`Application save failed: ${appError.message}`)
 
@@ -355,8 +367,31 @@ export default function JobsPage() {
       }}>
         <div className="absolute top-[-50%] right-[-10%] w-[300px] h-[300px] rounded-full opacity-[0.07]" style={{ background: 'radial-gradient(circle, #74b9ff, transparent 70%)' }} />
         <div className="relative z-10">
-          <h1 className="text-2xl lg:text-3xl font-black tracking-tight mb-2 text-white">Job Search</h1>
-          <p className="text-[14px] text-[#8a8a9a]">Search across 50+ job portals with AI-powered matching</p>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h1 className="text-2xl lg:text-3xl font-black tracking-tight mb-2 text-white">Job Search</h1>
+              <p className="text-[14px] text-[#8a8a9a]">Search across 50+ job portals with AI-powered matching</p>
+            </div>
+            {/* View Toggle */}
+            <div className="flex items-center gap-1 p-1 rounded-xl flex-shrink-0" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <motion.button whileTap={{ scale: 0.95 }} onClick={() => setViewMode('list')}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg text-[12px] font-semibold transition-all"
+                style={viewMode === 'list'
+                  ? { background: 'linear-gradient(135deg, #fd79a8, #e84393)', color: '#fff', boxShadow: '0 0 20px rgba(253,121,168,0.3)' }
+                  : { color: '#6a6a7a' }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                List
+              </motion.button>
+              <motion.button whileTap={{ scale: 0.95 }} onClick={() => setViewMode('globe')}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg text-[12px] font-semibold transition-all"
+                style={viewMode === 'globe'
+                  ? { background: 'linear-gradient(135deg, #a29bfe, #6c5ce7)', color: '#fff', boxShadow: '0 0 20px rgba(162,155,254,0.3)' }
+                  : { color: '#6a6a7a' }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                Globe View
+              </motion.button>
+            </div>
+          </div>
         </div>
       </motion.div>
 
@@ -425,9 +460,29 @@ export default function JobsPage() {
         </PremiumCard>
       </motion.div>
 
+      {/* Globe View */}
+      <AnimatePresence>
+        {viewMode === 'globe' && (
+          <motion.div
+            key="globe"
+            initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            className="rounded-2xl overflow-hidden"
+            style={{ height: '75vh', border: '1px solid rgba(162,155,254,0.15)', boxShadow: '0 0 80px rgba(162,155,254,0.08)' }}>
+            <JobsGlobe
+              jobs={jobs}
+              onSave={(job) => saveJob(job)}
+              onApply={(job) => applyJob(job)}
+              savedJobs={savedJobs}
+              appliedJobs={appliedJobs}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Results */}
       <AnimatePresence>
-        {jobs.length === 0 && !loading ? (
+        {viewMode === 'list' && jobs.length === 0 && !loading ? (
           <motion.div variants={fadeInUp} className="text-center py-16">
             <motion.div animate={{ y: [0, -8, 0] }} transition={{ duration: 3, repeat: Infinity }} className="inline-block mb-4">
               <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#3a3a4a" strokeWidth="1.5"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
@@ -435,7 +490,7 @@ export default function JobsPage() {
             <p className="text-[15px] font-semibold text-[#5a5a6a]">Search for your dream job</p>
             <p className="text-[12px] text-[#3a3a4a] mt-1">Supports US, India, UK, Canada and more</p>
           </motion.div>
-        ) : (
+        ) : viewMode === 'list' ? (
           <motion.div variants={staggerContainer} initial="hidden" animate="show" className="space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-[13px] font-semibold text-[#5a5a6a]">{jobs.length} jobs found</span>
@@ -491,7 +546,7 @@ export default function JobsPage() {
               </motion.div>
             ))}
           </motion.div>
-        )}
+        ) : null}
       </AnimatePresence>
     </motion.div>
   )

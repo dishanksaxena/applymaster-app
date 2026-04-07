@@ -4,6 +4,7 @@ import { useState, useRef, useCallback, useEffect } from 'react'
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion'
 import { createClient } from '@/lib/supabase-browser'
 import { useRouter } from 'next/navigation'
+import ResumeAnalysisOverlay from '@/components/ResumeAnalysisOverlay'
 
 function Particles() {
   const [particles] = useState(() =>
@@ -128,6 +129,10 @@ export default function OnboardingPage() {
   const [saving, setSaving] = useState(false)
   const [resumes, setResumes] = useState<any[]>([])
   const [primaryResume, setPrimaryResume] = useState<string | null>(null)
+  const [resumeProcessing, setResumeProcessing] = useState(false)
+  const [overlayStep, setOverlayStep] = useState<'uploading' | 'extracting' | 'analyzing' | 'saving' | 'done'>('uploading')
+  const [overlayError, setOverlayError] = useState<string | null>(null)
+  const uploadPromiseRef = useRef<Promise<boolean | void> | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
   const supabase = createClient()
@@ -167,8 +172,14 @@ export default function OnboardingPage() {
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) return
 
-        // Load resume
-        const { data: profile } = await supabase.from('profiles').select('resume_name').eq('id', user.id).single()
+        // Check if onboarding is already complete
+        const { data: profile } = await supabase.from('profiles').select('onboarding_complete, resume_name').eq('id', user.id).single()
+        if (profile?.onboarding_complete) {
+          console.log('[onboarding] User already completed onboarding, redirecting to dashboard')
+          router.push('/dashboard')
+          return
+        }
+
         if (profile?.resume_name) {
           setLoadedResumeName(profile.resume_name)
         }
@@ -333,55 +344,97 @@ export default function OnboardingPage() {
 
   const handleResumeUpload = async () => {
     if (!resumeFile) { goTo(1); return }
-    setUploading(true)
+
+    // Move to next step immediately so user doesn't wait
+    goTo(1)
+
+    // Get user auth - need this for the API call
+    let userId: string | null = null
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-      const ext = resumeFile.name.split('.').pop()
-      const path = `${user.id}/${Date.now()}.${ext}`
-      const { error } = await supabase.storage.from('resumes').upload(path, resumeFile)
-      if (!error) {
-        const { data: { publicUrl } } = supabase.storage.from('resumes').getPublicUrl(path)
-        // Mark previous resumes as not primary
-        await supabase.from('resumes').update({ is_primary: false }).eq('user_id', user.id)
-        // Insert new resume as primary
-        await supabase.from('resumes').insert({ user_id: user.id, name: resumeFile.name, file_url: publicUrl, is_primary: true })
+      userId = user?.id || null
+      console.log('[onboarding] Auth user:', userId)
+    } catch (err) {
+      console.error('[onboarding] Auth error:', err)
+    }
 
-        // Extract text and parse all details
-        const resumeText = await extractTextFromResume(resumeFile)
-        const details = parseResumeDetails(resumeText)
-        const parsedSkills = extractSkillsFromText(resumeText)
+    if (!userId) {
+      console.error('[onboarding] No user ID — cannot upload resume')
+      setOverlayError('Authentication error. Please refresh and try again.')
+      return
+    }
 
-        // Update profile with ALL extracted details
-        const profileUpdate: any = {
-          resume_url: publicUrl,
-          resume_name: resumeFile.name,
-          professional_summary: details.summary || null,
-          education: details.education || [],
-          certifications: details.certifications || [],
-          work_experience: details.workExperience || []
+    // Capture file reference before any state changes
+    const fileToUpload = resumeFile
+    console.log('[onboarding] Starting background resume upload:', fileToUpload.name, fileToUpload.size, 'bytes')
+
+    setResumeProcessing(true)
+    setOverlayStep('uploading')
+    setOverlayError(null)
+
+    // Create the upload promise and track it
+    const uploadPromise = (async () => {
+      try {
+        const formData = new FormData()
+        formData.append('file', fileToUpload)
+        formData.append('userId', userId!)
+
+        console.log('[onboarding] Sending to /api/resume/extract...')
+        setOverlayStep('extracting')
+
+        const response = await fetch('/api/resume/extract', {
+          method: 'POST',
+          body: formData,
+        })
+
+        console.log('[onboarding] API response status:', response.status)
+
+        if (response.ok) {
+          setOverlayStep('saving')
+          const result = await response.json()
+          console.log('[onboarding] API success:', result.success, 'profileSaved:', result.profileSaved, 'resumeSaved:', result.resumeSaved)
+
+          // Auto-fill onboarding form fields from parsed resume data
+          if (result.data?.skills?.length > 0) {
+            const matched = SKILLS.filter((s: string) =>
+              result.data.skills.some((ps: string) =>
+                ps.toLowerCase().includes(s.toLowerCase()) || s.toLowerCase().includes(ps.toLowerCase())
+              )
+            ).slice(0, 8)
+            if (matched.length > 0) {
+              console.log('[onboarding] Auto-filling skills:', matched)
+              setSelectedSkills(matched)
+            }
+          }
+          if (result.data?.experience?.[0]?.title) {
+            console.log('[onboarding] Auto-filling job title:', result.data.experience[0].title)
+            setDesiredJobTitle(result.data.experience[0].title)
+          }
+          if ((result.data?.total_years_experience || 0) >= 8) setExperienceLevel('senior')
+          else if ((result.data?.total_years_experience || 0) >= 4) setExperienceLevel('mid')
+          else if ((result.data?.total_years_experience || 0) < 2) setExperienceLevel('entry')
+
+          setOverlayStep('done')
+          console.log('[onboarding] Resume processing complete — profile should be populated')
+          loadResumes()
+          return true
+        } else {
+          const err = await response.json().catch(() => ({ error: `HTTP ${response.status}` }))
+          console.error('[onboarding] API error:', err)
+          setOverlayError(err.error || err.details || 'Failed to process resume')
+          return false
         }
-        if (details.name) profileUpdate.full_name = details.name
-        if (details.email) profileUpdate.email = details.email
-
-        await supabase.from('profiles').update(profileUpdate).eq('id', user.id)
-
-        // Auto-fill form fields
-        if (details.experienceLevel && details.experienceLevel !== 'mid') {
-          setExperienceLevel(details.experienceLevel)
-        }
-        if (parsedSkills.length > 0) {
-          setSelectedSkills(prev => Array.from(new Set([...prev, ...parsedSkills])).slice(0, 8))
-        }
-        if (details.jobTitles?.[0]) {
-          setDesiredJobTitle(details.jobTitles[0])
-        }
-
-        // Reload resumes list
-        loadResumes()
+      } catch (err) {
+        console.error('[onboarding] Fetch error:', err)
+        setOverlayError(err instanceof Error ? err.message : 'Network error processing resume')
+        return false
+      } finally {
+        setResumeProcessing(false)
+        console.log('[onboarding] Resume processing finished, resumeProcessing set to false')
       }
-    } catch (err) { console.error('Resume upload error:', err) }
-    setUploading(false); goTo(1)
+    })()
+
+    uploadPromiseRef.current = uploadPromise
   }
 
   const loadResumes = async () => {
@@ -506,15 +559,83 @@ export default function OnboardingPage() {
   }
 
   const handleComplete = async () => {
+    console.log('[onboarding] handleComplete called')
+    console.log('[onboarding] uploadPromiseRef.current:', !!uploadPromiseRef.current)
+    console.log('[onboarding] resumeProcessing:', resumeProcessing)
+    console.log('[onboarding] overlayStep:', overlayStep)
     setCompleting(true)
+
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-      await supabase.from('profiles').update({ onboarding_complete: true }).eq('id', user.id)
-      router.push('/dashboard'); router.refresh()
+      if (!user) {
+        console.error('[onboarding] No user in handleComplete')
+        setCompleting(false)
+        return
+      }
+
+      // Save all onboarding answers to profile table
+      console.log('[onboarding] Saving onboarding answers to profile...')
+      const profileUpdate: Record<string, unknown> = {
+        onboarding_complete: true,
+      }
+
+      // Save selected preferences to profile
+      if (selectedRoles.length > 0) profileUpdate.interested_roles = selectedRoles
+      if (minSalary > 0) profileUpdate.min_salary = minSalary
+      if (maxSalary > 0) profileUpdate.max_salary = maxSalary
+      if (experienceLevel) profileUpdate.experience_level = experienceLevel
+      if (remotePreference) profileUpdate.remote_preference = remotePreference
+      if (workType) profileUpdate.employment_type = workType
+      if (selectedIndustries.length > 0) profileUpdate.industries = selectedIndustries
+      if (selectedSkills.length > 0) profileUpdate.key_skills = selectedSkills
+      if (workAuth) profileUpdate.work_authorization = workAuth
+      if (employmentStatus) profileUpdate.current_employment_status = employmentStatus
+      if (desiredJobTitle) profileUpdate.desired_job_title = desiredJobTitle
+      if (availableStartDate) profileUpdate.available_start_date = availableStartDate
+      if (selectedCountry) profileUpdate.country_preference = selectedCountry
+      if (selectedCities.length > 0) profileUpdate.city_preferences = selectedCities
+      if (companySize) profileUpdate.company_size_preference = companySize
+      if (interviewStyle) profileUpdate.interview_style = interviewStyle
+
+      await supabase.from('profiles').update(profileUpdate).eq('id', user.id)
+      console.log('[onboarding] Profile updated with onboarding answers')
+
+      // If a resume was uploaded, wait for it to finish and let overlay handle redirect
+      if (uploadPromiseRef.current) {
+        console.log('[onboarding] Resume was uploaded — overlay will show')
+
+        // Wait for upload to finish if still in progress
+        if (resumeProcessing) {
+          console.log('[onboarding] Upload still in progress, waiting...')
+          await uploadPromiseRef.current
+          console.log('[onboarding] Upload promise resolved, overlayStep:', overlayStep)
+        }
+
+        // The overlay is already visible (isVisible={completing && resumeFile !== null})
+        // It will auto-redirect via onComplete callback after showing success animation
+        console.log('[onboarding] Overlay will handle redirect after animation')
+        return
+      }
+
+      // No resume uploaded — just redirect after brief delay
+      console.log('[onboarding] No resume uploaded — redirecting to dashboard in 300ms')
+      setTimeout(() => {
+        router.push('/dashboard')
+        router.refresh()
+      }, 300)
     } catch (err) {
-      console.error('Error:', err)
+      console.error('[onboarding] Error completing onboarding:', err)
+      setCompleting(false)
     }
+  }
+
+  const finishOnboarding = () => {
+    console.log('[onboarding] finishOnboarding — redirecting to dashboard in 500ms')
+    // Wait for database to commit before redirecting
+    setTimeout(() => {
+      router.push('/dashboard')
+      router.refresh()
+    }, 500)
   }
 
   const stepLabels = ['Resume', 'Preferences', 'Details', 'Skills', 'Plan']
@@ -523,6 +644,14 @@ export default function OnboardingPage() {
 
   return (
     <div className="min-h-screen bg-[#050510] flex items-center justify-center relative overflow-hidden py-10 px-4">
+      {/* Full-screen overlay — shown when completing if resume was uploaded */}
+      <ResumeAnalysisOverlay
+        isVisible={completing && resumeFile !== null}
+        currentStep={overlayStep}
+        fileName={resumeFile?.name || ''}
+        error={overlayError}
+        onComplete={finishOnboarding}
+      />
       <style jsx global>{`
         @keyframes mesh-shift { 0%, 100% { background-position: 0% 50%; } 25% { background-position: 100% 0%; } 50% { background-position: 100% 100%; } 75% { background-position: 0% 100%; } }
         @keyframes aurora { 0% { transform: rotate(0deg) scale(1.5); } 33% { transform: rotate(120deg) scale(1.2); } 66% { transform: rotate(240deg) scale(1.6); } 100% { transform: rotate(360deg) scale(1.5); } }
@@ -558,7 +687,18 @@ export default function OnboardingPage() {
           ))}
         </motion.div>
 
-        <motion.div initial={{ opacity: 0, y: 30, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ duration: 0.8, delay: 0.4 }}>
+        {/* Small floating badge while resume processes in background (steps 1-4) */}
+        {resumeProcessing && !completing && (
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-center gap-2 mb-3 px-4 py-2 rounded-full text-[11px] font-medium mx-auto w-fit"
+            style={{ background: 'rgba(253,121,168,0.1)', border: '1px solid rgba(253,121,168,0.2)' }}>
+            <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }} className="w-3 h-3 border-[1.5px] border-[#fd79a8] border-t-transparent rounded-full" />
+            <span className="text-[#fd79a8]">
+              {overlayStep === 'done' ? '✓ Resume analyzed' : overlayError ? '⚠ Resume error' : 'AI analyzing resume...'}
+            </span>
+          </motion.div>
+        )}
+
+        <motion.div initial={{ opacity: 0, y: 30, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ duration: 0.8, delay: 0.4 }} className="relative">
           <GlowCard>
             <div className="p-8 sm:p-10 max-h-[720px] overflow-y-auto">
               <AnimatePresence custom={direction} mode="wait">
@@ -933,7 +1073,7 @@ export default function OnboardingPage() {
                     <div className="flex gap-3 pt-4">
                       <MagneticButton onClick={() => goTo(3)} variant="secondary" className="flex-1 h-11">Back</MagneticButton>
                       <MagneticButton onClick={handleComplete} disabled={completing} className="flex-1 h-11" variant="primary">
-                        {completing ? 'Launching...' : '🚀 Let\'s Go!'}
+                        {completing ? 'Processing...' : '🚀 Let\'s Go!'}
                       </MagneticButton>
                     </div>
                   </motion.div>

@@ -143,10 +143,23 @@ export default function ProfilePage() {
     const load = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser()
-        if (!user) return
+        if (!user) {
+          console.log('❌ No user found')
+          return
+        }
+        console.log('👤 Loading profile for user:', user.id)
 
-        const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+        const { data: profile, error: profileError } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+        console.log('📋 Profile query error:', profileError)
+        console.log('📋 Profile data:', profile)
+
         if (profile) {
+          console.log('✓ Full name:', profile.full_name)
+          console.log('✓ Professional summary:', profile.professional_summary)
+          console.log('✓ Education:', profile.education)
+          console.log('✓ Certifications:', profile.certifications)
+          console.log('✓ Work experience:', profile.work_experience)
+
           setName(profile.full_name || '')
           setEmail(profile.email || user.email || '')
           setSummary(profile.professional_summary || '')
@@ -154,11 +167,20 @@ export default function ProfilePage() {
           setCertifications(profile.certifications || [])
           setWorkExperience(profile.work_experience || [])
         } else {
+          console.log('⚠️ No profile record found')
           setEmail(user.email || '')
         }
 
-        const { data: prefs } = await supabase.from('job_preferences').select('*').eq('user_id', user.id).single()
+        const { data: prefs, error: prefsError } = await supabase.from('job_preferences').select('*').eq('user_id', user.id).single()
+        console.log('🎯 Job preferences query error:', prefsError)
+        console.log('🎯 Job preferences data:', prefs)
+
         if (prefs) {
+          console.log('✓ Target roles:', prefs.target_roles)
+          console.log('✓ Experience level:', prefs.experience_level)
+          console.log('✓ Industries:', prefs.industries)
+          console.log('✓ Key skills:', prefs.key_skills)
+
           if (prefs.target_roles?.length) setSelectedRoles(prefs.target_roles)
           if (prefs.min_salary) setMinSalary(prefs.min_salary)
           if (prefs.max_salary) setMaxSalary(prefs.max_salary)
@@ -177,8 +199,12 @@ export default function ProfilePage() {
           if (prefs.key_skills?.length) setSelectedSkills(prefs.key_skills)
           if (prefs.company_size_preference) setCompanySize(prefs.company_size_preference)
           if (prefs.interview_strength) setInterviewStyle(prefs.interview_strength)
+        } else {
+          console.log('⚠️ No job preferences record found')
         }
-      } catch (err) { console.error('Error loading profile:', err) }
+
+        console.log('✓ Profile loading completed')
+      } catch (err) { console.error('❌ Error loading profile:', err) }
       setLoading(false)
     }
     load()
@@ -188,9 +214,15 @@ export default function ProfilePage() {
     setSaving(true)
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+      if (!user) {
+        console.error('❌ No user found')
+        return
+      }
 
-      await supabase.from('profiles').update({
+      console.log('💾 Saving profile for user:', user.id)
+      console.log('📝 Profile data:', { name, summary, education, certifications, work_experience: workExperience })
+
+      const { error: profileError } = await supabase.from('profiles').update({
         full_name: name,
         professional_summary: summary,
         education,
@@ -198,7 +230,20 @@ export default function ProfilePage() {
         work_experience: workExperience
       }).eq('id', user.id)
 
-      await supabase.from('job_preferences').upsert({
+      if (profileError) {
+        console.error('❌ Profile update error:', profileError)
+      } else {
+        console.log('✓ Profile updated successfully')
+      }
+
+      console.log('🎯 Saving job preferences:', {
+        target_roles: selectedRoles,
+        experience_level: experienceLevel,
+        industries: selectedIndustries,
+        key_skills: selectedSkills,
+      })
+
+      const { error: prefsError } = await supabase.from('job_preferences').upsert({
         user_id: user.id,
         target_roles: selectedRoles,
         min_salary: minSalary,
@@ -220,9 +265,16 @@ export default function ProfilePage() {
         interview_strength: interviewStyle,
       })
 
+      if (prefsError) {
+        console.error('❌ Job preferences update error:', prefsError)
+      } else {
+        console.log('✓ Job preferences updated successfully')
+      }
+
+      console.log('✓ All data saved successfully')
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
-    } catch (err) { console.error('Error saving:', err) }
+    } catch (err) { console.error('❌ Error saving:', err) }
     setSaving(false)
   }
 
@@ -252,6 +304,8 @@ export default function ProfilePage() {
                 <EditField label="Job Title" value={exp.title} onChange={(t: string) => { exp.title = t; setWorkExperience([...workExperience]) }} />
               </div>
               <EditField label="Description" value={exp.description} onChange={(d: string) => { exp.description = d; setWorkExperience([...workExperience]) }} multiline />
+              <button onClick={() => setWorkExperience(workExperience.filter((_, idx) => idx !== i))}
+                className="mt-3 px-2 py-1 rounded text-[11px] bg-[rgba(255,0,0,0.1)] text-[#ff6b6b] hover:bg-[rgba(255,0,0,0.2)]">Delete</button>
             </div>
           ))}
           <button onClick={() => setWorkExperience([...workExperience, { company: '', title: '', startDate: '', endDate: '', description: '' }])}
@@ -265,10 +319,12 @@ export default function ProfilePage() {
         <div className="space-y-4">
           {education.map((edu, i) => (
             <div key={i} className="p-4 rounded-lg bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.08)]">
-              <div className="grid sm:grid-cols-2 gap-3">
+              <div className="grid sm:grid-cols-2 gap-3 mb-3">
                 <EditField label="School" value={edu.school} onChange={(s: string) => { edu.school = s; setEducation([...education]) }} />
                 <EditField label="Degree" value={edu.degree} onChange={(d: string) => { edu.degree = d; setEducation([...education]) }} />
               </div>
+              <button onClick={() => setEducation(education.filter((_, idx) => idx !== i))}
+                className="px-2 py-1 rounded text-[11px] bg-[rgba(255,0,0,0.1)] text-[#ff6b6b] hover:bg-[rgba(255,0,0,0.2)]">Delete</button>
             </div>
           ))}
           <button onClick={() => setEducation([...education, { school: '', degree: '', field: '', endDate: '' }])}

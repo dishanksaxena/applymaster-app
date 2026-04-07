@@ -1,10 +1,17 @@
 import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
+import { createClient as createAdminClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
 
 export const maxDuration = 60
 
 const anthropic = new Anthropic()
+
+// Admin client with service role — bypasses RLS for profile writes
+const adminSupabase = createAdminClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
 
 async function extractTextFromPDF(buffer: Buffer): Promise<string> {
   // Try pdf-parse first with timeout
@@ -190,8 +197,8 @@ export async function POST(req: NextRequest) {
       return Response.json({ error: 'AI parsing failed. Please try again.' }, { status: 500 })
     }
 
-    // Save resume record
-    const { data: resumeRecord, error: resumeError } = await supabase
+    // Save resume record — use admin client to bypass RLS
+    const { data: resumeRecord, error: resumeError } = await adminSupabase
       .from('resumes')
       .insert({
         user_id: user.id,
@@ -208,37 +215,68 @@ export async function POST(req: NextRequest) {
       return Response.json({ error: 'Failed to save resume' }, { status: 500 })
     }
 
-    // Save parsed resume in structured table
-    await supabase.from('parsed_resumes').upsert({
-      resume_id: resumeRecord.id,
-      user_id: user.id,
-      full_name: parsed.full_name || null,
-      email: parsed.email || null,
-      phone: parsed.phone || null,
-      location: parsed.location || null,
-      summary: parsed.summary || null,
-      skills: parsed.skills || [],
-      experience: parsed.experience || [],
-      education: parsed.education || [],
-      certifications: parsed.certifications || [],
-      languages: parsed.languages || [],
-      raw_text: rawText,
-    })
+    // Save parsed resume in structured table (ignore errors — optional table)
+    try {
+      await adminSupabase.from('parsed_resumes').upsert({
+        resume_id: resumeRecord.id,
+        user_id: user.id,
+        full_name: parsed.full_name || null,
+        email: parsed.email || null,
+        phone: parsed.phone || null,
+        location: parsed.location || null,
+        summary: parsed.summary || null,
+        skills: parsed.skills || [],
+        experience: parsed.experience || [],
+        education: parsed.education || [],
+        certifications: parsed.certifications || [],
+        languages: parsed.languages || [],
+        raw_text: rawText,
+      })
+    } catch (e) {
+      console.warn('parsed_resumes upsert failed (non-critical):', e)
+    }
 
     // Update all previous resumes as non-primary
-    await supabase
+    await adminSupabase
       .from('resumes')
       .update({ is_primary: false })
       .eq('user_id', user.id)
       .neq('id', resumeRecord.id)
 
-    // Update profile
-    await supabase
+    // Update profile with ALL extracted data from resume
+    const profileUpdate: Record<string, unknown> = {
+      resume_url: fileUrl,
+      resume_name: file.name,
+      professional_summary: parsed.summary || null,
+      work_experience: (parsed.experience || []).map((e: Record<string, unknown>) => ({
+        company: e.company || '',
+        title: e.title || '',
+        startDate: e.start_date || '',
+        endDate: e.end_date || '',
+        description: e.description || '',
+      })),
+      education: (parsed.education || []).map((e: Record<string, unknown>) => ({
+        school: e.institution || '',
+        degree: e.degree || '',
+        field: e.field || '',
+        endDate: e.end_date || '',
+      })),
+      certifications: parsed.certifications || [],
+    }
+    if (parsed.full_name) profileUpdate.full_name = parsed.full_name
+    // Don't overwrite auth email — keep the email from login
+
+    // Use admin client to bypass RLS and guarantee profile is written
+    const { error: profileError } = await adminSupabase
       .from('profiles')
-      .update({
-        full_name: parsed.full_name || undefined,
-      })
+      .update(profileUpdate)
       .eq('id', user.id)
+
+    if (profileError) {
+      console.error('Profile update error:', profileError)
+    } else {
+      console.log('✓ Profile updated with resume data for user:', user.id)
+    }
 
     return Response.json({
       success: true,

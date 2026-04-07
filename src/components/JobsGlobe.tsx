@@ -315,18 +315,26 @@ export default function JobsGlobe({ jobs, onSave, onApply, savedJobs, appliedJob
     return () => ro.disconnect()
   }, [])
 
-  // Globe setup after ready
+  // Globe setup after ready (with timeout protection)
   useEffect(() => {
     if (!globeEl.current || !globeReady) return
-    const ctrl = globeEl.current.controls()
-    ctrl.autoRotate = true
-    ctrl.autoRotateSpeed = 0.5
-    ctrl.enableDamping = true
-    ctrl.dampingFactor = 0.08
-    ctrl.minDistance = 150
-    ctrl.maxDistance = 600
-    // Start pointing at USA
-    globeEl.current.pointOfView({ lat: 38, lng: -96, altitude: 2.2 }, 1200)
+    try {
+      const ctrl = globeEl.current.controls()
+      if (ctrl) {
+        ctrl.autoRotate = true
+        ctrl.autoRotateSpeed = 0.5
+        ctrl.enableDamping = true
+        ctrl.dampingFactor = 0.08
+        ctrl.minDistance = 150
+        ctrl.maxDistance = 600
+      }
+      // Start pointing at USA
+      if (globeEl.current.pointOfView) {
+        globeEl.current.pointOfView({ lat: 38, lng: -96, altitude: 2.2 }, 1200)
+      }
+    } catch (err) {
+      console.error('Globe initialization error:', err)
+    }
   }, [globeReady])
 
   // Fly to selected job

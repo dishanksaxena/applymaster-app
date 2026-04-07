@@ -151,6 +151,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [loading, setLoading] = useState(true)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
+  const [onboardingChecked, setOnboardingChecked] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
@@ -178,15 +179,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           const profileData = data as Profile
           setProfile(profileData)
 
-          // Check onboarding status and redirect if needed
-          if (pathname === '/onboarding' && profileData.onboarding_complete) {
-            // User completed onboarding, redirect to dashboard
-            console.log('[ONBOARDING] User already completed onboarding, redirecting to dashboard')
-            router.push('/dashboard')
-          } else if (pathname !== '/onboarding' && !profileData.onboarding_complete) {
-            // User hasn't completed onboarding, redirect to onboarding
-            console.log('[ONBOARDING] Redirecting to onboarding - onboarding_complete is false')
-            router.push('/onboarding')
+          // Check onboarding ONLY once on initial load
+          if (!onboardingChecked) {
+            if (pathname !== '/onboarding' && !profileData.onboarding_complete) {
+              console.log('[layout] Redirecting to onboarding - incomplete')
+              router.push('/onboarding')
+            }
+            setOnboardingChecked(true)
           }
         }
       } finally {
@@ -194,7 +193,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       }
     }
     fetchProfile()
-  }, [supabase, pathname, router])
+  }, [supabase, onboardingChecked, pathname, router])
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
