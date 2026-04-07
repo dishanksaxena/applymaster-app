@@ -7,12 +7,12 @@ import { PremiumCard, PremiumButton } from '@/components/premium'
 import { staggerContainer, fadeInUp } from '@/lib/animations'
 import dynamic from 'next/dynamic'
 
-const JobsGlobe = dynamic(() => import('@/components/JobsGlobe'), {
+const JobsMap = dynamic(() => import('@/components/JobsMap'), {
   ssr: false,
   loading: () => (
     <div className="w-full h-full flex flex-col items-center justify-center gap-3 bg-[#0a0a1a]">
       <div className="animate-spin w-8 h-8 border-2 border-[#a29bfe] border-t-transparent rounded-full" />
-      <p className="text-[#5a5a6a] text-sm">Loading 3D globe...</p>
+      <p className="text-[#5a5a6a] text-sm">Loading map...</p>
     </div>
   ),
 })
@@ -74,7 +74,7 @@ export default function JobsPage() {
   const [remote, setRemote] = useState('any')
   const [salaryIdx, setSalaryIdx] = useState(0)
   const [daysOld, setDaysOld] = useState(0)
-  const [viewMode, setViewMode] = useState<'list' | 'globe'>('list')
+  const [viewMode, setViewMode] = useState<'list' | 'map'>('list')
   const cityRef = useRef<HTMLDivElement>(null)
   const supabase = createClient()
 
@@ -382,13 +382,13 @@ export default function JobsPage() {
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
                 List
               </motion.button>
-              <motion.button whileTap={{ scale: 0.95 }} onClick={() => setViewMode('globe')}
+              <motion.button whileTap={{ scale: 0.95 }} onClick={() => setViewMode('map')}
                 className="flex items-center gap-2 px-4 py-2 rounded-lg text-[12px] font-semibold transition-all"
-                style={viewMode === 'globe'
+                style={viewMode === 'map'
                   ? { background: 'linear-gradient(135deg, #a29bfe, #6c5ce7)', color: '#fff', boxShadow: '0 0 20px rgba(162,155,254,0.3)' }
                   : { color: '#6a6a7a' }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-                Globe View
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                Map View
               </motion.button>
             </div>
           </div>
@@ -460,16 +460,16 @@ export default function JobsPage() {
         </PremiumCard>
       </motion.div>
 
-      {/* Globe View */}
+      {/* Map View */}
       <AnimatePresence>
-        {viewMode === 'globe' && (
+        {viewMode === 'map' && (
           <motion.div
-            key="globe"
+            key="map"
             initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
             className="rounded-2xl overflow-hidden"
             style={{ height: '75vh', border: '1px solid rgba(162,155,254,0.15)', boxShadow: '0 0 80px rgba(162,155,254,0.08)' }}>
-            <JobsGlobe
+            <JobsMap
               jobs={jobs}
               onSave={(job) => saveJob(job)}
               onApply={(job) => applyJob(job)}
