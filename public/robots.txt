@@ -1,0 +1,41 @@
+# ApplyMaster robots.txt — SEO Configuration
+# Blocks private/protected pages, allows all public content for crawling
+
+User-agent: *
+Disallow: /api/
+Disallow: /dashboard/
+Disallow: /onboarding/
+Disallow: /applications/
+Disallow: /settings/
+Disallow: /profile/
+Disallow: /notifications/
+Disallow: /auth/
+Disallow: /_next/
+Disallow: /saved-jobs/
+Allow: /
+
+# Google — be aggressive with crawling
+User-agent: Googlebot
+Allow: /
+Disallow: /api/
+Disallow: /dashboard/
+Disallow: /auth/
+
+# Bing — friendly crawl
+User-agent: Bingbot
+Allow: /
+Disallow: /api/
+Disallow: /dashboard/
+Disallow: /auth/
+
+# Tell all crawlers where the sitemap is
+Sitemap: https://applymaster.ai/sitemap.xml
+
+# Crawl delay (none) — we can handle it
+Crawl-delay: 0
+
+# Request rate (none) — standard crawl rate is fine
+Request-rate: 0
+
+# Preferred domain (non-www)
+Host: https://applymaster.ai/
