@@ -1012,21 +1012,38 @@ export default function Home() {
             </div>
             <div>
               <h5 className="font-bold text-[13px] mb-5 text-[#8a8a9a]">Product</h5>
-              <div className="space-y-3">{['Features', 'Pricing', 'Chrome Extension', 'Demo', 'Changelog'].map(l => <a key={l} href="#" className="block text-[13px] text-[#5a5a6a] hover:text-white transition-colors">{l}</a>)}</div>
+              <div className="space-y-3">
+                <a href="/features" className="block text-[13px] text-[#5a5a6a] hover:text-white transition-colors">Features</a>
+                <a href="/features/auto-apply" className="block text-[13px] text-[#5a5a6a] hover:text-white transition-colors">Auto Apply</a>
+                <a href="/features/resume-optimizer" className="block text-[13px] text-[#5a5a6a] hover:text-white transition-colors">Resume Optimizer</a>
+                <a href="/features/interview-coach" className="block text-[13px] text-[#5a5a6a] hover:text-white transition-colors">Interview Coach</a>
+                <a href="/pricing" className="block text-[13px] text-[#5a5a6a] hover:text-white transition-colors">Pricing</a>
+              </div>
             </div>
             <div>
-              <h5 className="font-bold text-[13px] mb-5 text-[#8a8a9a]">Company</h5>
-              <div className="space-y-3">{['About 3GP.AI', 'All Products', 'Blog', 'Careers', 'Contact'].map(l => <a key={l} href="#" className="block text-[13px] text-[#5a5a6a] hover:text-white transition-colors">{l}</a>)}</div>
+              <h5 className="font-bold text-[13px] mb-5 text-[#8a8a9a]">Resources</h5>
+              <div className="space-y-3">
+                <a href="/blog" className="block text-[13px] text-[#5a5a6a] hover:text-white transition-colors">Blog</a>
+                <a href="/blog/ai-job-application-guide" className="block text-[13px] text-[#5a5a6a] hover:text-white transition-colors">AI Job Application Guide</a>
+                <a href="/blog/ats-resume-optimization" className="block text-[13px] text-[#5a5a6a] hover:text-white transition-colors">ATS Resume Guide</a>
+                <a href="/blog/linkedin-auto-apply-guide" className="block text-[13px] text-[#5a5a6a] hover:text-white transition-colors">LinkedIn Auto Apply Guide</a>
+                <a href="https://3gp.ai" className="block text-[13px] text-[#5a5a6a] hover:text-white transition-colors">About 3GP.AI</a>
+              </div>
             </div>
             <div>
               <h5 className="font-bold text-[13px] mb-5 text-[#8a8a9a]">Legal</h5>
-              <div className="space-y-3">{['Privacy Policy', 'Terms of Service', 'Security', 'GDPR'].map(l => <a key={l} href="#" className="block text-[13px] text-[#5a5a6a] hover:text-white transition-colors">{l}</a>)}</div>
+              <div className="space-y-3">
+                <a href="/privacy" className="block text-[13px] text-[#5a5a6a] hover:text-white transition-colors">Privacy Policy</a>
+                <a href="/terms" className="block text-[13px] text-[#5a5a6a] hover:text-white transition-colors">Terms of Service</a>
+              </div>
             </div>
           </div>
           <div className="flex flex-col md:flex-row items-center justify-between pt-8 border-t border-[rgba(255,255,255,0.04)]">
             <span className="text-[12px] text-[#3a3a4a]">&copy; 2026 ApplyMaster by 3GP.AI. All rights reserved.</span>
             <div className="flex items-center gap-6 mt-4 md:mt-0">
-              {['Twitter', 'LinkedIn', 'GitHub'].map(l => <a key={l} href="#" className="text-[12px] text-[#5a5a6a] hover:text-[#fd79a8] transition-colors">{l}</a>)}
+              <a href="https://twitter.com/applymaster_ai" target="_blank" rel="noopener noreferrer" className="text-[12px] text-[#5a5a6a] hover:text-[#fd79a8] transition-colors">Twitter</a>
+              <a href="https://linkedin.com/company/applymaster" target="_blank" rel="noopener noreferrer" className="text-[12px] text-[#5a5a6a] hover:text-[#fd79a8] transition-colors">LinkedIn</a>
+              <a href="https://instagram.com/applymaster.ai" target="_blank" rel="noopener noreferrer" className="text-[12px] text-[#5a5a6a] hover:text-[#fd79a8] transition-colors">Instagram</a>
             </div>
           </div>
         </div>
