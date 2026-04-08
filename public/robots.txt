@@ -14,28 +14,24 @@ Disallow: /_next/
 Disallow: /saved-jobs/
 Allow: /
 
-# Google — be aggressive with crawling
+# Google — aggressive crawling with same rules
 User-agent: Googlebot
-Allow: /
 Disallow: /api/
 Disallow: /dashboard/
 Disallow: /auth/
+Disallow: /_next/
+Allow: /
 
-# Bing — friendly crawl
+# Bing — friendly crawl with same rules
 User-agent: Bingbot
-Allow: /
 Disallow: /api/
 Disallow: /dashboard/
 Disallow: /auth/
+Disallow: /_next/
+Allow: /
 
 # Tell all crawlers where the sitemap is
 Sitemap: https://applymaster.ai/sitemap.xml
 
-# Crawl delay (none) — we can handle it
-Crawl-delay: 0
-
-# Request rate (none) — standard crawl rate is fine
-Request-rate: 0
-
-# Preferred domain (non-www)
-Host: https://applymaster.ai/
+# Preferred canonical domain (non-www)
+Host: applymaster.ai
