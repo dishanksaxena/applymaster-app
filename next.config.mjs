@@ -41,31 +41,8 @@ const nextConfig = {
     ]
   },
 
-  // SEO redirects — canonical URL enforcement + old domain redirect
-  async redirects() {
-    return [
-      // Force www to non-www (canonical)
-      {
-        source: '/:path*',
-        has: [{ type: 'host', value: 'www.applymaster.ai' }],
-        destination: 'https://applymaster.ai/:path*',
-        permanent: true,
-      },
-      // Redirect old domain
-      {
-        source: '/:path*',
-        has: [{ type: 'host', value: 'owzify.com' }],
-        destination: 'https://applymaster.ai/:path*',
-        permanent: true,
-      },
-      {
-        source: '/:path*',
-        has: [{ type: 'host', value: 'www.owzify.com' }],
-        destination: 'https://applymaster.ai/:path*',
-        permanent: true,
-      },
-    ]
-  },
+  // Trailing slash handling
+  trailingSlash: false,
 }
 
 export default nextConfig
