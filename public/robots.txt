@@ -12,6 +12,7 @@ Disallow: /notifications/
 Disallow: /auth/
 Disallow: /_next/
 Disallow: /saved-jobs/
+Disallow: /network/
 Allow: /
 
 # Google — aggressive crawling with same rules
