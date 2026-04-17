@@ -202,7 +202,7 @@ export default function DashboardPage() {
             {greeting}{userName ? `, ${userName}` : ''}
           </motion.h1>
           <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}
-            className="text-[15px] text-[#8a8a9a] max-w-lg">
+            className="text-[15px] text-[var(--text-secondary)] max-w-lg">
             Your job search command center. Track everything, optimize your approach, and land your dream role.
           </motion.p>
         </div>
@@ -230,7 +230,7 @@ export default function DashboardPage() {
                 <div className="text-3xl font-black tracking-tight" style={{ color: s.color }}>
                   <AnimatedNumber value={typeof s.value === 'number' ? s.value : 0} suffix={s.suffix} />
                 </div>
-                <div className="text-[12px] text-[#5a5a6a] mt-1 font-medium">{s.label}</div>
+                <div className="text-[12px] text-[var(--text-muted)] mt-1 font-medium">{s.label}</div>
               </div>
             </PremiumCard>
           </motion.div>
@@ -243,8 +243,8 @@ export default function DashboardPage() {
           <div className="p-6">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h3 className="text-[16px] font-bold text-white">Your Journey</h3>
-                <p className="text-[12px] text-[#5a5a6a] mt-1">Follow these steps to land your next role</p>
+                <h3 className="text-[16px] font-bold text-[var(--text)]">Your Journey</h3>
+                <p className="text-[12px] text-[var(--text-muted)] mt-1">Follow these steps to land your next role</p>
               </div>
               <div className="text-[12px] font-bold px-3 py-1 rounded-full" style={{ background: 'rgba(253,121,168,0.08)', color: '#fd79a8' }}>
                 {journeySteps.filter(s => s.done).length}/{journeySteps.length} completed
@@ -255,16 +255,16 @@ export default function DashboardPage() {
                 <Link key={step.step} href={step.href}>
                   <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}
                     whileHover={{ y: -3, scale: 1.02 }} className="relative p-5 rounded-xl cursor-pointer group transition-all duration-300"
-                    style={{ background: step.done ? `${step.color}08` : 'rgba(255,255,255,0.02)', border: `1px solid ${step.done ? `${step.color}20` : 'rgba(255,255,255,0.1)'}` }}>
+                    style={{ background: step.done ? `${step.color}08` : 'var(--bg-overlay)', border: `1px solid ${step.done ? `${step.color}20` : 'var(--border)'}` }}>
                     <div className="w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-bold mb-3" style={{
-                      background: step.done ? `${step.color}20` : 'rgba(255,255,255,0.04)', color: step.done ? step.color : '#5a5a6a',
+                      background: step.done ? `${step.color}20` : 'var(--bg-overlay)', color: step.done ? step.color : 'var(--text-muted)',
                       boxShadow: step.done ? `0 0 12px ${step.color}20` : 'none',
                     }}>
                       {step.done ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M20 6L9 17L4 12"/></svg> : step.step}
                     </div>
-                    <div className="text-[13px] font-bold text-white group-hover:text-[#fd79a8] transition-colors">{step.label}</div>
-                    <div className="text-[11px] text-[#5a5a6a] mt-1">{step.desc}</div>
-                    <div className="absolute top-1/2 right-4 -translate-y-1/2 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 text-[#5a5a6a]">
+                    <div className="text-[13px] font-bold text-[var(--text)] group-hover:text-[#fd79a8] transition-colors">{step.label}</div>
+                    <div className="text-[11px] text-[var(--text-muted)] mt-1">{step.desc}</div>
+                    <div className="absolute top-1/2 right-4 -translate-y-1/2 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 text-[var(--text-muted)]">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                     </div>
                   </motion.div>
@@ -280,21 +280,21 @@ export default function DashboardPage() {
         <motion.div variants={fadeInUp}>
           <PremiumCard accent="pink" hover={false}>
             <div className="p-6">
-              <h3 className="text-[16px] font-bold text-white mb-1">Quick Actions</h3>
-              <p className="text-[12px] text-[#5a5a6a] mb-6">Jump right into any workflow</p>
+              <h3 className="text-[16px] font-bold text-[var(--text)] mb-1">Quick Actions</h3>
+              <p className="text-[12px] text-[var(--text-muted)] mb-6">Jump right into any workflow</p>
               <div className="grid sm:grid-cols-2 gap-3">
                 {quickActions.map((a, i) => (
                   <Link key={a.label} href={a.href}>
                     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
                       whileHover={{ y: -3, scale: 1.01 }} whileTap={{ scale: 0.98 }}
                       className="relative p-5 rounded-xl cursor-pointer group overflow-hidden"
-                      style={{ background: `${a.color}06`, border: '1px solid rgba(255,255,255,0.04)' }}>
+                      style={{ background: `${a.color}06`, border: '1px solid var(--border)' }}>
                       <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
                         style={{ background: `radial-gradient(circle at 30% 30%, ${a.color}10, transparent 70%)` }} />
                       <div className="relative z-10">
                         <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-4" style={{ background: `${a.color}15`, color: a.color }}>{a.icon}</div>
-                        <div className="text-[14px] font-bold text-white group-hover:text-[#fd79a8] transition-colors">{a.label}</div>
-                        <div className="text-[12px] text-[#5a5a6a] mt-1 leading-relaxed">{a.desc}</div>
+                        <div className="text-[14px] font-bold text-[var(--text)] group-hover:text-[#fd79a8] transition-colors">{a.label}</div>
+                        <div className="text-[12px] text-[var(--text-muted)] mt-1 leading-relaxed">{a.desc}</div>
                       </div>
                       <div className="absolute top-5 right-5 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 -translate-x-2 transition-all duration-300" style={{ color: a.color }}>
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>

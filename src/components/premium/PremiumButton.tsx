@@ -15,65 +15,41 @@ interface PremiumButtonProps {
 
 const variantStyles = {
   primary: {
-    bg: 'linear-gradient(135deg, #fd79a8, #e84393)',
+    bg: 'linear-gradient(135deg, #e84393, #d63384)',
     text: '#ffffff',
-    hover: 'rgba(253,121,168,0.9)',
-    shadow: '0 8px 30px rgba(253,121,168,0.3)',
+    shadow: '0 4px 14px rgba(232,67,147,0.25)',
   },
   secondary: {
-    bg: 'rgba(255,255,255,0.1)',
-    text: '#ffffff',
-    hover: 'rgba(255,255,255,0.15)',
-    shadow: '0 8px 30px rgba(0,0,0,0.1)',
+    bg: 'var(--bg-overlay)',
+    text: 'var(--text)',
+    shadow: 'var(--shadow-sm)',
   },
   ghost: {
     bg: 'transparent',
-    text: '#fd79a8',
-    hover: 'rgba(253,121,168,0.1)',
+    text: 'var(--accent)',
     shadow: 'none',
   },
   danger: {
     bg: 'linear-gradient(135deg, #ff6b6b, #ff5252)',
     text: '#ffffff',
-    hover: 'rgba(255,107,107,0.9)',
-    shadow: '0 8px 30px rgba(255,107,107,0.3)',
+    shadow: '0 4px 14px rgba(255,107,107,0.25)',
   },
   success: {
     bg: 'linear-gradient(135deg, #00b894, #00a381)',
     text: '#ffffff',
-    hover: 'rgba(0,184,148,0.9)',
-    shadow: '0 8px 30px rgba(0,184,148,0.3)',
+    shadow: '0 4px 14px rgba(0,184,148,0.25)',
   },
 }
 
 const sizeStyles = {
-  sm: {
-    padding: '0.5rem 1rem',
-    fontSize: '12px',
-    height: '32px',
-  },
-  md: {
-    padding: '0.75rem 1.5rem',
-    fontSize: '14px',
-    height: '40px',
-  },
-  lg: {
-    padding: '1rem 2rem',
-    fontSize: '16px',
-    height: '48px',
-  },
+  sm: { padding: '0.5rem 1rem', fontSize: '12px', height: '32px' },
+  md: { padding: '0.75rem 1.5rem', fontSize: '14px', height: '40px' },
+  lg: { padding: '1rem 2rem', fontSize: '16px', height: '48px' },
 }
 
 export default function PremiumButton({
-  children,
-  onClick,
-  variant = 'primary',
-  size = 'md',
-  disabled = false,
-  loading = false,
-  icon,
-  fullWidth = false,
-  className = '',
+  children, onClick, variant = 'primary', size = 'md',
+  disabled = false, loading = false, icon, fullWidth = false, className = '',
 }: PremiumButtonProps) {
   const style = variantStyles[variant]
   const sizeStyle = sizeStyles[size]
@@ -95,40 +71,20 @@ export default function PremiumButton({
         ...sizeStyle,
         background: style.bg,
         color: style.text,
-        border: variant === 'ghost' ? `1px solid ${style.text}20` : 'none',
+        border: variant === 'ghost' ? '1px solid var(--border)' : 'none',
         boxShadow: disabled || loading ? 'none' : style.shadow,
       }}
     >
-      {/* Loading Spinner */}
       {loading && (
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
           className="w-4 h-4 rounded-full"
-          style={{
-            border: '2px solid',
-            borderColor: `${style.text}40`,
-            borderTopColor: style.text,
-          }}
+          style={{ border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff' }}
         />
       )}
-
-      {/* Icon */}
       {icon && !loading && <span className="text-base">{icon}</span>}
-
-      {/* Text */}
       {children}
-
-      {/* Shine Effect on Hover (Premium Touch) */}
-      <motion.div
-        className="absolute inset-0 rounded-xl"
-        initial={{ opacity: 0 }}
-        whileHover={{ opacity: 0.2 }}
-        style={{
-          background: 'linear-gradient(90deg, transparent, white, transparent)',
-          pointerEvents: 'none',
-        }}
-      />
     </motion.button>
   )
 }

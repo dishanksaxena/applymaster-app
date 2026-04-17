@@ -49,6 +49,12 @@ const icons = {
       <polygon points="13,2 3,14 12,14 11,22 21,10 12,10" />
     </svg>
   ),
+  network: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="18" r="2.5"/><circle cx="12" cy="12" r="3"/>
+      <line x1="8" y1="7.5" x2="10" y2="10"/><line x1="16" y1="7.5" x2="14" y2="10"/><line x1="8" y1="16.5" x2="10" y2="14"/><line x1="16" y1="16.5" x2="14" y2="14"/>
+    </svg>
+  ),
   interviewCoach: (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z" />
@@ -111,7 +117,7 @@ const navItems = [
   { label: 'Profile', href: '/profile', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> },
   { label: 'Cover Letters', href: '/cover-letters', icon: icons.coverLetters },
   { label: 'Auto-Apply', href: '/auto-apply', icon: icons.autoApply },
-  { label: 'Referral Network', href: '/network', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="18" r="2.5"/><circle cx="12" cy="12" r="3"/><line x1="8" y1="7.5" x2="10" y2="10"/><line x1="16" y1="7.5" x2="14" y2="10"/><line x1="8" y1="16.5" x2="10" y2="14"/><line x1="16" y1="16.5" x2="14" y2="14"/></svg> },
+  { label: 'Referral Network', href: '/network', icon: icons.network },
   { label: 'Interview Coach', href: '/interview-coach', icon: icons.interviewCoach },
   { label: 'Settings', href: '/settings', icon: icons.settings },
 ]
@@ -140,11 +146,6 @@ const animationStyles = `
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
 }
-@keyframes sidebar-glow {
-  0% { opacity: 0.3; }
-  50% { opacity: 0.6; }
-  100% { opacity: 0.3; }
-}
 `
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -157,13 +158,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const router = useRouter()
   const supabase = createClient()
 
-  // Restore theme preference on mount and route changes
+  // Restore theme preference on mount — default is light (no class)
   useEffect(() => {
     const saved = localStorage.getItem('theme')
-    if (saved === 'light') {
-      document.documentElement.classList.add('light-theme')
+    if (saved === 'dark') {
+      document.documentElement.classList.add('dark-theme')
     } else {
-      document.documentElement.classList.remove('light-theme')
+      document.documentElement.classList.remove('dark-theme')
     }
   }, [pathname])
 
@@ -180,10 +181,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           const profileData = data as Profile
           setProfile(profileData)
 
-          // Check onboarding ONLY once on initial load
           if (!onboardingChecked) {
             if (pathname !== '/onboarding' && !profileData.onboarding_complete) {
-              console.log('[layout] Redirecting to onboarding - incomplete')
               router.push('/onboarding')
             }
             setOnboardingChecked(true)
@@ -214,12 +213,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const planLabel = profile?.plan?.toUpperCase() || 'FREE'
   const isPremiumPlan = planLabel === 'PRO' || planLabel === 'ELITE'
 
-  // Show blank screen while checking auth status
   if (loading) {
-    return <div className="min-h-screen bg-[#0a0a0f]" />
+    return <div className="min-h-screen" style={{ background: 'var(--bg)' }} />
   }
 
-  // Onboarding page gets its own minimal layout
   if (pathname === '/onboarding') {
     return <>{children}</>
   }
@@ -227,32 +224,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: animationStyles }} />
-      <div className="min-h-screen bg-[#09090e] flex">
+      <div className="min-h-screen flex" style={{ background: 'var(--bg)' }}>
 
         {/* ─── Sidebar ─── */}
         <aside
           className={`fixed lg:sticky top-0 left-0 z-40 h-screen flex flex-col transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${sidebarOpen ? 'w-[260px]' : 'w-[72px]'} ${mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
-          style={{ background: 'linear-gradient(180deg, rgba(14,14,22,0.95) 0%, rgba(10,10,15,0.98) 100%)' }}
+          style={{ background: 'var(--bg-sidebar)', borderRight: '1px solid var(--sidebar-border)' }}
         >
-          {/* Glassmorphism border effect */}
-          <div
-            className="absolute inset-0 rounded-none pointer-events-none"
-            style={{
-              borderRight: '1px solid rgba(253, 121, 168, 0.06)',
-              background: 'linear-gradient(180deg, rgba(253,121,168,0.02) 0%, transparent 30%, transparent 70%, rgba(232,67,147,0.02) 100%)',
-            }}
-          />
-          {/* Animated gradient edge line */}
-          <div
-            className="absolute top-0 right-0 w-[1px] h-full pointer-events-none"
-            style={{
-              background: 'linear-gradient(180deg, transparent 0%, rgba(253,121,168,0.15) 20%, rgba(232,67,147,0.25) 50%, rgba(253,121,168,0.15) 80%, transparent 100%)',
-              animation: 'sidebar-glow 4s ease-in-out infinite',
-            }}
-          />
-
           {/* Logo */}
-          <Link href="/dashboard" className="flex items-center gap-3 px-5 h-[64px] border-b border-white/[0.04] shrink-0 relative hover:opacity-80 transition-opacity duration-200">
+          <Link href="/dashboard" className="flex items-center gap-3 px-5 h-[64px] shrink-0 relative hover:opacity-80 transition-opacity duration-200" style={{ borderBottom: '1px solid var(--sidebar-divider)' }}>
             <div className="relative w-8 h-8 shrink-0">
               <div
                 className="absolute inset-0 rounded-lg"
@@ -262,12 +242,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   animation: 'gradient-rotate 3s ease infinite',
                 }}
               />
-              <div className="absolute inset-[1px] rounded-[7px] bg-[#0e0e16] flex items-center justify-center">
+              <div className="absolute inset-[1px] rounded-[7px] flex items-center justify-center" style={{ background: 'var(--bg-sidebar)' }}>
                 <span className="text-[10px] font-black bg-gradient-to-r from-[#fd79a8] to-[#e84393] bg-clip-text text-transparent">AM</span>
               </div>
             </div>
             {sidebarOpen && (
-              <span className="text-[15px] font-extrabold tracking-tight" style={{ animation: 'fade-in 0.2s ease' }}>
+              <span className="text-[15px] font-extrabold tracking-tight" style={{ color: 'var(--text)', animation: 'fade-in 0.2s ease' }}>
                 Apply<span className="bg-gradient-to-r from-[#fd79a8] to-[#e84393] bg-clip-text text-transparent">Master</span>
               </span>
             )}
@@ -277,7 +257,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <nav className="flex-1 py-4 px-3 space-y-0.5 overflow-y-auto">
             {sidebarOpen && (
               <div className="px-3 pb-2 pt-1">
-                <span className="text-[10px] font-semibold tracking-[0.08em] uppercase text-[#3a3a4a]">Navigation</span>
+                <span className="text-[10px] font-semibold tracking-[0.08em] uppercase" style={{ color: 'var(--text-faint)' }}>Navigation</span>
               </div>
             )}
             {navItems.map(item => {
@@ -289,11 +269,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   onClick={() => setMobileSidebarOpen(false)}
                   className="group relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all duration-200"
                   style={active ? {
-                    background: 'linear-gradient(135deg, rgba(253,121,168,0.1) 0%, rgba(232,67,147,0.06) 100%)',
-                    color: '#fd79a8',
-                    boxShadow: '0 0 20px rgba(253,121,168,0.06), inset 0 0 20px rgba(253,121,168,0.02)',
+                    background: 'var(--sidebar-active-bg)',
+                    color: 'var(--sidebar-active-text)',
+                    boxShadow: 'var(--shadow-sm)',
                   } : {
-                    color: '#6a6a7a',
+                    color: 'var(--sidebar-text)',
                   }}
                 >
                   {/* Active indicator dot */}
@@ -302,35 +282,30 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                       className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full"
                       style={{
                         background: 'linear-gradient(180deg, #fd79a8, #e84393)',
-                        boxShadow: '0 0 8px rgba(253,121,168,0.5)',
                       }}
                     />
                   )}
 
-                  {/* Hover glow bg */}
+                  {/* Hover bg */}
                   {!active && (
                     <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                      style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.01) 100%)' }}
+                      style={{ background: 'var(--sidebar-hover-bg)' }}
                     />
                   )}
 
                   {/* Icon */}
-                  <span
-                    className={`relative shrink-0 transition-all duration-200 ${active ? '' : 'group-hover:text-white'}`}
-                    style={active ? { filter: 'drop-shadow(0 0 4px rgba(253,121,168,0.4))' } : {}}
-                  >
+                  <span className={`relative shrink-0 transition-all duration-200 ${active ? '' : 'group-hover:text-[var(--text)]'}`}>
                     {item.icon}
                   </span>
 
                   {sidebarOpen && (
-                    <span className={`relative transition-all duration-200 ${active ? '' : 'group-hover:text-white group-hover:translate-x-0.5'}`}>
+                    <span className={`relative transition-all duration-200 ${active ? '' : 'group-hover:text-[var(--text)] group-hover:translate-x-0.5'}`}>
                       {item.label}
                     </span>
                   )}
 
-                  {/* Active border */}
                   {active && (
-                    <div className="absolute inset-0 rounded-xl border border-[rgba(253,121,168,0.12)] pointer-events-none" />
+                    <div className="absolute inset-0 rounded-xl pointer-events-none" style={{ border: '1px solid var(--border-accent)' }} />
                   )}
                 </Link>
               )
@@ -338,10 +313,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </nav>
 
           {/* User Section */}
-          <div className="p-3 border-t border-white/[0.04] relative">
+          <div className="p-3 relative" style={{ borderTop: '1px solid var(--sidebar-divider)' }}>
             {sidebarOpen ? (
-              <div className="flex items-center gap-3 px-2 py-2 rounded-xl transition-colors duration-200 hover:bg-white/[0.02] group">
-                {/* Avatar with animated gradient ring */}
+              <div className="flex items-center gap-3 px-2 py-2 rounded-xl transition-colors duration-200 group" style={{ cursor: 'default' }}>
                 <div className="relative w-9 h-9 shrink-0">
                   <div
                     className="absolute inset-0 rounded-full"
@@ -351,7 +325,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                       animation: 'avatar-ring 4s ease infinite',
                     }}
                   />
-                  <div className="absolute inset-[2px] rounded-full bg-[#0e0e16] flex items-center justify-center">
+                  <div className="absolute inset-[2px] rounded-full flex items-center justify-center" style={{ background: 'var(--bg-sidebar)' }}>
                     <span className="text-[12px] font-bold bg-gradient-to-br from-[#fd79a8] to-[#a29bfe] bg-clip-text text-transparent">
                       {profile?.full_name?.[0]?.toUpperCase() || profile?.email?.[0]?.toUpperCase() || '?'}
                     </span>
@@ -360,35 +334,35 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-[12px] font-semibold truncate text-white/90">
+                    <span className="text-[12px] font-semibold truncate" style={{ color: 'var(--text)' }}>
                       {profile?.full_name || 'User'}
                     </span>
-                    {/* Plan badge with shimmer for pro/elite */}
                     <span
                       className="shrink-0 text-[9px] font-bold tracking-wider px-1.5 py-0.5 rounded"
                       style={isPremiumPlan ? {
-                        background: 'linear-gradient(90deg, rgba(253,121,168,0.15), rgba(232,67,147,0.25), rgba(253,121,168,0.15))',
+                        background: 'var(--badge-pro-bg)',
                         backgroundSize: '200% auto',
                         animation: 'shimmer 3s linear infinite',
-                        color: '#fd79a8',
-                        border: '1px solid rgba(253,121,168,0.2)',
+                        color: 'var(--badge-pro-text)',
+                        border: '1px solid var(--border-accent)',
                       } : {
-                        background: 'rgba(255,255,255,0.04)',
-                        color: '#5a5a6a',
-                        border: '1px solid rgba(255,255,255,0.06)',
+                        background: 'var(--badge-free-bg)',
+                        color: 'var(--badge-free-text)',
+                        border: '1px solid var(--border)',
                       }}
                     >
                       {planLabel}
                     </span>
                   </div>
-                  <div className="text-[10px] text-[#4a4a5a] truncate mt-0.5">
+                  <div className="text-[10px] truncate mt-0.5" style={{ color: 'var(--text-muted)' }}>
                     {profile?.email || 'loading...'}
                   </div>
                 </div>
 
                 <button
                   onClick={handleSignOut}
-                  className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-[#5a5a6a] hover:text-[#ff6b6b] hover:bg-[rgba(255,107,107,0.08)] transition-all duration-200"
+                  className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg transition-all duration-200"
+                  style={{ color: 'var(--text-muted)' }}
                   title="Sign out"
                 >
                   {icons.signOut}
@@ -397,25 +371,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             ) : (
               <div className="flex flex-col items-center gap-2">
                 <div className="relative w-9 h-9">
-                  <div
-                    className="absolute inset-0 rounded-full"
-                    style={{
-                      background: 'linear-gradient(135deg, #fd79a8, #6c5ce7, #e84393, #a29bfe, #fd79a8)',
-                      backgroundSize: '300% 300%',
-                      animation: 'avatar-ring 4s ease infinite',
-                    }}
-                  />
-                  <div className="absolute inset-[2px] rounded-full bg-[#0e0e16] flex items-center justify-center">
+                  <div className="absolute inset-0 rounded-full" style={{ background: 'linear-gradient(135deg, #fd79a8, #6c5ce7, #e84393, #a29bfe, #fd79a8)', backgroundSize: '300% 300%', animation: 'avatar-ring 4s ease infinite' }} />
+                  <div className="absolute inset-[2px] rounded-full flex items-center justify-center" style={{ background: 'var(--bg-sidebar)' }}>
                     <span className="text-[12px] font-bold bg-gradient-to-br from-[#fd79a8] to-[#a29bfe] bg-clip-text text-transparent">
                       {profile?.full_name?.[0]?.toUpperCase() || profile?.email?.[0]?.toUpperCase() || '?'}
                     </span>
                   </div>
                 </div>
-                <button
-                  onClick={handleSignOut}
-                  className="p-1.5 rounded-lg text-[#5a5a6a] hover:text-[#ff6b6b] hover:bg-[rgba(255,107,107,0.08)] transition-all duration-200"
-                  title="Sign out"
-                >
+                <button onClick={handleSignOut} className="p-1.5 rounded-lg transition-all duration-200" style={{ color: 'var(--text-muted)' }} title="Sign out">
                   {icons.signOut}
                 </button>
               </div>
@@ -427,7 +390,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {mobileSidebarOpen && (
           <div
             className="fixed inset-0 z-30 lg:hidden"
-            style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
+            style={{ background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(4px)' }}
             onClick={() => setMobileSidebarOpen(false)}
           />
         )}
@@ -437,41 +400,32 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
           {/* Topbar */}
           <header
-            className="sticky top-0 z-20 h-[64px] flex items-center justify-between px-4 lg:px-6 border-b border-white/[0.04]"
+            className="sticky top-0 z-20 h-[64px] flex items-center justify-between px-4 lg:px-6"
             style={{
-              background: 'rgba(9,9,14,0.7)',
+              background: 'var(--bg-topbar)',
               backdropFilter: 'blur(20px) saturate(180%)',
               WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+              borderBottom: '1px solid var(--border)',
             }}
           >
             {/* Left: nav controls + breadcrumb */}
             <div className="flex items-center gap-1 lg:gap-3 min-w-0">
-              {/* Mobile menu */}
-              <button
-                onClick={() => setMobileSidebarOpen(true)}
-                className="lg:hidden p-2 rounded-lg text-[#6a6a7a] hover:text-white hover:bg-white/[0.04] transition-all duration-200"
-              >
+              <button onClick={() => setMobileSidebarOpen(true)} className="lg:hidden p-2 rounded-lg transition-all duration-200" style={{ color: 'var(--text-muted)' }}>
                 {icons.menu}
               </button>
 
-              {/* Sidebar toggle */}
-              <button
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="hidden lg:flex p-2 rounded-lg text-[#4a4a5a] hover:text-white/70 hover:bg-white/[0.03] transition-all duration-200"
-                title={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
-              >
+              <button onClick={() => setSidebarOpen(!sidebarOpen)} className="hidden lg:flex p-2 rounded-lg transition-all duration-200" style={{ color: 'var(--text-faint)' }} title={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}>
                 {icons.collapse}
               </button>
 
-              {/* Breadcrumb */}
               <div className="hidden sm:flex items-center gap-1 text-[12px] min-w-0">
                 {breadcrumbs.map((crumb, i) => (
                   <span key={crumb.href} className="flex items-center gap-1 min-w-0">
-                    {i > 0 && <span className="text-[#2a2a3a] mx-0.5">{icons.chevronRight}</span>}
+                    {i > 0 && <span className="mx-0.5" style={{ color: 'var(--text-faint)' }}>{icons.chevronRight}</span>}
                     {crumb.isLast ? (
-                      <span className="font-semibold text-white/90 capitalize truncate">{crumb.label}</span>
+                      <span className="font-semibold capitalize truncate" style={{ color: 'var(--text)' }}>{crumb.label}</span>
                     ) : (
-                      <Link href={crumb.href} className="text-[#5a5a6a] hover:text-white/70 transition-colors capitalize truncate">
+                      <Link href={crumb.href} className="capitalize truncate transition-colors" style={{ color: 'var(--text-muted)' }}>
                         {crumb.label}
                       </Link>
                     )}
@@ -479,49 +433,45 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 ))}
               </div>
 
-              {/* Mobile: simple page title */}
-              <h1 className="sm:hidden text-[14px] font-semibold capitalize truncate text-white/90">
+              <h1 className="sm:hidden text-[14px] font-semibold capitalize truncate" style={{ color: 'var(--text)' }}>
                 {pathname.split('/').pop()?.replace(/-/g, ' ') || 'Dashboard'}
               </h1>
             </div>
 
             {/* Right: actions */}
             <div className="flex items-center gap-2">
-              {/* Command palette trigger */}
               <button
-                className="hidden md:flex items-center gap-2 h-8 px-3 rounded-lg text-[12px] text-[#4a4a5a] transition-all duration-200 hover:text-[#6a6a7a] hover:bg-white/[0.03] group"
+                className="hidden md:flex items-center gap-2 h-8 px-3 rounded-lg text-[12px] transition-all duration-200 group"
                 style={{
-                  border: '1px solid rgba(255,255,255,0.06)',
-                  background: 'rgba(255,255,255,0.02)',
+                  border: '1px solid var(--border)',
+                  background: 'var(--bg-overlay)',
+                  color: 'var(--text-muted)',
                 }}
               >
-                <span className="text-[#4a4a5a] group-hover:text-[#6a6a7a] transition-colors">{icons.search}</span>
+                <span className="transition-colors">{icons.search}</span>
                 <span className="font-medium">Search...</span>
-                <kbd className="ml-2 h-5 px-1.5 rounded text-[10px] font-semibold flex items-center" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', color: '#3a3a4a' }}>
+                <kbd className="ml-2 h-5 px-1.5 rounded text-[10px] font-semibold flex items-center" style={{ background: 'var(--bg-overlay)', border: '1px solid var(--border)', color: 'var(--text-faint)' }}>
                   <span className="text-[9px] mr-0.5">&#8984;</span>K
                 </kbd>
               </button>
 
-              {/* Notification bell */}
               <button
                 onClick={() => router.push('/notifications')}
-                className="relative p-2 rounded-lg text-[#5a5a6a] hover:text-white/80 hover:bg-white/[0.03] transition-all duration-200 cursor-pointer"
+                className="relative p-2 rounded-lg transition-all duration-200 cursor-pointer"
+                style={{ color: 'var(--text-muted)' }}
                 title="Notifications"
               >
                 {icons.bell}
-                {/* Badge */}
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#fd79a8]" style={{ boxShadow: '0 0 6px rgba(253,121,168,0.5)' }} />
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#e84393]" style={{ boxShadow: '0 0 6px rgba(232,67,147,0.5)' }} />
               </button>
 
-              {/* Divider */}
-              <div className="w-px h-6 bg-white/[0.06] mx-1 hidden sm:block" />
+              <div className="w-px h-6 mx-1 hidden sm:block" style={{ background: 'var(--border)' }} />
 
-              {/* Engine Active badge */}
               <div
                 className="flex items-center gap-2 px-3 py-1.5 rounded-lg"
                 style={{
-                  background: 'linear-gradient(135deg, rgba(0,184,148,0.06) 0%, rgba(0,184,148,0.03) 100%)',
-                  border: '1px solid rgba(0,184,148,0.1)',
+                  background: 'var(--green-dim)',
+                  border: '1px solid rgba(0,184,148,0.15)',
                   animation: 'pulse-glow 3s ease-in-out infinite',
                 }}
               >
