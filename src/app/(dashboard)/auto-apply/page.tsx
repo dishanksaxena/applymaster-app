@@ -154,20 +154,32 @@ export default function AutoApplyPage() {
 
       console.log('[AUTO-APPLY] Saving settings:', { mode, dailyLimit, matchThreshold, userId: user.id })
 
+      // Save base settings first (always works)
       const { data, error } = await supabase.from('job_preferences').upsert(
         {
           user_id: user.id,
           auto_apply_mode: mode,
           daily_apply_limit: dailyLimit,
           match_threshold: matchThreshold,
-          god_mode_enabled: godModeEnabled,
-          god_mode_tailor_resume: godModeTailorResume,
-          god_mode_cover_letter: godModeCoverLetter,
-          god_mode_score_threshold: godModeScoreThreshold,
           updated_at: new Date().toISOString()
         },
         { onConflict: 'user_id' }
       ).select()
+
+      // Try saving God Mode settings separately — columns may not exist yet if migration hasn't run
+      if (!error) {
+        await supabase.from('job_preferences').upsert(
+          {
+            user_id: user.id,
+            god_mode_enabled: godModeEnabled,
+            god_mode_tailor_resume: godModeTailorResume,
+            god_mode_cover_letter: godModeCoverLetter,
+            god_mode_score_threshold: godModeScoreThreshold,
+          },
+          { onConflict: 'user_id' }
+        ).select()
+        // Silently ignore error — columns added after migration runs
+      }
 
       console.log('[AUTO-APPLY] Save response:', { data, error })
 
