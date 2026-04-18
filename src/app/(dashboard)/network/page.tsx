@@ -148,8 +148,27 @@ function NetworkMap({ results, directConnections, searching }: {
     const totalCards = results.length
     const spacing = Math.min(100, (dims.h - 80) / totalCards)
     const startY = cy - ((totalCards - 1) * spacing) / 2
-    return { ...p, x: dims.w - cardW - 20, y: startY + i * spacing - cardH / 2 }
+    return { ...p, x: dims.w - cardW - 20, y: startY + i * spacing - cardH / 2, leftConnectorIdx: i }
   })
+
+  // Create mapping: which left card connects to which right card based on connection path
+  const connectionMap: Record<number, number> = {}
+  rightCards.forEach((rc, idx) => {
+    if (rc.connectionPath.length > 1) {
+      const directName = rc.connectionPath[1]
+      const leftIdx = leftCards.findIndex(lc => lc.name === directName)
+      if (leftIdx >= 0) connectionMap[idx] = leftIdx
+    }
+  })
+
+  // Color palette for connection pairs
+  const connectionColors = [
+    '#e84393', // pink
+    '#6c5ce7', // purple
+    '#0984e3', // blue
+    '#00b894', // green
+    '#fdcb6e', // yellow
+  ]
 
   return (
     <div ref={containerRef} className="relative w-full" style={{ minHeight: '560px' }}>
@@ -160,16 +179,6 @@ function NetworkMap({ results, directConnections, searching }: {
       {/* SVG Lines */}
       <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ minHeight: '560px' }}>
         <defs>
-          <linearGradient id="lineGradLeft" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="var(--purple, #6c5ce7)" stopOpacity="0.15" />
-            <stop offset="40%" stopColor="var(--purple, #6c5ce7)" stopOpacity="0.4" />
-            <stop offset="100%" stopColor="var(--accent, #e84393)" stopOpacity="0.5" />
-          </linearGradient>
-          <linearGradient id="lineGradRight" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="var(--accent, #e84393)" stopOpacity="0.5" />
-            <stop offset="60%" stopColor="var(--green, #00b894)" stopOpacity="0.4" />
-            <stop offset="100%" stopColor="var(--green, #00b894)" stopOpacity="0.15" />
-          </linearGradient>
           <filter id="glowFilter">
             <feGaussianBlur stdDeviation="3" result="blur" />
             <feMerge>
@@ -177,71 +186,90 @@ function NetworkMap({ results, directConnections, searching }: {
               <feMergeNode in="SourceGraphic" />
             </feMerge>
           </filter>
+          {/* Gradients for each connection pair */}
+          {connectionColors.map((color, idx) => (
+            <linearGradient key={`connGrad-${idx}`} id={`connGrad${idx}`} x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor={color} stopOpacity="0.3" />
+              <stop offset="50%" stopColor={color} stopOpacity="0.5" />
+              <stop offset="100%" stopColor={color} stopOpacity="0.2" />
+            </linearGradient>
+          ))}
         </defs>
 
-        {/* Lines from left cards to center */}
-        {leftCards.map((card, i) => {
+        {/* Direct connection lines from left cards to right cards */}
+        {Object.entries(connectionMap).map(([rightIdxStr, leftIdx]) => {
+          const rightIdx = parseInt(rightIdxStr)
+          const leftCard = leftCards[leftIdx]
+          const rightCard = rightCards[rightIdx]
+          const color = connectionColors[rightIdx % connectionColors.length]
+
           const startX = 20 + cardW
-          const startY = card.y + cardH / 2
-          const ctrl1X = startX + (cx - startX) * 0.4
-          const ctrl2X = cx - (cx - startX) * 0.2
+          const startY = leftCard.y + cardH / 2
+          const endX = rightCard.x
+          const endY = rightCard.y + cardH / 2
+
+          // Bezier control points for curved path
+          const ctrl1X = startX + (endX - startX) * 0.35
+          const ctrl2X = endX - (endX - startX) * 0.35
+
           return (
-            <g key={`l-${i}`}>
+            <g key={`conn-${rightIdx}`}>
               {/* Glow line */}
               <path
-                d={`M ${startX} ${startY} C ${ctrl1X} ${startY}, ${ctrl2X} ${cy}, ${cx} ${cy}`}
-                fill="none" stroke={`${card.color}30`} strokeWidth="3" filter="url(#glowFilter)"
+                d={`M ${startX} ${startY} C ${ctrl1X} ${startY}, ${ctrl2X} ${endY}, ${endX} ${endY}`}
+                fill="none" stroke={color} strokeWidth="4" opacity="0.15" filter="url(#glowFilter)"
               />
               {/* Animated dashed line */}
               <path
-                d={`M ${startX} ${startY} C ${ctrl1X} ${startY}, ${ctrl2X} ${cy}, ${cx} ${cy}`}
-                fill="none" stroke={card.color} strokeWidth="1.5"
-                strokeDasharray="6 4"
-                style={{ animation: `flowRight 0.8s linear infinite`, animationDelay: `${i * 0.15}s` }}
-                opacity="0.6"
+                d={`M ${startX} ${startY} C ${ctrl1X} ${startY}, ${ctrl2X} ${endY}, ${endX} ${endY}`}
+                fill="none" stroke={color} strokeWidth="2"
+                strokeDasharray="8 5"
+                style={{ animation: `flowRight 1s linear infinite`, animationDelay: `${rightIdx * 0.2}s` }}
+                opacity="0.8"
               />
               {/* Moving dot */}
-              <circle r="3" fill={card.color} opacity="0.9" filter="url(#glowFilter)">
+              <circle r="3.5" fill={color} opacity="0.9" filter="url(#glowFilter)">
                 <animateMotion
-                  dur={`${2 + i * 0.3}s`}
+                  dur={`${2.5 + rightIdx * 0.25}s`}
                   repeatCount="indefinite"
-                  path={`M ${startX} ${startY} C ${ctrl1X} ${startY}, ${ctrl2X} ${cy}, ${cx} ${cy}`}
+                  path={`M ${startX} ${startY} C ${ctrl1X} ${startY}, ${ctrl2X} ${endY}, ${endX} ${endY}`}
                 />
               </circle>
             </g>
           )
         })}
 
-        {/* Lines from center to right cards */}
-        {rightCards.map((card, i) => {
-          const endX = card.x
-          const endY = card.y + cardH / 2
-          const ctrl1X = cx + (endX - cx) * 0.3
-          const ctrl2X = endX - (endX - cx) * 0.4
-          const lineColor = card.canRefer ? '#00b894' : '#0984e3'
-          return (
-            <g key={`r-${i}`}>
-              <path
-                d={`M ${cx} ${cy} C ${ctrl1X} ${cy}, ${ctrl2X} ${endY}, ${endX} ${endY}`}
-                fill="none" stroke={`${lineColor}25`} strokeWidth="3" filter="url(#glowFilter)"
-              />
-              <path
-                d={`M ${cx} ${cy} C ${ctrl1X} ${cy}, ${ctrl2X} ${endY}, ${endX} ${endY}`}
-                fill="none" stroke={lineColor} strokeWidth="1.5"
-                strokeDasharray="6 4"
-                style={{ animation: `flowRight 0.8s linear infinite`, animationDelay: `${i * 0.15}s` }}
-                opacity="0.5"
-              />
-              <circle r="3" fill={lineColor} opacity="0.9" filter="url(#glowFilter)">
-                <animateMotion
-                  dur={`${2.2 + i * 0.25}s`}
-                  repeatCount="indefinite"
-                  path={`M ${cx} ${cy} C ${ctrl1X} ${cy}, ${ctrl2X} ${endY}, ${endX} ${endY}`}
+        {/* Subtle accent lines connecting all to center (light background effect) */}
+        {results.length > 0 && (
+          <>
+            {leftCards.map((card, i) => {
+              const startX = 20 + cardW
+              const startY = card.y + cardH / 2
+              const ctrl1X = startX + (cx - startX) * 0.4
+              const ctrl2X = cx - (cx - startX) * 0.2
+              return (
+                <path key={`bg-left-${i}`}
+                  d={`M ${startX} ${startY} C ${ctrl1X} ${startY}, ${ctrl2X} ${cy}, ${cx} ${cy}`}
+                  fill="none" stroke="rgba(232,67,147,0.04)" strokeWidth="1.5"
+                  opacity="0.5"
                 />
-              </circle>
-            </g>
-          )
-        })}
+              )
+            })}
+            {rightCards.map((card, i) => {
+              const endX = card.x
+              const endY = card.y + cardH / 2
+              const ctrl1X = cx + (endX - cx) * 0.3
+              const ctrl2X = endX - (endX - cx) * 0.4
+              return (
+                <path key={`bg-right-${i}`}
+                  d={`M ${cx} ${cy} C ${ctrl1X} ${cy}, ${ctrl2X} ${endY}, ${endX} ${endY}`}
+                  fill="none" stroke="rgba(0,184,148,0.04)" strokeWidth="1.5"
+                  opacity="0.5"
+                />
+              )
+            })}
+          </>
+        )}
 
         {/* Scanning pulse when searching */}
         {searching && (
