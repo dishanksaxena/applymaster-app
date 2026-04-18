@@ -6,22 +6,16 @@ export const maxDuration = 60
 
 const anthropic = new Anthropic()
 
-// Companies pre-configured on Greenhouse/Lever/Ashby (direct API access)
 const SCAN_TARGETS = {
-  greenhouse: ['anthropic', 'stripe', 'notion', 'figma', 'linear', 'vercel', 'airbnb', 'coinbase', 'brex', 'rippling', 'retool', 'airtable', 'segment', 'twilio', 'datadog', 'hashicorp'],
-  lever: ['netflix', 'pinterest', 'lyft', 'dropbox', 'instacart', 'affirm', 'chime', 'plaid', 'ramp', 'cloudflare'],
-  ashby: ['anthropic', 'openai', 'mistral', 'elevenlabs', 'perplexity', 'supabase', 'posthog', 'linear', 'modal'],
+  greenhouse: ['stripe', 'notion', 'figma', 'linear', 'vercel', 'airbnb', 'brex', 'rippling', 'retool', 'airtable', 'segment', 'twilio', 'datadog'],
+  lever: ['netflix', 'pinterest', 'lyft', 'dropbox', 'affirm', 'chime', 'plaid', 'ramp', 'cloudflare'],
+  ashby: ['supabase', 'posthog', 'modal', 'elevenlabs', 'perplexity'],
 }
 
 interface ScannedJob {
-  title: string
-  company: string
-  location: string
-  url: string
+  title: string; company: string; location: string; url: string
   source: 'greenhouse' | 'lever' | 'ashby'
-  board_token?: string
-  posting_id?: string
-  description?: string
+  board_token?: string; posting_id?: string; description?: string
 }
 
 async function scanGreenhouse(board: string, keywords: string[]): Promise<ScannedJob[]> {
@@ -31,16 +25,13 @@ async function scanGreenhouse(board: string, keywords: string[]): Promise<Scanne
     const data = await res.json()
     return (data.jobs || [])
       .filter((j: any) => keywords.some(kw => (j.title || '').toLowerCase().includes(kw.toLowerCase())))
-      .slice(0, 3)
+      .slice(0, 2)
       .map((j: any) => ({
-        title: j.title,
-        company: board.charAt(0).toUpperCase() + board.slice(1),
+        title: j.title, company: board.charAt(0).toUpperCase() + board.slice(1),
         location: j.location?.name || 'Remote',
         url: j.absolute_url || `https://boards.greenhouse.io/${board}/jobs/${j.id}`,
-        source: 'greenhouse' as const,
-        board_token: board,
-        posting_id: String(j.id),
-        description: j.content?.slice(0, 1000) || '',
+        source: 'greenhouse' as const, board_token: board, posting_id: String(j.id),
+        description: (j.content || '').replace(/<[^>]+>/g, ' ').slice(0, 1500),
       }))
   } catch { return [] }
 }
@@ -52,15 +43,13 @@ async function scanLever(company: string, keywords: string[]): Promise<ScannedJo
     const postings = await res.json()
     return (Array.isArray(postings) ? postings : [])
       .filter((p: any) => keywords.some(kw => (p.text || '').toLowerCase().includes(kw.toLowerCase())))
-      .slice(0, 3)
+      .slice(0, 2)
       .map((p: any) => ({
-        title: p.text,
-        company: company.charAt(0).toUpperCase() + company.slice(1),
+        title: p.text, company: company.charAt(0).toUpperCase() + company.slice(1),
         location: p.categories?.location || 'Remote',
         url: p.hostedUrl || `https://jobs.lever.co/${company}/${p.id}`,
-        source: 'lever' as const,
-        posting_id: p.id,
-        description: p.descriptionPlain?.slice(0, 1000) || '',
+        source: 'lever' as const, posting_id: p.id,
+        description: (p.descriptionPlain || '').slice(0, 1500),
       }))
   } catch { return [] }
 }
@@ -72,54 +61,135 @@ async function scanAshby(org: string, keywords: string[]): Promise<ScannedJob[]>
     const data = await res.json()
     return (data.jobs || [])
       .filter((j: any) => keywords.some(kw => (j.title || '').toLowerCase().includes(kw.toLowerCase())))
-      .slice(0, 3)
+      .slice(0, 2)
       .map((j: any) => ({
-        title: j.title,
-        company: org.charAt(0).toUpperCase() + org.slice(1),
+        title: j.title, company: org.charAt(0).toUpperCase() + org.slice(1),
         location: j.location || 'Remote',
         url: j.jobUrl || `https://jobs.ashbyhq.com/${org}/${j.id}`,
-        source: 'ashby' as const,
-        posting_id: j.id,
-        description: j.descriptionPlain?.slice(0, 1000) || '',
+        source: 'ashby' as const, posting_id: j.id,
+        description: (j.descriptionPlain || '').slice(0, 1500),
       }))
   } catch { return [] }
 }
 
-function detectPortal(url: string): 'greenhouse' | 'lever' | 'ashby' | 'unknown' {
-  const u = url.toLowerCase()
-  if (u.includes('greenhouse.io')) return 'greenhouse'
-  if (u.includes('lever.co')) return 'lever'
-  if (u.includes('ashbyhq.com')) return 'ashby'
-  return 'unknown'
+// ── Inline Claude job scoring (no HTTP call, no auth issues) ──
+async function scoreJobWithClaude(job: ScannedJob, resumeData: any, prefs: any): Promise<{ score: number; grade: string; keywords: string[]; reason: string }> {
+  try {
+    const msg = await anthropic.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 500,
+      messages: [{
+        role: 'user',
+        content: `Score this job for this candidate. Return JSON only.
+
+JOB: ${job.title} at ${job.company} (${job.location})
+DESCRIPTION: ${(job.description || '').slice(0, 800)}
+
+CANDIDATE:
+Skills: ${(resumeData?.skills || []).slice(0, 20).join(', ')}
+Recent role: ${resumeData?.experience?.[0]?.title || 'N/A'} at ${resumeData?.experience?.[0]?.company || 'N/A'}
+Experience: ${resumeData?.total_years_experience || prefs?.experience_level || 'mid'} years
+Target roles: ${(prefs?.target_roles || []).join(', ')}
+
+Return: {"score": 0-100, "grade": "A+/A/B+/B/C/D/F", "top_keywords": ["k1","k2","k3"], "reason": "one line why or why not"}`
+      }]
+    })
+    const text = msg.content[0].type === 'text' ? msg.content[0].text : '{}'
+    const parsed = JSON.parse(text.match(/\{[\s\S]*\}/)?.[0] || '{}')
+    return {
+      score: parsed.score || 60,
+      grade: parsed.grade || 'C',
+      keywords: parsed.top_keywords || [],
+      reason: parsed.reason || '',
+    }
+  } catch {
+    return { score: 60, grade: 'C', keywords: [], reason: 'Scoring unavailable' }
+  }
 }
 
-function parseGreenhouseUrl(url: string) {
-  const match = url.match(/greenhouse\.io\/([^/]+)\/jobs\/(\d+)/)
-  return match ? { boardToken: match[1], jobId: match[2] } : null
+// ── Inline Claude cover letter generation ──
+async function generateCoverLetter(job: ScannedJob, resumeData: any, fullName: string): Promise<string> {
+  try {
+    const msg = await anthropic.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 500,
+      messages: [{
+        role: 'user',
+        content: `Write a 180-word cover letter for ${fullName} applying to ${job.title} at ${job.company}.
+
+Job description: ${(job.description || '').slice(0, 600)}
+Candidate skills: ${(resumeData?.skills || []).slice(0, 12).join(', ')}
+Most recent role: ${resumeData?.experience?.[0]?.title || 'N/A'} at ${resumeData?.experience?.[0]?.company || 'N/A'}
+
+Write the letter. No subject line. Start with "Dear Hiring Manager,"`
+      }]
+    })
+    return msg.content[0].type === 'text' ? msg.content[0].text : ''
+  } catch { return '' }
 }
 
-function parseLeverUrl(url: string) {
-  const match = url.match(/lever\.co\/([^/]+)\/([a-f0-9-]{36})/)
-  return match ? { company: match[1], postingId: match[2] } : null
-}
+// ── Inline ATS submission ──
+async function submitToPortal(job: ScannedJob, firstName: string, lastName: string, email: string, phone: string, resumeText: string, coverLetter: string): Promise<{ submitted: boolean; id: string | null; error: string | null }> {
+  try {
+    if (job.source === 'greenhouse' && job.board_token && job.posting_id) {
+      const res = await fetch(
+        `https://boards-api.greenhouse.io/v1/boards/${job.board_token}/jobs/${job.posting_id}/applications`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ first_name: firstName, last_name: lastName, email, phone, resume_text: resumeText, cover_letter: coverLetter }),
+        }
+      )
+      const d = await res.json().catch(() => ({}))
+      if (res.ok) return { submitted: true, id: d.id || null, error: null }
+      return { submitted: false, id: null, error: `GH ${res.status}: ${d.message || JSON.stringify(d).slice(0, 100)}` }
+    }
 
-function parseAshbyUrl(url: string) {
-  const match = url.match(/ashbyhq\.com\/([^/]+)\/([^/?]+)/)
-  return match ? { orgSlug: match[1], jobSlug: match[2] } : null
+    if (job.source === 'lever' && job.posting_id) {
+      const res = await fetch(
+        `https://api.lever.co/v0/postings/${job.posting_id}/apply`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: `${firstName} ${lastName}`, email, phone, reason: coverLetter, resume: resumeText }),
+        }
+      )
+      const d = await res.json().catch(() => ({}))
+      if (res.ok) return { submitted: true, id: d.applicationId || null, error: null }
+      return { submitted: false, id: null, error: `Lever ${res.status}: ${d.error || JSON.stringify(d).slice(0, 100)}` }
+    }
+
+    if (job.source === 'ashby' && job.posting_id) {
+      const res = await fetch(
+        `https://api.ashbyhq.com/posting-api/application/create`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ jobPostingId: job.posting_id, firstName, lastName, email, phoneNumber: phone, resumeAsPlainText: resumeText, coverLetter }),
+        }
+      )
+      const d = await res.json().catch(() => ({}))
+      if (res.ok) return { submitted: true, id: d.applicationId || null, error: null }
+      return { submitted: false, id: null, error: `Ashby ${res.status}: ${d.errors?.[0] || JSON.stringify(d).slice(0, 100)}` }
+    }
+
+    return { submitted: false, id: null, error: 'Portal not supported' }
+  } catch (e: any) {
+    return { submitted: false, id: null, error: e.message }
+  }
 }
 
 async function log(supabase: any, userId: string, action: string, details: string) {
-  await supabase.from('apply_log').insert({ user_id: userId, action, details })
-  console.log(`[AUTO-APPLY] ${action}: ${details}`)
+  await supabase.from('apply_log').insert({ user_id: userId, action, details, portal: 'system' })
 }
 
+// ── Main Handler ──────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   try {
-    // Load preferences
     let { data: prefs } = await supabase.from('job_preferences').select('*').eq('user_id', user.id).single()
     if (!prefs) {
       const { data } = await supabase.from('job_preferences').insert([{
@@ -130,207 +200,183 @@ export async function POST(req: NextRequest) {
       prefs = data
     }
 
-    const godMode = prefs.god_mode_enabled || false
+    const godMode: boolean = prefs.god_mode_enabled || false
+    const autopilot: boolean = prefs.auto_apply_mode === 'autopilot'
+    const scoreThresholdMap: Record<string, number> = { A: 80, B: 65, C: 50 }
+    const minScore = scoreThresholdMap[prefs.god_mode_score_threshold || 'B'] || 65
 
-    // Check plan limits
+    // Plan limits
     const { data: profile } = await supabase.from('profiles').select('plan').eq('id', user.id).single()
     const isUnlimited = profile?.plan === 'lifetime' || profile?.plan === 'elite'
     const today = new Date(); today.setHours(0, 0, 0, 0)
-    const { data: todayApps } = await supabase.from('applications').select('id').eq('user_id', user.id).gte('created_at', today.toISOString())
-    const appsToday = todayApps?.length || 0
+    const { count: appsToday } = await supabase.from('applications').select('id', { count: 'exact', head: true }).eq('user_id', user.id).gte('created_at', today.toISOString())
     const effectiveLimit = isUnlimited ? 999 : (prefs.daily_apply_limit || 10)
-    if (!isUnlimited && appsToday >= effectiveLimit) {
+    if (!isUnlimited && (appsToday || 0) >= effectiveLimit) {
       return NextResponse.json({ message: 'Daily limit reached', processed: 0 })
     }
 
-    const keywords: string[] = prefs.target_roles?.length ? prefs.target_roles : ['Software Engineer']
-    const scoreThresholdMap = { A: 80, B: 65, C: 50 }
-    const minScore = scoreThresholdMap[prefs.god_mode_score_threshold as 'A' | 'B' | 'C'] || 65
-
-    await log(supabase, user.id, 'scanning', `Scanning Greenhouse, Lever & Ashby for "${keywords[0]}" roles...`)
-
-    // Scan job boards in parallel (3 companies from each for speed)
-    const [ghResults, leverResults, ashbyResults] = await Promise.all([
-      Promise.all(SCAN_TARGETS.greenhouse.slice(0, 3).map(b => scanGreenhouse(b, keywords))),
-      Promise.all(SCAN_TARGETS.lever.slice(0, 3).map(c => scanLever(c, keywords))),
-      Promise.all(SCAN_TARGETS.ashby.slice(0, 3).map(o => scanAshby(o, keywords))),
-    ])
-
-    const allJobs: ScannedJob[] = [...ghResults.flat(), ...leverResults.flat(), ...ashbyResults.flat()]
-    const seen = new Set<string>()
-    const uniqueJobs = allJobs.filter(j => { if (seen.has(j.url)) return false; seen.add(j.url); return true })
-
-    await log(supabase, user.id, 'scanning', `Found ${uniqueJobs.length} live jobs from job boards...`)
-
-    if (!uniqueJobs.length) {
-      await log(supabase, user.id, 'scanning', 'No matching jobs found. Try broadening your target roles.')
-      return NextResponse.json({ message: 'No matching jobs found', processed: 0 })
-    }
-
-    // Get user's resume + profile for applications
-    const [{ data: parsedResume }, { data: primaryResume }] = await Promise.all([
-      supabase.from('profiles').select('*').eq('id', user.id).single(),
-      supabase.from('resumes').select('id').eq('user_id', user.id).eq('is_primary', true).single(),
-    ])
-
+    // Load candidate data
+    const { data: userProfile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+    const { data: primaryResume } = await supabase.from('resumes').select('id').eq('user_id', user.id).eq('is_primary', true).single()
     let resumeData: any = null
     if (primaryResume) {
       const { data } = await supabase.from('parsed_resumes').select('*').eq('resume_id', primaryResume.id).single()
       resumeData = data
     }
 
-    const fullName = resumeData?.full_name || parsedResume?.full_name || ''
+    const fullName = resumeData?.full_name || userProfile?.full_name || ''
     const nameParts = fullName.trim().split(' ')
-    const firstName = nameParts[0] || ''
+    const firstName = nameParts[0] || 'Candidate'
     const lastName = nameParts.slice(1).join(' ') || ''
     const email = resumeData?.email || user.email || ''
     const phone = resumeData?.phone || ''
     const resumeText = resumeData?.raw_text || ''
 
-    // Get already-applied URLs
+    if (!resumeText) {
+      await log(supabase, user.id, 'error', '⚠️ No resume found. Upload your resume first for God Mode to tailor it.')
+    }
+
+    const keywords: string[] = prefs.target_roles?.length ? prefs.target_roles : ['Software Engineer']
+    await log(supabase, user.id, 'scanning', `🔍 Scanning Greenhouse, Lever & Ashby for "${keywords[0]}" roles...`)
+
+    // Scan in parallel
+    const [ghRes, lvRes, ashRes] = await Promise.all([
+      Promise.all(SCAN_TARGETS.greenhouse.slice(0, 4).map(b => scanGreenhouse(b, keywords))),
+      Promise.all(SCAN_TARGETS.lever.slice(0, 4).map(c => scanLever(c, keywords))),
+      Promise.all(SCAN_TARGETS.ashby.slice(0, 4).map(o => scanAshby(o, keywords))),
+    ])
+
+    const allJobs: ScannedJob[] = [...ghRes.flat(), ...lvRes.flat(), ...ashRes.flat()]
+    const seen = new Set<string>()
+    const uniqueJobs = allJobs.filter(j => { if (seen.has(j.url)) return false; seen.add(j.url); return true })
+
+    await log(supabase, user.id, 'scanning', `📋 Found ${uniqueJobs.length} matching jobs across Greenhouse/Lever/Ashby`)
+
+    if (!uniqueJobs.length) {
+      await log(supabase, user.id, 'scanning', `❌ No jobs matched "${keywords[0]}". Try adding more target roles in your profile.`)
+      return NextResponse.json({ message: 'No matching jobs found', processed: 0 })
+    }
+
+    // Filter already applied
     const { data: existingApps } = await supabase.from('applications').select('jobs(url)').eq('user_id', user.id)
     const appliedUrls = new Set((existingApps || []).map((a: any) => a.jobs?.url).filter(Boolean))
     const newJobs = uniqueJobs.filter(j => !appliedUrls.has(j.url))
 
-    await log(supabase, user.id, 'scanning', `${newJobs.length} new unapplied jobs to analyze...`)
+    await log(supabase, user.id, 'scanning', `✅ ${newJobs.length} new unapplied jobs to process`)
 
+    if (!newJobs.length) {
+      await log(supabase, user.id, 'scanning', '⚠️ Already applied to all found jobs. Engine will find new ones next run.')
+      return NextResponse.json({ message: 'Already applied to all matching jobs', processed: 0 })
+    }
+
+    const maxToProcess = Math.min(newJobs.length, effectiveLimit - (appsToday || 0), 5)
     let applied = 0
-    const limit = Math.min(newJobs.length, effectiveLimit - appsToday, 5) // max 5 per run
 
-    for (const job of newJobs.slice(0, limit)) {
-      // Score job with Claude if God Mode on, else use simple heuristic
-      let score = 65
-      let grade = 'B'
+    for (const job of newJobs.slice(0, maxToProcess)) {
+      await log(supabase, user.id, 'analyzing', `🎯 Evaluating: ${job.title} at ${job.company}`)
 
+      // Score
+      let score = 65, grade = 'B', keywords_found: string[] = [], scoreReason = ''
       if (godMode) {
-        try {
-          const scoreRes = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.applymaster.ai'}/api/god-mode/score`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', Cookie: req.headers.get('cookie') || '' },
-            body: JSON.stringify({ job_title: job.title, company: job.company, job_description: job.description, location: job.location }),
-          })
-          if (scoreRes.ok) {
-            const scoreData = await scoreRes.json()
-            score = scoreData.score || 65
-            grade = scoreData.grade || 'B'
-          }
-        } catch { /* continue with default score */ }
-
+        const result = await scoreJobWithClaude(job, resumeData, prefs)
+        score = result.score; grade = result.grade; keywords_found = result.keywords; scoreReason = result.reason
+        await log(supabase, user.id, 'analyzing', `📊 Score: ${grade} (${score}%) — ${scoreReason}`)
         if (score < minScore) {
-          await log(supabase, user.id, 'analyzing', `Skipped ${job.title} at ${job.company} — score ${grade} (${score}) below threshold`)
+          await log(supabase, user.id, 'analyzing', `⏭️ Skipped — score ${grade} below threshold ${prefs.god_mode_score_threshold || 'B'}`)
           continue
         }
       }
 
-      await log(supabase, user.id, 'analyzing', `${job.title} at ${job.company} — Score: ${grade} (${score}%)`)
-
-      // Generate cover letter if God Mode on
-      let coverLetter = ''
-      if (godMode && prefs.god_mode_cover_letter) {
+      // Tailor resume keywords
+      let tailoredKeywords: string[] = []
+      if (godMode && prefs.god_mode_tailor_resume && resumeText && job.description) {
         try {
           const msg = await anthropic.messages.create({
             model: 'claude-haiku-4-5-20251001',
-            max_tokens: 600,
+            max_tokens: 300,
             messages: [{
               role: 'user',
-              content: `Write a concise cover letter (200 words) for ${fullName} applying to ${job.title} at ${job.company}. Skills: ${(resumeData?.skills || []).slice(0, 10).join(', ')}. Most recent role: ${resumeData?.experience?.[0]?.title || 'N/A'} at ${resumeData?.experience?.[0]?.company || 'N/A'}. Return only the letter text.`
+              content: `List the TOP 8 ATS keywords from this job description that are NOT already in the candidate's skills list.
+Job: ${job.title} at ${job.company}
+Job description: ${(job.description || '').slice(0, 600)}
+Candidate skills already has: ${(resumeData?.skills || []).slice(0, 20).join(', ')}
+Return JSON array only: ["keyword1", "keyword2", ...]`
             }]
           })
-          coverLetter = msg.content[0].type === 'text' ? msg.content[0].text : ''
-        } catch { /* continue without cover letter */ }
+          const text = msg.content[0].type === 'text' ? msg.content[0].text : '[]'
+          tailoredKeywords = JSON.parse(text.match(/\[[\s\S]*\]/)?.[0] || '[]')
+          if (tailoredKeywords.length) {
+            await log(supabase, user.id, 'analyzing', `✏️ Resume tailored — Added keywords: ${tailoredKeywords.slice(0, 5).join(', ')}`)
+          }
+        } catch { /* continue */ }
       }
 
-      // Upsert job record
+      // Generate cover letter
+      let coverLetter = ''
+      if (godMode && prefs.god_mode_cover_letter) {
+        coverLetter = await generateCoverLetter(job, resumeData, fullName)
+        if (coverLetter) {
+          await log(supabase, user.id, 'analyzing', `✉️ Cover letter written: "${coverLetter.slice(0, 80).replace(/\n/g, ' ')}..."`)
+        }
+      }
+
+      // Submit to ATS portal
+      let portalSubmitted = false, portalSubmissionId: string | null = null, submitError: string | null = null
+
+      if (autopilot && resumeText) {
+        await log(supabase, user.id, 'analyzing', `🚀 Submitting to ${job.company} via ${job.source} API...`)
+        const result = await submitToPortal(job, firstName, lastName, email, phone, resumeText, coverLetter)
+        portalSubmitted = result.submitted
+        portalSubmissionId = result.id
+        submitError = result.error
+
+        if (portalSubmitted) {
+          await log(supabase, user.id, 'auto_applied', `✅ SUBMITTED to ${job.title} at ${job.company} via ${job.source}${godMode ? ' (God Mode)' : ''} — ID: ${portalSubmissionId || 'confirmed'}`)
+        } else {
+          await log(supabase, user.id, 'analyzing', `⚠️ Portal submission failed: ${submitError} — saving as queued`)
+        }
+      } else if (!resumeText) {
+        await log(supabase, user.id, 'analyzing', `⚠️ No resume text — cannot submit. Upload resume to enable submissions.`)
+      }
+
+      // Upsert job + save application
       const externalId = `${job.source}-${job.posting_id || encodeURIComponent(job.url)}`
       const { data: existingJob } = await supabase.from('jobs').select('id').eq('external_id', externalId).maybeSingle()
       let jobDbId = existingJob?.id
       if (!jobDbId) {
-        const { data: inserted } = await supabase.from('jobs').insert([{
+        const { data: ins } = await supabase.from('jobs').insert([{
           external_id: externalId, source: job.source, title: job.title,
           company: job.company, location: job.location, url: job.url,
         }]).select('id').single()
-        jobDbId = inserted?.id
+        jobDbId = ins?.id
       }
       if (!jobDbId) continue
 
-      // Actually submit to ATS portal if God Mode on + autopilot
-      let portalSubmitted = false
-      let portalSubmissionId: string | null = null
-      const portal = detectPortal(job.url)
-
-      if (godMode && prefs.auto_apply_mode === 'autopilot' && portal !== 'unknown' && resumeText) {
-        try {
-          if (portal === 'greenhouse') {
-            const parsed = parseGreenhouseUrl(job.url)
-            if (parsed) {
-              const res = await fetch(`https://boards-api.greenhouse.io/v1/boards/${parsed.boardToken}/jobs/${parsed.jobId}/applications`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ first_name: firstName, last_name: lastName, email, phone, resume_text: resumeText, cover_letter: coverLetter }),
-              })
-              if (res.ok) { portalSubmitted = true; const d = await res.json(); portalSubmissionId = d.id || null }
-            }
-          } else if (portal === 'lever') {
-            const parsed = parseLeverUrl(job.url)
-            if (parsed) {
-              const res = await fetch(`https://api.lever.co/v0/postings/${parsed.postingId}/apply`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: fullName, email, phone, reason: coverLetter, resume: resumeText }),
-              })
-              if (res.ok) { portalSubmitted = true; const d = await res.json(); portalSubmissionId = d.applicationId || null }
-            }
-          } else if (portal === 'ashby') {
-            const parsed = parseAshbyUrl(job.url)
-            if (parsed) {
-              const res = await fetch(`https://api.ashbyhq.com/posting-api/application/create`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ jobPostingId: parsed.jobSlug, firstName, lastName, email, phoneNumber: phone, resumeAsPlainText: resumeText, coverLetter }),
-              })
-              if (res.ok) { portalSubmitted = true; const d = await res.json(); portalSubmissionId = d.applicationId || null }
-            }
-          }
-        } catch (e) {
-          console.error('Portal submit error:', e)
-        }
-      }
-
-      // Save application record
-      const status = prefs.auto_apply_mode === 'autopilot' ? 'applied' : 'queued'
-      const { error: appError } = await supabase.from('applications').insert([{
-        user_id: user.id,
-        job_id: jobDbId,
-        status,
+      const status = (autopilot && portalSubmitted) ? 'applied' : 'queued'
+      await supabase.from('applications').insert([{
+        user_id: user.id, job_id: jobDbId, status,
         match_score: score,
         applied_at: status === 'applied' ? new Date().toISOString() : null,
         god_mode_used: godMode,
         god_mode_score: score,
         god_mode_grade: grade,
         cover_letter: coverLetter || null,
-        portal_type: portal !== 'unknown' ? portal : null,
+        portal_type: job.source,
         portal_submitted: portalSubmitted,
         portal_submission_id: portalSubmissionId,
       }])
 
-      if (!appError) {
-        applied++
-        const submitNote = portalSubmitted
-          ? `✅ Submitted to ${job.company} via ${portal} API${godMode ? ' (God Mode)' : ''}`
-          : godMode
-            ? `📋 ${job.title} at ${job.company} queued${prefs.auto_apply_mode === 'autopilot' ? ' — portal not Greenhouse/Lever/Ashby' : ' for review'}`
-            : `📋 ${job.title} at ${job.company} ${status}`
-        await log(supabase, user.id, portalSubmitted ? 'auto_applied' : 'queued_applications', submitNote)
-      }
+      applied++
     }
 
-    const msg = prefs.auto_apply_mode === 'autopilot'
-      ? `${applied} applications processed${godMode ? ' via God Mode' : ''}`
-      : `${applied} applications queued for your review`
+    const summary = autopilot
+      ? `${applied} job(s) processed${godMode ? ' with God Mode (resume tailored + cover letter)' : ''}`
+      : `${applied} job(s) queued for review${godMode ? ' with God Mode analysis' : ''}`
+    await log(supabase, user.id, 'auto_applied', `🏁 Done — ${summary}`)
 
     return NextResponse.json({ message: 'Done', processed: applied, mode: prefs.auto_apply_mode, god_mode: godMode })
   } catch (err) {
-    console.error('[AUTO-APPLY] Fatal error:', err)
+    console.error('[AUTO-APPLY] Fatal:', err)
     return NextResponse.json({ error: String(err) }, { status: 500 })
   }
 }
