@@ -12,7 +12,7 @@ const JobsGlobe = dynamic(() => import('@/components/JobsGlobe'), {
   loading: () => (
     <div className="w-full h-full flex flex-col items-center justify-center gap-3" style={{ background: 'radial-gradient(ellipse at 50% 50%, #0c0c28, #050510)' }}>
       <div className="animate-spin w-10 h-10 border-2 border-[#a29bfe] border-t-transparent rounded-full" />
-      <p className="text-[#5a5a6a] text-sm">Initializing 3D Globe...</p>
+      <p className="text-[var(--text-muted)] text-sm">Initializing 3D Globe...</p>
     </div>
   ),
 })
@@ -66,6 +66,8 @@ export default function JobsPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [savedJobs, setSavedJobs] = useState<Set<string>>(new Set())
   const [appliedJobs, setAppliedJobs] = useState<Set<string>>(new Set())
+  const [applyingJobId, setApplyingJobId] = useState<string | null>(null)
+  const [godModeEnabled, setGodModeEnabled] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [country, setCountry] = useState('US')
   const [city, setCity] = useState('')
@@ -118,6 +120,11 @@ export default function JobsPage() {
         setSavedJobs(saved)
         setAppliedJobs(applied)
       }
+
+      // Load God Mode setting
+      const { data: prefs } = await supabase
+        .from('job_preferences').select('god_mode_enabled').eq('user_id', user.id).single()
+      if (prefs?.god_mode_enabled) setGodModeEnabled(true)
     }
     load()
   }, [supabase])
@@ -269,8 +276,10 @@ export default function JobsPage() {
   const applyJob = async (job: Job) => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return alert('Please log in first')
+
+    setApplyingJobId(job.id)
     try {
-      // Save job first
+      // Step 1: Upsert job record into DB
       const externalId = `${job.source}-${job.id}`
       const jobData = {
         external_id: externalId,
@@ -284,51 +293,65 @@ export default function JobsPage() {
         url: job.url,
       }
 
-      // First try to find existing job
-      const { data: existingJobs, error: selectError } = await supabase
-        .from('jobs')
-        .select('id')
-        .eq('external_id', externalId)
-        .eq('source', job.source)
-
-      if (selectError) throw new Error(`Job lookup failed: ${selectError.message}`)
+      const { data: existingJobs } = await supabase
+        .from('jobs').select('id').eq('external_id', externalId).eq('source', job.source)
 
       let jobId: string
-
       if (existingJobs && existingJobs.length > 0) {
-        // Update existing job
         jobId = existingJobs[0].id
-        const { error: updateError } = await supabase
-          .from('jobs')
-          .update(jobData)
-          .eq('id', jobId)
-        if (updateError) throw new Error(`Job update failed: ${updateError.message}`)
+        await supabase.from('jobs').update(jobData).eq('id', jobId)
       } else {
-        // Insert new job
-        const { data: newJob, error: insertError } = await supabase
-          .from('jobs')
-          .insert([jobData])
-          .select()
-
-        if (insertError) throw new Error(`Job insert failed: ${insertError.message}`)
-        if (!newJob || newJob.length === 0) throw new Error('Job insert succeeded but no data returned')
+        const { data: newJob } = await supabase.from('jobs').insert([jobData]).select()
+        if (!newJob || newJob.length === 0) throw new Error('Failed to save job record')
         jobId = newJob[0].id
       }
 
-      // Create/update application with "applied" status
-      const { error: appError } = await supabase.from('applications').upsert({
-        user_id: user.id,
-        job_id: jobId,
-        status: 'applied',
-      }, { onConflict: 'user_id,job_id' })
+      // Step 2: If God Mode is on, tailor resume first
+      let tailoredResumeId: string | null = null
+      if (godModeEnabled && job.url) {
+        try {
+          const tailorRes = await fetch('/api/god-mode/tailor-resume', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ job_title: job.title, company: job.company, job_description: '' }),
+          })
+          if (tailorRes.ok) {
+            const tailorData = await tailorRes.json()
+            tailoredResumeId = tailorData.tailored_resume_id || null
+          }
+        } catch { /* non-fatal — continue without tailoring */ }
+      }
 
-      if (appError) throw new Error(`Application save failed: ${appError.message}`)
+      // Step 3: Submit via God Mode engine (actual portal submission or DB fallback)
+      const submitRes = await fetch('/api/god-mode/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          job_id: jobId,
+          job_title: job.title,
+          company: job.company,
+          apply_url: job.url,
+          god_mode: godModeEnabled,
+          tailored_resume_id: tailoredResumeId,
+        }),
+      })
+
+      const submitData = await submitRes.json()
 
       setAppliedJobs(new Set(Array.from(appliedJobs).concat(job.id)))
-      alert(`✓ Applied to ${job.title} at ${job.company}!`)
+
+      if (submitData.submitted) {
+        alert(`✅ Applied to ${job.title} at ${job.company}!\n\n${godModeEnabled ? '⚡ God Mode: tailored resume + cover letter submitted.' : ''}`)
+      } else {
+        // Not an ATS portal we support directly — open in new tab
+        alert(`📋 Marked as applied. Opening job page so you can complete it there.`)
+        window.open(job.url, '_blank')
+      }
     } catch (err: any) {
       console.error('Apply error:', err)
       alert(`Failed to apply: ${err?.message || 'Please try again.'}`)
+    } finally {
+      setApplyingJobId(null)
     }
   }
 
@@ -354,7 +377,7 @@ export default function JobsPage() {
 
   if (!mounted) return <div className="p-8" />
 
-  const inputCls = "px-4 py-3 rounded-xl bg-[#16161f] border border-white/[0.06] text-white text-[13px] placeholder-[#3a3a4a] focus:outline-none focus:border-[rgba(253,121,168,0.3)] transition-all"
+  const inputCls = "px-4 py-3 rounded-xl bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text)] text-[13px] placeholder-[var(--text-faint)] focus:outline-none focus:border-[rgba(253,121,168,0.3)] transition-all"
   const selectCls = `${inputCls} cursor-pointer`
 
   return (
@@ -369,16 +392,16 @@ export default function JobsPage() {
         <div className="relative z-10">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h1 className="text-2xl lg:text-3xl font-black tracking-tight mb-2 text-white">Job Search</h1>
-              <p className="text-[14px] text-[#8a8a9a]">Search across 50+ job portals with AI-powered matching</p>
+              <h1 className="text-2xl lg:text-3xl font-black tracking-tight mb-2 text-[var(--text)]">Job Search</h1>
+              <p className="text-[14px] text-[var(--text-secondary)]">Search across 50+ job portals with AI-powered matching</p>
             </div>
             {/* View Toggle */}
-            <div className="flex items-center gap-1 p-1 rounded-xl flex-shrink-0" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
+            <div className="flex items-center gap-1 p-1 rounded-xl flex-shrink-0" style={{ background: 'var(--bg-overlay)', border: '1px solid var(--border)' }}>
               <motion.button whileTap={{ scale: 0.95 }} onClick={() => setViewMode('list')}
                 className="flex items-center gap-2 px-4 py-2 rounded-lg text-[12px] font-semibold transition-all"
                 style={viewMode === 'list'
                   ? { background: 'linear-gradient(135deg, #fd79a8, #e84393)', color: '#fff', boxShadow: '0 0 20px rgba(253,121,168,0.3)' }
-                  : { color: '#6a6a7a' }}>
+                  : { color: 'var(--text-secondary)' }}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
                 List
               </motion.button>
@@ -386,7 +409,7 @@ export default function JobsPage() {
                 className="flex items-center gap-2 px-4 py-2 rounded-lg text-[12px] font-semibold transition-all"
                 style={viewMode === 'globe'
                   ? { background: 'linear-gradient(135deg, #a29bfe, #6c5ce7)', color: '#fff', boxShadow: '0 0 20px rgba(162,155,254,0.3)' }
-                  : { color: '#6a6a7a' }}>
+                  : { color: 'var(--text-secondary)' }}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
                 Globe View
               </motion.button>
@@ -401,10 +424,10 @@ export default function JobsPage() {
           <div className="p-6 space-y-4">
           {/* Keyword */}
           <div className="relative">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5a5a6a" strokeWidth="1.8" className="absolute left-4 top-1/2 -translate-y-1/2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="1.8" className="absolute left-4 top-1/2 -translate-y-1/2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
             <input value={searchTerm} onChange={e => setSearchTerm(e.target.value)} onKeyDown={e => e.key === 'Enter' && searchJobs()}
               placeholder="Job title, skill, or keyword..."
-              className="w-full pl-12 pr-4 py-4 rounded-xl bg-[#16161f] border border-white/[0.06] text-white text-[15px] placeholder-[#3a3a4a] focus:outline-none focus:border-[rgba(253,121,168,0.3)] transition-all" />
+              className="w-full pl-12 pr-4 py-4 rounded-xl bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text)] text-[15px] placeholder-[var(--text-faint)] focus:outline-none focus:border-[rgba(253,121,168,0.3)] transition-all" />
           </div>
 
           {/* Row 1: Country + City */}
@@ -424,7 +447,7 @@ export default function JobsPage() {
                 {showCitySuggestions && (
                   <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
                     className="absolute top-full left-0 right-0 mt-1 rounded-xl overflow-hidden z-50"
-                    style={{ background: '#1e1e3a', border: '1px solid rgba(255,255,255,0.1)' }}>
+                    style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>
                     {citySuggestions.map(s => (
                       <button key={s} onClick={() => { setCity(s); setShowCitySuggestions(false) }}
                         className="w-full text-left px-4 py-2.5 text-[13px] text-white hover:bg-white/5 transition-colors">
@@ -485,15 +508,15 @@ export default function JobsPage() {
         {viewMode === 'list' && jobs.length === 0 && !loading ? (
           <motion.div variants={fadeInUp} className="text-center py-16">
             <motion.div animate={{ y: [0, -8, 0] }} transition={{ duration: 3, repeat: Infinity }} className="inline-block mb-4">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#3a3a4a" strokeWidth="1.5"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text-faint)" strokeWidth="1.5"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
             </motion.div>
-            <p className="text-[15px] font-semibold text-[#5a5a6a]">Search for your dream job</p>
-            <p className="text-[12px] text-[#3a3a4a] mt-1">Supports US, India, UK, Canada and more</p>
+            <p className="text-[15px] font-semibold text-[var(--text-muted)]">Search for your dream job</p>
+            <p className="text-[12px] text-[var(--text-faint)] mt-1">Supports US, India, UK, Canada and more</p>
           </motion.div>
         ) : viewMode === 'list' ? (
           <motion.div variants={staggerContainer} initial="hidden" animate="show" className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-[13px] font-semibold text-[#5a5a6a]">{jobs.length} jobs found</span>
+              <span className="text-[13px] font-semibold text-[var(--text-muted)]">{jobs.length} jobs found</span>
             </div>
             {jobs.map((job, i) => (
               <motion.div key={job.id} variants={fadeInUp}>
@@ -506,8 +529,8 @@ export default function JobsPage() {
                           {job.company[0]}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <a href={job.url} target="_blank" rel="noopener noreferrer" className="text-[15px] font-bold text-white hover:text-[#fd79a8] transition-colors">{job.title}</a>
-                          <div className="text-[13px] text-[#6a6a7a] mt-0.5">{job.company} · {job.location}</div>
+                          <a href={job.url} target="_blank" rel="noopener noreferrer" className="text-[15px] font-bold text-[var(--text)] hover:text-[#fd79a8] transition-colors">{job.title}</a>
+                          <div className="text-[13px] text-[var(--text-secondary)] mt-0.5">{job.company} · {job.location}</div>
                           {formatSalary(job) && (
                             <div className="text-[13px] font-semibold text-[#00b894] mt-1">{formatSalary(job)}</div>
                           )}
@@ -519,7 +542,7 @@ export default function JobsPage() {
                             )}
                             <span className="text-[11px] font-bold px-2.5 py-1 rounded-lg" style={{ background: 'rgba(116,185,255,0.08)', color: '#74b9ff' }}>{job.source}</span>
                             {job.posted_at && (
-                              <span className="text-[11px] text-[#5a5a6a]">{formatPosted(job.posted_at)}</span>
+                              <span className="text-[11px] text-[var(--text-muted)]">{formatPosted(job.posted_at)}</span>
                             )}
                           </div>
                         </div>
@@ -536,8 +559,9 @@ export default function JobsPage() {
                           variant={appliedJobs.has(job.id) ? 'secondary' : 'primary'}
                           size="sm"
                           onClick={() => applyJob(job)}
-                          disabled={appliedJobs.has(job.id)}>
-                          {appliedJobs.has(job.id) ? '✓ Applied' : 'Apply Now'}
+                          disabled={appliedJobs.has(job.id) || applyingJobId === job.id}
+                          loading={applyingJobId === job.id}>
+                          {appliedJobs.has(job.id) ? '✓ Applied' : applyingJobId === job.id ? (godModeEnabled ? '⚡ God Mode...' : 'Applying...') : (godModeEnabled ? '⚡ Apply' : 'Apply Now')}
                         </PremiumButton>
                       </div>
                     </div>

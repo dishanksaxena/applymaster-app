@@ -65,6 +65,11 @@ export default function AutoApplyPage() {
   const [testingAuto, setTestingAuto] = useState(false)
   const [testResult, setTestResult] = useState<string | null>(null)
   const [isInitialized, setIsInitialized] = useState(false)
+  // God Mode
+  const [godModeEnabled, setGodModeEnabled] = useState(false)
+  const [godModeTailorResume, setGodModeTailorResume] = useState(true)
+  const [godModeCoverLetter, setGodModeCoverLetter] = useState(true)
+  const [godModeScoreThreshold, setGodModeScoreThreshold] = useState<'A' | 'B' | 'C'>('B')
   const supabaseRef = useRef<any>(null)
 
   useEffect(() => {
@@ -88,6 +93,10 @@ export default function AutoApplyPage() {
         setMode(data.auto_apply_mode || 'off')
         setDailyLimit(data.daily_apply_limit || 10)
         setMatchThreshold(data.match_threshold || 80)
+        setGodModeEnabled(data.god_mode_enabled || false)
+        setGodModeTailorResume(data.god_mode_tailor_resume ?? true)
+        setGodModeCoverLetter(data.god_mode_cover_letter ?? true)
+        setGodModeScoreThreshold(data.god_mode_score_threshold || 'B')
       }
 
       // Load activity logs
@@ -151,6 +160,10 @@ export default function AutoApplyPage() {
           auto_apply_mode: mode,
           daily_apply_limit: dailyLimit,
           match_threshold: matchThreshold,
+          god_mode_enabled: godModeEnabled,
+          god_mode_tailor_resume: godModeTailorResume,
+          god_mode_cover_letter: godModeCoverLetter,
+          god_mode_score_threshold: godModeScoreThreshold,
           updated_at: new Date().toISOString()
         },
         { onConflict: 'user_id' }
@@ -252,7 +265,7 @@ export default function AutoApplyPage() {
             </div>
             <div>
               <h1 className="text-2xl lg:text-3xl font-black tracking-tight">Auto-Apply Engine</h1>
-              <p className="text-[14px] text-[#8a8a9a] mt-1">Let AI handle applications while you prepare for interviews</p>
+              <p className="text-[14px] text-[var(--text-secondary)] mt-1">Let AI handle applications while you prepare for interviews</p>
             </div>
           </div>
           {mode !== 'off' && (
@@ -277,11 +290,11 @@ export default function AutoApplyPage() {
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f0b429" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
               </div>
               <div>
-                <div className="text-[14px] font-bold text-white">Review Queue</div>
-                <div className="text-[11px] text-[#8a8a9a]">{queuedApps.length} application{queuedApps.length !== 1 ? 's' : ''} waiting for your approval</div>
+                <div className="text-[14px] font-bold text-[var(--text)]">Review Queue</div>
+                <div className="text-[11px] text-[var(--text-secondary)]">{queuedApps.length} application{queuedApps.length !== 1 ? 's' : ''} waiting for your approval</div>
               </div>
             </div>
-            <button onClick={refreshApplications} className="text-[11px] text-[#5a5a6a] hover:text-[#8a8a9a] transition-colors px-3 py-1.5 rounded-lg" style={{ border: '1px solid rgba(255,255,255,0.06)' }}>
+            <button onClick={refreshApplications} className="text-[11px] text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors px-3 py-1.5 rounded-lg" style={{ border: '1px solid var(--border)' }}>
               ↻ Refresh
             </button>
           </div>
@@ -297,8 +310,8 @@ export default function AutoApplyPage() {
 
                 {/* Job info */}
                 <div className="flex-1 min-w-0">
-                  <div className="text-[13px] font-bold text-white truncate">{app.job?.title || 'Job Title'}</div>
-                  <div className="text-[11px] text-[#6a6a7a] truncate">
+                  <div className="text-[13px] font-bold text-[var(--text)] truncate">{app.job?.title || 'Job Title'}</div>
+                  <div className="text-[11px] text-[var(--text-secondary)] truncate">
                     {app.job?.company || 'Company'}
                     {app.job?.location ? ` · ${app.job.location}` : ''}
                     {app.job?.remote_type ? ` · ${app.job.remote_type}` : ''}
@@ -309,7 +322,7 @@ export default function AutoApplyPage() {
                 {app.match_score != null && (
                   <div className="flex-shrink-0 text-center hidden sm:block">
                     <div className="text-[16px] font-black" style={{ color: app.match_score >= 75 ? '#00b894' : app.match_score >= 60 ? '#f0b429' : '#ff7675' }}>{app.match_score}%</div>
-                    <div className="text-[9px] text-[#5a5a6a] uppercase tracking-wider">match</div>
+                    <div className="text-[9px] text-[var(--text-muted)] uppercase tracking-wider">match</div>
                   </div>
                 )}
 
@@ -352,7 +365,7 @@ export default function AutoApplyPage() {
 
           {/* Footer */}
           <div className="px-6 py-3 border-t border-[rgba(240,180,41,0.08)] flex items-center justify-between">
-            <span className="text-[11px] text-[#5a5a6a]">Approving marks the application as sent and moves it to Applied.</span>
+            <span className="text-[11px] text-[var(--text-muted)]">Approving marks the application as sent and moves it to Applied.</span>
             <div className="flex gap-2">
               <button
                 onClick={async () => { for (const app of queuedApps) await approveApp(app.id) }}
@@ -378,51 +391,51 @@ export default function AutoApplyPage() {
         <div className="space-y-6">
 
           {/* Mode Selection */}
-          <motion.div variants={fadeUp} className="p-6 rounded-2xl" style={{ background: 'linear-gradient(135deg, #1c1c2e 0%, #16162a 100%)', border: '1px solid rgba(255,255,255,0.1)' }}>
+          <motion.div variants={fadeUp} className="p-6 rounded-2xl" style={{ background: 'linear-gradient(135deg, var(--bg-card-gradient-start), var(--bg-card-gradient-end))', border: '1px solid var(--border)' }}>
             <h3 className="text-[16px] font-bold mb-4">Operating Mode</h3>
             <div className="grid sm:grid-cols-3 gap-3">
               {modes.map(m => (
                 <motion.button key={m.id} whileHover={{ y: -3, scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => setMode(m.id)}
                   className="p-5 rounded-xl text-left transition-all duration-300"
-                  style={mode === m.id ? { background: `${m.color}10`, border: `1px solid ${m.color}30`, boxShadow: `0 0 20px ${m.color}08` } : { background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                  style={mode === m.id ? { background: `${m.color}10`, border: `1px solid ${m.color}30`, boxShadow: `0 0 20px ${m.color}08` } : { background: 'var(--bg-overlay)', border: '1px solid var(--border)' }}>
                   <div className="flex items-center justify-between mb-3">
                     <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${m.color}15`, color: m.color }}>{m.icon}</div>
                     {mode === m.id && <div className="w-3 h-3 rounded-full" style={{ background: m.color, boxShadow: `0 0 8px ${m.color}` }} />}
                   </div>
-                  <div className="text-[14px] font-bold" style={{ color: mode === m.id ? 'white' : '#6a6a7a' }}>{m.label}</div>
-                  <div className="text-[11px] mt-1" style={{ color: mode === m.id ? '#8a8a9a' : '#4a4a5a' }}>{m.desc}</div>
+                  <div className="text-[14px] font-bold" style={{ color: mode === m.id ? 'var(--text)' : 'var(--text-secondary)' }}>{m.label}</div>
+                  <div className="text-[11px] mt-1" style={{ color: mode === m.id ? 'var(--text-secondary)' : 'var(--text-faint)' }}>{m.desc}</div>
                 </motion.button>
               ))}
             </div>
           </motion.div>
 
           {/* Settings */}
-          <motion.div variants={fadeUp} className="p-6 rounded-2xl" style={{ background: 'linear-gradient(135deg, #1c1c2e 0%, #16162a 100%)', border: '1px solid rgba(255,255,255,0.1)' }}>
+          <motion.div variants={fadeUp} className="p-6 rounded-2xl" style={{ background: 'linear-gradient(135deg, var(--bg-card-gradient-start), var(--bg-card-gradient-end))', border: '1px solid var(--border)' }}>
             <h3 className="text-[16px] font-bold mb-6">Settings</h3>
             <div className="space-y-8">
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <label className="text-[13px] font-semibold text-[#8a8a9a]">Daily Apply Limit</label>
+                  <label className="text-[13px] font-semibold text-[var(--text-secondary)]">Daily Apply Limit</label>
                   <span className="text-[14px] font-black text-[#fd79a8]">{dailyLimit}/day</span>
                 </div>
                 <input type="range" min="5" max="50" value={dailyLimit} onChange={e => setDailyLimit(parseInt(e.target.value))}
                   className="w-full h-1.5 rounded-full appearance-none cursor-pointer" style={{ background: `linear-gradient(to right, #fd79a8 0%, #fd79a8 ${((dailyLimit - 5) / 45) * 100}%, rgba(255,255,255,0.1) ${((dailyLimit - 5) / 45) * 100}%, rgba(255,255,255,0.1) 100%)` }} />
-                <div className="flex justify-between mt-2 text-[10px] text-[#3a3a4a]"><span>5</span><span>50</span></div>
+                <div className="flex justify-between mt-2 text-[10px] text-[var(--text-faint)]"><span>5</span><span>50</span></div>
               </div>
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <label className="text-[13px] font-semibold text-[#8a8a9a]">Match Threshold</label>
+                  <label className="text-[13px] font-semibold text-[var(--text-secondary)]">Match Threshold</label>
                   <span className="text-[14px] font-black text-[#00b894]">{matchThreshold}%</span>
                 </div>
                 <input type="range" min="50" max="100" value={matchThreshold} onChange={e => setMatchThreshold(parseInt(e.target.value))}
                   className="w-full h-1.5 rounded-full appearance-none cursor-pointer" style={{ background: `linear-gradient(to right, #00b894 0%, #00b894 ${((matchThreshold - 50) / 50) * 100}%, rgba(255,255,255,0.1) ${((matchThreshold - 50) / 50) * 100}%, rgba(255,255,255,0.1) 100%)` }} />
-                <div className="flex justify-between mt-2 text-[10px] text-[#3a3a4a]"><span>50%</span><span>100%</span></div>
+                <div className="flex justify-between mt-2 text-[10px] text-[var(--text-faint)]"><span>50%</span><span>100%</span></div>
               </div>
             </div>
           </motion.div>
 
           {/* Sources */}
-          <motion.div variants={fadeUp} className="p-6 rounded-2xl" style={{ background: 'linear-gradient(135deg, #1c1c2e 0%, #16162a 100%)', border: '1px solid rgba(255,255,255,0.1)' }}>
+          <motion.div variants={fadeUp} className="p-6 rounded-2xl" style={{ background: 'linear-gradient(135deg, var(--bg-card-gradient-start), var(--bg-card-gradient-end))', border: '1px solid var(--border)' }}>
             <h3 className="text-[16px] font-bold mb-4">Job Sources</h3>
             <div className="grid grid-cols-3 gap-3">
               {sources.map(source => {
@@ -431,10 +444,10 @@ export default function AutoApplyPage() {
                   <motion.button key={source.name} whileTap={{ scale: 0.95 }}
                     onClick={() => setActiveSources(active ? activeSources.filter(s => s !== source.name) : [...activeSources, source.name])}
                     className="p-4 rounded-xl text-center transition-all duration-300"
-                    style={active ? { background: `${source.color}10`, border: `1px solid ${source.color}30` } : { background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                    style={active ? { background: `${source.color}10`, border: `1px solid ${source.color}30` } : { background: 'var(--bg-overlay)', border: '1px solid var(--border)' }}>
                     <div className="w-8 h-8 rounded-lg flex items-center justify-center mx-auto mb-2 text-[11px] font-black"
-                      style={{ background: active ? `${source.color}20` : 'rgba(255,255,255,0.04)', color: active ? source.color : '#5a5a6a' }}>{source.icon}</div>
-                    <div className="text-[12px] font-bold" style={{ color: active ? 'white' : '#5a5a6a' }}>{source.name}</div>
+                      style={{ background: active ? `${source.color}20` : 'var(--bg-overlay)', color: active ? source.color : 'var(--text-muted)' }}>{source.icon}</div>
+                    <div className="text-[12px] font-bold" style={{ color: active ? 'var(--text)' : 'var(--text-muted)' }}>{source.name}</div>
                   </motion.button>
                 )
               })}
@@ -472,7 +485,7 @@ export default function AutoApplyPage() {
               </motion.button>
             )}
             {mode !== 'off' && !saved && (
-              <p className="text-center text-[11px] text-[#5a5a6a]">Select your mode above, configure settings, then click Activate</p>
+              <p className="text-center text-[11px] text-[var(--text-muted)]">Select your mode above, configure settings, then click Activate</p>
             )}
 
             {/* Test Auto-Apply Button - Always Available */}
@@ -505,9 +518,9 @@ export default function AutoApplyPage() {
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#74b9ff" strokeWidth="2" className="shrink-0 mt-0.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
               <div>
                 <div className="text-[13px] font-bold text-[#74b9ff] mb-1">How Auto-Apply Works</div>
-                <div className="text-[12px] text-[#5a5a6a] leading-relaxed space-y-1">
-                  <p>• <strong className="text-[#8a8a9a]">Copilot:</strong> AI finds matching jobs and queues them for your review — you approve before each send.</p>
-                  <p>• <strong className="text-[#8a8a9a]">Autopilot:</strong> AI applies automatically to jobs above your match threshold (Elite plan feature).</p>
+                <div className="text-[12px] text-[var(--text-muted)] leading-relaxed space-y-1">
+                  <p>• <strong className="text-[var(--text-secondary)]">Copilot:</strong> AI finds matching jobs and queues them for your review — you approve before each send.</p>
+                  <p>• <strong className="text-[var(--text-secondary)]">Autopilot:</strong> AI applies automatically to jobs above your match threshold (Elite plan feature).</p>
                   <p>• Activity logs will appear here once applications start processing.</p>
                 </div>
               </div>
@@ -521,6 +534,116 @@ export default function AutoApplyPage() {
         </motion.div>
       </div>
 
+      {/* ── God Mode Panel ───────────────────────────────────────────── */}
+      <motion.div variants={fadeUp} className="rounded-2xl overflow-hidden" style={{
+        border: godModeEnabled ? '1px solid rgba(232,67,147,0.25)' : '1px solid var(--border)',
+        background: godModeEnabled
+          ? 'linear-gradient(135deg, rgba(232,67,147,0.06) 0%, rgba(108,92,231,0.04) 100%)'
+          : 'var(--bg-card)',
+      }}>
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-5 border-b" style={{ borderColor: godModeEnabled ? 'rgba(232,67,147,0.12)' : 'var(--border)' }}>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: godModeEnabled ? 'rgba(232,67,147,0.15)' : 'var(--bg-overlay)' }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={godModeEnabled ? '#e84393' : 'var(--text-muted)'} strokeWidth="2">
+                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+              </svg>
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[15px] font-black" style={{ color: 'var(--text)' }}>God Mode</span>
+                {godModeEnabled && (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full text-white" style={{ background: 'linear-gradient(135deg, #e84393, #6c5ce7)' }}>ACTIVE</span>
+                )}
+              </div>
+              <p className="text-[12px]" style={{ color: 'var(--text-muted)' }}>
+                AI tailors your resume + writes cover letter for every job before submitting
+              </p>
+            </div>
+          </div>
+          {/* Toggle */}
+          <button
+            onClick={() => setGodModeEnabled(v => !v)}
+            className="relative w-12 h-6 rounded-full transition-all duration-300 flex-shrink-0"
+            style={{ background: godModeEnabled ? 'linear-gradient(135deg, #e84393, #d63384)' : 'var(--bg-overlay)', border: '1px solid var(--border)' }}
+          >
+            <span
+              className="absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all duration-300"
+              style={{ left: godModeEnabled ? '26px' : '2px' }}
+            />
+          </button>
+        </div>
+
+        {/* God Mode options */}
+        {godModeEnabled && (
+          <div className="p-6 space-y-5">
+            {/* What God Mode does */}
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                { icon: '📄', title: 'Resume Tailoring', desc: 'ATS keywords injected per job', active: godModeTailorResume, toggle: () => setGodModeTailorResume(v => !v) },
+                { icon: '✉️', title: 'Cover Letter', desc: 'Personalized letter per job', active: godModeCoverLetter, toggle: () => setGodModeCoverLetter(v => !v) },
+                { icon: '🎯', title: 'ATS Submission', desc: 'Direct API: Greenhouse, Lever, Ashby', active: true, toggle: () => {} },
+              ].map((item, i) => (
+                <div key={i}
+                  onClick={item.toggle}
+                  className={`rounded-xl p-4 transition-all duration-200 ${i < 2 ? 'cursor-pointer' : 'cursor-default'}`}
+                  style={{
+                    background: item.active ? 'rgba(232,67,147,0.06)' : 'var(--bg-overlay)',
+                    border: `1px solid ${item.active ? 'rgba(232,67,147,0.2)' : 'var(--border)'}`,
+                  }}
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <span className="text-lg">{item.icon}</span>
+                    {i < 2 && (
+                      <div className="w-4 h-4 rounded-full border-2 flex items-center justify-center" style={{ borderColor: item.active ? '#e84393' : 'var(--border)' }}>
+                        {item.active && <div className="w-2 h-2 rounded-full bg-[#e84393]" />}
+                      </div>
+                    )}
+                    {i === 2 && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded text-[#00b894]" style={{ background: 'rgba(0,184,148,0.1)' }}>Always on</span>}
+                  </div>
+                  <div className="text-[12px] font-bold" style={{ color: item.active ? 'var(--text)' : 'var(--text-muted)' }}>{item.title}</div>
+                  <div className="text-[11px] mt-0.5" style={{ color: 'var(--text-faint)' }}>{item.desc}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Score threshold */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <span className="text-[13px] font-bold" style={{ color: 'var(--text)' }}>Minimum Score to Auto-Apply</span>
+                  <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>Only apply to jobs scoring at or above this grade</p>
+                </div>
+                <span className="text-[20px] font-black" style={{ color: '#e84393' }}>{godModeScoreThreshold}</span>
+              </div>
+              <div className="flex gap-2">
+                {(['A', 'B', 'C'] as const).map(grade => (
+                  <button
+                    key={grade}
+                    onClick={() => setGodModeScoreThreshold(grade)}
+                    className="flex-1 py-2.5 rounded-xl text-[13px] font-bold transition-all duration-200"
+                    style={godModeScoreThreshold === grade
+                      ? { background: 'linear-gradient(135deg, #e84393, #d63384)', color: '#fff', boxShadow: '0 4px 14px rgba(232,67,147,0.25)' }
+                      : { background: 'var(--bg-overlay)', color: 'var(--text-muted)', border: '1px solid var(--border)' }}
+                  >
+                    {grade === 'A' ? 'A (85%+) — Elite only' : grade === 'B' ? 'B (70%+) — Recommended' : 'C (55%+) — Wider net'}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Supported portals */}
+            <div className="flex items-center gap-3 p-3 rounded-xl" style={{ background: 'var(--bg-overlay)', border: '1px solid var(--border)' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+              <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
+                <span className="font-semibold" style={{ color: 'var(--text-secondary)' }}>Supported ATS portals:</span> Greenhouse · Lever · Ashby — covers thousands of tech companies.
+                For LinkedIn/Indeed, Chrome Extension coming soon.
+              </p>
+            </div>
+          </div>
+        )}
+      </motion.div>
+
       {/* Analytics Cards - Today, This Week, This Month */}
       {applications.length > 0 && (
         <motion.div variants={fadeUp} className="grid sm:grid-cols-3 gap-4">
@@ -531,19 +654,19 @@ export default function AutoApplyPage() {
           ].map((stat, i) => (
             <div
               key={stat.period}
-              className="rounded-2xl border border-[rgba(255,255,255,0.06)] bg-[#0d0d15] p-6"
+              className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-6"
               style={{ animation: `floatUp 0.5s ease ${i * 0.1}s both` }}
             >
-              <div className="text-[12px] font-bold uppercase tracking-wider text-[#5a5a6a] mb-3">{stat.period}</div>
+              <div className="text-[12px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-3">{stat.period}</div>
               <div className="space-y-4">
                 <div>
-                  <div className="text-[13px] text-[#8a8a9a] mb-1">Applications</div>
-                  <div className="text-3xl font-black text-white">
+                  <div className="text-[13px] text-[var(--text-secondary)] mb-1">Applications</div>
+                  <div className="text-3xl font-black text-[var(--text)]">
                     <AnimatedNumber value={stat.apps} delay={i * 150} />
                   </div>
                 </div>
                 <div>
-                  <div className="text-[13px] text-[#8a8a9a] mb-1">Success Rate</div>
+                  <div className="text-[13px] text-[var(--text-secondary)] mb-1">Success Rate</div>
                   <div className="text-3xl font-black" style={{ color: stat.color }}>
                     <AnimatedNumber value={stat.rate} delay={i * 150 + 100} />%
                   </div>
