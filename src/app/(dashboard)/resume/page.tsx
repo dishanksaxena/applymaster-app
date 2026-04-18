@@ -153,7 +153,7 @@ function ATSScoreRing({ score, size = 120, strokeWidth = 8 }: { score: number; s
         >
           {score}
         </span>
-        <span className="text-[10px] font-semibold text-[#5a5a6a] tracking-wider uppercase">ATS</span>
+        <span className="text-[10px] font-semibold text-[var(--text-muted)] tracking-wider uppercase">ATS</span>
       </div>
     </div>
   )
@@ -166,8 +166,8 @@ function FileTypeBadge({ type, active }: { type: string; active?: boolean }) {
       className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all duration-300"
       style={{
         background: active ? 'rgba(253,121,168,0.12)' : 'rgba(255,255,255,0.03)',
-        border: `1px solid ${active ? 'rgba(253,121,168,0.25)' : 'rgba(255,255,255,0.06)'}`,
-        color: active ? '#fd79a8' : '#5a5a6a',
+        border: `1px solid ${active ? 'rgba(253,121,168,0.25)' : 'var(--border)'}`,
+        color: active ? '#fd79a8' : 'var(--text-muted)',
       }}
     >
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -193,6 +193,8 @@ export default function ResumePage() {
   const [isDragOver, setIsDragOver] = useState(false)
   const [copiedTailored, setCopiedTailored] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
+  const [reparsing, setReparsing] = useState(false)
+  const [reparseMsg, setReparseMsg] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
   const supabase = createClient()
   const router = useRouter()
@@ -300,6 +302,24 @@ export default function ResumePage() {
     }
   }
 
+  const reparseResume = async () => {
+    setReparsing(true)
+    setReparseMsg(null)
+    try {
+      const res = await fetch('/api/resume/reparse', { method: 'POST' })
+      const data = await res.json()
+      if (res.ok) {
+        setReparseMsg(`Parsed successfully — ${data.skills_count} skills, ${data.experience_count} roles found. God Mode is ready!`)
+        await loadResumes()
+      } else {
+        setReparseMsg(data.error || 'Re-parse failed. Try re-uploading your resume.')
+      }
+    } catch {
+      setReparseMsg('Network error. Please try again.')
+    }
+    setReparsing(false)
+  }
+
   const optimizeResume = async () => {
     if (!selectedResume || !jobTitle) return
     setOptimizing(true)
@@ -349,11 +369,11 @@ export default function ResumePage() {
       <style dangerouslySetInnerHTML={{ __html: pageStyles }} />
       {deleteConfirm && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50" onClick={() => setDeleteConfirm(null)}>
-          <div className="bg-[#12121a] border border-[rgba(255,107,107,0.2)] rounded-2xl p-6 max-w-sm w-full mx-4" onClick={e => e.stopPropagation()}>
-            <h3 className="text-lg font-bold text-white mb-2">Delete Resume?</h3>
-            <p className="text-[#8a8a9a] text-sm mb-6">This action cannot be undone.</p>
+          <div className="bg-[var(--bg-card)] border border-[rgba(255,107,107,0.2)] rounded-2xl p-6 max-w-sm w-full mx-4" onClick={e => e.stopPropagation()}>
+            <h3 className="text-lg font-bold text-[var(--text)] mb-2">Delete Resume?</h3>
+            <p className="text-[var(--text-secondary)] text-sm mb-6">This action cannot be undone.</p>
             <div className="flex gap-3">
-              <button onClick={() => setDeleteConfirm(null)} className="flex-1 px-4 py-2.5 rounded-xl border border-[rgba(255,255,255,0.1)] text-white font-semibold hover:bg-white/5 transition-colors">Cancel</button>
+              <button onClick={() => setDeleteConfirm(null)} className="flex-1 px-4 py-2.5 rounded-xl border border-[var(--border)] text-[var(--text)] font-semibold hover:bg-white/5 transition-colors">Cancel</button>
               <button onClick={() => deleteResume(deleteConfirm)} className="flex-1 px-4 py-2.5 rounded-xl bg-[#ff6b6b] text-white font-semibold hover:bg-[#ff5252] transition-colors">Delete</button>
             </div>
           </div>
@@ -376,7 +396,7 @@ export default function ResumePage() {
               AI-POWERED
             </span>
           </div>
-          <p className="text-[14px] text-[#6a6a7a]">
+          <p className="text-[14px] text-[var(--text-secondary)]">
             Upload, analyze, and optimize your resume for ATS compatibility and job-specific tailoring.
           </p>
         </div>
@@ -390,7 +410,7 @@ export default function ResumePage() {
               className="rounded-2xl overflow-hidden"
               style={{
                 background: 'linear-gradient(135deg, rgba(18,18,26,0.95), rgba(14,14,22,0.98))',
-                border: '1px solid rgba(255,255,255,0.06)',
+                border: '1px solid var(--border)',
               }}
             >
               <div className="px-6 pt-6 pb-2 flex items-center justify-between">
@@ -402,7 +422,7 @@ export default function ResumePage() {
                   Your Resumes
                 </h3>
                 {resumes.length > 0 && (
-                  <span className="text-[11px] font-semibold text-[#4a4a5a] bg-[rgba(255,255,255,0.03)] px-2 py-0.5 rounded-md">
+                  <span className="text-[11px] font-semibold text-[var(--text-faint)] bg-[var(--bg-overlay)] px-2 py-0.5 rounded-md">
                     {resumes.length} file{resumes.length !== 1 ? 's' : ''}
                   </span>
                 )}
@@ -449,12 +469,12 @@ export default function ResumePage() {
                     <div className="text-[14px] font-semibold text-white/90 mb-1">
                       {isDragOver ? 'Drop your resume here' : 'Drag & drop your resume'}
                     </div>
-                    <div className="text-[12px] text-[#5a5a6a] mb-4">or click to browse files</div>
+                    <div className="text-[12px] text-[var(--text-muted)] mb-4">or click to browse files</div>
                     <div className="flex items-center gap-2">
                       <FileTypeBadge type=".pdf" active={isDragOver} />
                       <FileTypeBadge type=".docx" active={isDragOver} />
                     </div>
-                    <div className="text-[10px] text-[#3a3a4a] mt-3">Maximum file size: 5MB</div>
+                    <div className="text-[10px] text-[var(--text-faint)] mt-3">Maximum file size: 5MB</div>
                   </div>
                 </div>
 
@@ -462,7 +482,7 @@ export default function ResumePage() {
                 {loading && (
                   <div className="mt-4" style={{ animation: 'card-fade-in 0.3s ease' }}>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-[12px] font-semibold text-[#8a8a9a]">Uploading...</span>
+                      <span className="text-[12px] font-semibold text-[var(--text-secondary)]">Uploading...</span>
                       <span className="text-[11px] font-bold text-[#fd79a8]">{Math.round(uploadProgress)}%</span>
                     </div>
                     <div className="h-1.5 rounded-full bg-[rgba(255,255,255,0.04)] overflow-hidden">
@@ -482,6 +502,7 @@ export default function ResumePage() {
 
                 {/* Resume Cards */}
                 {resumes.length > 0 && (
+                  <>
                   <div className="mt-5 space-y-3">
                     {resumes.map((r, idx) => (
                       <div
@@ -494,7 +515,7 @@ export default function ResumePage() {
                           background: selectedResume?.id === r.id
                             ? 'linear-gradient(135deg, rgba(253,121,168,0.06), rgba(232,67,147,0.03))'
                             : 'rgba(255,255,255,0.015)',
-                          border: `1px solid ${selectedResume?.id === r.id ? 'rgba(253,121,168,0.2)' : 'rgba(255,255,255,0.04)'}`,
+                          border: `1px solid ${selectedResume?.id === r.id ? 'rgba(253,121,168,0.2)' : 'var(--border)'}`,
                           boxShadow: selectedResume?.id === r.id ? '0 4px 24px rgba(253,121,168,0.08)' : 'none',
                           transform: 'translateY(0)',
                         }}
@@ -502,14 +523,14 @@ export default function ResumePage() {
                           if (selectedResume?.id !== r.id) {
                             e.currentTarget.style.transform = 'translateY(-2px)'
                             e.currentTarget.style.boxShadow = '0 8px 30px rgba(0,0,0,0.3)'
-                            e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'
+                            e.currentTarget.style.borderColor = 'var(--border)'
                           }
                         }}
                         onMouseLeave={e => {
                           e.currentTarget.style.transform = 'translateY(0)'
                           if (selectedResume?.id !== r.id) {
                             e.currentTarget.style.boxShadow = 'none'
-                            e.currentTarget.style.borderColor = 'rgba(255,255,255,0.04)'
+                            e.currentTarget.style.borderColor = 'var(--border)'
                           }
                         }}
                       >
@@ -526,7 +547,7 @@ export default function ResumePage() {
                                   border: '2px solid rgba(255,255,255,0.06)',
                                 }}
                               >
-                                <span className="text-[10px] font-bold text-[#3a3a4a]">N/A</span>
+                                <span className="text-[10px] font-bold text-[var(--text-faint)]">N/A</span>
                               </div>
                             )}
                           </div>
@@ -550,17 +571,17 @@ export default function ResumePage() {
                                 </span>
                               )}
                             </div>
-                            <div className="flex items-center gap-3 text-[11px] text-[#5a5a6a]">
+                            <div className="flex items-center gap-3 text-[11px] text-[var(--text-muted)]">
                               <span>{formatDate(r.created_at)}</span>
                               {r.file_size && (
                                 <>
-                                  <span className="w-0.5 h-0.5 rounded-full bg-[#3a3a4a]" />
+                                  <span className="w-0.5 h-0.5 rounded-full bg-[var(--text-faint)]" />
                                   <span>{formatFileSize(r.file_size)}</span>
                                 </>
                               )}
                               {r.ats_score && (
                                 <>
-                                  <span className="w-0.5 h-0.5 rounded-full bg-[#3a3a4a]" />
+                                  <span className="w-0.5 h-0.5 rounded-full bg-[var(--text-faint)]" />
                                   <span>Score: {r.ats_score}/100</span>
                                 </>
                               )}
@@ -569,10 +590,28 @@ export default function ResumePage() {
 
                           {/* Actions */}
                           <div className="flex items-center gap-1 opacity-0 group-hover/card:opacity-100 transition-opacity duration-200">
+                            {r.is_primary && (
+                              <button
+                                onClick={(e) => { e.stopPropagation(); reparseResume() }}
+                                disabled={reparsing}
+                                className="p-2 rounded-lg text-[var(--text-muted)] hover:text-[#6c5ce7] hover:bg-[rgba(108,92,231,0.08)] transition-all duration-200 disabled:opacity-50"
+                                title="Re-parse with AI (fix God Mode)"
+                              >
+                                {reparsing ? (
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin">
+                                    <path d="M21 12a9 9 0 11-6.219-8.56" />
+                                  </svg>
+                                ) : (
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <polyline points="23,4 23,10 17,10" /><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10" />
+                                  </svg>
+                                )}
+                              </button>
+                            )}
                             {!r.is_primary && (
                               <button
                                 onClick={(e) => { e.stopPropagation(); setPrimary(r.id) }}
-                                className="p-2 rounded-lg text-[#5a5a6a] hover:text-[#00b894] hover:bg-[rgba(0,184,148,0.08)] transition-all duration-200"
+                                className="p-2 rounded-lg text-[var(--text-muted)] hover:text-[#00b894] hover:bg-[rgba(0,184,148,0.08)] transition-all duration-200"
                                 title="Set as primary"
                               >
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -582,7 +621,7 @@ export default function ResumePage() {
                             )}
                             <button
                               onClick={(e) => { e.stopPropagation(); setDeleteConfirm(r.id) }}
-                              className="p-2 rounded-lg text-[#5a5a6a] hover:text-[#ff6b6b] hover:bg-[rgba(255,107,107,0.08)] transition-all duration-200"
+                              className="p-2 rounded-lg text-[var(--text-muted)] hover:text-[#ff6b6b] hover:bg-[rgba(255,107,107,0.08)] transition-all duration-200"
                               title="Delete"
                             >
                               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -594,6 +633,22 @@ export default function ResumePage() {
                       </div>
                     ))}
                   </div>
+
+                  {/* Re-parse message */}
+                  {reparseMsg && (
+                    <div
+                      className="mt-3 px-4 py-3 rounded-xl text-[13px] font-medium"
+                      style={{
+                        background: reparseMsg.includes('success') || reparseMsg.includes('ready')
+                          ? 'rgba(0,184,148,0.08)' : 'rgba(255,107,107,0.08)',
+                        border: `1px solid ${reparseMsg.includes('success') || reparseMsg.includes('ready') ? 'rgba(0,184,148,0.2)' : 'rgba(255,107,107,0.2)'}`,
+                        color: reparseMsg.includes('success') || reparseMsg.includes('ready') ? '#00b894' : '#ff6b6b',
+                      }}
+                    >
+                      {reparseMsg}
+                    </div>
+                  )}
+                  </>
                 )}
 
                 {/* Empty State */}
@@ -626,8 +681,8 @@ export default function ResumePage() {
                         </div>
                       </div>
                     </div>
-                    <p className="text-[13px] font-semibold text-[#6a6a7a] mb-1">No resumes yet</p>
-                    <p className="text-[11px] text-[#4a4a5a]">Upload your first resume to get started</p>
+                    <p className="text-[13px] font-semibold text-[var(--text-secondary)] mb-1">No resumes yet</p>
+                    <p className="text-[11px] text-[var(--text-faint)]">Upload your first resume to get started</p>
                   </div>
                 )}
               </div>
@@ -646,10 +701,10 @@ export default function ResumePage() {
                     { step: '2', label: 'Search Jobs', desc: 'Find matching jobs with AI-powered search across 50+ job boards', color: '#a29bfe', href: '/jobs' },
                     { step: '3', label: 'Generate Cover Letter', desc: 'Let AI write a personalized cover letter for each application', color: '#74b9ff', href: '/cover-letters' },
                   ].map(s => (
-                    <div key={s.step} className="p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                    <div key={s.step} className="p-3 rounded-xl" style={{ background: 'var(--bg-overlay)', border: '1px solid var(--border)' }}>
                       <div className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-black mb-2" style={{ background: `${s.color}18`, color: s.color }}>{s.step}</div>
-                      <div className="text-[12px] font-bold text-white mb-1">{s.label}</div>
-                      <div className="text-[11px] text-[#5a5a6a] leading-relaxed">{s.desc}</div>
+                      <div className="text-[12px] font-bold text-[var(--text)] mb-1">{s.label}</div>
+                      <div className="text-[11px] text-[var(--text-muted)] leading-relaxed">{s.desc}</div>
                       {s.href && (
                         <a href={s.href} className="inline-block mt-2 text-[11px] font-bold" style={{ color: s.color }}>Go →</a>
                       )}
@@ -665,7 +720,7 @@ export default function ResumePage() {
                 className="rounded-2xl overflow-hidden"
                 style={{
                   background: 'linear-gradient(135deg, rgba(18,18,26,0.95), rgba(14,14,22,0.98))',
-                  border: '1px solid rgba(255,255,255,0.06)',
+                  border: '1px solid var(--border)',
                   animation: 'card-fade-in 0.4s ease',
                 }}
               >
@@ -698,10 +753,10 @@ export default function ResumePage() {
                       onFocus={() => setJobTitleFocused(true)}
                       onBlur={() => setJobTitleFocused(false)}
                       placeholder=" "
-                      className="peer w-full px-4 pt-5 pb-2 rounded-xl text-[14px] text-white transition-all duration-300 focus:outline-none"
+                      className="peer w-full px-4 pt-5 pb-2 rounded-xl text-[14px] text-[var(--text)] transition-all duration-300 focus:outline-none"
                       style={{
-                        background: 'rgba(255,255,255,0.02)',
-                        border: `1px solid ${jobTitleFocused ? 'rgba(253,121,168,0.3)' : 'rgba(255,255,255,0.06)'}`,
+                        background: 'var(--bg-overlay)',
+                        border: `1px solid ${jobTitleFocused ? 'rgba(253,121,168,0.3)' : 'var(--border)'}`,
                         boxShadow: jobTitleFocused ? '0 0 20px rgba(253,121,168,0.06)' : 'none',
                       }}
                     />
@@ -710,7 +765,7 @@ export default function ResumePage() {
                       style={{
                         top: jobTitle || jobTitleFocused ? '6px' : '14px',
                         fontSize: jobTitle || jobTitleFocused ? '10px' : '14px',
-                        color: jobTitleFocused ? '#fd79a8' : '#5a5a6a',
+                        color: jobTitleFocused ? '#fd79a8' : 'var(--text-muted)',
                         fontWeight: jobTitle || jobTitleFocused ? 700 : 400,
                         letterSpacing: jobTitle || jobTitleFocused ? '0.05em' : 'normal',
                       }}
@@ -809,8 +864,8 @@ export default function ResumePage() {
                   }}
                 >
                   <ATSScoreRing score={optimization.ats_score} size={140} strokeWidth={10} />
-                  <div className="mt-3 text-[13px] font-semibold text-[#6a6a7a]">ATS Compatibility Score</div>
-                  <div className="mt-1 text-[11px] text-[#4a4a5a]">
+                  <div className="mt-3 text-[13px] font-semibold text-[var(--text-secondary)]">ATS Compatibility Score</div>
+                  <div className="mt-1 text-[11px] text-[var(--text-faint)]">
                     {optimization.ats_score >= 85 ? 'Excellent - Your resume is well optimized' :
                      optimization.ats_score >= 70 ? 'Good - Minor improvements recommended' :
                      'Needs work - Several improvements suggested'}
@@ -830,7 +885,7 @@ export default function ResumePage() {
                       <path d="M22 11.08V12a10 10 0 11-5.93-9.14" /><polyline points="22,4 12,14.01 9,11.01" />
                     </svg>
                     Strengths
-                    <span className="ml-auto text-[10px] font-semibold text-[#3a3a4a] bg-[rgba(0,184,148,0.06)] px-2 py-0.5 rounded-md">{(optimization.strengths ?? []).length} found</span>
+                    <span className="ml-auto text-[10px] font-semibold text-[var(--text-faint)] bg-[rgba(0,184,148,0.06)] px-2 py-0.5 rounded-md">{(optimization.strengths ?? []).length} found</span>
                   </h4>
                   <div className="space-y-2">
                     {(optimization.strengths ?? []).map((s, i) => (
@@ -867,7 +922,7 @@ export default function ResumePage() {
                       <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
                     </svg>
                     Improvements
-                    <span className="ml-auto text-[10px] font-semibold text-[#3a3a4a] bg-[rgba(253,203,110,0.06)] px-2 py-0.5 rounded-md">{(optimization.improvements ?? []).length} suggested</span>
+                    <span className="ml-auto text-[10px] font-semibold text-[var(--text-faint)] bg-[rgba(253,203,110,0.06)] px-2 py-0.5 rounded-md">{(optimization.improvements ?? []).length} suggested</span>
                   </h4>
                   <div className="space-y-2">
                     {(optimization.improvements ?? []).map((imp, i) => (
@@ -913,7 +968,7 @@ export default function ResumePage() {
                         <div className="w-2.5 h-2.5 rounded-full bg-[#febc2e]" />
                         <div className="w-2.5 h-2.5 rounded-full bg-[#28c840]" />
                       </div>
-                      <span className="text-[11px] font-semibold text-[#5a5a6a]">
+                      <span className="text-[11px] font-semibold text-[var(--text-muted)]">
                         Tailored Resume — {jobTitle}
                       </span>
                     </div>
@@ -925,7 +980,7 @@ export default function ResumePage() {
                         style={{
                           background: copiedTailored ? 'rgba(0,184,148,0.1)' : 'rgba(255,255,255,0.03)',
                           border: `1px solid ${copiedTailored ? 'rgba(0,184,148,0.2)' : 'rgba(255,255,255,0.06)'}`,
-                          color: copiedTailored ? '#00b894' : '#6a6a7a',
+                          color: copiedTailored ? '#00b894' : 'var(--text-secondary)',
                         }}
                       >
                         {copiedTailored ? (
@@ -1065,7 +1120,7 @@ export default function ResumePage() {
                             </span>
                           )}
                         </div>
-                        <span className="text-[11px] text-[#5a5a6a] leading-relaxed">{tip.desc}</span>
+                        <span className="text-[11px] text-[var(--text-muted)] leading-relaxed">{tip.desc}</span>
                       </div>
                     </div>
                   </div>
@@ -1087,10 +1142,10 @@ export default function ResumePage() {
                   borderBottom: '1px solid rgba(255,255,255,0.04)',
                 }}
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6a6a7a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="12" r="10" /><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3" /><line x1="12" y1="17" x2="12.01" y2="17" />
                 </svg>
-                <span className="text-[13px] font-bold text-[#8a8a9a]">Basics</span>
+                <span className="text-[13px] font-bold text-[var(--text-secondary)]">Basics</span>
               </div>
               <div className="p-4 space-y-1">
                 {[
@@ -1139,7 +1194,7 @@ export default function ResumePage() {
                       </div>
                       <div>
                         <span className="text-[12px] font-bold text-white/80 block mb-0.5">{tip.title}</span>
-                        <span className="text-[11px] text-[#5a5a6a] leading-relaxed">{tip.desc}</span>
+                        <span className="text-[11px] text-[var(--text-muted)] leading-relaxed">{tip.desc}</span>
                       </div>
                     </div>
                   </div>
@@ -1159,7 +1214,7 @@ export default function ResumePage() {
               >
                 <div className="text-[10px] font-bold text-[#fd79a8] tracking-wider mb-2">SELECTED FOR OPTIMIZATION</div>
                 <div className="text-[13px] font-semibold text-white/90 truncate">{selectedResume.name}</div>
-                <div className="text-[11px] text-[#5a5a6a] mt-1">
+                <div className="text-[11px] text-[var(--text-muted)] mt-1">
                   {selectedResume.ats_score ? `Current ATS Score: ${selectedResume.ats_score}/100` : 'Not yet analyzed'}
                 </div>
               </div>

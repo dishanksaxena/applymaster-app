@@ -217,11 +217,25 @@ export async function POST(req: NextRequest) {
 
     // Load candidate data
     const { data: userProfile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-    const { data: primaryResume } = await supabase.from('resumes').select('id').eq('user_id', user.id).eq('is_primary', true).single()
+    // Read parsed data from resumes.parsed_data (written by /api/resume/upload)
+    const { data: primaryResume } = await supabase
+      .from('resumes').select('id, parsed_data, name').eq('user_id', user.id).eq('is_primary', true).single()
+
     let resumeData: any = null
-    if (primaryResume) {
-      const { data } = await supabase.from('parsed_resumes').select('*').eq('resume_id', primaryResume.id).single()
-      resumeData = data
+    let rawResumeText = ''
+
+    if (primaryResume?.id) {
+      // Try parsed_resumes first (has raw_text for better portal submissions)
+      const { data: pr } = await supabase
+        .from('parsed_resumes').select('*').eq('resume_id', primaryResume.id).maybeSingle()
+      if (pr?.raw_text) {
+        rawResumeText = pr.raw_text
+        resumeData = pr
+      }
+      // Fall back to resumes.parsed_data (structured data without raw_text)
+      if (!resumeData && primaryResume.parsed_data) {
+        resumeData = primaryResume.parsed_data
+      }
     }
 
     const fullName = resumeData?.full_name || userProfile?.full_name || ''
@@ -230,10 +244,24 @@ export async function POST(req: NextRequest) {
     const lastName = nameParts.slice(1).join(' ') || ''
     const email = resumeData?.email || user.email || ''
     const phone = resumeData?.phone || ''
-    const resumeText = resumeData?.raw_text || ''
 
-    if (!resumeText) {
-      await log(supabase, user.id, 'error', '⚠️ No resume found. Upload your resume first for God Mode to tailor it.')
+    // Use raw_text if available; otherwise reconstruct from structured fields
+    const resumeText = rawResumeText || (resumeData ? [
+      resumeData.full_name,
+      [resumeData.email, resumeData.phone, resumeData.location].filter(Boolean).join(' | '),
+      resumeData.summary,
+      resumeData.skills?.length ? 'SKILLS\n' + resumeData.skills.join(', ') : '',
+      ...(resumeData.experience || []).map((e: any) =>
+        `${e.title || e.company} — ${e.company || ''} (${e.startDate || e.start_date || ''} – ${e.endDate || e.end_date || 'Present'})\n${e.description || ''}`),
+      ...(resumeData.education || []).map((e: any) =>
+        `${e.degree || ''} in ${e.field || ''}, ${e.school || e.institution || ''} (${e.endDate || e.end_date || ''})`),
+      resumeData.certifications?.length ? 'CERTIFICATIONS\n' + resumeData.certifications.join(', ') : '',
+    ].filter(Boolean).join('\n\n') : '')
+
+    if (!resumeData) {
+      await log(supabase, user.id, 'error', '⚠️ No resume found. Re-upload your resume in the Resume section so it can be parsed.')
+    } else if (!resumeText) {
+      await log(supabase, user.id, 'analyzing', `⚠️ Resume found (${primaryResume?.name || 'unknown'}) but no text could be extracted. Re-upload for best results.`)
     }
 
     const keywords: string[] = prefs.target_roles?.length ? prefs.target_roles : ['Software Engineer']
