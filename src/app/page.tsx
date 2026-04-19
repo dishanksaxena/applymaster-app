@@ -413,7 +413,7 @@ export default function Home() {
   }, [])
 
   return (
-    <div className="relative cursor-none md:cursor-none">
+    <div className="relative cursor-none md:cursor-none min-h-screen bg-[#0a0a0f] text-[#f0f0f5]">
       <MagneticCursor />
       <ParticleField />
       <GradientMesh />
