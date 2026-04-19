@@ -31,17 +31,29 @@ export async function POST(req: NextRequest) {
       return Response.json({ error: 'No primary resume found. Upload one first.' }, { status: 404 })
     }
 
-    // Fetch the PDF from storage
+    // Fetch the PDF from Supabase storage using admin client (bypasses auth/public access issues)
     if (!resume.file_url) {
       return Response.json({ error: 'Resume has no file URL. Re-upload your resume.' }, { status: 400 })
     }
 
-    const fileRes = await fetch(resume.file_url)
-    if (!fileRes.ok) {
-      return Response.json({ error: 'Could not fetch resume file from storage.' }, { status: 500 })
+    // Extract storage path from the URL: .../object/public/resumes/USER_ID/FILE.pdf → USER_ID/FILE.pdf
+    let storagePath: string
+    try {
+      const urlObj = new URL(resume.file_url)
+      const marker = '/object/public/resumes/'
+      const idx = urlObj.pathname.indexOf(marker)
+      if (idx === -1) throw new Error('Unrecognised URL format')
+      storagePath = decodeURIComponent(urlObj.pathname.slice(idx + marker.length))
+    } catch {
+      return Response.json({ error: 'Could not determine storage path from file URL. Re-upload your resume.' }, { status: 400 })
     }
 
-    const arrayBuffer = await fileRes.arrayBuffer()
+    const { data: fileBlob, error: dlError } = await adminSupabase.storage.from('resumes').download(storagePath)
+    if (dlError || !fileBlob) {
+      return Response.json({ error: `Could not download resume from storage: ${dlError?.message || 'file not found'}. Try re-uploading your resume.` }, { status: 500 })
+    }
+
+    const arrayBuffer = await fileBlob.arrayBuffer()
     const buffer = Buffer.from(arrayBuffer)
     const base64 = buffer.toString('base64')
 
