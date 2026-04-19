@@ -378,7 +378,42 @@ export default function NetworkPage() {
     if (!searchQuery.trim()) return
     setSearching(true); setShowResults(false)
     await new Promise(r => setTimeout(r, 2200))
-    setResults(SAMPLE_RESULTS); setShowResults(true); setSearching(false)
+
+    const q = searchQuery.toLowerCase()
+
+    // Known company aliases to detect in the query
+    const companyAliases: Record<string, string> = {
+      google: 'Google', alphabet: 'Google',
+      meta: 'Meta', facebook: 'Meta', instagram: 'Meta',
+      stripe: 'Stripe',
+      amazon: 'Amazon', aws: 'Amazon',
+      apple: 'Apple',
+      notion: 'Notion',
+      figma: 'Figma',
+      airbnb: 'Airbnb',
+      uber: 'Uber',
+      netflix: 'Netflix',
+    }
+
+    // Find which company (if any) the user is asking about
+    const targetCompany = Object.entries(companyAliases).find(([alias]) => q.includes(alias))?.[1] ?? null
+
+    // Filter sample results to match query intent
+    let filtered = SAMPLE_RESULTS.filter(p => {
+      if (targetCompany) return p.company === targetCompany
+      // No company specified — show all who canRefer or match keywords
+      return true
+    })
+
+    // If query mentions "refer" or specific role, boost canRefer contacts
+    if (q.includes('refer')) {
+      filtered = filtered.filter(p => p.canRefer)
+    }
+
+    // If nothing matched, fall back to showing the full list
+    if (!filtered.length) filtered = SAMPLE_RESULTS
+
+    setResults(filtered); setShowResults(true); setSearching(false)
   }
 
   const handleConnect = (id: string) => {
