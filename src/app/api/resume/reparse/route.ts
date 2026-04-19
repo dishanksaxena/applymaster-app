@@ -12,7 +12,6 @@ const adminSupabase = createAdminClient(
 
 const anthropic = new Anthropic()
 
-// Re-parse an existing resume from storage and populate parsed_resumes table
 export async function POST(req: NextRequest) {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -21,58 +20,43 @@ export async function POST(req: NextRequest) {
   try {
     // Get primary resume
     const { data: resume, error: resumeErr } = await supabase
-      .from('resumes')
-      .select('*')
-      .eq('user_id', user.id)
-      .eq('is_primary', true)
-      .single()
+      .from('resumes').select('*').eq('user_id', user.id).eq('is_primary', true).single()
 
     if (resumeErr || !resume) {
       return Response.json({ error: 'No primary resume found. Upload one first.' }, { status: 404 })
     }
 
-    // Fetch the PDF from Supabase storage using admin client (bypasses auth/public access issues)
     if (!resume.file_url) {
       return Response.json({ error: 'Resume has no file URL. Re-upload your resume.' }, { status: 400 })
     }
 
-    // Extract storage path from the URL: .../object/public/resumes/USER_ID/FILE.pdf → USER_ID/FILE.pdf
+    // Extract storage path from URL: .../object/public/resumes/USER_ID/FILE.pdf → USER_ID/FILE.pdf
     let storagePath: string
     try {
       const urlObj = new URL(resume.file_url)
       const marker = '/object/public/resumes/'
       const idx = urlObj.pathname.indexOf(marker)
-      if (idx === -1) throw new Error('Unrecognised URL format')
+      if (idx === -1) throw new Error('bad url')
       storagePath = decodeURIComponent(urlObj.pathname.slice(idx + marker.length))
     } catch {
-      return Response.json({ error: 'Could not determine storage path from file URL. Re-upload your resume.' }, { status: 400 })
+      return Response.json({ error: 'Could not parse storage path. Re-upload your resume.' }, { status: 400 })
     }
 
-    const { data: fileBlob, error: dlError } = await adminSupabase.storage.from('resumes').download(storagePath)
+    // Download via admin client (bypasses bucket access policies)
+    const { data: fileBlob, error: dlError } = await adminSupabase.storage
+      .from('resumes').download(storagePath)
+
     if (dlError || !fileBlob) {
-      return Response.json({ error: `Could not download resume from storage: ${dlError?.message || 'file not found'}. Try re-uploading your resume.` }, { status: 500 })
+      return Response.json({
+        error: `Storage download failed: ${dlError?.message || 'file not found'}. Re-upload your resume.`
+      }, { status: 500 })
     }
 
-    const arrayBuffer = await fileBlob.arrayBuffer()
-    const buffer = Buffer.from(arrayBuffer)
+    const buffer = Buffer.from(await fileBlob.arrayBuffer())
     const base64 = buffer.toString('base64')
 
-    // Extract raw text from PDF via Claude document API
-    const textMsg = await anthropic.messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 4000,
-      messages: [{
-        role: 'user',
-        content: [
-          { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: base64 } } as any,
-          { type: 'text', text: 'Extract all text from this resume PDF. Return ONLY the raw text, no formatting or explanation.' }
-        ]
-      }]
-    })
-    const rawText = textMsg.content[0].type === 'text' ? textMsg.content[0].text : ''
-
-    // Parse structured data from PDF
-    const parseMsg = await anthropic.messages.create({
+    // Single Claude call — extract structured data AND raw text together
+    const msg = await anthropic.messages.create({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 4000,
       messages: [{
@@ -81,10 +65,10 @@ export async function POST(req: NextRequest) {
           { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: base64 } } as any,
           {
             type: 'text',
-            text: `You are a resume parser. Extract ALL structured data from this PDF resume.
+            text: `Parse this resume PDF and return a single JSON object. No markdown, no explanation.
 
-Return ONLY valid JSON (no markdown fences, no explanation):
 {
+  "raw_text": "all text from the resume as plain text",
   "full_name": "string",
   "email": "string",
   "phone": "string",
@@ -102,8 +86,8 @@ Return ONLY valid JSON (no markdown fences, no explanation):
       }]
     })
 
-    const parseRaw = parseMsg.content[0].type === 'text' ? parseMsg.content[0].text : '{}'
-    const cleaned = parseRaw.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim()
+    const raw = msg.content[0].type === 'text' ? msg.content[0].text : '{}'
+    const cleaned = raw.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim()
     let parsed: any = {}
     try {
       parsed = JSON.parse(cleaned.match(/\{[\s\S]*\}/)?.[0] || '{}')
@@ -111,8 +95,10 @@ Return ONLY valid JSON (no markdown fences, no explanation):
       parsed = {}
     }
 
+    const rawText: string = parsed.raw_text || ''
+
     // Upsert into parsed_resumes
-    const { error: prErr } = await adminSupabase.from('parsed_resumes').upsert({
+    await adminSupabase.from('parsed_resumes').upsert({
       resume_id: resume.id,
       user_id: user.id,
       full_name: parsed.full_name || null,
@@ -128,11 +114,7 @@ Return ONLY valid JSON (no markdown fences, no explanation):
       raw_text: rawText || null,
     }, { onConflict: 'resume_id' })
 
-    if (prErr) {
-      console.error('[reparse] parsed_resumes upsert error:', prErr)
-    }
-
-    // Also update resumes.parsed_data
+    // Update resumes.parsed_data
     await adminSupabase.from('resumes').update({ parsed_data: parsed }).eq('id', resume.id)
 
     // Update profile
@@ -157,7 +139,7 @@ Return ONLY valid JSON (no markdown fences, no explanation):
       skills_count: (parsed.skills || []).length,
       experience_count: (parsed.experience || []).length,
       raw_text_length: rawText.length,
-      message: `Resume re-parsed successfully. Found ${(parsed.skills || []).length} skills and ${(parsed.experience || []).length} experience entries.`,
+      message: `Parsed — ${(parsed.skills || []).length} skills, ${(parsed.experience || []).length} roles. God Mode ready!`,
     })
 
   } catch (err: any) {
