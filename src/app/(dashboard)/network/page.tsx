@@ -83,7 +83,12 @@ const ALL_REFERRALS: NetworkPerson[] = [
   { id: '12', name: 'Omar Hassan',     role: 'Senior Product Manager',     company: 'Uber',      avatar: '', initials: 'OH', mutualCount: 2, mutualNames: ['Rahul Mehta', 'Neha Patel'],                        source: 'gmail',    relevance: 77, canRefer: false, connectionPath: ['You', 'Rahul Mehta', 'Omar Hassan'],     detail: 'Uber Eats growth team' },
   { id: '13', name: 'Yuki Tanaka',     role: 'Staff SWE',                  company: 'Salesforce',avatar: '', initials: 'YT', mutualCount: 4, mutualNames: ['Sarah Kim', 'Kevin Wu', 'Mark Johnson'],            source: 'linkedin', relevance: 75, canRefer: true,  connectionPath: ['You', 'Sarah Kim', 'Yuki Tanaka'],       detail: 'Einstein AI platform' },
   { id: '14', name: 'Nina Rossi',      role: 'Engineering Lead',           company: 'Figma',     avatar: '', initials: 'NR', mutualCount: 3, mutualNames: ['Kevin Wu', 'Sarah Kim', 'Mark Johnson'],            source: 'linkedin', relevance: 90, canRefer: true,  connectionPath: ['You', 'Kevin Wu', 'Nina Rossi'],         detail: 'Figma components and plugins team' },
-  { id: '15', name: 'James Chen',      role: 'SWE III',                    company: 'Netflix',   avatar: '', initials: 'JC', mutualCount: 2, mutualNames: ['Neha Patel', 'Mark Johnson'],                       source: 'gmail',    relevance: 84, canRefer: true,  connectionPath: ['You', 'Neha Patel', 'James Chen'],       detail: 'Streaming recommendation algorithms' },
+  { id: '15', name: 'James Chen',      role: 'SWE III',                    company: 'Netflix',    avatar: '', initials: 'JC', mutualCount: 2, mutualNames: ['Neha Patel', 'Mark Johnson'],                        source: 'gmail',    relevance: 84, canRefer: true,  connectionPath: ['You', 'Neha Patel', 'James Chen'],         detail: 'Streaming recommendation algorithms' },
+  { id: '16', name: 'Ananya Singh',    role: 'Senior Software Engineer',   company: 'Honeywell',  avatar: '', initials: 'AS', mutualCount: 2, mutualNames: ['Rahul Mehta', 'Neha Patel'],                           source: 'linkedin', relevance: 76, canRefer: true,  connectionPath: ['You', 'Rahul Mehta', 'Ananya Singh'],       detail: 'Connected Manufacturing & IoT team' },
+  { id: '17', name: 'Tom Wilson',      role: 'Engineering Manager',        company: 'Oracle',     avatar: '', initials: 'TW', mutualCount: 1, mutualNames: ['Mark Johnson'],                                         source: 'linkedin', relevance: 72, canRefer: true,  connectionPath: ['You', 'Mark Johnson', 'Tom Wilson'],        detail: 'Oracle Cloud Infrastructure, hiring backend engineers' },
+  { id: '18', name: 'Shreya Gupta',   role: 'Staff Engineer',             company: 'Nvidia',     avatar: '', initials: 'SG', mutualCount: 3, mutualNames: ['Rahul Mehta', 'Kevin Wu', 'Sarah Kim'],                  source: 'linkedin', relevance: 87, canRefer: true,  connectionPath: ['You', 'Kevin Wu', 'Shreya Gupta'],          detail: 'CUDA platform and AI acceleration team' },
+  { id: '19', name: 'Lucas Martin',   role: 'Research Engineer',          company: 'OpenAI',     avatar: '', initials: 'LM', mutualCount: 2, mutualNames: ['Mark Johnson', 'Sarah Kim'],                             source: 'linkedin', relevance: 93, canRefer: true,  connectionPath: ['You', 'Mark Johnson', 'Lucas Martin'],      detail: 'GPT-4 fine-tuning and RLHF infrastructure' },
+  { id: '20', name: 'Mia Thompson',   role: 'Software Engineer',          company: 'Shopify',    avatar: '', initials: 'MT', mutualCount: 2, mutualNames: ['Kevin Wu', 'Sarah Kim'],                                 source: 'gmail',    relevance: 74, canRefer: true,  connectionPath: ['You', 'Kevin Wu', 'Mia Thompson'],          detail: 'Payments and checkout infrastructure' },
 ]
 
 const SAMPLE_QUERIES = [
@@ -409,40 +414,81 @@ export default function NetworkPage() {
       figma: 'Figma',
       notion: 'Notion',
       salesforce: 'Salesforce',
+      honeywell: 'Honeywell',
+      oracle: 'Oracle',
+      ibm: 'IBM',
+      nvidia: 'Nvidia',
+      openai: 'OpenAI',
+      anthropic: 'Anthropic',
+      bytedance: 'ByteDance', tiktok: 'ByteDance',
+      twitter: 'X (Twitter)', 'x.com': 'X (Twitter)',
+      snapchat: 'Snap', snap: 'Snap',
+      shopify: 'Shopify',
+      twilio: 'Twilio',
+      slack: 'Slack',
+      dropbox: 'Dropbox',
+      atlassian: 'Atlassian', jira: 'Atlassian',
+      adobe: 'Adobe',
+      intuit: 'Intuit',
+      coinbase: 'Coinbase',
     }
 
-    // Collect ALL companies mentioned in the query
+    // Collect ALL companies mentioned in the query (check word boundaries to avoid false matches)
     const targetCompanies = [...new Set(
       Object.entries(companyAliases)
-        .filter(([alias]) => q.includes(alias))
+        .filter(([alias]) => {
+          // Match whole word only (e.g. "meta" shouldn't match "metadata")
+          const regex = new RegExp(`\\b${alias.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`)
+          return regex.test(q)
+        })
         .map(([, canonical]) => canonical)
     )]
 
-    // Filter: company match + optionally canRefer
+    // When specific companies are named → show everyone there (canRefer or not),
+    // user can decide who to reach out to.
+    // When no company specified + "refer" in query → only canRefer contacts.
     let filtered = ALL_REFERRALS.filter(p => {
       const companyMatch = targetCompanies.length === 0 || targetCompanies.includes(p.company)
-      const referMatch = !q.includes('refer') || p.canRefer
+      const referMatch = targetCompanies.length > 0 || !q.includes('refer') || p.canRefer
       return companyMatch && referMatch
     })
 
-    // Role keyword filter (engineer, pm, manager, recruiter, etc.)
+    // Role keyword filter — only narrow if there are still enough results
     const roleKeywords: Record<string, string[]> = {
-      engineer: ['engineer', 'swe', 'engineering', 'developer', 'dev'],
-      manager: ['manager', 'em', 'engineering manager', 'lead'],
-      recruiter: ['recruiter', 'recruiting', 'talent'],
-      pm: ['product manager', 'pm', 'product lead'],
+      engineer: ['engineer', 'swe', 'developer', 'dev'],
+      manager:  ['manager', 'lead'],
+      recruiter:['recruiter', 'recruiting', 'talent'],
+      pm:       ['product manager', 'product lead'],
     }
     for (const [, aliases] of Object.entries(roleKeywords)) {
       if (aliases.some(kw => q.includes(kw))) {
         const roleFiltered = filtered.filter(p =>
           aliases.some(kw => p.role.toLowerCase().includes(kw))
         )
+        // Only apply role filter if it doesn't wipe everything out
         if (roleFiltered.length > 0) filtered = roleFiltered
         break
       }
     }
 
-    // Fall back to top results if nothing matched
+    // Generate placeholder cards for companies mentioned but not in dataset
+    const foundCompanies = new Set(filtered.map(p => p.company))
+    const missingCompanies = targetCompanies.filter(c => !foundCompanies.has(c))
+    const placeholders: NetworkPerson[] = missingCompanies.map((company, i) => ({
+      id: `ph-${i}`,
+      name: `${company} Contact`,
+      role: 'Employee',
+      company,
+      avatar: '', initials: company.slice(0, 2).toUpperCase(),
+      mutualCount: 0, mutualNames: [],
+      source: 'linkedin', relevance: 60, canRefer: false,
+      connectionPath: ['You', `${company} Contact`],
+      detail: `Connect your LinkedIn to find ${company} connections in your network`,
+    }))
+
+    filtered = [...filtered, ...placeholders]
+
+    // Fall back to top results if nothing matched at all
     if (!filtered.length) filtered = ALL_REFERRALS.slice(0, 5)
 
     // Sort by relevance descending
