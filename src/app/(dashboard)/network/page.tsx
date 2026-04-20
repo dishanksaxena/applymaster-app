@@ -68,12 +68,22 @@ const DIRECT_CONNECTIONS = [
   { id: 'dc5', name: 'Kevin Wu', role: 'Senior SWE', company: 'Figma', initials: 'KW', color: '#fdcb6e' },
 ]
 
-const SAMPLE_RESULTS: NetworkPerson[] = [
-  { id: '1', name: 'Priya Sharma', role: 'Senior Engineering Manager', company: 'Google', avatar: '', initials: 'PS', mutualCount: 3, mutualNames: ['Rahul Mehta', 'Anita Desai', 'James Chen'], source: 'linkedin', relevance: 97, canRefer: true, connectionPath: ['You', 'Rahul Mehta', 'Priya Sharma'], detail: 'Manages Cloud Platform team, hiring senior engineers' },
-  { id: '2', name: 'Alex Rivera', role: 'Staff Software Engineer', company: 'Meta', avatar: '', initials: 'AR', mutualCount: 2, mutualNames: ['Sarah Kim', 'David Liu'], source: 'gmail', relevance: 94, canRefer: true, connectionPath: ['You', 'Sarah Kim', 'Alex Rivera'], detail: 'Works on Instagram Reels infrastructure' },
-  { id: '3', name: 'Emily Zhang', role: 'Technical Recruiter', company: 'Stripe', avatar: '', initials: 'EZ', mutualCount: 5, mutualNames: ['Mark Johnson', 'Lisa Wang', 'Tom Brown', 'Amy Lee', 'Chris Park'], source: 'linkedin', relevance: 91, canRefer: false, connectionPath: ['You', 'Mark Johnson', 'Emily Zhang'], detail: 'Recruits for payments infrastructure roles' },
-  { id: '4', name: 'Michael O\'Brien', role: 'VP of Engineering', company: 'Amazon', avatar: '', initials: 'MO', mutualCount: 1, mutualNames: ['Neha Patel'], source: 'calendar', relevance: 88, canRefer: true, connectionPath: ['You', 'Neha Patel', 'Michael O\'Brien'], detail: 'Leads AWS Lambda team, 200+ reports' },
-  { id: '5', name: 'Sakura Tanaka', role: 'Lead Product Manager', company: 'Apple', avatar: '', initials: 'ST', mutualCount: 4, mutualNames: ['Kevin Wu', 'Rachel Adams', 'Omar Hassan', 'Julia Morales'], source: 'linkedin', relevance: 85, canRefer: true, connectionPath: ['You', 'Kevin Wu', 'Sakura Tanaka'], detail: 'Leading Vision Pro developer experience' },
+const ALL_REFERRALS: NetworkPerson[] = [
+  { id: '1',  name: 'Priya Sharma',    role: 'Senior Engineering Manager', company: 'Google',    avatar: '', initials: 'PS', mutualCount: 3, mutualNames: ['Rahul Mehta', 'Anita Desai', 'James Chen'],        source: 'linkedin', relevance: 97, canRefer: true,  connectionPath: ['You', 'Rahul Mehta', 'Priya Sharma'],    detail: 'Manages Cloud Platform team, hiring senior engineers' },
+  { id: '2',  name: 'Alex Rivera',     role: 'Staff Software Engineer',    company: 'Meta',      avatar: '', initials: 'AR', mutualCount: 2, mutualNames: ['Sarah Kim', 'David Liu'],                           source: 'gmail',    relevance: 94, canRefer: true,  connectionPath: ['You', 'Sarah Kim', 'Alex Rivera'],       detail: 'Works on Instagram Reels infrastructure' },
+  { id: '3',  name: 'Emily Zhang',     role: 'Technical Recruiter',        company: 'Stripe',    avatar: '', initials: 'EZ', mutualCount: 5, mutualNames: ['Mark Johnson', 'Lisa Wang', 'Tom Brown'],           source: 'linkedin', relevance: 91, canRefer: false, connectionPath: ['You', 'Mark Johnson', 'Emily Zhang'],    detail: 'Recruits for payments infrastructure roles' },
+  { id: '4',  name: "Michael O'Brien", role: 'VP of Engineering',          company: 'Amazon',    avatar: '', initials: 'MO', mutualCount: 1, mutualNames: ['Neha Patel'],                                      source: 'calendar', relevance: 88, canRefer: true,  connectionPath: ['You', 'Neha Patel', "Michael O'Brien"],  detail: 'Leads AWS Lambda team, 200+ reports' },
+  { id: '5',  name: 'Sakura Tanaka',   role: 'Lead Product Manager',       company: 'Apple',     avatar: '', initials: 'ST', mutualCount: 4, mutualNames: ['Kevin Wu', 'Rachel Adams', 'Omar Hassan'],          source: 'linkedin', relevance: 85, canRefer: true,  connectionPath: ['You', 'Kevin Wu', 'Sakura Tanaka'],      detail: 'Leading Vision Pro developer experience' },
+  { id: '6',  name: 'Jordan Lee',      role: 'Senior Software Engineer',   company: 'Zoom',      avatar: '', initials: 'JL', mutualCount: 2, mutualNames: ['Sarah Kim', 'Mark Johnson'],                        source: 'linkedin', relevance: 82, canRefer: true,  connectionPath: ['You', 'Sarah Kim', 'Jordan Lee'],        detail: 'Works on Zoom Apps platform team' },
+  { id: '7',  name: 'Anika Patel',     role: 'Engineering Manager',        company: 'PayPal',    avatar: '', initials: 'AP', mutualCount: 3, mutualNames: ['Rahul Mehta', 'Kevin Wu', 'Neha Patel'],            source: 'gmail',    relevance: 80, canRefer: true,  connectionPath: ['You', 'Rahul Mehta', 'Anika Patel'],     detail: 'Manages checkout infrastructure team' },
+  { id: '8',  name: 'Carlos Mendez',   role: 'Staff Engineer',             company: 'LinkedIn',  avatar: '', initials: 'CM', mutualCount: 6, mutualNames: ['Mark Johnson', 'Sarah Kim', 'Kevin Wu'],            source: 'linkedin', relevance: 89, canRefer: true,  connectionPath: ['You', 'Mark Johnson', 'Carlos Mendez'],  detail: 'Core Feed Ranking team, previously at Google' },
+  { id: '9',  name: 'Rachel Kim',      role: 'Senior SWE',                 company: 'Microsoft', avatar: '', initials: 'RK', mutualCount: 2, mutualNames: ['Neha Patel', 'Kevin Wu'],                          source: 'calendar', relevance: 86, canRefer: true,  connectionPath: ['You', 'Neha Patel', 'Rachel Kim'],       detail: 'Azure AI team, hiring for multiple roles' },
+  { id: '10', name: 'David Park',      role: 'Product Lead',               company: 'Airbnb',    avatar: '', initials: 'DP', mutualCount: 1, mutualNames: ['Sarah Kim'],                                       source: 'linkedin', relevance: 78, canRefer: true,  connectionPath: ['You', 'Sarah Kim', 'David Park'],        detail: 'Leading Experiences product at Airbnb' },
+  { id: '11', name: 'Lena Fischer',    role: 'Engineering Manager',        company: 'Spotify',   avatar: '', initials: 'LF', mutualCount: 3, mutualNames: ['Mark Johnson', 'Rahul Mehta', 'Kevin Wu'],          source: 'linkedin', relevance: 83, canRefer: true,  connectionPath: ['You', 'Mark Johnson', 'Lena Fischer'],   detail: 'Podcast infrastructure, hiring senior backend' },
+  { id: '12', name: 'Omar Hassan',     role: 'Senior Product Manager',     company: 'Uber',      avatar: '', initials: 'OH', mutualCount: 2, mutualNames: ['Rahul Mehta', 'Neha Patel'],                        source: 'gmail',    relevance: 77, canRefer: false, connectionPath: ['You', 'Rahul Mehta', 'Omar Hassan'],     detail: 'Uber Eats growth team' },
+  { id: '13', name: 'Yuki Tanaka',     role: 'Staff SWE',                  company: 'Salesforce',avatar: '', initials: 'YT', mutualCount: 4, mutualNames: ['Sarah Kim', 'Kevin Wu', 'Mark Johnson'],            source: 'linkedin', relevance: 75, canRefer: true,  connectionPath: ['You', 'Sarah Kim', 'Yuki Tanaka'],       detail: 'Einstein AI platform' },
+  { id: '14', name: 'Nina Rossi',      role: 'Engineering Lead',           company: 'Figma',     avatar: '', initials: 'NR', mutualCount: 3, mutualNames: ['Kevin Wu', 'Sarah Kim', 'Mark Johnson'],            source: 'linkedin', relevance: 90, canRefer: true,  connectionPath: ['You', 'Kevin Wu', 'Nina Rossi'],         detail: 'Figma components and plugins team' },
+  { id: '15', name: 'James Chen',      role: 'SWE III',                    company: 'Netflix',   avatar: '', initials: 'JC', mutualCount: 2, mutualNames: ['Neha Patel', 'Mark Johnson'],                       source: 'gmail',    relevance: 84, canRefer: true,  connectionPath: ['You', 'Neha Patel', 'James Chen'],       detail: 'Streaming recommendation algorithms' },
 ]
 
 const SAMPLE_QUERIES = [
@@ -377,41 +387,66 @@ export default function NetworkPage() {
   const handleSearch = async () => {
     if (!searchQuery.trim()) return
     setSearching(true); setShowResults(false)
-    await new Promise(r => setTimeout(r, 2200))
+    await new Promise(r => setTimeout(r, 1800))
 
     const q = searchQuery.toLowerCase()
 
-    // Known company aliases to detect in the query
+    // Map every alias → canonical company name (covers abbreviations, alternate names)
     const companyAliases: Record<string, string> = {
-      google: 'Google', alphabet: 'Google',
-      meta: 'Meta', facebook: 'Meta', instagram: 'Meta',
+      google: 'Google', alphabet: 'Google', deepmind: 'Google',
+      meta: 'Meta', facebook: 'Meta', instagram: 'Meta', fb: 'Meta',
       stripe: 'Stripe',
       amazon: 'Amazon', aws: 'Amazon',
       apple: 'Apple',
-      notion: 'Notion',
-      figma: 'Figma',
+      zoom: 'Zoom',
+      paypal: 'PayPal',
+      linkedin: 'LinkedIn',
+      microsoft: 'Microsoft', msft: 'Microsoft', azure: 'Microsoft',
+      spotify: 'Spotify',
       airbnb: 'Airbnb',
       uber: 'Uber',
       netflix: 'Netflix',
+      figma: 'Figma',
+      notion: 'Notion',
+      salesforce: 'Salesforce',
     }
 
-    // Find which company (if any) the user is asking about
-    const targetCompany = Object.entries(companyAliases).find(([alias]) => q.includes(alias))?.[1] ?? null
+    // Collect ALL companies mentioned in the query
+    const targetCompanies = [...new Set(
+      Object.entries(companyAliases)
+        .filter(([alias]) => q.includes(alias))
+        .map(([, canonical]) => canonical)
+    )]
 
-    // Filter sample results to match query intent
-    let filtered = SAMPLE_RESULTS.filter(p => {
-      if (targetCompany) return p.company === targetCompany
-      // No company specified — show all who canRefer or match keywords
-      return true
+    // Filter: company match + optionally canRefer
+    let filtered = ALL_REFERRALS.filter(p => {
+      const companyMatch = targetCompanies.length === 0 || targetCompanies.includes(p.company)
+      const referMatch = !q.includes('refer') || p.canRefer
+      return companyMatch && referMatch
     })
 
-    // If query mentions "refer" or specific role, boost canRefer contacts
-    if (q.includes('refer')) {
-      filtered = filtered.filter(p => p.canRefer)
+    // Role keyword filter (engineer, pm, manager, recruiter, etc.)
+    const roleKeywords: Record<string, string[]> = {
+      engineer: ['engineer', 'swe', 'engineering', 'developer', 'dev'],
+      manager: ['manager', 'em', 'engineering manager', 'lead'],
+      recruiter: ['recruiter', 'recruiting', 'talent'],
+      pm: ['product manager', 'pm', 'product lead'],
+    }
+    for (const [, aliases] of Object.entries(roleKeywords)) {
+      if (aliases.some(kw => q.includes(kw))) {
+        const roleFiltered = filtered.filter(p =>
+          aliases.some(kw => p.role.toLowerCase().includes(kw))
+        )
+        if (roleFiltered.length > 0) filtered = roleFiltered
+        break
+      }
     }
 
-    // If nothing matched, fall back to showing the full list
-    if (!filtered.length) filtered = SAMPLE_RESULTS
+    // Fall back to top results if nothing matched
+    if (!filtered.length) filtered = ALL_REFERRALS.slice(0, 5)
+
+    // Sort by relevance descending
+    filtered = [...filtered].sort((a, b) => b.relevance - a.relevance)
 
     setResults(filtered); setShowResults(true); setSearching(false)
   }
