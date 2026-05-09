@@ -391,7 +391,7 @@ export default function JobsGlobe({ jobs, onSave, onApply, savedJobs, appliedJob
     const scene = new THREE.Scene()
 
     const camera = new THREE.PerspectiveCamera(42, W / H, 0.1, 5000)
-    camera.position.set(0, 30, 275)
+    camera.position.set(0, 15, 340)
     cameraRef.current = camera
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' })
@@ -401,6 +401,8 @@ export default function JobsGlobe({ jobs, onSave, onApply, savedJobs, appliedJob
     renderer.outputColorSpace = THREE.SRGBColorSpace
     renderer.toneMapping = THREE.ACESFilmicToneMapping
     renderer.toneMappingExposure = 1.1
+    renderer.domElement.style.position = 'absolute'
+    renderer.domElement.style.inset = '0'
     container.appendChild(renderer.domElement)
 
     const globe = new THREE.Group()
@@ -553,8 +555,8 @@ export default function JobsGlobe({ jobs, onSave, onApply, savedJobs, appliedJob
         y: -((e.clientY - rect.top)  / rect.height) * 2 + 1,
       }
       if (dragRef.current.active) {
-        dragRef.current.vx = (e.clientX - dragRef.current.x) * 0.005
-        dragRef.current.vy = (e.clientY - dragRef.current.y) * 0.005
+        dragRef.current.vx = (e.clientX - dragRef.current.x) * 0.002
+        dragRef.current.vy = (e.clientY - dragRef.current.y) * 0.002
         dragRef.current.x  = e.clientX
         dragRef.current.y  = e.clientY
       }
@@ -565,7 +567,7 @@ export default function JobsGlobe({ jobs, onSave, onApply, savedJobs, appliedJob
     }
     const onClick = (e: MouseEvent) => {
       // Don't fire if user was dragging
-      if (Math.abs(dragRef.current.vx) > 0.003 || Math.abs(dragRef.current.vy) > 0.003) return
+      if (Math.abs(dragRef.current.vx) > 0.001 || Math.abs(dragRef.current.vy) > 0.001) return
       const rect = renderer.domElement.getBoundingClientRect()
       const mouse = new THREE.Vector2(
         ((e.clientX - rect.left) / rect.width)  * 2 - 1,
@@ -594,8 +596,8 @@ export default function JobsGlobe({ jobs, onSave, onApply, savedJobs, appliedJob
     const onTouchMove = (e: TouchEvent) => {
       if (e.touches.length !== 1 || !dragRef.current.active) return
       e.preventDefault()
-      dragRef.current.vx = (e.touches[0].clientX - dragRef.current.x) * 0.005
-      dragRef.current.vy = (e.touches[0].clientY - dragRef.current.y) * 0.005
+      dragRef.current.vx = (e.touches[0].clientX - dragRef.current.x) * 0.002
+      dragRef.current.vy = (e.touches[0].clientY - dragRef.current.y) * 0.002
       dragRef.current.x  = e.touches[0].clientX
       dragRef.current.y  = e.touches[0].clientY
     }
@@ -620,8 +622,8 @@ export default function JobsGlobe({ jobs, onSave, onApply, savedJobs, appliedJob
       globe.rotation.x += dragRef.current.vy
       globe.rotation.x = Math.max(-Math.PI / 2.5, Math.min(Math.PI / 2.5, globe.rotation.x))
       if (!dragRef.current.active) {
-        dragRef.current.vx *= 0.90
-        dragRef.current.vy *= 0.90
+        dragRef.current.vx *= 0.75
+        dragRef.current.vy *= 0.75
       }
 
       // Pulse rings
