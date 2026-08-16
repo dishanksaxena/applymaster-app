@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase-browser'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import type { Profile } from '@/lib/database.types'
+import ThemeToggle from '@/components/ThemeToggle'
 
 /* ─── SVG Icon Components ─── */
 const icons = {
@@ -158,15 +159,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const router = useRouter()
   const supabase = createClient()
 
-  // Restore theme preference on mount — default is light (no class)
-  useEffect(() => {
-    const saved = localStorage.getItem('theme')
-    if (saved === 'dark') {
-      document.documentElement.classList.add('dark-theme')
-    } else {
-      document.documentElement.classList.remove('dark-theme')
-    }
-  }, [pathname])
+  // Theme is applied by the inline script in the root layout, before first
+  // paint. Restoring it here (as this file used to) ran after mount and
+  // caused a visible flash on every navigation.
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -237,18 +232,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <div
                 className="absolute inset-0 rounded-lg"
                 style={{
-                  background: 'linear-gradient(135deg, #fd79a8, #e84393, #fd79a8)',
+                  background: 'linear-gradient(135deg, var(--accent), var(--accent-solid), var(--accent))',
                   backgroundSize: '200% 200%',
                   animation: 'gradient-rotate 3s ease infinite',
                 }}
               />
               <div className="absolute inset-[1px] rounded-[7px] flex items-center justify-center" style={{ background: 'var(--bg-sidebar)' }}>
-                <span className="text-[10px] font-black bg-gradient-to-r from-[#fd79a8] to-[#e84393] bg-clip-text text-transparent">AM</span>
+                <span className="text-[10px] font-black bg-gradient-to-r from-[var(--accent)] to-[var(--accent-solid)] bg-clip-text text-transparent">AM</span>
               </div>
             </div>
             {sidebarOpen && (
               <span className="text-[15px] font-extrabold tracking-tight" style={{ color: 'var(--text)', animation: 'fade-in 0.2s ease' }}>
-                Apply<span className="bg-gradient-to-r from-[#fd79a8] to-[#e84393] bg-clip-text text-transparent">Master</span>
+                Apply<span className="bg-gradient-to-r from-[var(--accent)] to-[var(--accent-solid)] bg-clip-text text-transparent">Master</span>
               </span>
             )}
           </Link>
@@ -281,7 +276,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     <div
                       className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full"
                       style={{
-                        background: 'linear-gradient(180deg, #fd79a8, #e84393)',
+                        background: 'linear-gradient(180deg, var(--accent), var(--accent-solid))',
                       }}
                     />
                   )}
@@ -320,13 +315,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   <div
                     className="absolute inset-0 rounded-full"
                     style={{
-                      background: 'linear-gradient(135deg, #fd79a8, #6c5ce7, #e84393, #a29bfe, #fd79a8)',
+                      background: 'linear-gradient(135deg, var(--accent), var(--purple), var(--accent-solid), var(--purple), var(--accent))',
                       backgroundSize: '300% 300%',
                       animation: 'avatar-ring 4s ease infinite',
                     }}
                   />
                   <div className="absolute inset-[2px] rounded-full flex items-center justify-center" style={{ background: 'var(--bg-sidebar)' }}>
-                    <span className="text-[12px] font-bold bg-gradient-to-br from-[#fd79a8] to-[#a29bfe] bg-clip-text text-transparent">
+                    <span className="text-[12px] font-bold bg-gradient-to-br from-[var(--accent)] to-[var(--purple)] bg-clip-text text-transparent">
                       {profile?.full_name?.[0]?.toUpperCase() || profile?.email?.[0]?.toUpperCase() || '?'}
                     </span>
                   </div>
@@ -371,9 +366,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             ) : (
               <div className="flex flex-col items-center gap-2">
                 <div className="relative w-9 h-9">
-                  <div className="absolute inset-0 rounded-full" style={{ background: 'linear-gradient(135deg, #fd79a8, #6c5ce7, #e84393, #a29bfe, #fd79a8)', backgroundSize: '300% 300%', animation: 'avatar-ring 4s ease infinite' }} />
+                  <div className="absolute inset-0 rounded-full" style={{ background: 'linear-gradient(135deg, var(--accent), var(--purple), var(--accent-solid), var(--purple), var(--accent))', backgroundSize: '300% 300%', animation: 'avatar-ring 4s ease infinite' }} />
                   <div className="absolute inset-[2px] rounded-full flex items-center justify-center" style={{ background: 'var(--bg-sidebar)' }}>
-                    <span className="text-[12px] font-bold bg-gradient-to-br from-[#fd79a8] to-[#a29bfe] bg-clip-text text-transparent">
+                    <span className="text-[12px] font-bold bg-gradient-to-br from-[var(--accent)] to-[var(--purple)] bg-clip-text text-transparent">
                       {profile?.full_name?.[0]?.toUpperCase() || profile?.email?.[0]?.toUpperCase() || '?'}
                     </span>
                   </div>
@@ -462,8 +457,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 title="Notifications"
               >
                 {icons.bell}
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#e84393]" style={{ boxShadow: '0 0 6px rgba(232,67,147,0.5)' }} />
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[var(--accent-solid)]" style={{ boxShadow: '0 0 6px rgba(232,67,147,0.5)' }} />
               </button>
+
+              <ThemeToggle />
 
               <div className="w-px h-6 mx-1 hidden sm:block" style={{ background: 'var(--border)' }} />
 
@@ -471,15 +468,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 className="flex items-center gap-2 px-3 py-1.5 rounded-lg"
                 style={{
                   background: 'var(--green-dim)',
-                  border: '1px solid rgba(0,184,148,0.15)',
-                  animation: 'pulse-glow 3s ease-in-out infinite',
+                  border: '1px solid var(--border)',
                 }}
               >
                 <span className="relative flex h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full rounded-full bg-[#00b894] opacity-60 animate-ping" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[#00b894]" style={{ boxShadow: '0 0 6px rgba(0,184,148,0.6)' }} />
+                  <span
+                    className="absolute inline-flex h-full w-full rounded-full opacity-60 animate-ping motion-reduce:hidden"
+                    style={{ background: 'var(--green)' }}
+                  />
+                  <span className="relative inline-flex rounded-full h-2 w-2" style={{ background: 'var(--green)' }} />
                 </span>
-                <span className="text-[11px] font-semibold text-[#00b894] hidden sm:inline">Engine Active</span>
+                <span className="text-[11px] font-semibold hidden sm:inline" style={{ color: 'var(--green)' }}>
+                  Engine Active
+                </span>
               </div>
             </div>
           </header>

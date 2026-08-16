@@ -10,8 +10,8 @@ import dynamic from 'next/dynamic'
 const JobsGlobe = dynamic(() => import('@/components/JobsGlobe'), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-full flex flex-col items-center justify-center gap-3" style={{ background: 'radial-gradient(ellipse at 50% 50%, #0c0c28, #050510)' }}>
-      <div className="animate-spin w-10 h-10 border-2 border-[#a29bfe] border-t-transparent rounded-full" />
+    <div className="w-full h-full flex flex-col items-center justify-center gap-3" style={{ background: 'radial-gradient(ellipse at 50% 50%, var(--bg-card), var(--bg))' }}>
+      <div className="animate-spin w-10 h-10 border-2 border-[var(--purple)] border-t-transparent rounded-full" />
       <p className="text-[var(--text-muted)] text-sm">Initializing 3D Globe...</p>
     </div>
   ),
@@ -388,7 +388,7 @@ export default function JobsPage() {
         background: 'linear-gradient(135deg, rgba(253,121,168,0.08) 0%, rgba(116,185,255,0.06) 100%)',
         border: '1px solid rgba(253,121,168,0.1)',
       }}>
-        <div className="absolute top-[-50%] right-[-10%] w-[300px] h-[300px] rounded-full opacity-[0.07]" style={{ background: 'radial-gradient(circle, #74b9ff, transparent 70%)' }} />
+        <div className="absolute top-[-50%] right-[-10%] w-[300px] h-[300px] rounded-full opacity-[0.07]" style={{ background: 'radial-gradient(circle, var(--blue), transparent 70%)' }} />
         <div className="relative z-10">
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -400,7 +400,7 @@ export default function JobsPage() {
               <motion.button whileTap={{ scale: 0.95 }} onClick={() => setViewMode('list')}
                 className="flex items-center gap-2 px-4 py-2 rounded-lg text-[12px] font-semibold transition-all"
                 style={viewMode === 'list'
-                  ? { background: 'linear-gradient(135deg, #fd79a8, #e84393)', color: '#fff', boxShadow: '0 0 20px rgba(253,121,168,0.3)' }
+                  ? { background: 'linear-gradient(135deg, var(--accent), var(--accent-solid))', color: '#fff', boxShadow: '0 0 20px rgba(253,121,168,0.3)' }
                   : { color: 'var(--text-secondary)' }}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
                 List
@@ -408,7 +408,7 @@ export default function JobsPage() {
               <motion.button whileTap={{ scale: 0.95 }} onClick={() => setViewMode('globe')}
                 className="flex items-center gap-2 px-4 py-2 rounded-lg text-[12px] font-semibold transition-all"
                 style={viewMode === 'globe'
-                  ? { background: 'linear-gradient(135deg, #a29bfe, #6c5ce7)', color: '#fff', boxShadow: '0 0 20px rgba(162,155,254,0.3)' }
+                  ? { background: 'linear-gradient(135deg, var(--purple), var(--purple))', color: '#fff', boxShadow: '0 0 20px rgba(162,155,254,0.3)' }
                   : { color: 'var(--text-secondary)' }}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
                 Globe View
@@ -450,7 +450,7 @@ export default function JobsPage() {
                     style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>
                     {citySuggestions.map(s => (
                       <button key={s} onClick={() => { setCity(s); setShowCitySuggestions(false) }}
-                        className="w-full text-left px-4 py-2.5 text-[13px] text-white hover:bg-white/5 transition-colors">
+                        className="w-full text-left px-4 py-2.5 text-[13px] text-ink hover:bg-[var(--bg-overlay)] transition-colors">
                         {s}
                       </button>
                     ))}
@@ -525,22 +525,22 @@ export default function JobsPage() {
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex gap-4 flex-1">
                         <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 text-[14px] font-bold"
-                          style={{ background: 'linear-gradient(135deg, rgba(253,121,168,0.1), rgba(162,155,254,0.1))', color: '#fd79a8' }}>
+                          style={{ background: 'linear-gradient(135deg, rgba(253,121,168,0.1), rgba(162,155,254,0.1))', color: 'var(--accent)' }}>
                           {job.company[0]}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <a href={job.url} target="_blank" rel="noopener noreferrer" className="text-[15px] font-bold text-[var(--text)] hover:text-[#fd79a8] transition-colors">{job.title}</a>
+                          <a href={job.url} target="_blank" rel="noopener noreferrer" className="text-[15px] font-bold text-[var(--text)] hover:text-[var(--accent)] transition-colors">{job.title}</a>
                           <div className="text-[13px] text-[var(--text-secondary)] mt-0.5">{job.company} · {job.location}</div>
                           {formatSalary(job) && (
-                            <div className="text-[13px] font-semibold text-[#00b894] mt-1">{formatSalary(job)}</div>
+                            <div className="text-[13px] font-semibold text-[var(--green)] mt-1">{formatSalary(job)}</div>
                           )}
                           <div className="flex flex-wrap gap-2 mt-3">
                             {job.remote_type && (
-                              <span className="text-[11px] font-bold px-2.5 py-1 rounded-lg" style={{ background: 'rgba(0,184,148,0.08)', color: '#00b894' }}>
+                              <span className="text-[11px] font-bold px-2.5 py-1 rounded-lg" style={{ background: 'rgba(0,184,148,0.08)', color: 'var(--green)' }}>
                                 {job.remote_type}
                               </span>
                             )}
-                            <span className="text-[11px] font-bold px-2.5 py-1 rounded-lg" style={{ background: 'rgba(116,185,255,0.08)', color: '#74b9ff' }}>{job.source}</span>
+                            <span className="text-[11px] font-bold px-2.5 py-1 rounded-lg" style={{ background: 'rgba(116,185,255,0.08)', color: 'var(--blue)' }}>{job.source}</span>
                             {job.posted_at && (
                               <span className="text-[11px] text-[var(--text-muted)]">{formatPosted(job.posted_at)}</span>
                             )}

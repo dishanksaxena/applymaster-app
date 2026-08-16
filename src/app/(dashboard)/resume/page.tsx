@@ -98,10 +98,10 @@ const CloudUploadIcon = ({ animated }: { animated?: boolean }) => (
     />
     <defs>
       <linearGradient id="cloud-grad" x1="8" y1="16" x2="38" y2="32">
-        <stop stopColor="#fd79a8" /><stop offset="1" stopColor="#e84393" />
+        <stop stopColor="var(--accent)" /><stop offset="1" stopColor="var(--accent-solid)" />
       </linearGradient>
       <linearGradient id="arrow-grad" x1="20" y1="22" x2="28" y2="36">
-        <stop stopColor="#fd79a8" /><stop offset="1" stopColor="#e84393" />
+        <stop stopColor="var(--accent)" /><stop offset="1" stopColor="var(--accent-solid)" />
       </linearGradient>
     </defs>
   </svg>
@@ -120,14 +120,14 @@ function ATSScoreRing({ score, size = 120, strokeWidth = 8 }: { score: number; s
   const radius = (size - strokeWidth) / 2
   const circumference = 2 * Math.PI * radius
   const offset = circumference - (score / 100) * circumference
-  const color = score >= 85 ? '#00b894' : score >= 70 ? '#fdcb6e' : '#ff6b6b'
+  const color = score >= 85 ? 'var(--green)' : score >= 70 ? 'var(--yellow)' : 'var(--red)'
   const glowColor = score >= 85 ? 'rgba(0,184,148,0.4)' : score >= 70 ? 'rgba(253,203,110,0.4)' : 'rgba(255,107,107,0.4)'
 
   return (
     <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
       <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
         {/* Background circle */}
-        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth={strokeWidth} />
+        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="var(--bg-overlay)" strokeWidth={strokeWidth} />
         {/* Score arc */}
         <circle
           cx={size / 2} cy={size / 2} r={radius} fill="none"
@@ -165,9 +165,9 @@ function FileTypeBadge({ type, active }: { type: string; active?: boolean }) {
     <span
       className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all duration-300"
       style={{
-        background: active ? 'rgba(253,121,168,0.12)' : 'rgba(255,255,255,0.03)',
+        background: active ? 'rgba(253,121,168,0.12)' : 'var(--bg-overlay)',
         border: `1px solid ${active ? 'rgba(253,121,168,0.25)' : 'var(--border)'}`,
-        color: active ? '#fd79a8' : 'var(--text-muted)',
+        color: active ? 'var(--accent)' : 'var(--text-muted)',
       }}
     >
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -373,8 +373,8 @@ export default function ResumePage() {
             <h3 className="text-lg font-bold text-[var(--text)] mb-2">Delete Resume?</h3>
             <p className="text-[var(--text-secondary)] text-sm mb-6">This action cannot be undone.</p>
             <div className="flex gap-3">
-              <button onClick={() => setDeleteConfirm(null)} className="flex-1 px-4 py-2.5 rounded-xl border border-[var(--border)] text-[var(--text)] font-semibold hover:bg-white/5 transition-colors">Cancel</button>
-              <button onClick={() => deleteResume(deleteConfirm)} className="flex-1 px-4 py-2.5 rounded-xl bg-[#ff6b6b] text-white font-semibold hover:bg-[#ff5252] transition-colors">Delete</button>
+              <button onClick={() => setDeleteConfirm(null)} className="flex-1 px-4 py-2.5 rounded-xl border border-[var(--border)] text-[var(--text)] font-semibold hover:bg-[var(--bg-overlay)] transition-colors">Cancel</button>
+              <button onClick={() => deleteResume(deleteConfirm)} className="flex-1 px-4 py-2.5 rounded-xl bg-[var(--red)] text-[var(--text-on-accent)] font-semibold hover:bg-[var(--red)] transition-colors">Delete</button>
             </div>
           </div>
         </div>
@@ -390,7 +390,7 @@ export default function ResumePage() {
               style={{
                 background: 'linear-gradient(135deg, rgba(253,121,168,0.12), rgba(232,67,147,0.08))',
                 border: '1px solid rgba(253,121,168,0.2)',
-                color: '#fd79a8',
+                color: 'var(--accent)',
               }}
             >
               AI-POWERED
@@ -415,7 +415,7 @@ export default function ResumePage() {
             >
               <div className="px-6 pt-6 pb-2 flex items-center justify-between">
                 <h3 className="text-[15px] font-bold flex items-center gap-2">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fd79a8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" />
                     <polyline points="14,2 14,8 20,8" />
                   </svg>
@@ -440,7 +440,7 @@ export default function ResumePage() {
                     padding: resumes.length === 0 ? '48px 24px' : '24px',
                     background: isDragOver
                       ? 'rgba(253,121,168,0.04)'
-                      : 'rgba(255,255,255,0.01)',
+                      : 'var(--bg-overlay)',
                     animation: isDragOver ? 'drop-glow 1.5s ease-in-out infinite' : undefined,
                   }}
                 >
@@ -466,7 +466,7 @@ export default function ResumePage() {
                     <div className="mb-4">
                       <CloudUploadIcon animated />
                     </div>
-                    <div className="text-[14px] font-semibold text-white/90 mb-1">
+                    <div className="text-[14px] font-semibold text-ink/90 mb-1">
                       {isDragOver ? 'Drop your resume here' : 'Drag & drop your resume'}
                     </div>
                     <div className="text-[12px] text-[var(--text-muted)] mb-4">or click to browse files</div>
@@ -483,14 +483,14 @@ export default function ResumePage() {
                   <div className="mt-4" style={{ animation: 'card-fade-in 0.3s ease' }}>
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-[12px] font-semibold text-[var(--text-secondary)]">Uploading...</span>
-                      <span className="text-[11px] font-bold text-[#fd79a8]">{Math.round(uploadProgress)}%</span>
+                      <span className="text-[11px] font-bold text-[var(--accent)]">{Math.round(uploadProgress)}%</span>
                     </div>
-                    <div className="h-1.5 rounded-full bg-[rgba(255,255,255,0.04)] overflow-hidden">
+                    <div className="h-1.5 rounded-full bg-[var(--bg-overlay)] overflow-hidden">
                       <div
                         className="h-full rounded-full transition-all duration-300"
                         style={{
                           width: `${uploadProgress}%`,
-                          background: 'linear-gradient(90deg, #fd79a8, #e84393, #fd79a8)',
+                          background: 'linear-gradient(90deg, var(--accent), var(--accent-solid), var(--accent))',
                           backgroundSize: '200% 100%',
                           animation: 'progress-gradient 1.5s linear infinite',
                           boxShadow: '0 0 12px rgba(253,121,168,0.4)',
@@ -514,7 +514,7 @@ export default function ResumePage() {
                           padding: '16px',
                           background: selectedResume?.id === r.id
                             ? 'linear-gradient(135deg, rgba(253,121,168,0.06), rgba(232,67,147,0.03))'
-                            : 'rgba(255,255,255,0.015)',
+                            : 'var(--bg-overlay)',
                           border: `1px solid ${selectedResume?.id === r.id ? 'rgba(253,121,168,0.2)' : 'var(--border)'}`,
                           boxShadow: selectedResume?.id === r.id ? '0 4px 24px rgba(253,121,168,0.08)' : 'none',
                           transform: 'translateY(0)',
@@ -543,8 +543,8 @@ export default function ResumePage() {
                               <div
                                 className="w-[52px] h-[52px] rounded-full flex items-center justify-center"
                                 style={{
-                                  background: 'rgba(255,255,255,0.02)',
-                                  border: '2px solid rgba(255,255,255,0.06)',
+                                  background: 'var(--bg-overlay)',
+                                  border: '2px solid var(--border)',
                                 }}
                               >
                                 <span className="text-[10px] font-bold text-[var(--text-faint)]">N/A</span>
@@ -555,7 +555,7 @@ export default function ResumePage() {
                           {/* File Info */}
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
-                              <span className="text-[13px] font-semibold text-white/90 truncate">{r.name}</span>
+                              <span className="text-[13px] font-semibold text-ink/90 truncate">{r.name}</span>
                               {r.is_primary && (
                                 <span
                                   className="shrink-0 text-[9px] font-bold px-2 py-0.5 rounded-full tracking-wider"
@@ -563,7 +563,7 @@ export default function ResumePage() {
                                     background: 'linear-gradient(90deg, rgba(0,184,148,0.12), rgba(0,184,148,0.2), rgba(0,184,148,0.12))',
                                     backgroundSize: '200% auto',
                                     animation: 'shimmer-badge 3s linear infinite',
-                                    color: '#00b894',
+                                    color: 'var(--green)',
                                     border: '1px solid rgba(0,184,148,0.2)',
                                   }}
                                 >
@@ -594,7 +594,7 @@ export default function ResumePage() {
                               <button
                                 onClick={(e) => { e.stopPropagation(); reparseResume() }}
                                 disabled={reparsing}
-                                className="p-2 rounded-lg text-[var(--text-muted)] hover:text-[#6c5ce7] hover:bg-[rgba(108,92,231,0.08)] transition-all duration-200 disabled:opacity-50"
+                                className="p-2 rounded-lg text-[var(--text-muted)] hover:text-[var(--purple)] hover:bg-[rgba(108,92,231,0.08)] transition-all duration-200 disabled:opacity-50"
                                 title="Re-parse with AI (fix God Mode)"
                               >
                                 {reparsing ? (
@@ -611,7 +611,7 @@ export default function ResumePage() {
                             {!r.is_primary && (
                               <button
                                 onClick={(e) => { e.stopPropagation(); setPrimary(r.id) }}
-                                className="p-2 rounded-lg text-[var(--text-muted)] hover:text-[#00b894] hover:bg-[rgba(0,184,148,0.08)] transition-all duration-200"
+                                className="p-2 rounded-lg text-[var(--text-muted)] hover:text-[var(--green)] hover:bg-[rgba(0,184,148,0.08)] transition-all duration-200"
                                 title="Set as primary"
                               >
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -621,7 +621,7 @@ export default function ResumePage() {
                             )}
                             <button
                               onClick={(e) => { e.stopPropagation(); setDeleteConfirm(r.id) }}
-                              className="p-2 rounded-lg text-[var(--text-muted)] hover:text-[#ff6b6b] hover:bg-[rgba(255,107,107,0.08)] transition-all duration-200"
+                              className="p-2 rounded-lg text-[var(--text-muted)] hover:text-[var(--red)] hover:bg-[rgba(255,107,107,0.08)] transition-all duration-200"
                               title="Delete"
                             >
                               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -642,7 +642,7 @@ export default function ResumePage() {
                         background: reparseMsg.includes('success') || reparseMsg.includes('ready')
                           ? 'rgba(0,184,148,0.08)' : 'rgba(255,107,107,0.08)',
                         border: `1px solid ${reparseMsg.includes('success') || reparseMsg.includes('ready') ? 'rgba(0,184,148,0.2)' : 'rgba(255,107,107,0.2)'}`,
-                        color: reparseMsg.includes('success') || reparseMsg.includes('ready') ? '#00b894' : '#ff6b6b',
+                        color: reparseMsg.includes('success') || reparseMsg.includes('ready') ? 'var(--green)' : 'var(--red)',
                       }}
                     >
                       {reparseMsg}
@@ -667,13 +667,13 @@ export default function ResumePage() {
                         {/* Lines */}
                         <div className="absolute top-4 left-3 right-3 space-y-2">
                           <div className="h-1 rounded bg-[rgba(253,121,168,0.15)] w-3/4" />
-                          <div className="h-1 rounded bg-[rgba(255,255,255,0.04)] w-full" />
-                          <div className="h-1 rounded bg-[rgba(255,255,255,0.04)] w-5/6" />
-                          <div className="h-1 rounded bg-[rgba(255,255,255,0.04)] w-full" />
-                          <div className="h-1 rounded bg-[rgba(255,255,255,0.04)] w-2/3" />
+                          <div className="h-1 rounded bg-[var(--bg-overlay)] w-full" />
+                          <div className="h-1 rounded bg-[var(--bg-overlay)] w-5/6" />
+                          <div className="h-1 rounded bg-[var(--bg-overlay)] w-full" />
+                          <div className="h-1 rounded bg-[var(--bg-overlay)] w-2/3" />
                           <div className="mt-3 h-1 rounded bg-[rgba(253,121,168,0.1)] w-1/2" />
-                          <div className="h-1 rounded bg-[rgba(255,255,255,0.04)] w-full" />
-                          <div className="h-1 rounded bg-[rgba(255,255,255,0.04)] w-4/5" />
+                          <div className="h-1 rounded bg-[var(--bg-overlay)] w-full" />
+                          <div className="h-1 rounded bg-[var(--bg-overlay)] w-4/5" />
                         </div>
                         {/* Corner fold */}
                         <div className="absolute top-0 right-0 w-5 h-5">
@@ -692,14 +692,14 @@ export default function ResumePage() {
             {resumes.length > 0 && !selectedResume && (
               <div className="rounded-2xl p-5" style={{ background: 'linear-gradient(135deg, rgba(0,184,148,0.06), rgba(0,184,148,0.02))', border: '1px solid rgba(0,184,148,0.12)' }}>
                 <div className="flex items-center gap-2 mb-3">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00b894" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22,4 12,14.01 9,11.01"/></svg>
-                  <span className="text-[13px] font-bold text-[#00b894]">Resume uploaded! What to do next:</span>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22,4 12,14.01 9,11.01"/></svg>
+                  <span className="text-[13px] font-bold text-[var(--green)]">Resume uploaded! What to do next:</span>
                 </div>
                 <div className="grid sm:grid-cols-3 gap-3">
                   {[
-                    { step: '1', label: 'Optimize Resume', desc: 'Click your resume below to select it, then enter a job title to get an AI ATS score', color: '#fd79a8', href: null },
-                    { step: '2', label: 'Search Jobs', desc: 'Find matching jobs with AI-powered search across 50+ job boards', color: '#a29bfe', href: '/jobs' },
-                    { step: '3', label: 'Generate Cover Letter', desc: 'Let AI write a personalized cover letter for each application', color: '#74b9ff', href: '/cover-letters' },
+                    { step: '1', label: 'Optimize Resume', desc: 'Click your resume below to select it, then enter a job title to get an AI ATS score', color: 'var(--accent)', href: null },
+                    { step: '2', label: 'Search Jobs', desc: 'Find matching jobs with AI-powered search across 50+ job boards', color: 'var(--purple)', href: '/jobs' },
+                    { step: '3', label: 'Generate Cover Letter', desc: 'Let AI write a personalized cover letter for each application', color: 'var(--blue)', href: '/cover-letters' },
                   ].map(s => (
                     <div key={s.step} className="p-3 rounded-xl" style={{ background: 'var(--bg-overlay)', border: '1px solid var(--border)' }}>
                       <div className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-black mb-2" style={{ background: `${s.color}18`, color: s.color }}>{s.step}</div>
@@ -726,7 +726,7 @@ export default function ResumePage() {
               >
                 <div className="px-6 pt-6 pb-2 flex items-center justify-between">
                   <h3 className="text-[15px] font-bold flex items-center gap-2">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fd79a8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <polygon points="13,2 3,14 12,14 11,22 21,10 12,10" />
                     </svg>
                     Optimize for Job
@@ -736,7 +736,7 @@ export default function ResumePage() {
                     style={{
                       background: 'linear-gradient(135deg, rgba(108,92,231,0.08), rgba(162,155,254,0.05))',
                       border: '1px solid rgba(108,92,231,0.15)',
-                      color: '#a29bfe',
+                      color: 'var(--purple)',
                     }}
                   >
                     <BrainIcon size={12} />
@@ -765,7 +765,7 @@ export default function ResumePage() {
                       style={{
                         top: jobTitle || jobTitleFocused ? '6px' : '14px',
                         fontSize: jobTitle || jobTitleFocused ? '10px' : '14px',
-                        color: jobTitleFocused ? '#fd79a8' : 'var(--text-muted)',
+                        color: jobTitleFocused ? 'var(--accent)' : 'var(--text-muted)',
                         fontWeight: jobTitle || jobTitleFocused ? 700 : 400,
                         letterSpacing: jobTitle || jobTitleFocused ? '0.05em' : 'normal',
                       }}
@@ -778,9 +778,9 @@ export default function ResumePage() {
                   <button
                     onClick={optimizeResume}
                     disabled={optimizing || !jobTitle}
-                    className="relative w-full py-3.5 rounded-xl text-white font-bold text-[14px] transition-all duration-300 overflow-hidden disabled:opacity-40"
+                    className="relative w-full py-3.5 rounded-xl text-[var(--text-on-accent)] font-bold text-[14px] transition-all duration-300 overflow-hidden disabled:opacity-40"
                     style={{
-                      background: 'linear-gradient(135deg, #fd79a8, #e84393)',
+                      background: 'linear-gradient(135deg, var(--accent), var(--accent-solid))',
                       boxShadow: !optimizing && jobTitle ? '0 4px 20px rgba(253,121,168,0.3)' : 'none',
                     }}
                     onMouseEnter={e => { if (!optimizing && jobTitle) e.currentTarget.style.boxShadow = '0 8px 40px rgba(253,121,168,0.4)' }}
@@ -811,8 +811,8 @@ export default function ResumePage() {
                       className="relative rounded-xl overflow-hidden"
                       style={{
                         height: '120px',
-                        background: 'rgba(255,255,255,0.01)',
-                        border: '1px solid rgba(255,255,255,0.04)',
+                        background: 'var(--bg-overlay)',
+                        border: '1px solid var(--border)',
                       }}
                     >
                       {/* Scanning lines */}
@@ -829,14 +829,14 @@ export default function ResumePage() {
                         {[80, 65, 90, 50].map((w, i) => (
                           <div key={i} className="flex items-center gap-3">
                             <div className="w-3 h-3 rounded-full" style={{ background: 'rgba(253,121,168,0.1)', animation: `pulse-brain 1.5s ease-in-out ${i * 0.2}s infinite` }} />
-                            <div className="h-2 rounded-full" style={{ width: `${w}%`, background: 'rgba(255,255,255,0.04)' }} />
+                            <div className="h-2 rounded-full" style={{ width: `${w}%`, background: 'var(--bg-overlay)' }} />
                           </div>
                         ))}
                       </div>
                       {/* Center brain pulse */}
                       <div className="absolute inset-0 flex items-center justify-center">
                         <div
-                          className="text-[#fd79a8]"
+                          className="text-[var(--accent)]"
                           style={{
                             animation: 'pulse-brain 1.5s ease-in-out infinite',
                             filter: 'drop-shadow(0 0 12px rgba(253,121,168,0.5))',
@@ -859,7 +859,7 @@ export default function ResumePage() {
                   className="rounded-2xl text-center py-8"
                   style={{
                     background: 'linear-gradient(135deg, rgba(18,18,26,0.95), rgba(14,14,22,0.98))',
-                    border: '1px solid rgba(255,255,255,0.06)',
+                    border: '1px solid var(--border)',
                     animation: 'glow-border 3s ease-in-out infinite',
                   }}
                 >
@@ -880,8 +880,8 @@ export default function ResumePage() {
                     border: '1px solid rgba(0,184,148,0.1)',
                   }}
                 >
-                  <h4 className="text-[13px] font-bold text-[#00b894] mb-4 flex items-center gap-2">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00b894" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <h4 className="text-[13px] font-bold text-[var(--green)] mb-4 flex items-center gap-2">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M22 11.08V12a10 10 0 11-5.93-9.14" /><polyline points="22,4 12,14.01 9,11.01" />
                     </svg>
                     Strengths
@@ -899,11 +899,11 @@ export default function ResumePage() {
                         }}
                       >
                         <div className="shrink-0 mt-0.5 w-5 h-5 rounded-full flex items-center justify-center" style={{ background: 'rgba(0,184,148,0.12)' }}>
-                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#00b894" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                             <polyline points="20,6 9,17 4,12" />
                           </svg>
                         </div>
-                        <span className="text-[12px] text-[#9a9aaa] leading-relaxed">{s}</span>
+                        <span className="text-[12px] text-[var(--text-muted)] leading-relaxed">{s}</span>
                       </div>
                     ))}
                   </div>
@@ -917,8 +917,8 @@ export default function ResumePage() {
                     border: '1px solid rgba(253,203,110,0.1)',
                   }}
                 >
-                  <h4 className="text-[13px] font-bold text-[#fdcb6e] mb-4 flex items-center gap-2">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fdcb6e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <h4 className="text-[13px] font-bold text-[var(--yellow)] mb-4 flex items-center gap-2">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
                     </svg>
                     Improvements
@@ -936,11 +936,11 @@ export default function ResumePage() {
                         }}
                       >
                         <div className="shrink-0 mt-0.5 w-5 h-5 rounded-full flex items-center justify-center" style={{ background: 'rgba(253,203,110,0.12)' }}>
-                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fdcb6e" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                             <line x1="12" y1="5" x2="12" y2="19" /><polyline points="19,12 12,5 5,12" />
                           </svg>
                         </div>
-                        <span className="text-[12px] text-[#9a9aaa] leading-relaxed">{imp}</span>
+                        <span className="text-[12px] text-[var(--text-muted)] leading-relaxed">{imp}</span>
                       </div>
                     ))}
                   </div>
@@ -951,22 +951,22 @@ export default function ResumePage() {
                   className="rounded-2xl overflow-hidden"
                   style={{
                     background: 'linear-gradient(135deg, rgba(18,18,26,0.95), rgba(14,14,22,0.98))',
-                    border: '1px solid rgba(255,255,255,0.06)',
+                    border: '1px solid var(--border)',
                   }}
                 >
                   {/* Document header bar */}
                   <div
                     className="flex items-center justify-between px-5 py-3"
                     style={{
-                      background: 'rgba(255,255,255,0.02)',
-                      borderBottom: '1px solid rgba(255,255,255,0.04)',
+                      background: 'var(--bg-overlay)',
+                      borderBottom: '1px solid var(--border)',
                     }}
                   >
                     <div className="flex items-center gap-3">
                       <div className="flex items-center gap-1.5">
-                        <div className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]" />
-                        <div className="w-2.5 h-2.5 rounded-full bg-[#febc2e]" />
-                        <div className="w-2.5 h-2.5 rounded-full bg-[#28c840]" />
+                        <div className="w-2.5 h-2.5 rounded-full bg-[var(--red)]" />
+                        <div className="w-2.5 h-2.5 rounded-full bg-[var(--yellow)]" />
+                        <div className="w-2.5 h-2.5 rounded-full bg-[var(--green)]" />
                       </div>
                       <span className="text-[11px] font-semibold text-[var(--text-muted)]">
                         Tailored Resume — {jobTitle}
@@ -978,14 +978,14 @@ export default function ResumePage() {
                         onClick={copyTailored}
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all duration-300"
                         style={{
-                          background: copiedTailored ? 'rgba(0,184,148,0.1)' : 'rgba(255,255,255,0.03)',
-                          border: `1px solid ${copiedTailored ? 'rgba(0,184,148,0.2)' : 'rgba(255,255,255,0.06)'}`,
-                          color: copiedTailored ? '#00b894' : 'var(--text-secondary)',
+                          background: copiedTailored ? 'rgba(0,184,148,0.1)' : 'var(--bg-overlay)',
+                          border: `1px solid ${copiedTailored ? 'rgba(0,184,148,0.2)' : 'var(--bg-overlay)'}`,
+                          color: copiedTailored ? 'var(--green)' : 'var(--text-secondary)',
                         }}
                       >
                         {copiedTailored ? (
                           <span style={{ animation: 'success-pop 0.3s ease' }}>
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#00b894" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                               <polyline points="20,6 9,17 4,12" />
                             </svg>
                           </span>
@@ -1002,7 +1002,7 @@ export default function ResumePage() {
                         style={{
                           background: 'rgba(253,121,168,0.08)',
                           border: '1px solid rgba(253,121,168,0.15)',
-                          color: '#fd79a8',
+                          color: 'var(--accent)',
                         }}
                         onMouseEnter={e => { e.currentTarget.style.background = 'rgba(253,121,168,0.15)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(253,121,168,0.15)' }}
                         onMouseLeave={e => { e.currentTarget.style.background = 'rgba(253,121,168,0.08)'; e.currentTarget.style.boxShadow = 'none' }}
@@ -1021,12 +1021,12 @@ export default function ResumePage() {
                     <div
                       className="p-6 rounded-xl min-h-[200px]"
                       style={{
-                        background: 'rgba(255,255,255,0.015)',
-                        border: '1px solid rgba(255,255,255,0.04)',
+                        background: 'var(--bg-overlay)',
+                        border: '1px solid var(--border)',
                         boxShadow: '0 4px 24px rgba(0,0,0,0.2)',
                       }}
                     >
-                      <p className="text-[12px] text-[#9a9aaa] leading-relaxed whitespace-pre-wrap font-mono">{optimization.tailored_resume}</p>
+                      <p className="text-[12px] text-[var(--text-muted)] leading-relaxed whitespace-pre-wrap font-mono">{optimization.tailored_resume}</p>
                     </div>
                   </div>
                 </div>
@@ -1051,16 +1051,16 @@ export default function ResumePage() {
                   borderBottom: '1px solid rgba(253,121,168,0.08)',
                 }}
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fd79a8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" />
                 </svg>
-                <span className="text-[13px] font-bold text-[#fd79a8]">Pro Tips</span>
+                <span className="text-[13px] font-bold text-[var(--accent)]">Pro Tips</span>
               </div>
               <div className="p-4 space-y-1">
                 {[
                   {
                     icon: (
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fd79a8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                         <circle cx="11" cy="11" r="7" /><path d="M21 21l-4.35-4.35" /><line x1="11" y1="8" x2="11" y2="14" /><line x1="8" y1="11" x2="14" y2="11" />
                       </svg>
                     ),
@@ -1070,7 +1070,7 @@ export default function ResumePage() {
                   },
                   {
                     icon: (
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fd79a8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                         <line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" />
                       </svg>
                     ),
@@ -1080,7 +1080,7 @@ export default function ResumePage() {
                   },
                   {
                     icon: (
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fd79a8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                         <polygon points="13,2 3,14 12,14 11,22 21,10 12,10" />
                       </svg>
                     ),
@@ -1106,13 +1106,13 @@ export default function ResumePage() {
                       </div>
                       <div>
                         <div className="flex items-center gap-2 mb-0.5">
-                          <span className="text-[12px] font-bold text-white/90">{tip.title}</span>
+                          <span className="text-[12px] font-bold text-ink/90">{tip.title}</span>
                           {tip.pro && (
                             <span
                               className="text-[8px] font-bold px-1.5 py-0.5 rounded tracking-wider"
                               style={{
                                 background: 'linear-gradient(135deg, rgba(253,121,168,0.15), rgba(232,67,147,0.1))',
-                                color: '#fd79a8',
+                                color: 'var(--accent)',
                                 border: '1px solid rgba(253,121,168,0.2)',
                               }}
                             >
@@ -1133,13 +1133,13 @@ export default function ResumePage() {
               className="rounded-2xl overflow-hidden"
               style={{
                 background: 'linear-gradient(135deg, rgba(18,18,26,0.95), rgba(14,14,22,0.98))',
-                border: '1px solid rgba(255,255,255,0.06)',
+                border: '1px solid var(--border)',
               }}
             >
               <div
                 className="px-5 py-3 flex items-center gap-2"
                 style={{
-                  borderBottom: '1px solid rgba(255,255,255,0.04)',
+                  borderBottom: '1px solid var(--border)',
                 }}
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -1151,7 +1151,7 @@ export default function ResumePage() {
                 {[
                   {
                     icon: (
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00b894" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                         <rect x="3" y="3" width="18" height="18" rx="2" /><line x1="3" y1="9" x2="21" y2="9" /><line x1="9" y1="21" x2="9" y2="9" />
                       </svg>
                     ),
@@ -1160,7 +1160,7 @@ export default function ResumePage() {
                   },
                   {
                     icon: (
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00b894" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" /><polyline points="14,2 14,8 20,8" />
                       </svg>
                     ),
@@ -1169,7 +1169,7 @@ export default function ResumePage() {
                   },
                   {
                     icon: (
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00b894" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M4 19.5A2.5 2.5 0 016.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" />
                       </svg>
                     ),
@@ -1179,7 +1179,7 @@ export default function ResumePage() {
                 ].map((tip, i) => (
                   <div
                     key={i}
-                    className="group/tip p-3 rounded-xl transition-all duration-300 hover:bg-[rgba(255,255,255,0.02)]"
+                    className="group/tip p-3 rounded-xl transition-all duration-300 hover:bg-[var(--bg-overlay)]"
                     style={{
                       animation: `card-fade-in 0.4s ease ${(i + 3) * 0.1}s both`,
                       borderLeft: '2px solid rgba(0,184,148,0.15)',
@@ -1193,7 +1193,7 @@ export default function ResumePage() {
                         {tip.icon}
                       </div>
                       <div>
-                        <span className="text-[12px] font-bold text-white/80 block mb-0.5">{tip.title}</span>
+                        <span className="text-[12px] font-bold text-ink/80 block mb-0.5">{tip.title}</span>
                         <span className="text-[11px] text-[var(--text-muted)] leading-relaxed">{tip.desc}</span>
                       </div>
                     </div>
@@ -1212,8 +1212,8 @@ export default function ResumePage() {
                   animation: 'card-fade-in 0.3s ease',
                 }}
               >
-                <div className="text-[10px] font-bold text-[#fd79a8] tracking-wider mb-2">SELECTED FOR OPTIMIZATION</div>
-                <div className="text-[13px] font-semibold text-white/90 truncate">{selectedResume.name}</div>
+                <div className="text-[10px] font-bold text-[var(--accent)] tracking-wider mb-2">SELECTED FOR OPTIMIZATION</div>
+                <div className="text-[13px] font-semibold text-ink/90 truncate">{selectedResume.name}</div>
                 <div className="text-[11px] text-[var(--text-muted)] mt-1">
                   {selectedResume.ats_score ? `Current ATS Score: ${selectedResume.ats_score}/100` : 'Not yet analyzed'}
                 </div>

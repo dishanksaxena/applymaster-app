@@ -12,13 +12,13 @@ type Status = (typeof statuses)[number]
 const pipelineStatuses: Status[] = ['saved', 'queued', 'applied', 'screening', 'interview', 'offer']
 
 const statusConfig: Record<Status, { label: string; color: string; gradient: string; icon: React.ReactNode; bg: string }> = {
-  saved:     { label: 'Saved',     color: '#8a8a9a', gradient: 'from-gray-500 to-gray-600',     bg: 'rgba(138,138,154,0.10)', icon: <BookmarkIcon /> },
-  queued:    { label: 'Queued',    color: '#f0b429', gradient: 'from-yellow-400 to-amber-500',   bg: 'rgba(240,180,41,0.10)',  icon: <ClockIcon /> },
-  applied:   { label: 'Applied',   color: '#4c9aff', gradient: 'from-blue-400 to-blue-600',     bg: 'rgba(76,154,255,0.10)',  icon: <SendIcon /> },
-  screening: { label: 'Screening', color: '#a78bfa', gradient: 'from-purple-400 to-violet-600', bg: 'rgba(167,139,250,0.10)', icon: <EyeIcon /> },
-  interview: { label: 'Interview', color: '#f472b6', gradient: 'from-pink-400 to-rose-500',     bg: 'rgba(244,114,182,0.10)', icon: <MicIcon /> },
-  offer:     { label: 'Offer',     color: '#34d399', gradient: 'from-emerald-400 to-green-500',  bg: 'rgba(52,211,153,0.10)',  icon: <TrophyIcon /> },
-  rejected:  { label: 'Rejected',  color: '#f87171', gradient: 'from-red-400 to-red-600',       bg: 'rgba(248,113,113,0.10)', icon: <XCircleIcon /> },
+  saved:     { label: 'Saved',     color: 'var(--text-muted)', gradient: 'from-gray-500 to-gray-600',     bg: 'rgba(138,138,154,0.10)', icon: <BookmarkIcon /> },
+  queued:    { label: 'Queued',    color: 'var(--yellow)', gradient: 'from-[var(--yellow)] to-[var(--yellow)]',   bg: 'rgba(240,180,41,0.10)',  icon: <ClockIcon /> },
+  applied:   { label: 'Applied',   color: '#4c9aff', gradient: 'from-[var(--blue)] to-[var(--blue)]',     bg: 'rgba(76,154,255,0.10)',  icon: <SendIcon /> },
+  screening: { label: 'Screening', color: 'var(--purple)', gradient: 'from-[var(--accent)] to-[var(--accent)]', bg: 'rgba(167,139,250,0.10)', icon: <EyeIcon /> },
+  interview: { label: 'Interview', color: 'var(--accent)', gradient: 'from-[var(--accent)] to-[var(--red)]',     bg: 'rgba(244,114,182,0.10)', icon: <MicIcon /> },
+  offer:     { label: 'Offer',     color: 'var(--green)', gradient: 'from-[var(--green)] to-[var(--green)]',  bg: 'rgba(52,211,153,0.10)',  icon: <TrophyIcon /> },
+  rejected:  { label: 'Rejected',  color: 'var(--red)', gradient: 'from-[var(--red)] to-[var(--red)]',       bg: 'rgba(248,113,113,0.10)', icon: <XCircleIcon /> },
 }
 
 // ─── SVG Icons ──────────────────────────────────────────────────────────────
@@ -107,7 +107,7 @@ function MatchRing({ score, color, size = 40 }: { score: number; color: string; 
   return (
     <div className="relative" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="3" />
+        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="var(--border)" strokeWidth="3" />
         <circle
           cx={size / 2} cy={size / 2} r={radius} fill="none"
           stroke={color} strokeWidth="3" strokeLinecap="round"
@@ -115,7 +115,7 @@ function MatchRing({ score, color, size = 40 }: { score: number; color: string; 
           style={{ transition: 'stroke-dashoffset 1s ease-out' }}
         />
       </svg>
-      <span className="absolute inset-0 flex items-center justify-center text-[9px] font-black text-white">
+      <span className="absolute inset-0 flex items-center justify-center text-[9px] font-black text-ink">
         {animatedScore}%
       </span>
     </div>
@@ -403,7 +403,7 @@ export default function ApplicationsPage() {
           transition: background-color 0.2s ease, transform 0.15s ease;
         }
         .list-row:hover {
-          background-color: rgba(255,255,255,0.03);
+          background-color: var(--bg-overlay);
           transform: translateX(4px);
         }
         .status-pill {
@@ -425,27 +425,27 @@ export default function ApplicationsPage() {
           <h2 className="text-3xl font-black tracking-tight mb-1 bg-gradient-to-r from-white via-white to-gray-400 bg-clip-text text-transparent">
             Application Tracker
           </h2>
-          <p className="text-[14px] text-[#6a6a7a]">
+          <p className="text-[14px] text-[var(--text-secondary)]">
             Track your job applications through every stage of the pipeline.
           </p>
         </div>
 
         {/* View Toggle */}
         {!isEmpty && (
-          <div className="relative flex items-center bg-[#0d0d15] border border-[rgba(255,255,255,0.06)] rounded-xl p-1">
+          <div className="relative flex items-center bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-1">
             <div
-              className="absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-lg bg-gradient-to-r from-[rgba(244,114,182,0.15)] to-[rgba(167,139,250,0.15)] border border-[rgba(255,255,255,0.08)] view-toggle-slider"
+              className="absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-lg bg-gradient-to-r from-[rgba(244,114,182,0.15)] to-[rgba(167,139,250,0.15)] border border-[var(--border)] view-toggle-slider"
               style={{ transform: view === 'kanban' ? 'translateX(0)' : 'translateX(calc(100% + 4px))' }}
             />
             <button
               onClick={() => setView('kanban')}
-              className={`relative z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-colors ${view === 'kanban' ? 'text-white' : 'text-[#5a5a6a] hover:text-[#8a8a9a]'}`}
+              className={`relative z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-colors ${view === 'kanban' ? 'text-ink' : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]'}`}
             >
               <KanbanIcon /> Board
             </button>
             <button
               onClick={() => setView('list')}
-              className={`relative z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-colors ${view === 'list' ? 'text-white' : 'text-[#5a5a6a] hover:text-[#8a8a9a]'}`}
+              className={`relative z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-colors ${view === 'list' ? 'text-ink' : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]'}`}
             >
               <ListIcon /> List
             </button>
@@ -456,26 +456,26 @@ export default function ApplicationsPage() {
       {loading ? (
         <div className="flex items-center justify-center py-24">
           <div className="flex flex-col items-center gap-4">
-            <div className="w-10 h-10 rounded-full border-2 border-[rgba(244,114,182,0.3)] border-t-[#f472b6] animate-spin" />
-            <span className="text-[13px] text-[#5a5a6a] font-medium">Loading applications...</span>
+            <div className="w-10 h-10 rounded-full border-2 border-[rgba(244,114,182,0.3)] border-t-[var(--accent)] animate-spin" />
+            <span className="text-[13px] text-[var(--text-muted)] font-medium">Loading applications...</span>
           </div>
         </div>
       ) : isEmpty ? (
         /* ─── Empty State ────────────────────────────────────────────── */
         <div className="flex flex-col items-center justify-center py-20" style={{ animation: 'floatUp 0.6s ease forwards' }}>
           <div className="relative mb-6">
-            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-pink-500/20 to-purple-500/20 blur-2xl scale-150" />
-            <div className="relative text-[#5a5a6a]" style={{ animation: 'rocketBob 3s ease-in-out infinite' }}>
+            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[var(--accent-dim)] to-[var(--accent-dim)] blur-2xl scale-150" />
+            <div className="relative text-[var(--text-muted)]" style={{ animation: 'rocketBob 3s ease-in-out infinite' }}>
               <RocketIcon />
             </div>
           </div>
-          <h3 className="text-xl font-bold text-white mb-2">No applications yet</h3>
-          <p className="text-[14px] text-[#5a5a6a] mb-6 text-center max-w-sm">
+          <h3 className="text-xl font-bold text-[var(--text)] mb-2">No applications yet</h3>
+          <p className="text-[14px] text-[var(--text-muted)] mb-6 text-center max-w-sm">
             Start your journey by browsing jobs and adding them to your pipeline. We will track every step.
           </p>
           <Link
             href="/jobs"
-            className="px-6 py-2.5 rounded-xl text-[13px] font-bold text-white bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-400 hover:to-purple-500 transition-all shadow-lg shadow-pink-500/20 hover:shadow-pink-500/40 hover:scale-105 active:scale-95"
+            className="px-6 py-2.5 rounded-xl text-[13px] font-bold text-ink bg-gradient-to-r from-[var(--accent)] to-[var(--accent)] hover:from-[var(--accent)] hover:to-[var(--accent)] transition-all shadow-lg shadow-pink-500/20 hover:shadow-pink-500/40 hover:scale-105 active:scale-95"
           >
             Browse Jobs
           </Link>
@@ -486,17 +486,17 @@ export default function ApplicationsPage() {
           <div className="grid grid-cols-3 gap-4">
             {[
               { label: 'Total Applications', value: stats.total, suffix: '', color: '#4c9aff' },
-              { label: 'Interview Rate', value: stats.interviewRate, suffix: '%', color: '#f472b6' },
-              { label: 'Avg Response Time', value: stats.avgResponseDays, suffix: 'd', color: '#a78bfa' },
+              { label: 'Interview Rate', value: stats.interviewRate, suffix: '%', color: 'var(--accent)' },
+              { label: 'Avg Response Time', value: stats.avgResponseDays, suffix: 'd', color: 'var(--purple)' },
             ].map((stat, i) => (
               <div
                 key={stat.label}
-                className="relative overflow-hidden rounded-2xl border border-[rgba(255,255,255,0.06)] bg-[#0d0d15] p-5"
+                className="relative overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5"
                 style={{ animation: `floatUp 0.5s ease ${i * 0.1}s both` }}
               >
                 <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r opacity-60" style={{ backgroundImage: `linear-gradient(to right, transparent, ${stat.color}, transparent)` }} />
-                <div className="text-[11px] font-semibold text-[#5a5a6a] uppercase tracking-wider mb-2">{stat.label}</div>
-                <div className="text-3xl font-black text-white">
+                <div className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2">{stat.label}</div>
+                <div className="text-3xl font-black text-[var(--text)]">
                   <AnimatedNumber value={stat.value} delay={i * 150} />{stat.suffix}
                 </div>
               </div>
@@ -505,7 +505,7 @@ export default function ApplicationsPage() {
 
           {/* ─── Pipeline Funnel ──────────────────────────────────── */}
           <div
-            className="relative rounded-2xl border border-[rgba(255,255,255,0.06)] bg-[#0d0d15] p-6 overflow-hidden"
+            className="relative rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-6 overflow-hidden"
             style={{ animation: 'floatUp 0.5s ease 0.2s both' }}
           >
             <div className="absolute inset-0 opacity-30" style={{
@@ -525,8 +525,8 @@ export default function ApplicationsPage() {
                       <div
                         className="relative flex items-center justify-center w-12 h-12 rounded-full border-2 transition-all duration-500"
                         style={{
-                          borderColor: isActive ? config.color : 'rgba(255,255,255,0.08)',
-                          background: isActive ? `${config.color}15` : 'rgba(255,255,255,0.02)',
+                          borderColor: isActive ? config.color : 'var(--bg-overlay)',
+                          background: isActive ? `${config.color}15` : 'var(--bg-overlay)',
                           boxShadow: isActive ? `0 0 20px ${config.color}25, 0 0 40px ${config.color}10` : 'none',
                         }}
                       >
@@ -540,14 +540,14 @@ export default function ApplicationsPage() {
                             }}
                           />
                         )}
-                        <span className="text-lg font-black" style={{ color: isActive ? config.color : '#3a3a4a' }}>
+                        <span className="text-lg font-black" style={{ color: isActive ? config.color : 'var(--text-faint)' }}>
                           <AnimatedNumber value={count} delay={i * 100 + 400} />
                         </span>
                       </div>
                       <div className="flex flex-col items-center">
                         <span
                           className="text-[10px] font-bold uppercase tracking-wider"
-                          style={{ color: isActive ? config.color : '#3a3a4a' }}
+                          style={{ color: isActive ? config.color : 'var(--text-faint)' }}
                         >
                           {config.label}
                         </span>
@@ -562,7 +562,7 @@ export default function ApplicationsPage() {
                           style={{
                             background: i < activeStageIndex
                               ? `linear-gradient(90deg, ${statusConfig[pipelineStatuses[i]].color}, ${statusConfig[pipelineStatuses[i + 1]].color})`
-                              : 'rgba(255,255,255,0.06)',
+                              : 'var(--bg-overlay)',
                             backgroundSize: '200% 100%',
                             animation: i < activeStageIndex ? 'gradientFlow 3s ease infinite' : 'none',
                           }}
@@ -585,14 +585,14 @@ export default function ApplicationsPage() {
               <select
                 value={statusFilter}
                 onChange={e => setStatusFilter(e.target.value)}
-                className="filter-select pl-3 pr-8 py-2 rounded-xl bg-[#0d0d15] border border-[rgba(255,255,255,0.06)] text-[12px] font-semibold text-white focus:outline-none focus:border-[rgba(167,139,250,0.3)] transition-colors cursor-pointer"
+                className="filter-select pl-3 pr-8 py-2 rounded-xl bg-[var(--bg-card)] border border-[var(--border)] text-[12px] font-semibold text-[var(--text)] focus:outline-none focus:border-[rgba(167,139,250,0.3)] transition-colors cursor-pointer"
               >
                 <option value="all">All Statuses</option>
                 {statuses.map(s => (
                   <option key={s} value={s}>{statusConfig[s].label}</option>
                 ))}
               </select>
-              <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-[#5a5a6a]">
+              <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-[var(--text-muted)]">
                 <ChevronDownIcon />
               </div>
             </div>
@@ -602,18 +602,18 @@ export default function ApplicationsPage() {
               <select
                 value={sortBy}
                 onChange={e => setSortBy(e.target.value as 'newest' | 'oldest' | 'match')}
-                className="filter-select pl-3 pr-8 py-2 rounded-xl bg-[#0d0d15] border border-[rgba(255,255,255,0.06)] text-[12px] font-semibold text-white focus:outline-none focus:border-[rgba(167,139,250,0.3)] transition-colors cursor-pointer"
+                className="filter-select pl-3 pr-8 py-2 rounded-xl bg-[var(--bg-card)] border border-[var(--border)] text-[12px] font-semibold text-[var(--text)] focus:outline-none focus:border-[rgba(167,139,250,0.3)] transition-colors cursor-pointer"
               >
                 <option value="newest">Newest First</option>
                 <option value="oldest">Oldest First</option>
                 <option value="match">Highest Match</option>
               </select>
-              <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-[#5a5a6a]">
+              <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-[var(--text-muted)]">
                 <ChevronDownIcon />
               </div>
             </div>
 
-            <div className="ml-auto text-[11px] text-[#4a4a5a] font-medium">
+            <div className="ml-auto text-[11px] text-[var(--text-faint)] font-medium">
               {filteredApps.length} application{filteredApps.length !== 1 ? 's' : ''}
             </div>
           </div>
@@ -625,10 +625,10 @@ export default function ApplicationsPage() {
               {canScrollLeft && (
                 <button
                   onClick={() => scroll('left')}
-                  className="absolute left-0 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-[rgba(253,121,168,0.2)] to-[rgba(162,155,254,0.2)] border border-[rgba(255,255,255,0.1)] hover:border-[rgba(253,121,168,0.3)] transition-all hover:scale-110 active:scale-95 group"
+                  className="absolute left-0 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-[rgba(253,121,168,0.2)] to-[rgba(162,155,254,0.2)] border border-[var(--border)] hover:border-[rgba(253,121,168,0.3)] transition-all hover:scale-110 active:scale-95 group"
                   title="Scroll left"
                 >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-[#fd79a8] group-hover:text-[#ff9abf] transition-colors">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-[var(--accent)] group-hover:text-[var(--accent)] transition-colors">
                     <polyline points="15 18 9 12 15 6" />
                   </svg>
                 </button>
@@ -638,10 +638,10 @@ export default function ApplicationsPage() {
               {canScrollRight && (
                 <button
                   onClick={() => scroll('right')}
-                  className="absolute right-0 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-[rgba(162,155,254,0.2)] to-[rgba(116,185,255,0.2)] border border-[rgba(255,255,255,0.1)] hover:border-[rgba(116,185,255,0.3)] transition-all hover:scale-110 active:scale-95 group"
+                  className="absolute right-0 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-[rgba(162,155,254,0.2)] to-[rgba(116,185,255,0.2)] border border-[var(--border)] hover:border-[rgba(116,185,255,0.3)] transition-all hover:scale-110 active:scale-95 group"
                   title="Scroll right"
                 >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-[#74b9ff] group-hover:text-[#99d5ff] transition-colors">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-[var(--blue)] group-hover:text-[var(--blue)] transition-colors">
                     <polyline points="9 18 15 12 9 6" />
                   </svg>
                 </button>
@@ -678,7 +678,7 @@ export default function ApplicationsPage() {
                           >
                             {config.icon}
                           </div>
-                          <h3 className="text-[13px] font-bold text-white">
+                          <h3 className="text-[13px] font-bold text-[var(--text)]">
                             {config.label}
                           </h3>
                           <span
@@ -688,7 +688,7 @@ export default function ApplicationsPage() {
                             {apps.length}
                           </span>
                           {dropTargetStatus === status && draggedFromStatus && draggedFromStatus !== status && (
-                            <div className="absolute right-2 -bottom-1 text-[10px] text-[#4a4a5a]">
+                            <div className="absolute right-2 -bottom-1 text-[10px] text-[var(--text-faint)]">
                               Drop to move →
                             </div>
                           )}
@@ -703,7 +703,7 @@ export default function ApplicationsPage() {
                         onDragLeave={handleDragLeaveColumn}
                         onDrop={(e) => handleDropOnColumn(e, status)}
                         style={{
-                          backgroundColor: dropTargetStatus === status ? 'rgba(255,255,255,0.05)' : 'transparent',
+                          backgroundColor: dropTargetStatus === status ? 'var(--bg-overlay)' : 'transparent',
                           borderRadius: '0.75rem',
                           padding: '0.75rem',
                           transition: 'background-color 0.2s ease',
@@ -716,7 +716,7 @@ export default function ApplicationsPage() {
                             draggable={!isSwappingCard}
                             onDragStart={(e) => handleDragStart(e, app.id, status, app.position || cardIndex)}
                             onDragEnd={handleDragEnd}
-                            className={`card-hover relative rounded-2xl border border-[rgba(255,255,255,0.06)] p-4 cursor-grab active:cursor-grabbing group transition-all ${
+                            className={`card-hover relative rounded-2xl border border-[var(--border)] p-4 cursor-grab active:cursor-grabbing group transition-all ${
                               draggedCardId === app.id ? 'opacity-50 scale-95' : 'opacity-100 scale-100'
                             }`}
                             style={{
@@ -731,14 +731,14 @@ export default function ApplicationsPage() {
                             }}
                             onMouseLeave={e => {
                               const el = e.currentTarget
-                              el.style.borderColor = 'rgba(255,255,255,0.06)'
+                              el.style.borderColor = 'var(--border)'
                               el.style.boxShadow = 'none'
                             }}
                           >
                             <div className="flex items-start gap-3">
                               {/* Company Logo Placeholder */}
                               <div
-                                className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center text-[14px] font-black text-white"
+                                className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center text-[14px] font-black text-[var(--text-on-accent)]"
                                 style={{
                                   background: `linear-gradient(135deg, ${config.color}40, ${config.color}20)`,
                                   border: `1px solid ${config.color}20`,
@@ -747,10 +747,10 @@ export default function ApplicationsPage() {
                                 {(app.job?.company || 'C')[0].toUpperCase()}
                               </div>
                               <div className="flex-1 min-w-0">
-                                <div className="text-[13px] font-bold text-white mb-0.5 line-clamp-2 leading-tight">
+                                <div className="text-[13px] font-bold text-[var(--text)] mb-0.5 line-clamp-2 leading-tight">
                                   {app.job?.title || 'Job Title'}
                                 </div>
-                                <div className="text-[11px] text-[#6a6a7a] line-clamp-1">
+                                <div className="text-[11px] text-[var(--text-secondary)] line-clamp-1">
                                   {app.job?.company || 'Company'} {app.job?.location ? `\u00B7 ${app.job.location}` : ''}
                                 </div>
                               </div>
@@ -762,12 +762,12 @@ export default function ApplicationsPage() {
 
                             {/* Timestamp */}
                             {app.applied_at && (
-                              <div className="mt-3 text-[10px] text-[#4a4a5a] font-medium">
+                              <div className="mt-3 text-[10px] text-[var(--text-faint)] font-medium">
                                 Applied {daysAgo(app.applied_at)}
                               </div>
                             )}
                             {!app.applied_at && app.created_at && (
-                              <div className="mt-3 text-[10px] text-[#4a4a5a] font-medium">
+                              <div className="mt-3 text-[10px] text-[var(--text-faint)] font-medium">
                                 Added {daysAgo(app.created_at)}
                               </div>
                             )}
@@ -786,7 +786,7 @@ export default function ApplicationsPage() {
                                   }}
                                 >
                                   {statuses.map(s => (
-                                    <option key={s} value={s} style={{ backgroundColor: '#12121a', color: '#fff' }}>
+                                    <option key={s} value={s} style={{ backgroundColor: 'var(--bg-card)', color: '#fff' }}>
                                       {statusConfig[s].label}
                                     </option>
                                   ))}
@@ -807,8 +807,8 @@ export default function ApplicationsPage() {
                         ))}
 
                         {apps.length === 0 && (
-                          <div className="flex flex-col items-center py-10 text-[#3a3a4a]">
-                            <div className="w-8 h-8 rounded-full border-2 border-dashed border-[rgba(255,255,255,0.06)] flex items-center justify-center mb-2">
+                          <div className="flex flex-col items-center py-10 text-[var(--text-faint)]">
+                            <div className="w-8 h-8 rounded-full border-2 border-dashed border-[var(--border)] flex items-center justify-center mb-2">
                               <span className="text-[16px] opacity-40">+</span>
                             </div>
                             <div className="text-[11px] font-medium">No applications</div>
@@ -826,18 +826,18 @@ export default function ApplicationsPage() {
           {/* ─── List View ───────────────────────────────────────── */}
           {view === 'list' && (
             <div
-              className="rounded-2xl border border-[rgba(255,255,255,0.06)] bg-[#0d0d15] overflow-hidden"
+              className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] overflow-hidden"
               style={{ animation: 'floatUp 0.4s ease 0.35s both' }}
             >
               {/* Table Header */}
-              <div className="grid grid-cols-[2fr_1.5fr_1fr_0.8fr_0.8fr_1fr] gap-4 px-5 py-3 border-b border-[rgba(255,255,255,0.04)] text-[10px] font-bold uppercase tracking-wider text-[#4a4a5a]">
+              <div className="grid grid-cols-[2fr_1.5fr_1fr_0.8fr_0.8fr_1fr] gap-4 px-5 py-3 border-b border-[var(--border)] text-[10px] font-bold uppercase tracking-wider text-[var(--text-faint)]">
                 <div>Position</div>
                 <div>Company</div>
-                <div className="flex items-center gap-1 cursor-pointer hover:text-[#8a8a9a] transition-colors" onClick={() => setSortBy('match')}>
+                <div className="flex items-center gap-1 cursor-pointer hover:text-[var(--text-secondary)] transition-colors" onClick={() => setSortBy('match')}>
                   Match <ArrowUpDownIcon />
                 </div>
                 <div>Status</div>
-                <div className="flex items-center gap-1 cursor-pointer hover:text-[#8a8a9a] transition-colors" onClick={() => setSortBy(sortBy === 'newest' ? 'oldest' : 'newest')}>
+                <div className="flex items-center gap-1 cursor-pointer hover:text-[var(--text-secondary)] transition-colors" onClick={() => setSortBy(sortBy === 'newest' ? 'oldest' : 'newest')}>
                   Date <ArrowUpDownIcon />
                 </div>
                 <div>Action</div>
@@ -849,24 +849,24 @@ export default function ApplicationsPage() {
                 return (
                   <div
                     key={app.id}
-                    className="list-row grid grid-cols-[2fr_1.5fr_1fr_0.8fr_0.8fr_1fr] gap-4 px-5 py-3.5 border-b border-[rgba(255,255,255,0.03)] items-center"
+                    className="list-row grid grid-cols-[2fr_1.5fr_1fr_0.8fr_0.8fr_1fr] gap-4 px-5 py-3.5 border-b border-[var(--border)] items-center"
                     style={{ animation: `floatUp 0.3s ease ${i * 0.03}s both` }}
                   >
                     {/* Position */}
                     <div className="flex items-center gap-3">
                       <div
-                        className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-[12px] font-black text-white"
+                        className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-[12px] font-black text-[var(--text-on-accent)]"
                         style={{ background: `linear-gradient(135deg, ${config.color}40, ${config.color}20)` }}
                       >
                         {(app.job?.company || 'C')[0].toUpperCase()}
                       </div>
-                      <span className="text-[13px] font-semibold text-white line-clamp-1">
+                      <span className="text-[13px] font-semibold text-[var(--text)] line-clamp-1">
                         {app.job?.title || 'Job Title'}
                       </span>
                     </div>
 
                     {/* Company */}
-                    <div className="text-[12px] text-[#6a6a7a] line-clamp-1">
+                    <div className="text-[12px] text-[var(--text-secondary)] line-clamp-1">
                       {app.job?.company || 'Company'} {app.job?.location ? `\u00B7 ${app.job.location}` : ''}
                     </div>
 
@@ -874,7 +874,7 @@ export default function ApplicationsPage() {
                     <div>
                       {app.match_score != null ? (
                         <div className="flex items-center gap-2">
-                          <div className="flex-1 h-1.5 rounded-full bg-[rgba(255,255,255,0.04)] overflow-hidden">
+                          <div className="flex-1 h-1.5 rounded-full bg-[var(--bg-overlay)] overflow-hidden">
                             <div
                               className="h-full rounded-full transition-all duration-700"
                               style={{ width: `${app.match_score}%`, backgroundColor: config.color }}
@@ -883,7 +883,7 @@ export default function ApplicationsPage() {
                           <span className="text-[11px] font-bold" style={{ color: config.color }}>{app.match_score}%</span>
                         </div>
                       ) : (
-                        <span className="text-[11px] text-[#3a3a4a]">--</span>
+                        <span className="text-[11px] text-[var(--text-faint)]">--</span>
                       )}
                     </div>
 
@@ -899,7 +899,7 @@ export default function ApplicationsPage() {
                     </div>
 
                     {/* Date */}
-                    <div className="text-[11px] text-[#5a5a6a]">
+                    <div className="text-[11px] text-[var(--text-muted)]">
                       {daysAgo(app.applied_at || app.created_at)}
                     </div>
 
@@ -918,7 +918,7 @@ export default function ApplicationsPage() {
                             }}
                           >
                             {statuses.map(s => (
-                              <option key={s} value={s} style={{ backgroundColor: '#12121a', color: '#fff' }}>
+                              <option key={s} value={s} style={{ backgroundColor: 'var(--bg-card)', color: '#fff' }}>
                                 {statusConfig[s].label}
                               </option>
                             ))}
@@ -938,7 +938,7 @@ export default function ApplicationsPage() {
               })}
 
               {filteredApps.length === 0 && (
-                <div className="text-center py-12 text-[#4a4a5a] text-[13px]">
+                <div className="text-center py-12 text-[var(--text-faint)] text-[13px]">
                   No applications match this filter.
                 </div>
               )}

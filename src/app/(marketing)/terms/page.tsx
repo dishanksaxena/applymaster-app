@@ -43,15 +43,15 @@ export default function TermsPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <main className="min-h-screen bg-[#0a0a12] text-white">
+      <main className="min-h-screen bg-[var(--bg)] text-ink">
         <div className="mx-auto max-w-4xl px-6 py-24 lg:px-8">
           <h1 className="text-4xl font-extrabold tracking-tight mb-2">Terms of Service</h1>
-          <p className="text-gray-400 mb-12">Last updated: April 7, 2026</p>
+          <p className="text-[var(--text-muted)] mb-12">Last updated: April 7, 2026</p>
 
-          <div className="prose prose-invert max-w-none space-y-10 text-gray-300 leading-relaxed">
+          <div className="prose prose-invert max-w-none space-y-10 text-[var(--text-secondary)] leading-relaxed">
             {/* Acceptance */}
             <section>
-              <h2 className="text-2xl font-bold text-white mb-4">1. Acceptance of Terms</h2>
+              <h2 className="text-2xl font-bold text-ink mb-4">1. Acceptance of Terms</h2>
               <p>
                 By accessing or using ApplyMaster (&ldquo;the Service&rdquo;), operated by ApplyMaster
                 (&ldquo;we,&rdquo; &ldquo;our,&rdquo; or &ldquo;us&rdquo;), you agree to be bound by these
@@ -68,7 +68,7 @@ export default function TermsPage() {
 
             {/* Description of Service */}
             <section>
-              <h2 className="text-2xl font-bold text-white mb-4">2. Description of Service</h2>
+              <h2 className="text-2xl font-bold text-ink mb-4">2. Description of Service</h2>
               <p>
                 ApplyMaster is an AI-powered job application platform that provides the following features:
               </p>
@@ -87,7 +87,7 @@ export default function TermsPage() {
 
             {/* Account Registration */}
             <section>
-              <h2 className="text-2xl font-bold text-white mb-4">3. Account Registration</h2>
+              <h2 className="text-2xl font-bold text-ink mb-4">3. Account Registration</h2>
               <p>To use ApplyMaster, you must:</p>
               <ul className="list-disc pl-6 space-y-2 mt-4">
                 <li>Be at least 16 years of age.</li>
@@ -103,7 +103,7 @@ export default function TermsPage() {
 
             {/* Acceptable Use */}
             <section>
-              <h2 className="text-2xl font-bold text-white mb-4">4. Acceptable Use</h2>
+              <h2 className="text-2xl font-bold text-ink mb-4">4. Acceptable Use</h2>
               <p>You agree not to use the Service to:</p>
               <ul className="list-disc pl-6 space-y-2 mt-4">
                 <li>Submit fraudulent, misleading, or false information in job applications.</li>
@@ -119,37 +119,37 @@ export default function TermsPage() {
 
             {/* Subscriptions and Payments */}
             <section>
-              <h2 className="text-2xl font-bold text-white mb-4">5. Subscriptions and Payments</h2>
+              <h2 className="text-2xl font-bold text-ink mb-4">5. Subscriptions and Payments</h2>
 
-              <h3 className="text-lg font-semibold text-white mt-6 mb-3">5.1 Plans</h3>
+              <h3 className="text-lg font-semibold text-ink mt-6 mb-3">5.1 Plans</h3>
               <p>
                 ApplyMaster offers a Free plan, a Pro subscription ($29/month), and a Lifetime plan ($199
                 one-time payment). Plan details, including features and limitations, are described on our{' '}
-                <Link href="/pricing" className="text-purple-400 underline hover:text-purple-300">pricing page</Link>.
+                <Link href="/pricing" className="text-[var(--accent)] underline hover:text-[var(--accent)]">pricing page</Link>.
               </p>
 
-              <h3 className="text-lg font-semibold text-white mt-6 mb-3">5.2 Billing</h3>
+              <h3 className="text-lg font-semibold text-ink mt-6 mb-3">5.2 Billing</h3>
               <p>
                 Pro subscriptions are billed monthly in advance via Stripe. By subscribing, you authorize
                 us to charge your payment method on a recurring basis until you cancel. Prices are in
                 US Dollars unless otherwise stated.
               </p>
 
-              <h3 className="text-lg font-semibold text-white mt-6 mb-3">5.3 Cancellation</h3>
+              <h3 className="text-lg font-semibold text-ink mt-6 mb-3">5.3 Cancellation</h3>
               <p>
                 You may cancel your Pro subscription at any time through your account settings. Cancellation
                 takes effect at the end of the current billing period. No partial refunds are issued for
                 unused portions of a billing cycle, except within the 14-day money-back guarantee period.
               </p>
 
-              <h3 className="text-lg font-semibold text-white mt-6 mb-3">5.4 Refunds</h3>
+              <h3 className="text-lg font-semibold text-ink mt-6 mb-3">5.4 Refunds</h3>
               <p>
                 We offer a 14-day money-back guarantee on both Pro and Lifetime plans. To request a refund,
                 contact support@applymaster.ai within 14 days of your purchase. After the 14-day period,
                 refunds are issued at our sole discretion.
               </p>
 
-              <h3 className="text-lg font-semibold text-white mt-6 mb-3">5.5 Price Changes</h3>
+              <h3 className="text-lg font-semibold text-ink mt-6 mb-3">5.5 Price Changes</h3>
               <p>
                 We reserve the right to adjust pricing. Existing subscribers will be notified at least
                 30 days before any price increase takes effect. Lifetime plan holders are not affected
@@ -159,16 +159,16 @@ export default function TermsPage() {
 
             {/* Intellectual Property */}
             <section>
-              <h2 className="text-2xl font-bold text-white mb-4">6. Intellectual Property</h2>
+              <h2 className="text-2xl font-bold text-ink mb-4">6. Intellectual Property</h2>
 
-              <h3 className="text-lg font-semibold text-white mt-6 mb-3">6.1 Our Content</h3>
+              <h3 className="text-lg font-semibold text-ink mt-6 mb-3">6.1 Our Content</h3>
               <p>
                 The Service, including its design, code, features, documentation, and branding, is
                 owned by ApplyMaster and protected by intellectual property laws. You may not copy,
                 modify, or distribute any part of the Service without written permission.
               </p>
 
-              <h3 className="text-lg font-semibold text-white mt-6 mb-3">6.2 Your Content</h3>
+              <h3 className="text-lg font-semibold text-ink mt-6 mb-3">6.2 Your Content</h3>
               <p>
                 You retain ownership of all content you upload to ApplyMaster, including resumes,
                 cover letters, and profile information. By using the Service, you grant us a limited,
@@ -180,7 +180,7 @@ export default function TermsPage() {
                 delivering the features you have requested.
               </p>
 
-              <h3 className="text-lg font-semibold text-white mt-6 mb-3">6.3 AI-Generated Content</h3>
+              <h3 className="text-lg font-semibold text-ink mt-6 mb-3">6.3 AI-Generated Content</h3>
               <p>
                 Content generated by ApplyMaster&apos;s AI features (optimized resumes, cover letters,
                 interview responses) is considered a derivative of your input and belongs to you. You
@@ -191,7 +191,7 @@ export default function TermsPage() {
 
             {/* Disclaimer of Warranties */}
             <section>
-              <h2 className="text-2xl font-bold text-white mb-4">7. Disclaimer of Warranties</h2>
+              <h2 className="text-2xl font-bold text-ink mb-4">7. Disclaimer of Warranties</h2>
               <p>
                 THE SERVICE IS PROVIDED &ldquo;AS IS&rdquo; AND &ldquo;AS AVAILABLE&rdquo; WITHOUT
                 WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO WARRANTIES
@@ -210,7 +210,7 @@ export default function TermsPage() {
 
             {/* Limitation of Liability */}
             <section>
-              <h2 className="text-2xl font-bold text-white mb-4">8. Limitation of Liability</h2>
+              <h2 className="text-2xl font-bold text-ink mb-4">8. Limitation of Liability</h2>
               <p>
                 TO THE MAXIMUM EXTENT PERMITTED BY LAW, APPLYMASTER AND ITS OFFICERS, DIRECTORS,
                 EMPLOYEES, AND AGENTS SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL,
@@ -225,7 +225,7 @@ export default function TermsPage() {
 
             {/* Indemnification */}
             <section>
-              <h2 className="text-2xl font-bold text-white mb-4">9. Indemnification</h2>
+              <h2 className="text-2xl font-bold text-ink mb-4">9. Indemnification</h2>
               <p>
                 You agree to indemnify and hold harmless ApplyMaster from any claims, damages, losses,
                 or expenses (including reasonable attorney fees) arising from your use of the Service,
@@ -235,7 +235,7 @@ export default function TermsPage() {
 
             {/* Third-Party Services */}
             <section>
-              <h2 className="text-2xl font-bold text-white mb-4">10. Third-Party Services</h2>
+              <h2 className="text-2xl font-bold text-ink mb-4">10. Third-Party Services</h2>
               <p>
                 The Service integrates with third-party job portals, payment processors, and AI providers.
                 Your use of these third-party services is subject to their respective terms of service and
@@ -245,7 +245,7 @@ export default function TermsPage() {
 
             {/* Termination */}
             <section>
-              <h2 className="text-2xl font-bold text-white mb-4">11. Termination</h2>
+              <h2 className="text-2xl font-bold text-ink mb-4">11. Termination</h2>
               <p>
                 We may suspend or terminate your access to the Service at any time for violation of these
                 Terms or for any other reason with reasonable notice. Upon termination:
@@ -253,7 +253,7 @@ export default function TermsPage() {
               <ul className="list-disc pl-6 space-y-2 mt-4">
                 <li>Your right to use the Service ceases immediately.</li>
                 <li>We will provide a reasonable period (at least 30 days) for you to export your data.</li>
-                <li>We will delete your personal data in accordance with our <Link href="/privacy" className="text-purple-400 underline hover:text-purple-300">Privacy Policy</Link>.</li>
+                <li>We will delete your personal data in accordance with our <Link href="/privacy" className="text-[var(--accent)] underline hover:text-[var(--accent)]">Privacy Policy</Link>.</li>
               </ul>
               <p className="mt-4">
                 You may terminate your account at any time by contacting support or through your account settings.
@@ -262,7 +262,7 @@ export default function TermsPage() {
 
             {/* Governing Law */}
             <section>
-              <h2 className="text-2xl font-bold text-white mb-4">12. Governing Law and Dispute Resolution</h2>
+              <h2 className="text-2xl font-bold text-ink mb-4">12. Governing Law and Dispute Resolution</h2>
               <p>
                 These Terms are governed by the laws of the State of Delaware, United States, without
                 regard to conflict of law principles. Any disputes arising from these Terms or the
@@ -274,7 +274,7 @@ export default function TermsPage() {
 
             {/* Severability */}
             <section>
-              <h2 className="text-2xl font-bold text-white mb-4">13. Severability</h2>
+              <h2 className="text-2xl font-bold text-ink mb-4">13. Severability</h2>
               <p>
                 If any provision of these Terms is found to be unenforceable, the remaining provisions
                 shall continue in full force and effect. The unenforceable provision shall be modified
@@ -284,9 +284,9 @@ export default function TermsPage() {
 
             {/* Entire Agreement */}
             <section>
-              <h2 className="text-2xl font-bold text-white mb-4">14. Entire Agreement</h2>
+              <h2 className="text-2xl font-bold text-ink mb-4">14. Entire Agreement</h2>
               <p>
-                These Terms, together with our <Link href="/privacy" className="text-purple-400 underline hover:text-purple-300">Privacy Policy</Link>,
+                These Terms, together with our <Link href="/privacy" className="text-[var(--accent)] underline hover:text-[var(--accent)]">Privacy Policy</Link>,
                 constitute the entire agreement between you and ApplyMaster regarding the Service and
                 supersede all prior agreements, understandings, and communications.
               </p>
@@ -294,9 +294,9 @@ export default function TermsPage() {
 
             {/* Contact */}
             <section>
-              <h2 className="text-2xl font-bold text-white mb-4">15. Contact Us</h2>
+              <h2 className="text-2xl font-bold text-ink mb-4">15. Contact Us</h2>
               <p>If you have questions about these Terms, contact us at:</p>
-              <div className="mt-4 rounded-xl border border-gray-800 bg-gray-900/40 p-6">
+              <div className="mt-4 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-6">
                 <p><strong>ApplyMaster</strong></p>
                 <p className="mt-1">Email: legal@applymaster.ai</p>
                 <p className="mt-1">Support: support@applymaster.ai</p>
@@ -305,11 +305,11 @@ export default function TermsPage() {
           </div>
 
           {/* Footer links */}
-          <div className="mt-16 pt-8 border-t border-gray-800 flex flex-wrap gap-6 text-sm">
-            <Link href="/privacy" className="text-purple-400 hover:text-purple-300">Privacy Policy</Link>
-            <Link href="/features" className="text-purple-400 hover:text-purple-300">Features</Link>
-            <Link href="/pricing" className="text-purple-400 hover:text-purple-300">Pricing</Link>
-            <Link href="/signup" className="text-purple-400 hover:text-purple-300">Sign Up</Link>
+          <div className="mt-16 pt-8 border-t border-[var(--border)] flex flex-wrap gap-6 text-sm">
+            <Link href="/privacy" className="text-[var(--accent)] hover:text-[var(--accent)]">Privacy Policy</Link>
+            <Link href="/features" className="text-[var(--accent)] hover:text-[var(--accent)]">Features</Link>
+            <Link href="/pricing" className="text-[var(--accent)] hover:text-[var(--accent)]">Pricing</Link>
+            <Link href="/signup" className="text-[var(--accent)] hover:text-[var(--accent)]">Sign Up</Link>
           </div>
         </div>
       </main>

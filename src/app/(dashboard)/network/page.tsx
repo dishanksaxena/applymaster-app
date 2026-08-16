@@ -61,11 +61,11 @@ const NETWORK_SOURCES: NetworkSource[] = [
 ]
 
 const DIRECT_CONNECTIONS = [
-  { id: 'dc1', name: 'Rahul Mehta', role: 'Engineering Lead', company: 'Uber', initials: 'RM', color: '#6c5ce7' },
-  { id: 'dc2', name: 'Sarah Kim', role: 'Product Designer', company: 'Airbnb', initials: 'SK', color: '#0984e3' },
-  { id: 'dc3', name: 'Mark Johnson', role: 'CTO', company: 'Notion', initials: 'MJ', color: '#e17055' },
-  { id: 'dc4', name: 'Neha Patel', role: 'Data Scientist', company: 'Netflix', initials: 'NP', color: '#00b894' },
-  { id: 'dc5', name: 'Kevin Wu', role: 'Senior SWE', company: 'Figma', initials: 'KW', color: '#fdcb6e' },
+  { id: 'dc1', name: 'Rahul Mehta', role: 'Engineering Lead', company: 'Uber', initials: 'RM', color: 'var(--purple)' },
+  { id: 'dc2', name: 'Sarah Kim', role: 'Product Designer', company: 'Airbnb', initials: 'SK', color: 'var(--blue)' },
+  { id: 'dc3', name: 'Mark Johnson', role: 'CTO', company: 'Notion', initials: 'MJ', color: 'var(--red)' },
+  { id: 'dc4', name: 'Neha Patel', role: 'Data Scientist', company: 'Netflix', initials: 'NP', color: 'var(--green)' },
+  { id: 'dc5', name: 'Kevin Wu', role: 'Senior SWE', company: 'Figma', initials: 'KW', color: 'var(--yellow)' },
 ]
 
 const ALL_REFERRALS: NetworkPerson[] = [
@@ -176,14 +176,14 @@ function NetworkMap({ results, directConnections, searching }: {
       <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ minHeight: '560px' }}>
         <defs>
           <linearGradient id="lineGradLeft" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="var(--purple, #6c5ce7)" stopOpacity="0.15" />
-            <stop offset="40%" stopColor="var(--purple, #6c5ce7)" stopOpacity="0.4" />
-            <stop offset="100%" stopColor="var(--accent, #e84393)" stopOpacity="0.5" />
+            <stop offset="0%" stopColor="var(--purple, var(--purple))" stopOpacity="0.15" />
+            <stop offset="40%" stopColor="var(--purple, var(--purple))" stopOpacity="0.4" />
+            <stop offset="100%" stopColor="var(--accent, var(--accent-solid))" stopOpacity="0.5" />
           </linearGradient>
           <linearGradient id="lineGradRight" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="var(--accent, #e84393)" stopOpacity="0.5" />
-            <stop offset="60%" stopColor="var(--green, #00b894)" stopOpacity="0.4" />
-            <stop offset="100%" stopColor="var(--green, #00b894)" stopOpacity="0.15" />
+            <stop offset="0%" stopColor="var(--accent, var(--accent-solid))" stopOpacity="0.5" />
+            <stop offset="60%" stopColor="var(--green, var(--green))" stopOpacity="0.4" />
+            <stop offset="100%" stopColor="var(--green, var(--green))" stopOpacity="0.15" />
           </linearGradient>
           <filter id="glowFilter">
             <feGaussianBlur stdDeviation="3" result="blur" />
@@ -233,7 +233,7 @@ function NetworkMap({ results, directConnections, searching }: {
           const endY = card.y + cardH / 2
           const ctrl1X = cx + (endX - cx) * 0.3
           const ctrl2X = endX - (endX - cx) * 0.4
-          const lineColor = card.canRefer ? '#00b894' : '#0984e3'
+          const lineColor = card.canRefer ? 'var(--green)' : 'var(--blue)'
           return (
             <g key={`r-${i}`}>
               <path
@@ -260,7 +260,7 @@ function NetworkMap({ results, directConnections, searching }: {
 
         {/* Scanning pulse when searching */}
         {searching && (
-          <circle cx={cx} cy={cy} r="30" fill="none" stroke="var(--accent, #e84393)" strokeWidth="2" opacity="0.4">
+          <circle cx={cx} cy={cy} r="30" fill="none" stroke="var(--accent, var(--accent-solid))" strokeWidth="2" opacity="0.4">
             <animate attributeName="r" from="30" to="250" dur="2s" repeatCount="indefinite" />
             <animate attributeName="opacity" from="0.5" to="0" dur="2s" repeatCount="indefinite" />
           </circle>
@@ -273,13 +273,13 @@ function NetworkMap({ results, directConnections, searching }: {
         style={{
           left: cx - 42, top: cy - 42,
           width: 84, height: 84,
-          background: 'linear-gradient(135deg, #e84393, #d63384)',
+          background: 'linear-gradient(135deg, var(--accent-solid), var(--accent-solid))',
           boxShadow: '0 0 0 6px rgba(232,67,147,0.12), 0 0 30px rgba(232,67,147,0.25), 0 8px 30px rgba(0,0,0,0.1)',
           animation: 'pulseGlow 3s ease-in-out infinite',
         }}
       >
-        <span className="text-white font-black text-[15px] tracking-wide">YOU</span>
-        <span className="text-white/60 text-[9px] font-medium mt-0.5">{directConnections.length} direct</span>
+        <span className="text-ink font-black text-[15px] tracking-wide">YOU</span>
+        <span className="text-ink/60 text-[9px] font-medium mt-0.5">{directConnections.length} direct</span>
       </div>
 
       {/* Outer ring */}
@@ -303,7 +303,7 @@ function NetworkMap({ results, directConnections, searching }: {
             boxShadow: 'var(--shadow-sm)',
           }}
         >
-          <div className="w-10 h-10 rounded-full flex items-center justify-center text-[12px] font-bold text-white shrink-0" style={{ background: card.color }}>
+          <div className="w-10 h-10 rounded-full flex items-center justify-center text-[12px] font-bold text-ink shrink-0" style={{ background: card.color }}>
             {card.initials}
           </div>
           <div className="min-w-0 flex-1">
@@ -317,7 +317,7 @@ function NetworkMap({ results, directConnections, searching }: {
 
       {/* Right Cards (Referrals) */}
       {rightCards.map((card, i) => {
-        const lineColor = card.canRefer ? '#00b894' : '#0984e3'
+        const lineColor = card.canRefer ? 'var(--green)' : 'var(--blue)'
         return (
           <motion.div
             key={card.id}
@@ -336,7 +336,7 @@ function NetworkMap({ results, directConnections, searching }: {
               <div className="flex items-center gap-1.5">
                 <span className="text-[13px] font-bold truncate" style={{ color: 'var(--text)' }}>{card.name}</span>
                 {card.canRefer && (
-                  <span className="shrink-0 text-[8px] font-bold px-1.5 py-0.5 rounded-full text-white bg-[#00b894]">REFER</span>
+                  <span className="shrink-0 text-[8px] font-bold px-1.5 py-0.5 rounded-full text-[var(--text-on-accent)] bg-[var(--green)]">REFER</span>
                 )}
               </div>
               <div className="text-[11px] truncate" style={{ color: 'var(--text-muted)' }}>{card.role}</div>
@@ -345,7 +345,7 @@ function NetworkMap({ results, directConnections, searching }: {
                 <span className="text-[9px]" style={{ color: 'var(--text-faint)' }}>{card.relevance}% match</span>
               </div>
             </div>
-            <div className="w-10 h-10 rounded-full flex items-center justify-center text-[12px] font-bold text-white shrink-0" style={{ background: `linear-gradient(135deg, ${lineColor}, ${lineColor}cc)` }}>
+            <div className="w-10 h-10 rounded-full flex items-center justify-center text-[12px] font-bold text-[var(--text-on-accent)] shrink-0" style={{ background: `linear-gradient(135deg, ${lineColor}, ${lineColor}cc)` }}>
               {card.initials}
             </div>
           </motion.div>
@@ -576,9 +576,9 @@ export default function NetworkPage() {
                   <span className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-faint)' }}>{icons.search}</span>
                 </div>
                 <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={handleSearch} disabled={searching || !searchQuery.trim()}
-                  className="h-12 px-6 rounded-xl font-bold text-[13px] text-white flex items-center gap-2 disabled:opacity-40 shrink-0"
-                  style={{ background: 'linear-gradient(135deg, #e84393, #d63384)', boxShadow: '0 4px 14px rgba(232,67,147,0.25)' }}>
-                  {searching ? <><motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }} className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full"/>Searching...</> : <>{icons.sparkle}Find People</>}
+                  className="h-12 px-6 rounded-xl font-bold text-[13px] text-[var(--text-on-accent)] flex items-center gap-2 disabled:opacity-40 shrink-0"
+                  style={{ background: 'linear-gradient(135deg, var(--accent-solid), var(--accent-solid))', boxShadow: '0 4px 14px rgba(232,67,147,0.25)' }}>
+                  {searching ? <><motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }} className="w-4 h-4 border-2 border-[var(--border)] border-t-white rounded-full"/>Searching...</> : <>{icons.sparkle}Find People</>}
                 </motion.button>
               </div>
               <div className="flex flex-wrap gap-2 mt-3">
@@ -628,14 +628,14 @@ export default function NetworkPage() {
                         style={{ background: 'var(--bg-card)', border: expandedId === person.id ? '1px solid var(--border-accent)' : '1px solid var(--border)', boxShadow: expandedId === person.id ? 'var(--shadow-lg)' : 'var(--shadow-sm)' }}>
                         <div className="flex items-start gap-4">
                           <div className="relative shrink-0">
-                            <div className="w-12 h-12 rounded-full flex items-center justify-center text-[13px] font-bold text-white" style={{ background: person.canRefer ? 'linear-gradient(135deg, #00b894, #00a381)' : 'linear-gradient(135deg, #0984e3, #0773c5)' }}>{person.initials}</div>
-                            {person.canRefer && <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-[#00b894] flex items-center justify-center" style={{ border: '2px solid var(--bg-card)' }}><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3"><polyline points="20,6 9,17 4,12"/></svg></div>}
+                            <div className="w-12 h-12 rounded-full flex items-center justify-center text-[13px] font-bold text-ink" style={{ background: person.canRefer ? 'linear-gradient(135deg, var(--green), var(--green))' : 'linear-gradient(135deg, var(--blue), #0773c5)' }}>{person.initials}</div>
+                            {person.canRefer && <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-[var(--green)] flex items-center justify-center" style={{ border: '2px solid var(--bg-card)' }}><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3"><polyline points="20,6 9,17 4,12"/></svg></div>}
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
                               <h3 className="text-[14px] font-bold" style={{ color: 'var(--text)' }}>{person.name}</h3>
-                              <span className="text-[10px] px-2 py-0.5 rounded-full font-bold" style={{ background: person.relevance > 90 ? 'rgba(0,184,148,0.08)' : 'rgba(9,132,227,0.08)', color: person.relevance > 90 ? '#00b894' : '#0984e3' }}>{person.relevance}% match</span>
-                              {person.canRefer && <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-[#00b894] text-white">Can Refer</span>}
+                              <span className="text-[10px] px-2 py-0.5 rounded-full font-bold" style={{ background: person.relevance > 90 ? 'rgba(0,184,148,0.08)' : 'rgba(9,132,227,0.08)', color: person.relevance > 90 ? 'var(--green)' : 'var(--blue)' }}>{person.relevance}% match</span>
+                              {person.canRefer && <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-[var(--green)] text-[var(--text-on-accent)]">Can Refer</span>}
                             </div>
                             <p className="text-[12px] mt-0.5" style={{ color: 'var(--text-secondary)' }}>{person.role} at <span className="font-semibold" style={{ color: 'var(--purple)' }}>{person.company}</span></p>
                             <p className="text-[11px] mt-1" style={{ color: 'var(--text-muted)' }}>{person.detail}</p>
@@ -650,7 +650,7 @@ export default function NetworkPage() {
                           </div>
                           <div className="flex flex-col gap-2 shrink-0">
                             {person.canRefer && (
-                              <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="h-8 px-3.5 rounded-lg text-[11px] font-bold text-white flex items-center gap-1.5" style={{ background: 'linear-gradient(135deg, #00b894, #00a381)', boxShadow: '0 2px 8px rgba(0,184,148,0.2)' }}>{icons.send}Ask Referral</motion.button>
+                              <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="h-8 px-3.5 rounded-lg text-[11px] font-bold text-[var(--text-on-accent)] flex items-center gap-1.5" style={{ background: 'linear-gradient(135deg, var(--green), var(--green))', boxShadow: '0 2px 8px rgba(0,184,148,0.2)' }}>{icons.send}Ask Referral</motion.button>
                             )}
                             <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="h-8 px-3.5 rounded-lg text-[11px] font-semibold flex items-center gap-1.5" style={{ background: 'var(--purple-dim)', color: 'var(--purple)', border: '1px solid rgba(108,92,231,0.15)' }}>{icons.link}Get Intro</motion.button>
                           </div>
@@ -693,7 +693,7 @@ export default function NetworkPage() {
                 <p className="text-[12px]" style={{ color: 'var(--text-muted)' }}>More sources = better referral matches</p>
               </div>
               <div className="h-2 w-28 rounded-full overflow-hidden" style={{ background: 'var(--border)' }}>
-                <div className="h-full rounded-full transition-all duration-500" style={{ width: `${(connectedSources.length / sources.length) * 100}%`, background: 'linear-gradient(90deg, #e84393, #d63384)' }} />
+                <div className="h-full rounded-full transition-all duration-500" style={{ width: `${(connectedSources.length / sources.length) * 100}%`, background: 'linear-gradient(90deg, var(--accent-solid), var(--accent-solid))' }} />
               </div>
             </div>
 
@@ -703,16 +703,16 @@ export default function NetworkPage() {
                   className="rounded-2xl p-5 transition-all duration-300" style={{ background: 'var(--bg-card)', border: source.connected ? '1px solid rgba(0,184,148,0.2)' : '1px solid var(--border)', boxShadow: 'var(--shadow-sm)' }}>
                   <div className="flex items-start justify-between mb-3">
                     <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: `${source.color}10`, color: source.color }}>{source.icon}</div>
-                    {source.connected && <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold text-[#00b894]" style={{ background: 'rgba(0,184,148,0.08)' }}>{icons.check} Connected</span>}
+                    {source.connected && <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold text-[var(--green)]" style={{ background: 'rgba(0,184,148,0.08)' }}>{icons.check} Connected</span>}
                   </div>
                   <h3 className="text-[14px] font-bold" style={{ color: 'var(--text)' }}>{source.name}</h3>
                   <p className="text-[11px] mt-0.5 mb-1" style={{ color: 'var(--text-muted)' }}>{source.desc}</p>
                   <p className="text-[12px] font-semibold mb-4" style={{ color: 'var(--text-secondary)' }}>{source.count.toLocaleString()} contacts</p>
                   {!source.connected ? (
                     <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }} onClick={() => handleConnect(source.id)}
-                      className="w-full h-10 rounded-xl text-[12px] font-bold flex items-center justify-center gap-2 text-white" style={{ background: source.gradient, boxShadow: `0 3px 10px ${source.color}25` }}>{icons.link} Connect {source.name}</motion.button>
+                      className="w-full h-10 rounded-xl text-[12px] font-bold flex items-center justify-center gap-2 text-ink" style={{ background: source.gradient, boxShadow: `0 3px 10px ${source.color}25` }}>{icons.link} Connect {source.name}</motion.button>
                   ) : (
-                    <div className="w-full h-10 rounded-xl text-[12px] font-semibold flex items-center justify-center gap-2 text-[#00b894]" style={{ background: 'rgba(0,184,148,0.06)', border: '1px solid rgba(0,184,148,0.12)' }}>{icons.check} Synced</div>
+                    <div className="w-full h-10 rounded-xl text-[12px] font-semibold flex items-center justify-center gap-2 text-[var(--green)]" style={{ background: 'rgba(0,184,148,0.06)', border: '1px solid rgba(0,184,148,0.12)' }}>{icons.check} Synced</div>
                   )}
                 </motion.div>
               ))}
@@ -734,10 +734,10 @@ export default function NetworkPage() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { step: '01', title: 'Connect Sources', desc: 'Link Gmail, LinkedIn, Calendar, and social accounts to map your network.', color: '#e84393', icon: icons.link },
-              { step: '02', title: 'Search Naturally', desc: '"Find someone at Google who can refer me for a PM role."', color: '#6c5ce7', icon: icons.search },
-              { step: '03', title: 'Discover Paths', desc: 'See who connects you to your target — with mutual connections highlighted.', color: '#0984e3', icon: icons.people },
-              { step: '04', title: 'Get Referred', desc: 'Request warm introductions and track referral status in real-time.', color: '#00b894', icon: icons.send },
+              { step: '01', title: 'Connect Sources', desc: 'Link Gmail, LinkedIn, Calendar, and social accounts to map your network.', color: 'var(--accent-solid)', icon: icons.link },
+              { step: '02', title: 'Search Naturally', desc: '"Find someone at Google who can refer me for a PM role."', color: 'var(--purple)', icon: icons.search },
+              { step: '03', title: 'Discover Paths', desc: 'See who connects you to your target — with mutual connections highlighted.', color: 'var(--blue)', icon: icons.people },
+              { step: '04', title: 'Get Referred', desc: 'Request warm introductions and track referral status in real-time.', color: 'var(--green)', icon: icons.send },
             ].map((item, i) => (
               <motion.div key={i} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 + i * 0.08 }} className="text-center">
                 <div className="w-14 h-14 mx-auto mb-4 rounded-2xl flex items-center justify-center" style={{ background: `${item.color}0d`, color: item.color }}>{item.icon}</div>

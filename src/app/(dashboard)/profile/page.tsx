@@ -39,7 +39,7 @@ function SectionCard({ title, icon, children }: { title: string; icon: React.Rea
     <motion.div variants={fadeInUp}>
       <PremiumCard accent="pink" glowEffect={false}>
         <div className="p-6">
-          <h3 className="text-[14px] font-bold mb-4 flex items-center gap-2 text-white">
+          <h3 className="text-[14px] font-bold mb-4 flex items-center gap-2 text-ink">
             {icon} {title}
           </h3>
           {children}
@@ -52,13 +52,13 @@ function SectionCard({ title, icon, children }: { title: string; icon: React.Rea
 function EditField({ label, value, onChange, type = 'text', multiline }: any) {
   return (
     <div className="space-y-1">
-      <label className="text-[11px] font-bold text-[#fd79a8] uppercase">{label}</label>
+      <label className="text-[11px] font-bold text-[var(--accent)] uppercase">{label}</label>
       {multiline ? (
         <textarea value={value} onChange={e => onChange(e.target.value)} rows={3}
-          className="w-full px-3 py-2 rounded-lg bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] text-white text-[12px] focus:border-[rgba(253,121,168,0.3)] outline-none resize-none" />
+          className="w-full px-3 py-2 rounded-lg bg-[var(--bg-overlay)] border border-[var(--border)] text-ink text-[12px] focus:border-[rgba(253,121,168,0.3)] outline-none resize-none" />
       ) : (
         <input type={type} value={value} onChange={e => onChange(e.target.value)}
-          className="w-full px-3 py-2 rounded-lg bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] text-white text-[12px] focus:border-[rgba(253,121,168,0.3)] outline-none" />
+          className="w-full px-3 py-2 rounded-lg bg-[var(--bg-overlay)] border border-[var(--border)] text-ink text-[12px] focus:border-[rgba(253,121,168,0.3)] outline-none" />
       )}
     </div>
   )
@@ -67,11 +67,11 @@ function EditField({ label, value, onChange, type = 'text', multiline }: any) {
 function SelectField({ label, value, onChange, options }: any) {
   return (
     <div className="space-y-1">
-      <label className="text-[11px] font-bold text-[#fd79a8] uppercase">{label}</label>
+      <label className="text-[11px] font-bold text-[var(--accent)] uppercase">{label}</label>
       <select value={value} onChange={e => onChange(e.target.value)}
-        className="w-full px-3 py-2 rounded-lg border border-[rgba(255,255,255,0.08)] text-white text-[12px] focus:border-[rgba(253,121,168,0.3)] outline-none"
-        style={{ background: '#13131f' }}>
-        {options.map((opt: string) => <option key={opt} value={opt} style={{ background: '#13131f', color: 'white' }}>{opt}</option>)}
+        className="w-full px-3 py-2 rounded-lg border border-[var(--border)] text-ink text-[12px] focus:border-[rgba(253,121,168,0.3)] outline-none"
+        style={{ background: 'var(--bg-card)' }}>
+        {options.map((opt: string) => <option key={opt} value={opt} style={{ background: 'var(--bg-card)', color: 'white' }}>{opt}</option>)}
       </select>
     </div>
   )
@@ -80,14 +80,14 @@ function SelectField({ label, value, onChange, options }: any) {
 function ChipSelector({ label, selected, options, onChange, max }: any) {
   return (
     <div>
-      <label className="text-[11px] font-bold text-[#fd79a8] uppercase mb-2 block">{label}</label>
+      <label className="text-[11px] font-bold text-[var(--accent)] uppercase mb-2 block">{label}</label>
       <div className="grid grid-cols-2 gap-2">
         {options.map((opt: string) => (
           <button key={opt} onClick={() => {
             if (selected.includes(opt)) onChange(selected.filter((s: string) => s !== opt))
             else if (!max || selected.length < max) onChange([...selected, opt])
           }}
-            className={`px-3 py-2 rounded-lg text-[11px] font-medium transition-all ${selected.includes(opt) ? 'bg-[rgba(253,121,168,0.15)] text-[#fd79a8] border border-[rgba(253,121,168,0.3)]' : 'bg-[rgba(255,255,255,0.04)] text-[#8a8a9a] border border-transparent hover:bg-[rgba(255,255,255,0.08)]'}`}>
+            className={`px-3 py-2 rounded-lg text-[11px] font-medium transition-all ${selected.includes(opt) ? 'bg-[rgba(253,121,168,0.15)] text-[var(--accent)] border border-[rgba(253,121,168,0.3)]' : 'bg-[var(--bg-overlay)] text-[var(--text-muted)] border border-transparent hover:bg-[var(--bg-overlay)]'}`}>
             {opt}
           </button>
         ))}
@@ -298,18 +298,18 @@ export default function ProfilePage() {
       <SectionCard title="Work Experience" icon={<span>💼</span>}>
         <div className="space-y-4">
           {workExperience.map((exp, i) => (
-            <div key={i} className="p-4 rounded-lg bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.08)]">
+            <div key={i} className="p-4 rounded-lg bg-[var(--bg-overlay)] border border-[var(--border)]">
               <div className="grid sm:grid-cols-2 gap-3 mb-3">
                 <EditField label="Company" value={exp.company} onChange={(c: string) => { exp.company = c; setWorkExperience([...workExperience]) }} />
                 <EditField label="Job Title" value={exp.title} onChange={(t: string) => { exp.title = t; setWorkExperience([...workExperience]) }} />
               </div>
               <EditField label="Description" value={exp.description} onChange={(d: string) => { exp.description = d; setWorkExperience([...workExperience]) }} multiline />
               <button onClick={() => setWorkExperience(workExperience.filter((_, idx) => idx !== i))}
-                className="mt-3 px-2 py-1 rounded text-[11px] bg-[rgba(255,0,0,0.1)] text-[#ff6b6b] hover:bg-[rgba(255,0,0,0.2)]">Delete</button>
+                className="mt-3 px-2 py-1 rounded text-[11px] bg-[rgba(255,0,0,0.1)] text-[var(--red)] hover:bg-[rgba(255,0,0,0.2)]">Delete</button>
             </div>
           ))}
           <button onClick={() => setWorkExperience([...workExperience, { company: '', title: '', startDate: '', endDate: '', description: '' }])}
-            className="px-3 py-2 rounded-lg text-[12px] font-medium bg-[rgba(253,121,168,0.1)] text-[#fd79a8] hover:bg-[rgba(253,121,168,0.2)]">
+            className="px-3 py-2 rounded-lg text-[12px] font-medium bg-[rgba(253,121,168,0.1)] text-[var(--accent)] hover:bg-[rgba(253,121,168,0.2)]">
             + Add Experience
           </button>
         </div>
@@ -318,17 +318,17 @@ export default function ProfilePage() {
       <SectionCard title="Education" icon={<span>🎓</span>}>
         <div className="space-y-4">
           {education.map((edu, i) => (
-            <div key={i} className="p-4 rounded-lg bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.08)]">
+            <div key={i} className="p-4 rounded-lg bg-[var(--bg-overlay)] border border-[var(--border)]">
               <div className="grid sm:grid-cols-2 gap-3 mb-3">
                 <EditField label="School" value={edu.school} onChange={(s: string) => { edu.school = s; setEducation([...education]) }} />
                 <EditField label="Degree" value={edu.degree} onChange={(d: string) => { edu.degree = d; setEducation([...education]) }} />
               </div>
               <button onClick={() => setEducation(education.filter((_, idx) => idx !== i))}
-                className="px-2 py-1 rounded text-[11px] bg-[rgba(255,0,0,0.1)] text-[#ff6b6b] hover:bg-[rgba(255,0,0,0.2)]">Delete</button>
+                className="px-2 py-1 rounded text-[11px] bg-[rgba(255,0,0,0.1)] text-[var(--red)] hover:bg-[rgba(255,0,0,0.2)]">Delete</button>
             </div>
           ))}
           <button onClick={() => setEducation([...education, { school: '', degree: '', field: '', endDate: '' }])}
-            className="px-3 py-2 rounded-lg text-[12px] font-medium bg-[rgba(253,121,168,0.1)] text-[#fd79a8] hover:bg-[rgba(253,121,168,0.2)]">
+            className="px-3 py-2 rounded-lg text-[12px] font-medium bg-[rgba(253,121,168,0.1)] text-[var(--accent)] hover:bg-[rgba(253,121,168,0.2)]">
             + Add Education
           </button>
         </div>
@@ -339,13 +339,13 @@ export default function ProfilePage() {
           {certifications.map((cert, i) => (
             <div key={i} className="flex gap-2">
               <input value={cert} onChange={(c: React.ChangeEvent<HTMLInputElement>) => { certifications[i] = c.target.value; setCertifications([...certifications]) }}
-                className="flex-1 px-3 py-2 rounded-lg bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] text-white text-[12px] outline-none" />
+                className="flex-1 px-3 py-2 rounded-lg bg-[var(--bg-overlay)] border border-[var(--border)] text-ink text-[12px] outline-none" />
               <button onClick={() => setCertifications(certifications.filter((_, idx) => idx !== i))}
-                className="px-2 py-1 rounded bg-[rgba(255,0,0,0.1)] text-[#ff6b6b] text-[11px]">Delete</button>
+                className="px-2 py-1 rounded bg-[rgba(255,0,0,0.1)] text-[var(--red)] text-[11px]">Delete</button>
             </div>
           ))}
           <button onClick={() => setCertifications([...certifications, ''])}
-            className="px-3 py-2 rounded-lg text-[12px] font-medium bg-[rgba(253,121,168,0.1)] text-[#fd79a8] hover:bg-[rgba(253,121,168,0.2)]">
+            className="px-3 py-2 rounded-lg text-[12px] font-medium bg-[rgba(253,121,168,0.1)] text-[var(--accent)] hover:bg-[rgba(253,121,168,0.2)]">
             + Add Certification
           </button>
         </div>
@@ -355,17 +355,17 @@ export default function ProfilePage() {
         <div className="space-y-4">
           <ChipSelector label="Target Roles (up to 5)" selected={selectedRoles} options={ROLES} onChange={setSelectedRoles} max={5} />
           <div className="space-y-2">
-            <label className="text-[11px] font-bold text-[#fd79a8] uppercase">Annual Salary Range</label>
+            <label className="text-[11px] font-bold text-[var(--accent)] uppercase">Annual Salary Range</label>
             <div className="flex gap-4">
               <div className="flex-1 space-y-1">
-                <label className="text-[10px] text-[#8a8a9a]">Min: ${(minSalary/1000).toFixed(0)}k</label>
+                <label className="text-[10px] text-[var(--text-muted)]">Min: ${(minSalary/1000).toFixed(0)}k</label>
                 <input type="range" min="30000" max="500000" step="5000" value={minSalary} onChange={e => setMinSalary(Math.min(parseInt(e.target.value), maxSalary - 5000))}
-                  className="w-full accent-[#fd79a8]" />
+                  className="w-full accent-[var(--accent)]" />
               </div>
               <div className="flex-1 space-y-1">
-                <label className="text-[10px] text-[#8a8a9a]">Max: ${(maxSalary/1000).toFixed(0)}k</label>
+                <label className="text-[10px] text-[var(--text-muted)]">Max: ${(maxSalary/1000).toFixed(0)}k</label>
                 <input type="range" min="30000" max="500000" step="5000" value={maxSalary} onChange={e => setMaxSalary(Math.max(parseInt(e.target.value), minSalary + 5000))}
-                  className="w-full accent-[#fd79a8]" />
+                  className="w-full accent-[var(--accent)]" />
               </div>
             </div>
           </div>
@@ -386,14 +386,14 @@ export default function ProfilePage() {
             <SelectField label="Available Start Date" value={availableStartDate} onChange={setAvailableStartDate} options={START_DATES} />
           </div>
           <div className="space-y-2">
-            <label className="text-[11px] font-bold text-[#fd79a8] uppercase block">Willing to Relocate?</label>
+            <label className="text-[11px] font-bold text-[var(--accent)] uppercase block">Willing to Relocate?</label>
             <div className="flex gap-2">
               <button onClick={() => setWillingToRelocate(true)}
-                className={`flex-1 px-3 py-2 rounded-lg font-medium transition-all ${willingToRelocate ? 'bg-[rgba(253,121,168,0.2)] text-[#fd79a8] border border-[#fd79a8]' : 'bg-[rgba(255,255,255,0.04)] text-[#8a8a9a] border border-transparent'}`}>
+                className={`flex-1 px-3 py-2 rounded-lg font-medium transition-all ${willingToRelocate ? 'bg-[rgba(253,121,168,0.2)] text-[var(--accent)] border border-[var(--accent)]' : 'bg-[var(--bg-overlay)] text-[var(--text-muted)] border border-transparent'}`}>
                 Yes
               </button>
               <button onClick={() => setWillingToRelocate(false)}
-                className={`flex-1 px-3 py-2 rounded-lg font-medium transition-all ${!willingToRelocate ? 'bg-[rgba(253,121,168,0.2)] text-[#fd79a8] border border-[#fd79a8]' : 'bg-[rgba(255,255,255,0.04)] text-[#8a8a9a] border border-transparent'}`}>
+                className={`flex-1 px-3 py-2 rounded-lg font-medium transition-all ${!willingToRelocate ? 'bg-[rgba(253,121,168,0.2)] text-[var(--accent)] border border-[var(--accent)]' : 'bg-[var(--bg-overlay)] text-[var(--text-muted)] border border-transparent'}`}>
                 No
               </button>
             </div>

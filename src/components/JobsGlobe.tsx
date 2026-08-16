@@ -87,11 +87,11 @@ interface JobsGlobeProps {
 
 function salaryColor(min: number | null, currency = 'USD'): string {
   const v = currency === 'INR' ? (min || 0) / 83 : (min || 0)
-  if (v >= 150000) return '#ffd700'
-  if (v >= 100000) return '#ff6eb4'
-  if (v >= 60000) return '#a78bfa'
-  if (v >= 30000) return '#60a5fa'
-  return '#34d399'
+  if (v >= 150000) return 'var(--yellow)'
+  if (v >= 100000) return 'var(--accent)'
+  if (v >= 60000) return 'var(--purple)'
+  if (v >= 30000) return 'var(--blue)'
+  return 'var(--green)'
 }
 
 function formatSalary(min: number | null, max: number | null, currency = 'USD') {
@@ -171,7 +171,7 @@ function makeFlagTexture(job: Job, color: string): THREE.CanvasTexture {
   ctx.fillText(salary, W - salaryW - 1, 21)
 
   // Job title
-  ctx.fillStyle = 'rgba(255,255,255,0.96)'
+  ctx.fillStyle = 'var(--bg-overlay)'
   ctx.font = 'bold 14px system-ui, sans-serif'
   const title = job.title.length > 26 ? job.title.slice(0, 26) + '…' : job.title
   ctx.fillText(title, 13, 26)
@@ -183,7 +183,7 @@ function makeFlagTexture(job: Job, color: string): THREE.CanvasTexture {
   ctx.fillText(company, 13, 44)
 
   // Location
-  ctx.fillStyle = 'rgba(255,255,255,0.4)'
+  ctx.fillStyle = 'var(--bg-overlay)'
   ctx.font = '10px system-ui, sans-serif'
   const cityName = job.location?.split(',')[0]?.trim()?.slice(0, 28) || 'Remote'
   ctx.fillText(`📍 ${cityName}`, 13, 62)
@@ -201,7 +201,7 @@ function makeBaseDot(color: string): THREE.CanvasTexture {
   const cx = S / 2
 
   const g1 = ctx.createRadialGradient(cx, cx, 0, cx, cx, cx)
-  g1.addColorStop(0, `rgba(255,255,255,1)`)
+  g1.addColorStop(0, `var(--bg-overlay)`)
   g1.addColorStop(0.25, `rgba(${r},${g},${b},0.9)`)
   g1.addColorStop(0.6, `rgba(${r},${g},${b},0.3)`)
   g1.addColorStop(1, `rgba(${r},${g},${b},0)`)
@@ -288,42 +288,42 @@ function JobCard({ job, onClose, onSave, onApply, isSaved, isApplied }: any) {
       }}>
         <div className="p-5">
           <div className="flex items-start justify-between mb-3">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold text-white"
-              style={{ background: 'linear-gradient(135deg, #fd79a8, #a29bfe)' }}>
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold text-[var(--text-on-accent)]"
+              style={{ background: 'linear-gradient(135deg, var(--accent), var(--purple))' }}>
               {job.company[0]?.toUpperCase()}
             </div>
-            <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-white/10 text-white/50 hover:text-white transition-colors">
+            <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-[var(--bg-overlay)] text-ink/50 hover:text-ink transition-colors">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <path d="M18 6 6 18M6 6l12 12"/>
               </svg>
             </button>
           </div>
-          <h3 className="font-bold text-white text-[14px] mb-1 leading-tight">{job.title}</h3>
-          <p className="text-[12px] text-[#a29bfe] font-medium mb-3">{job.company}</p>
+          <h3 className="font-bold text-ink text-[14px] mb-1 leading-tight">{job.title}</h3>
+          <p className="text-[12px] text-[var(--purple)] font-medium mb-3">{job.company}</p>
           <div className="flex flex-wrap gap-1.5 mb-4">
-            <span className="px-2 py-1 rounded-lg text-[10px] font-medium" style={{ background: 'rgba(96,165,250,0.12)', color: '#60a5fa' }}>
+            <span className="px-2 py-1 rounded-lg text-[10px] font-medium" style={{ background: 'rgba(96,165,250,0.12)', color: 'var(--blue)' }}>
               📍 {job.location || 'Remote'}
             </span>
             {job.remote_type && (
-              <span className="px-2 py-1 rounded-lg text-[10px]" style={{ background: 'rgba(52,211,153,0.12)', color: '#34d399' }}>
+              <span className="px-2 py-1 rounded-lg text-[10px]" style={{ background: 'rgba(52,211,153,0.12)', color: 'var(--green)' }}>
                 {job.remote_type}
               </span>
             )}
-            <span className="px-2 py-1 rounded-lg text-[10px] font-bold" style={{ background: 'rgba(253,203,94,0.12)', color: '#fdcb6e' }}>
+            <span className="px-2 py-1 rounded-lg text-[10px] font-bold" style={{ background: 'rgba(253,203,94,0.12)', color: 'var(--yellow)' }}>
               {formatSalary(job.salary_min, job.salary_max, job.salary_currency)}
             </span>
           </div>
           <div className="flex gap-2">
             <button onClick={onSave} className="flex-1 py-2 rounded-xl text-[11px] font-semibold transition-all"
               style={isSaved
-                ? { background: 'rgba(162,155,254,0.2)', color: '#a29bfe', border: '1px solid rgba(162,155,254,0.3)' }
-                : { background: 'rgba(255,255,255,0.05)', color: '#6a6a8a', border: '1px solid rgba(255,255,255,0.08)' }}>
+                ? { background: 'rgba(162,155,254,0.2)', color: 'var(--purple)', border: '1px solid rgba(162,155,254,0.3)' }
+                : { background: 'var(--bg-overlay)', color: 'var(--text-faint)', border: '1px solid var(--border)' }}>
               {isSaved ? '✓ Saved' : 'Save'}
             </button>
-            <button onClick={onApply} className="flex-1 py-2 rounded-xl text-[11px] font-bold text-white transition-all"
+            <button onClick={onApply} className="flex-1 py-2 rounded-xl text-[11px] font-bold text-[var(--text-on-accent)] transition-all"
               style={isApplied
-                ? { background: 'rgba(52,211,153,0.2)', color: '#34d399', border: '1px solid rgba(52,211,153,0.3)' }
-                : { background: 'linear-gradient(135deg, #fd79a8, #e84393)', boxShadow: '0 4px 20px rgba(232,67,147,0.4)' }}>
+                ? { background: 'rgba(52,211,153,0.2)', color: 'var(--green)', border: '1px solid rgba(52,211,153,0.3)' }
+                : { background: 'linear-gradient(135deg, var(--accent), var(--accent-solid))', boxShadow: '0 4px 20px rgba(232,67,147,0.4)' }}>
               {isApplied ? '✓ Applied' : 'Apply Now →'}
             </button>
           </div>
@@ -676,7 +676,7 @@ export default function JobsGlobe({ jobs, onSave, onApply, savedJobs, appliedJob
     <div
       ref={containerRef}
       className="relative w-full h-full overflow-hidden"
-      style={{ background: 'radial-gradient(ellipse at 50% 40%, #0b0d1f 0%, #050610 55%, #000005 100%)' }}
+      style={{ background: 'radial-gradient(ellipse at 50% 40%, var(--bg-card) 0%, var(--bg) 55%, var(--bg) 100%)' }}
     >
       {/* Stars */}
       <div className="absolute inset-0 pointer-events-none">
@@ -694,16 +694,16 @@ export default function JobsGlobe({ jobs, onSave, onApply, savedJobs, appliedJob
         className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-6 px-6 py-3 rounded-2xl"
         style={{ background: 'rgba(5,5,18,0.92)', border: '1px solid rgba(59,130,246,0.2)', backdropFilter: 'blur(20px)', boxShadow: '0 4px 30px rgba(0,0,0,0.4)' }}>
         {[
-          { label: 'Pinned',     value: points.length, color: '#60a5fa' },
-          { label: 'Total',      value: jobs.length,   color: '#a78bfa' },
-          { label: 'Top City',   value: topCity,       color: '#f472b6' },
-          { label: 'Avg Salary', value: avgSalary ? `$${Math.round(avgSalary/1000)}K` : 'N/A', color: '#fbbf24' },
+          { label: 'Pinned',     value: points.length, color: 'var(--blue)' },
+          { label: 'Total',      value: jobs.length,   color: 'var(--purple)' },
+          { label: 'Top City',   value: topCity,       color: 'var(--accent)' },
+          { label: 'Avg Salary', value: avgSalary ? `$${Math.round(avgSalary/1000)}K` : 'N/A', color: 'var(--yellow)' },
         ].map((s, i) => (
           <div key={s.label} className="flex items-center gap-6">
             {i > 0 && <div className="w-px h-4" style={{ background: 'rgba(59,130,246,0.2)' }} />}
             <div className="text-center">
               <div className="text-[15px] font-bold" style={{ color: s.color }}>{s.value}</div>
-              <div className="text-[9px] text-[#2a3a5a] font-semibold uppercase tracking-widest">{s.label}</div>
+              <div className="text-[9px] text-[var(--border-hover)] font-semibold uppercase tracking-widest">{s.label}</div>
             </div>
           </div>
         ))}
@@ -713,13 +713,13 @@ export default function JobsGlobe({ jobs, onSave, onApply, savedJobs, appliedJob
       <motion.div initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5 }}
         className="absolute bottom-6 left-5 z-20 rounded-xl p-4"
         style={{ background: 'rgba(5,5,18,0.92)', border: '1px solid rgba(59,130,246,0.15)', backdropFilter: 'blur(20px)' }}>
-        <p className="text-[9px] font-bold tracking-widest uppercase text-[#2a3a5a] mb-3">Salary Range</p>
+        <p className="text-[9px] font-bold tracking-widest uppercase text-[var(--border-hover)] mb-3">Salary Range</p>
         {[
-          { color: '#ffd700', label: '$150K+' },
-          { color: '#ff6eb4', label: '$100K–150K' },
-          { color: '#a78bfa', label: '$60K–100K' },
-          { color: '#60a5fa', label: '$30K–60K' },
-          { color: '#34d399', label: 'Below $30K' },
+          { color: 'var(--yellow)', label: '$150K+' },
+          { color: 'var(--accent)', label: '$100K–150K' },
+          { color: 'var(--purple)', label: '$60K–100K' },
+          { color: 'var(--blue)', label: '$30K–60K' },
+          { color: 'var(--green)', label: 'Below $30K' },
         ].map(t => (
           <div key={t.label} className="flex items-center gap-2.5 mb-2">
             <motion.div className="w-2.5 h-2.5 rounded-full flex-shrink-0"
@@ -727,7 +727,7 @@ export default function JobsGlobe({ jobs, onSave, onApply, savedJobs, appliedJob
               animate={{ opacity: [0.7, 1, 0.7] }}
               transition={{ duration: 2.5, repeat: Infinity, delay: Math.random() }}
             />
-            <span className="text-[10px] text-white/50">{t.label}</span>
+            <span className="text-[10px] text-ink/50">{t.label}</span>
           </div>
         ))}
       </motion.div>
@@ -741,7 +741,7 @@ export default function JobsGlobe({ jobs, onSave, onApply, savedJobs, appliedJob
       >
         <button
           onClick={zoomIn}
-          className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-lg select-none transition-all hover:scale-105 active:scale-95"
+          className="w-10 h-10 rounded-xl flex items-center justify-center text-ink font-bold text-lg select-none transition-all hover:scale-105 active:scale-95"
           style={{ background: 'rgba(5,5,18,0.92)', border: '1px solid rgba(59,130,246,0.25)', backdropFilter: 'blur(20px)', boxShadow: '0 4px 20px rgba(0,0,0,0.3)' }}
           title="Zoom In"
         >
@@ -749,7 +749,7 @@ export default function JobsGlobe({ jobs, onSave, onApply, savedJobs, appliedJob
         </button>
         <button
           onClick={zoomOut}
-          className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-xl select-none transition-all hover:scale-105 active:scale-95"
+          className="w-10 h-10 rounded-xl flex items-center justify-center text-ink font-bold text-xl select-none transition-all hover:scale-105 active:scale-95"
           style={{ background: 'rgba(5,5,18,0.92)', border: '1px solid rgba(59,130,246,0.25)', backdropFilter: 'blur(20px)', boxShadow: '0 4px 20px rgba(0,0,0,0.3)' }}
           title="Zoom Out"
         >
@@ -757,7 +757,7 @@ export default function JobsGlobe({ jobs, onSave, onApply, savedJobs, appliedJob
         </button>
         <div className="w-10 h-px" style={{ background: 'rgba(59,130,246,0.1)' }} />
         <div className="text-center">
-          <span className="text-[8px] text-[#1e2a4a] font-medium uppercase tracking-widest">Zoom</span>
+          <span className="text-[8px] text-[var(--bg-elevated)] font-medium uppercase tracking-widest">Zoom</span>
         </div>
       </motion.div>
 
@@ -765,7 +765,7 @@ export default function JobsGlobe({ jobs, onSave, onApply, savedJobs, appliedJob
       {!selectedJob && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2.5 }}
           className="absolute bottom-[72px] right-5 z-20 pointer-events-none text-right">
-          <p className="text-[10px] text-[#1e2a4a]">Drag to rotate · Click flag for details</p>
+          <p className="text-[10px] text-[var(--bg-elevated)]">Drag to rotate · Click flag for details</p>
         </motion.div>
       )}
 

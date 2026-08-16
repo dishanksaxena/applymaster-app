@@ -21,7 +21,7 @@ const posts = [
     category: 'AI & Automation',
     date: 'April 2, 2025',
     readTime: '12 min read',
-    color: '#fd79a8',
+    color: 'var(--accent)',
   },
   {
     slug: 'ats-resume-optimization',
@@ -30,7 +30,7 @@ const posts = [
     category: 'Resume',
     date: 'March 28, 2025',
     readTime: '15 min read',
-    color: '#a29bfe',
+    color: 'var(--purple)',
   },
   {
     slug: 'cover-letter-tips-2025',
@@ -39,7 +39,7 @@ const posts = [
     category: 'Cover Letters',
     date: 'March 20, 2025',
     readTime: '10 min read',
-    color: '#74b9ff',
+    color: 'var(--blue)',
   },
   {
     slug: 'interview-preparation-guide',
@@ -48,7 +48,7 @@ const posts = [
     category: 'Interviews',
     date: 'March 15, 2025',
     readTime: '14 min read',
-    color: '#55efc4',
+    color: 'var(--green)',
   },
   {
     slug: 'linkedin-auto-apply-guide',
@@ -57,33 +57,33 @@ const posts = [
     category: 'LinkedIn',
     date: 'March 8, 2025',
     readTime: '11 min read',
-    color: '#fdcb6e',
+    color: 'var(--yellow)',
   },
 ]
 
 export default function BlogPage() {
   return (
-    <main className="min-h-screen bg-[#0a0a12] text-white">
+    <main className="min-h-screen bg-[var(--bg)] text-ink">
       <div className="max-w-5xl mx-auto px-6 py-24">
         {/* Header */}
         <div className="mb-16">
-          <Link href="/" className="text-sm text-[#fd79a8] hover:text-[#e84393] font-medium mb-8 inline-block">&larr; Back to ApplyMaster</Link>
+          <Link href="/" className="text-sm text-[var(--accent)] hover:text-[var(--accent-solid)] font-medium mb-8 inline-block">&larr; Back to ApplyMaster</Link>
           <h1 className="text-5xl font-extrabold mb-4 bg-gradient-to-r from-white to-white/70 bg-clip-text text-transparent">Blog</h1>
-          <p className="text-lg text-[#6a6a8a] max-w-2xl">Expert guides on job search automation, resume optimization, and AI-powered career tools. Everything you need to get hired faster.</p>
+          <p className="text-lg text-[var(--text-faint)] max-w-2xl">Expert guides on job search automation, resume optimization, and AI-powered career tools. Everything you need to get hired faster.</p>
         </div>
 
         {/* Posts grid */}
         <div className="space-y-6">
           {posts.map((post, i) => (
             <Link key={post.slug} href={`/blog/${post.slug}`} className="group block">
-              <article className="rounded-2xl p-8 border border-white/5 hover:border-white/10 transition-all duration-300" style={{ background: 'rgba(255,255,255,0.02)' }}>
+              <article className="rounded-2xl p-8 border border-[var(--border)] hover:border-[var(--border)] transition-all duration-300" style={{ background: 'var(--bg-overlay)' }}>
                 <div className="flex items-center gap-3 mb-4">
                   <span className="px-3 py-1 rounded-full text-xs font-semibold" style={{ background: `${post.color}15`, color: post.color }}>{post.category}</span>
-                  <span className="text-xs text-[#4a4a6a]">{post.date}</span>
-                  <span className="text-xs text-[#4a4a6a]">{post.readTime}</span>
+                  <span className="text-xs text-[var(--text-faint)]">{post.date}</span>
+                  <span className="text-xs text-[var(--text-faint)]">{post.readTime}</span>
                 </div>
-                <h2 className="text-xl font-bold text-white group-hover:text-[#fd79a8] transition-colors mb-3">{post.title}</h2>
-                <p className="text-[#7a7a9a] text-sm leading-relaxed">{post.excerpt}</p>
+                <h2 className="text-xl font-bold text-ink group-hover:text-[var(--accent)] transition-colors mb-3">{post.title}</h2>
+                <p className="text-[var(--text-faint)] text-sm leading-relaxed">{post.excerpt}</p>
               </article>
             </Link>
           ))}

@@ -56,18 +56,18 @@ export default function AutoApplyPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <main className="min-h-screen bg-[#0a0a12] text-white">
+      <main className="min-h-screen bg-[var(--bg)] text-ink">
         {/* Hero */}
         <section className="relative overflow-hidden py-24 sm:py-32">
-          <div className="absolute inset-0 bg-gradient-to-b from-blue-900/20 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[var(--blue-dim)] to-transparent" />
           <div className="relative mx-auto max-w-7xl px-6 lg:px-8">
-            <Link href="/features" className="text-sm text-purple-400 hover:text-purple-300 mb-6 inline-block">
+            <Link href="/features" className="text-sm text-[var(--accent)] hover:text-[var(--accent)] mb-6 inline-block">
               &larr; All Features
             </Link>
-            <h1 className="text-4xl font-extrabold tracking-tight sm:text-6xl bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+            <h1 className="text-4xl font-extrabold tracking-tight sm:text-6xl bg-gradient-to-r from-[var(--blue)] to-[var(--accent)] bg-clip-text text-transparent">
               Apply to Jobs Automatically
             </h1>
-            <p className="mt-6 max-w-2xl text-lg text-gray-300 leading-relaxed">
+            <p className="mt-6 max-w-2xl text-lg text-[var(--text-secondary)] leading-relaxed">
               Stop spending hours filling out the same form fields over and over. ApplyMaster&apos;s
               auto-apply engine detects application forms across 50+ job portals, fills them with
               your tailored information, and submits applications on your behalf — all while you
@@ -76,13 +76,13 @@ export default function AutoApplyPage() {
             <div className="mt-10 flex items-center gap-4">
               <Link
                 href="/signup"
-                className="rounded-full bg-purple-600 px-8 py-3 text-sm font-semibold text-white shadow-lg hover:bg-purple-500 transition-colors"
+                className="rounded-full bg-[var(--accent-solid)] px-8 py-3 text-sm font-semibold text-ink shadow-lg hover:bg-[var(--accent-solid)] transition-colors"
               >
                 Start Auto-Applying Free
               </Link>
               <Link
                 href="/pricing"
-                className="rounded-full border border-gray-600 px-8 py-3 text-sm font-semibold text-gray-300 hover:border-purple-400 hover:text-white transition-colors"
+                className="rounded-full border border-[var(--border-hover)] px-8 py-3 text-sm font-semibold text-[var(--text-secondary)] hover:border-[var(--accent)] hover:text-ink transition-colors"
               >
                 View Pricing
               </Link>
@@ -96,18 +96,18 @@ export default function AutoApplyPage() {
             <h2 className="text-3xl font-bold text-center mb-4">
               Two Modes, One Goal: More Applications, Less Effort
             </h2>
-            <p className="text-center text-gray-400 mb-16 max-w-2xl mx-auto">
+            <p className="text-center text-[var(--text-muted)] mb-16 max-w-2xl mx-auto">
               Whether you want full control or total automation, ApplyMaster adapts to your workflow.
             </p>
 
             <div className="grid gap-8 md:grid-cols-2">
               {/* Copilot */}
-              <div className="rounded-2xl border border-blue-500/30 bg-blue-900/10 p-8">
+              <div className="rounded-2xl border border-[var(--border)] bg-[var(--blue-dim)] p-8">
                 <div className="flex items-center gap-3 mb-4">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600/20 text-2xl">🎮</span>
-                  <h3 className="text-2xl font-bold text-blue-400">Copilot Mode</h3>
+                  <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--blue-dim)] text-2xl">🎮</span>
+                  <h3 className="text-2xl font-bold text-[var(--blue)]">Copilot Mode</h3>
                 </div>
-                <p className="text-gray-300 mb-6">
+                <p className="text-[var(--text-secondary)] mb-6">
                   You stay in the driver&apos;s seat. The AI pre-fills every field and suggests answers,
                   but you review and approve each application before it goes out.
                 </p>
@@ -119,8 +119,8 @@ export default function AutoApplyPage() {
                     'Full visibility into every answer',
                     'Ideal for senior or targeted roles',
                   ].map((item) => (
-                    <li key={item} className="flex items-start gap-3 text-sm text-gray-300">
-                      <span className="mt-0.5 h-5 w-5 shrink-0 rounded-full bg-blue-600/30 flex items-center justify-center text-xs text-blue-400">&#10003;</span>
+                    <li key={item} className="flex items-start gap-3 text-sm text-[var(--text-secondary)]">
+                      <span className="mt-0.5 h-5 w-5 shrink-0 rounded-full bg-[var(--blue-dim)] flex items-center justify-center text-xs text-[var(--blue)]">&#10003;</span>
                       {item}
                     </li>
                   ))}
@@ -128,12 +128,12 @@ export default function AutoApplyPage() {
               </div>
 
               {/* Autopilot */}
-              <div className="rounded-2xl border border-purple-500/30 bg-purple-900/10 p-8">
+              <div className="rounded-2xl border border-[var(--border-accent)] bg-[var(--accent-dim)] p-8">
                 <div className="flex items-center gap-3 mb-4">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-600/20 text-2xl">🚀</span>
-                  <h3 className="text-2xl font-bold text-purple-400">Autopilot Mode</h3>
+                  <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--accent-dim)] text-2xl">🚀</span>
+                  <h3 className="text-2xl font-bold text-[var(--accent)]">Autopilot Mode</h3>
                 </div>
-                <p className="text-gray-300 mb-6">
+                <p className="text-[var(--text-secondary)] mb-6">
                   Set your criteria and let ApplyMaster handle everything. The AI applies to
                   matching jobs 24/7, sending you a summary of what was submitted.
                 </p>
@@ -145,8 +145,8 @@ export default function AutoApplyPage() {
                     'Daily digest of submitted applications',
                     'Perfect for high-volume job searches',
                   ].map((item) => (
-                    <li key={item} className="flex items-start gap-3 text-sm text-gray-300">
-                      <span className="mt-0.5 h-5 w-5 shrink-0 rounded-full bg-purple-600/30 flex items-center justify-center text-xs text-purple-400">&#10003;</span>
+                    <li key={item} className="flex items-start gap-3 text-sm text-[var(--text-secondary)]">
+                      <span className="mt-0.5 h-5 w-5 shrink-0 rounded-full bg-[var(--accent-dim)] flex items-center justify-center text-xs text-[var(--accent)]">&#10003;</span>
                       {item}
                     </li>
                   ))}
@@ -157,7 +157,7 @@ export default function AutoApplyPage() {
         </section>
 
         {/* How It Works */}
-        <section className="py-20 bg-gray-900/30">
+        <section className="py-20 bg-[var(--bg-card)]">
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
             <h2 className="text-3xl font-bold text-center mb-16">
               How Auto-Apply Works
@@ -181,11 +181,11 @@ export default function AutoApplyPage() {
                 },
               ].map((item) => (
                 <div key={item.step} className="text-center">
-                  <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-purple-600 text-xl font-bold">
+                  <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--accent-solid)] text-xl font-bold">
                     {item.step}
                   </div>
                   <h3 className="text-lg font-semibold mb-3">{item.title}</h3>
-                  <p className="text-sm text-gray-400 leading-relaxed">{item.desc}</p>
+                  <p className="text-sm text-[var(--text-muted)] leading-relaxed">{item.desc}</p>
                 </div>
               ))}
             </div>
@@ -198,7 +198,7 @@ export default function AutoApplyPage() {
             <h2 className="text-3xl font-bold text-center mb-4">
               50+ Supported Job Portals
             </h2>
-            <p className="text-center text-gray-400 mb-12 max-w-2xl mx-auto">
+            <p className="text-center text-[var(--text-muted)] mb-12 max-w-2xl mx-auto">
               ApplyMaster integrates with major job boards and applicant tracking systems.
               New portals are added every month.
             </p>
@@ -206,12 +206,12 @@ export default function AutoApplyPage() {
               {supportedPortals.map((portal) => (
                 <span
                   key={portal}
-                  className="rounded-full border border-gray-700 bg-gray-800/50 px-4 py-2 text-sm text-gray-300"
+                  className="rounded-full border border-[var(--border)] bg-[var(--bg-card-hover)] px-4 py-2 text-sm text-[var(--text-secondary)]"
                 >
                   {portal}
                 </span>
               ))}
-              <span className="rounded-full border border-purple-600/50 bg-purple-900/20 px-4 py-2 text-sm text-purple-400">
+              <span className="rounded-full border border-[var(--border-accent)] bg-[var(--accent-dim)] px-4 py-2 text-sm text-[var(--accent)]">
                 + 30 more
               </span>
             </div>
@@ -219,7 +219,7 @@ export default function AutoApplyPage() {
         </section>
 
         {/* Smart Features */}
-        <section className="py-20 bg-gray-900/30">
+        <section className="py-20 bg-[var(--bg-card)]">
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
             <h2 className="text-3xl font-bold text-center mb-16">
               Intelligent Application Logic
@@ -233,9 +233,9 @@ export default function AutoApplyPage() {
                 { title: 'Rate Limiting', desc: 'Applies at a natural pace to avoid triggering bot-detection systems on job portals.' },
                 { title: 'Error Recovery', desc: 'If a submission fails, ApplyMaster retries intelligently and alerts you if manual intervention is needed.' },
               ].map((item) => (
-                <div key={item.title} className="rounded-xl border border-gray-800 bg-gray-900/40 p-6">
-                  <h3 className="font-semibold mb-2 text-white">{item.title}</h3>
-                  <p className="text-sm text-gray-400 leading-relaxed">{item.desc}</p>
+                <div key={item.title} className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-6">
+                  <h3 className="font-semibold mb-2 text-ink">{item.title}</h3>
+                  <p className="text-sm text-[var(--text-muted)] leading-relaxed">{item.desc}</p>
                 </div>
               ))}
             </div>
@@ -268,8 +268,8 @@ export default function AutoApplyPage() {
                 },
               ].map((item) => (
                 <div key={item.q}>
-                  <h3 className="font-semibold text-white mb-2">{item.q}</h3>
-                  <p className="text-sm text-gray-400 leading-relaxed">{item.a}</p>
+                  <h3 className="font-semibold text-ink mb-2">{item.q}</h3>
+                  <p className="text-sm text-[var(--text-muted)] leading-relaxed">{item.a}</p>
                 </div>
               ))}
             </div>
@@ -277,17 +277,17 @@ export default function AutoApplyPage() {
         </section>
 
         {/* CTA */}
-        <section className="py-24 bg-gradient-to-b from-transparent to-purple-900/20">
+        <section className="py-24 bg-gradient-to-b from-transparent to-[var(--accent-dim)]">
           <div className="mx-auto max-w-3xl px-6 text-center">
             <h2 className="text-3xl font-bold mb-6">
               Stop Applying Manually. Let AI Do the Heavy Lifting.
             </h2>
-            <p className="text-gray-400 mb-10 text-lg">
+            <p className="text-[var(--text-muted)] mb-10 text-lg">
               Start with 10 free applications per month. No credit card required.
             </p>
             <Link
               href="/signup"
-              className="rounded-full bg-purple-600 px-10 py-4 text-base font-semibold text-white shadow-lg hover:bg-purple-500 transition-colors"
+              className="rounded-full bg-[var(--accent-solid)] px-10 py-4 text-base font-semibold text-ink shadow-lg hover:bg-[var(--accent-solid)] transition-colors"
             >
               Start Auto-Applying Free
             </Link>

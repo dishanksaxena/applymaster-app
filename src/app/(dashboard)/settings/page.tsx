@@ -4,9 +4,38 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { createClient } from '@/lib/supabase-browser'
 import { useRouter } from 'next/navigation'
+import { applyTheme, getStoredTheme, type Theme } from '@/lib/theme'
 
 const container = { hidden: {}, show: { transition: { staggerChildren: 0.08 } } }
 const fadeUp = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] as const } } }
+
+const THEME_OPTIONS: { value: Theme; label: string; icon: JSX.Element }[] = [
+  {
+    value: 'light',
+    label: 'Light',
+    icon: (
+      <>
+        <circle cx="12" cy="12" r="4" />
+        <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+      </>
+    ),
+  },
+  {
+    value: 'dark',
+    label: 'Dark',
+    icon: <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />,
+  },
+  {
+    value: 'system',
+    label: 'System',
+    icon: (
+      <>
+        <rect x="2" y="3" width="20" height="14" rx="2" />
+        <path d="M8 21h8M12 17v4" />
+      </>
+    ),
+  },
+]
 
 export default function SettingsPage() {
   const [profile, setProfile] = useState<{ full_name: string; email: string; plan: string } | null>(null)
@@ -14,7 +43,7 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false)
   const [name, setName] = useState('')
   const [mounted, setMounted] = useState(false)
-  const [theme, setTheme] = useState<'light' | 'dark'>('light')
+  const [theme, setTheme] = useState<Theme>('system')
   const [newEmail, setNewEmail] = useState('')
   const [emailMsg, setEmailMsg] = useState('')
   const [emailLoading, setEmailLoading] = useState(false)
@@ -24,13 +53,11 @@ export default function SettingsPage() {
   const supabase = createClient()
   const router = useRouter()
 
+  // The class is already set by the root layout's pre-paint script; this
+  // only syncs local state so the control renders the right position.
   useEffect(() => {
     setMounted(true)
-    const saved = localStorage.getItem('theme') as 'dark' | 'light' | null
-    if (saved) {
-      setTheme(saved)
-      document.documentElement.classList.toggle('dark-theme', saved === 'dark')
-    }
+    setTheme(getStoredTheme())
   }, [])
 
   useEffect(() => {
@@ -86,11 +113,9 @@ export default function SettingsPage() {
 
   const handleSignOut = async () => { await supabase.auth.signOut(); router.push('/'); router.refresh() }
 
-  const toggleTheme = () => {
-    const next = theme === 'light' ? 'dark' : 'light'
+  const setThemePref = (next: Theme) => {
     setTheme(next)
-    localStorage.setItem('theme', next)
-    document.documentElement.classList.toggle('dark-theme', next === 'dark')
+    applyTheme(next)
   }
 
   if (loading) return (
@@ -101,9 +126,9 @@ export default function SettingsPage() {
   )
 
   const plans = [
-    { name: 'pro', price: 29, period: '/mo', color: '#e84393', features: ['100 applications/month', 'AI resume optimization', 'Cover letter generation', 'Email support'], icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><polygon points="13,2 3,14 12,14 11,22 21,10 12,10"/></svg> },
-    { name: 'elite', price: 59, period: '/mo', color: '#6c5ce7', popular: true, features: ['Unlimited applications', 'Priority AI processing', 'Auto-apply engine', 'Interview coaching', 'Priority support'], icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> },
-    { name: 'lifetime', price: 199, period: ' once', color: '#00b894', features: ['Everything in Elite', 'Lifetime access', 'All future features', 'VIP support', 'Early access'], icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> },
+    { name: 'pro', price: 29, period: '/mo', color: 'var(--accent-solid)', features: ['100 applications/month', 'AI resume optimization', 'Cover letter generation', 'Email support'], icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><polygon points="13,2 3,14 12,14 11,22 21,10 12,10"/></svg> },
+    { name: 'elite', price: 59, period: '/mo', color: 'var(--purple)', popular: true, features: ['Unlimited applications', 'Priority AI processing', 'Auto-apply engine', 'Interview coaching', 'Priority support'], icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> },
+    { name: 'lifetime', price: 199, period: ' once', color: 'var(--green)', features: ['Everything in Elite', 'Lifetime access', 'All future features', 'VIP support', 'Early access'], icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> },
   ]
 
   if (!mounted) return <div className="p-8" />
@@ -119,7 +144,7 @@ export default function SettingsPage() {
       <motion.div variants={fadeUp} className="theme-card-gradient p-6">
         <div className="flex items-center gap-4 mb-6">
           <div className="w-16 h-16 rounded-full flex items-center justify-center shrink-0" style={{ background: 'var(--accent-dim)' }}>
-            <span className="text-xl font-bold bg-gradient-to-br from-[#fd79a8] to-[#a29bfe] bg-clip-text text-transparent">
+            <span className="text-xl font-bold bg-gradient-to-br from-[var(--accent)] to-[var(--purple)] bg-clip-text text-transparent">
               {profile?.full_name?.[0]?.toUpperCase() || '?'}
             </span>
           </div>
@@ -136,7 +161,7 @@ export default function SettingsPage() {
             <label className="block text-[12px] font-semibold mb-2" style={{ color: 'var(--text-secondary)' }}>Display Name</label>
             <div className="flex gap-3">
               <input value={name} onChange={e => setName(e.target.value)} className="flex-1 px-4 py-3 rounded-xl text-[14px] theme-input" />
-              <motion.button whileTap={{ scale: 0.95 }} onClick={saveName} disabled={saving} className="px-6 py-3 rounded-xl text-[13px] font-bold text-white" style={{ background: nameSaved ? 'linear-gradient(135deg, #00b894, #00a381)' : 'linear-gradient(135deg, #e84393, #d63384)' }}>
+              <motion.button whileTap={{ scale: 0.95 }} onClick={saveName} disabled={saving} className="px-6 py-3 rounded-xl text-[13px] font-bold text-ink" style={{ background: nameSaved ? 'linear-gradient(135deg, var(--green), var(--green))' : 'linear-gradient(135deg, var(--accent-solid), var(--accent-solid))' }}>
                 {saving ? 'Saving...' : nameSaved ? 'Saved' : 'Save'}
               </motion.button>
             </div>
@@ -151,11 +176,11 @@ export default function SettingsPage() {
             <label className="block text-[12px] font-semibold mb-2" style={{ color: 'var(--text-secondary)' }}>Update Email Address</label>
             <div className="flex gap-3">
               <input type="email" value={newEmail} onChange={e => setNewEmail(e.target.value)} placeholder="Enter new email address" className="flex-1 px-4 py-3 rounded-xl text-[14px] theme-input" />
-              <motion.button whileTap={{ scale: 0.95 }} onClick={updateEmail} disabled={emailLoading} className="px-6 py-3 rounded-xl text-[13px] font-bold text-white shrink-0" style={{ background: 'linear-gradient(135deg, #0984e3, #0773c5)' }}>
+              <motion.button whileTap={{ scale: 0.95 }} onClick={updateEmail} disabled={emailLoading} className="px-6 py-3 rounded-xl text-[13px] font-bold text-[var(--text-on-accent)] shrink-0" style={{ background: 'linear-gradient(135deg, var(--blue), #0773c5)' }}>
                 {emailLoading ? 'Sending...' : 'Update'}
               </motion.button>
             </div>
-            {emailMsg && <p className="mt-2 text-[12px]" style={{ color: emailMsg.startsWith('Confirmation') ? '#00b894' : '#ff6b6b' }}>{emailMsg}</p>}
+            {emailMsg && <p className="mt-2 text-[12px]" style={{ color: emailMsg.startsWith('Confirmation') ? 'var(--green)' : 'var(--red)' }}>{emailMsg}</p>}
             <p className="mt-1.5 text-[11px]" style={{ color: 'var(--text-faint)' }}>A confirmation link will be sent to both your old and new email.</p>
           </div>
 
@@ -170,7 +195,7 @@ export default function SettingsPage() {
                 {resetLoading ? 'Sending...' : 'Send Reset Link'}
               </motion.button>
             </div>
-            {resetMsg && <p className="mt-2 text-[12px]" style={{ color: resetMsg.startsWith('Password') ? '#00b894' : '#ff6b6b' }}>{resetMsg}</p>}
+            {resetMsg && <p className="mt-2 text-[12px]" style={{ color: resetMsg.startsWith('Password') ? 'var(--green)' : 'var(--red)' }}>{resetMsg}</p>}
           </div>
         </div>
       </motion.div>
@@ -182,7 +207,7 @@ export default function SettingsPage() {
         <div className="grid sm:grid-cols-3 gap-4">
           {plans.map(plan => (
             <motion.div key={plan.name} whileHover={{ y: -4, scale: 1.02 }} className="relative p-5 rounded-2xl group" style={{ background: 'var(--bg-card)', border: `1px solid ${plan.popular ? `${plan.color}30` : 'var(--border)'}`, boxShadow: 'var(--shadow-sm)' }}>
-              {plan.popular && <div className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] font-bold px-3 py-1 rounded-full text-white" style={{ background: 'linear-gradient(135deg, #a29bfe, #6c5ce7)' }}>POPULAR</div>}
+              {plan.popular && <div className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] font-bold px-3 py-1 rounded-full text-[var(--text-on-accent)]" style={{ background: 'linear-gradient(135deg, var(--purple), var(--purple))' }}>POPULAR</div>}
               <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4" style={{ background: `${plan.color}12`, color: plan.color }}>{plan.icon}</div>
               <div className="text-[13px] font-bold capitalize mb-1" style={{ color: plan.color }}>{plan.name}</div>
               <div className="flex items-baseline gap-1 mb-4">
@@ -207,37 +232,49 @@ export default function SettingsPage() {
       {/* Appearance */}
       <motion.div variants={fadeUp} className="theme-card-gradient p-6">
         <h3 className="text-[16px] font-bold mb-1" style={{ color: 'var(--text)' }}>Appearance</h3>
-        <p className="text-[12px] mb-5" style={{ color: 'var(--text-muted)' }}>Choose your preferred theme</p>
-        <div className="flex items-center justify-between p-4 rounded-xl" style={{ background: 'var(--bg-overlay)', border: '1px solid var(--border)' }}>
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: theme === 'dark' ? 'rgba(108,92,231,0.12)' : 'rgba(253,203,110,0.12)' }}>
-              {theme === 'dark' ? (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6c5ce7" strokeWidth="1.8"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
-              ) : (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f39c12" strokeWidth="1.8"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-              )}
-            </div>
-            <div>
-              <div className="text-[13px] font-semibold" style={{ color: 'var(--text)' }}>{theme === 'dark' ? 'Dark Mode' : 'Light Mode'}</div>
-              <div className="text-[11px]" style={{ color: 'var(--text-muted)' }}>{theme === 'dark' ? 'Easy on the eyes' : 'Bright and professional'}</div>
-            </div>
-          </div>
-          <button onClick={toggleTheme} className="relative w-12 h-6 rounded-full transition-all duration-300 focus:outline-none" style={{ background: theme === 'dark' ? 'rgba(108,92,231,0.3)' : 'rgba(253,203,110,0.4)', border: `1px solid ${theme === 'dark' ? 'rgba(108,92,231,0.4)' : 'rgba(253,203,110,0.5)'}` }}>
-            <span className="absolute top-0.5 w-5 h-5 rounded-full transition-all duration-300 shadow-md flex items-center justify-center" style={{ left: theme === 'light' ? '2px' : 'calc(100% - 22px)', background: theme === 'dark' ? '#6c5ce7' : '#f39c12' }}>
-              {theme === 'dark' ? (
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="white" stroke="none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
-              ) : (
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="white" stroke="none"><circle cx="12" cy="12" r="5"/></svg>
-              )}
-            </span>
-          </button>
+        <p className="text-[12px] mb-5" style={{ color: 'var(--text-muted)' }}>
+          Choose a theme, or follow your device setting.
+        </p>
+
+        <div
+          role="radiogroup"
+          aria-label="Colour theme"
+          className="grid grid-cols-3 gap-2 p-2 rounded-xl"
+          style={{ background: 'var(--bg-overlay)', border: '1px solid var(--border)' }}
+        >
+          {THEME_OPTIONS.map(opt => {
+            const active = mounted && theme === opt.value
+            return (
+              <button
+                key={opt.value}
+                role="radio"
+                aria-checked={active}
+                onClick={() => setThemePref(opt.value)}
+                className="flex flex-col items-center gap-2 py-3 px-2 rounded-lg text-[12px] font-semibold transition-colors"
+                style={{
+                  background: active ? 'var(--accent-dim)' : 'transparent',
+                  color: active ? 'var(--accent)' : 'var(--text-secondary)',
+                  border: `1px solid ${active ? 'var(--border-accent)' : 'transparent'}`,
+                }}
+              >
+                <svg
+                  width="18" height="18" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" strokeWidth="1.8"
+                  strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"
+                >
+                  {opt.icon}
+                </svg>
+                {opt.label}
+              </button>
+            )
+          })}
         </div>
       </motion.div>
 
       {/* Danger Zone */}
       <motion.div variants={fadeUp} className="p-6 rounded-2xl" style={{ background: 'var(--bg-card)', border: '1px solid rgba(255,95,87,0.15)', boxShadow: 'var(--shadow-sm)' }}>
-        <h3 className="text-[15px] font-bold text-[#ff6b6b] mb-4">Danger Zone</h3>
-        <motion.button whileTap={{ scale: 0.95 }} onClick={handleSignOut} className="px-6 py-2.5 rounded-xl text-[13px] font-bold text-[#ff6b6b] hover:bg-[rgba(255,107,107,0.06)]" style={{ border: '1px solid rgba(255,107,107,0.2)' }}>
+        <h3 className="text-[15px] font-bold text-[var(--red)] mb-4">Danger Zone</h3>
+        <motion.button whileTap={{ scale: 0.95 }} onClick={handleSignOut} className="px-6 py-2.5 rounded-xl text-[13px] font-bold text-[var(--red)] hover:bg-[rgba(255,107,107,0.06)]" style={{ border: '1px solid rgba(255,107,107,0.2)' }}>
           Sign Out
         </motion.button>
       </motion.div>

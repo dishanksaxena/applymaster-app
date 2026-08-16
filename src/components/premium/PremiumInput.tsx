@@ -49,7 +49,7 @@ export default function PremiumInput({
         <motion.label
           initial={{ opacity: 0, y: -5 }}
           animate={{ opacity: 1, y: 0 }}
-          className="block text-[12px] font-semibold text-[#6a6a7a] mb-2 uppercase tracking-wide"
+          className="block text-[12px] font-semibold text-[var(--text-faint)] mb-2 uppercase tracking-wide"
         >
           {label}
         </motion.label>
@@ -91,10 +91,10 @@ export default function PremiumInput({
         {/* Icon Left */}
         {icon && (
           <motion.div
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-[#5a5a6a]"
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-faint)]"
             animate={{
               scale: isFocused ? 1.1 : 1,
-              color: isFocused ? '#fd79a8' : '#5a5a6a',
+              color: isFocused ? 'var(--accent)' : 'var(--text-faint)',
             }}
           >
             {icon}
@@ -113,15 +113,15 @@ export default function PremiumInput({
           className={`
             relative w-full py-3.5 px-4 rounded-xl
             ${icon ? 'pl-12' : 'px-4'}
-            bg-[#16161f] border transition-all duration-300
-            text-white text-[14px] placeholder-[#3a3a4a]
+            bg-[var(--bg-input)] border transition-all duration-300
+            text-ink text-[14px] placeholder-[var(--text-faint)]
             focus:outline-none disabled:cursor-not-allowed
             ${
               error
                 ? 'border-[rgba(255,107,107,0.3)] focus:border-[rgba(255,107,107,0.5)]'
                 : success
                 ? 'border-[rgba(0,184,148,0.3)] focus:border-[rgba(0,184,148,0.5)]'
-                : 'border-[rgba(255,255,255,0.06)] focus:border-[rgba(253,121,168,0.3)]'
+                : 'border-[var(--border)] focus:border-[rgba(253,121,168,0.3)]'
             }
           `}
         />
@@ -133,7 +133,7 @@ export default function PremiumInput({
               initial={{ opacity: 0, scale: 0 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0 }}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-[#00b894]"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--green)]"
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <path d="M20 6L9 17L4 12" />
@@ -164,7 +164,7 @@ export default function PremiumInput({
             initial={{ opacity: 0, y: -5 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -5 }}
-            className="text-[12px] text-[#ff6b6b] mt-2 flex items-center gap-1"
+            className="text-[12px] text-[var(--red)] mt-2 flex items-center gap-1"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
               <circle cx="12" cy="12" r="10" />

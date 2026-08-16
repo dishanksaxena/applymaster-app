@@ -62,39 +62,39 @@ function LiveTerminal({ activities }: { activities: { action: string; details: s
   }, [])
 
   return (
-    <div className="rounded-2xl overflow-hidden border border-white/[0.06] h-full" style={{ background: 'linear-gradient(180deg, #0d0d14 0%, #0a0a10 100%)' }}>
-      <div className="flex items-center gap-2 px-4 py-2.5 border-b border-white/[0.04]">
+    <div className="rounded-2xl overflow-hidden border border-[var(--border)] h-full" style={{ background: 'linear-gradient(180deg, var(--bg) 0%, var(--bg) 100%)' }}>
+      <div className="flex items-center gap-2 px-4 py-2.5 border-b border-[var(--border)]">
         <div className="flex gap-1.5">
-          <div className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]" />
-          <div className="w-2.5 h-2.5 rounded-full bg-[#febc2e]" />
-          <div className="w-2.5 h-2.5 rounded-full bg-[#28c840]" />
+          <div className="w-2.5 h-2.5 rounded-full bg-[var(--red)]" />
+          <div className="w-2.5 h-2.5 rounded-full bg-[var(--yellow)]" />
+          <div className="w-2.5 h-2.5 rounded-full bg-[var(--green)]" />
         </div>
-        <span className="text-[10px] font-mono text-[#4a4a5a] ml-2">applymaster — activity-feed</span>
+        <span className="text-[10px] font-mono text-[var(--text-faint)] ml-2">applymaster — activity-feed</span>
         <div className="ml-auto flex items-center gap-1.5">
           <span className="relative flex h-1.5 w-1.5">
-            <span className="absolute inline-flex h-full w-full rounded-full bg-[#00b894] opacity-60 animate-ping" />
-            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#00b894]" />
+            <span className="absolute inline-flex h-full w-full rounded-full bg-[var(--green)] opacity-60 animate-ping" />
+            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[var(--green)]" />
           </span>
-          <span className="text-[9px] font-mono text-[#00b894]">LIVE</span>
+          <span className="text-[9px] font-mono text-[var(--green)]">LIVE</span>
         </div>
       </div>
       <div className="p-4 max-h-[360px] overflow-y-auto font-mono text-[11px] space-y-2">
         {activities.length === 0 ? (
           <div className="text-center py-8">
-            <motion.div animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 2, repeat: Infinity }} className="text-[#4a4a5a]">
+            <motion.div animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 2, repeat: Infinity }} className="text-[var(--text-faint)]">
               Waiting for activity{dots}
             </motion.div>
-            <p className="text-[#3a3a4a] text-[10px] mt-2">Upload your resume to get started</p>
+            <p className="text-[var(--text-faint)] text-[10px] mt-2">Upload your resume to get started</p>
           </div>
         ) : (
           <AnimatePresence>
             {activities.map((log, i) => (
               <motion.div key={i} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }} className="flex items-start gap-3">
-                <span className="text-[#3a3a4a] shrink-0 mt-px">{new Date(log.created_at).toLocaleTimeString('en-US', { hour12: false })}</span>
-                <span className="text-[#00b894]">$</span>
+                <span className="text-[var(--text-faint)] shrink-0 mt-px">{new Date(log.created_at).toLocaleTimeString('en-US', { hour12: false })}</span>
+                <span className="text-[var(--green)]">$</span>
                 <div>
-                  <span className="text-[#e0e0e8]">{log.action}</span>
-                  {log.details && <span className="text-[#5a5a6a]"> — {log.details}</span>}
+                  <span className="text-[var(--text)]">{log.action}</span>
+                  {log.details && <span className="text-[var(--text-faint)]"> — {log.details}</span>}
                 </div>
               </motion.div>
             ))}
@@ -148,40 +148,40 @@ export default function DashboardPage() {
   }, [supabase])
 
   const statCards = [
-    { label: 'Applications Sent', value: stats.applied, suffix: '', color: '#fd79a8', sparkData: [2, 5, 3, 8, 6, 9, 7, 12, 10, 15], icon: (
+    { label: 'Applications Sent', value: stats.applied, suffix: '', color: 'var(--accent)', sparkData: [2, 5, 3, 8, 6, 9, 7, 12, 10, 15], icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M22 2L11 13"/><path d="M22 2L15 22L11 13L2 9L22 2Z"/></svg>
     )},
-    { label: 'Interviews Lined Up', value: stats.interviews, suffix: '', color: '#00b894', sparkData: [1, 2, 1, 3, 2, 4, 3, 5, 4, 6], icon: (
+    { label: 'Interviews Lined Up', value: stats.interviews, suffix: '', color: 'var(--green)', sparkData: [1, 2, 1, 3, 2, 4, 3, 5, 4, 6], icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/></svg>
     )},
-    { label: 'Offers Received', value: stats.offers, suffix: '', color: '#a29bfe', sparkData: [0, 0, 1, 0, 1, 1, 2, 1, 2, 3], icon: (
+    { label: 'Offers Received', value: stats.offers, suffix: '', color: 'var(--purple)', sparkData: [0, 0, 1, 0, 1, 1, 2, 1, 2, 3], icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>
     )},
-    { label: 'Avg Match Score', value: stats.matchRate, suffix: '%', color: '#fdcb6e', sparkData: [60, 65, 72, 68, 75, 78, 82, 80, 85, 88], icon: (
+    { label: 'Avg Match Score', value: stats.matchRate, suffix: '%', color: 'var(--yellow)', sparkData: [60, 65, 72, 68, 75, 78, 82, 80, 85, 88], icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20V16"/></svg>
     )},
   ]
 
   const quickActions = [
-    { label: 'Search Jobs', desc: 'Browse 50+ job portals with AI matching', href: '/jobs', color: '#fd79a8', icon: (
+    { label: 'Search Jobs', desc: 'Browse 50+ job portals with AI matching', href: '/jobs', color: 'var(--accent)', icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
     )},
-    { label: 'Optimize Resume', desc: 'AI-powered ATS scoring and improvements', href: '/resume', color: '#00b894', icon: (
+    { label: 'Optimize Resume', desc: 'AI-powered ATS scoring and improvements', href: '/resume', color: 'var(--green)', icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z"/><polyline points="14,2 14,8 20,8"/></svg>
     )},
-    { label: 'Cover Letter', desc: 'AI writes personalized letters in seconds', href: '/cover-letters', color: '#a29bfe', icon: (
+    { label: 'Cover Letter', desc: 'AI writes personalized letters in seconds', href: '/cover-letters', color: 'var(--purple)', icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
     )},
-    { label: 'Auto-Apply', desc: 'Let AI apply to jobs on autopilot', href: '/auto-apply', color: '#fdcb6e', icon: (
+    { label: 'Auto-Apply', desc: 'Let AI apply to jobs on autopilot', href: '/auto-apply', color: 'var(--yellow)', icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><polygon points="13,2 3,14 12,14 11,22 21,10 12,10"/></svg>
     )},
   ]
 
   const journeySteps = [
-    { step: 1, label: 'Upload Resume', desc: 'Get your ATS score', href: '/resume', done: hasResume, color: '#fd79a8' },
-    { step: 2, label: 'Search Jobs', desc: 'Find matching roles', href: '/jobs', done: hasResume, color: '#00b894' },
-    { step: 3, label: 'Enable Auto-Apply', desc: 'Apply on autopilot', href: '/auto-apply', done: stats.applied > 0, color: '#a29bfe' },
-    { step: 4, label: 'Ace Interviews', desc: 'Practice with AI coach', href: '/interview-coach', done: stats.interviews > 0, color: '#fdcb6e' },
+    { step: 1, label: 'Upload Resume', desc: 'Get your ATS score', href: '/resume', done: hasResume, color: 'var(--accent)' },
+    { step: 2, label: 'Search Jobs', desc: 'Find matching roles', href: '/jobs', done: hasResume, color: 'var(--green)' },
+    { step: 3, label: 'Enable Auto-Apply', desc: 'Apply on autopilot', href: '/auto-apply', done: stats.applied > 0, color: 'var(--purple)' },
+    { step: 4, label: 'Ace Interviews', desc: 'Practice with AI coach', href: '/interview-coach', done: stats.interviews > 0, color: 'var(--yellow)' },
   ]
 
   if (!mounted) return <div className="p-8" />
@@ -194,8 +194,8 @@ export default function DashboardPage() {
         background: 'linear-gradient(135deg, rgba(253,121,168,0.08) 0%, rgba(162,155,254,0.06) 50%, rgba(0,184,148,0.04) 100%)',
         border: '1px solid rgba(253,121,168,0.1)',
       }}>
-        <div className="absolute top-[-50%] right-[-10%] w-[300px] h-[300px] rounded-full opacity-[0.07]" style={{ background: 'radial-gradient(circle, #fd79a8, transparent 70%)' }} />
-        <div className="absolute bottom-[-50%] left-[-10%] w-[250px] h-[250px] rounded-full opacity-[0.05]" style={{ background: 'radial-gradient(circle, #a29bfe, transparent 70%)' }} />
+        <div className="absolute top-[-50%] right-[-10%] w-[300px] h-[300px] rounded-full opacity-[0.07]" style={{ background: 'radial-gradient(circle, var(--accent), transparent 70%)' }} />
+        <div className="absolute bottom-[-50%] left-[-10%] w-[250px] h-[250px] rounded-full opacity-[0.05]" style={{ background: 'radial-gradient(circle, var(--purple), transparent 70%)' }} />
         <div className="relative z-10">
           <motion.h1 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
             className="text-3xl lg:text-4xl font-black tracking-tight mb-2">
@@ -246,7 +246,7 @@ export default function DashboardPage() {
                 <h3 className="text-[16px] font-bold text-[var(--text)]">Your Journey</h3>
                 <p className="text-[12px] text-[var(--text-muted)] mt-1">Follow these steps to land your next role</p>
               </div>
-              <div className="text-[12px] font-bold px-3 py-1 rounded-full" style={{ background: 'rgba(253,121,168,0.08)', color: '#fd79a8' }}>
+              <div className="text-[12px] font-bold px-3 py-1 rounded-full" style={{ background: 'rgba(253,121,168,0.08)', color: 'var(--accent)' }}>
                 {journeySteps.filter(s => s.done).length}/{journeySteps.length} completed
               </div>
             </div>
@@ -262,7 +262,7 @@ export default function DashboardPage() {
                     }}>
                       {step.done ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M20 6L9 17L4 12"/></svg> : step.step}
                     </div>
-                    <div className="text-[13px] font-bold text-[var(--text)] group-hover:text-[#fd79a8] transition-colors">{step.label}</div>
+                    <div className="text-[13px] font-bold text-[var(--text)] group-hover:text-[var(--accent)] transition-colors">{step.label}</div>
                     <div className="text-[11px] text-[var(--text-muted)] mt-1">{step.desc}</div>
                     <div className="absolute top-1/2 right-4 -translate-y-1/2 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 text-[var(--text-muted)]">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
@@ -293,7 +293,7 @@ export default function DashboardPage() {
                         style={{ background: `radial-gradient(circle at 30% 30%, ${a.color}10, transparent 70%)` }} />
                       <div className="relative z-10">
                         <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-4" style={{ background: `${a.color}15`, color: a.color }}>{a.icon}</div>
-                        <div className="text-[14px] font-bold text-[var(--text)] group-hover:text-[#fd79a8] transition-colors">{a.label}</div>
+                        <div className="text-[14px] font-bold text-[var(--text)] group-hover:text-[var(--accent)] transition-colors">{a.label}</div>
                         <div className="text-[12px] text-[var(--text-muted)] mt-1 leading-relaxed">{a.desc}</div>
                       </div>
                       <div className="absolute top-5 right-5 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 -translate-x-2 transition-all duration-300" style={{ color: a.color }}>

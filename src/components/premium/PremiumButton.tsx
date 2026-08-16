@@ -15,7 +15,7 @@ interface PremiumButtonProps {
 
 const variantStyles = {
   primary: {
-    bg: 'linear-gradient(135deg, #e84393, #d63384)',
+    bg: 'linear-gradient(135deg, var(--accent-solid), var(--accent-solid))',
     text: '#ffffff',
     shadow: '0 4px 14px rgba(232,67,147,0.25)',
   },
@@ -30,12 +30,12 @@ const variantStyles = {
     shadow: 'none',
   },
   danger: {
-    bg: 'linear-gradient(135deg, #ff6b6b, #ff5252)',
+    bg: 'linear-gradient(135deg, var(--red), var(--red))',
     text: '#ffffff',
     shadow: '0 4px 14px rgba(255,107,107,0.25)',
   },
   success: {
-    bg: 'linear-gradient(135deg, #00b894, #00a381)',
+    bg: 'linear-gradient(135deg, var(--green), var(--green))',
     text: '#ffffff',
     shadow: '0 4px 14px rgba(0,184,148,0.25)',
   },
@@ -80,7 +80,7 @@ export default function PremiumButton({
           animate={{ rotate: 360 }}
           transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
           className="w-4 h-4 rounded-full"
-          style={{ border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff' }}
+          style={{ border: '2px solid var(--border)', borderTopColor: '#fff' }}
         />
       )}
       {icon && !loading && <span className="text-base">{icon}</span>}

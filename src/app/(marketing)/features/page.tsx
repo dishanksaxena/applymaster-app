@@ -89,15 +89,15 @@ export default function FeaturesPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <main className="min-h-screen bg-[#0a0a12] text-white">
+      <main className="min-h-screen bg-[var(--bg)] text-ink">
         {/* Hero */}
         <section className="relative overflow-hidden py-24 sm:py-32">
-          <div className="absolute inset-0 bg-gradient-to-b from-purple-900/20 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[var(--accent-dim)] to-transparent" />
           <div className="relative mx-auto max-w-7xl px-6 lg:px-8 text-center">
-            <h1 className="text-4xl font-extrabold tracking-tight sm:text-6xl bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent">
+            <h1 className="text-4xl font-extrabold tracking-tight sm:text-6xl bg-gradient-to-r from-[var(--accent)] via-[var(--accent)] to-[var(--blue)] bg-clip-text text-transparent">
               Job Search Automation Tools Built for Results
             </h1>
-            <p className="mt-6 max-w-2xl mx-auto text-lg text-gray-300 leading-relaxed">
+            <p className="mt-6 max-w-2xl mx-auto text-lg text-[var(--text-secondary)] leading-relaxed">
               ApplyMaster combines five AI-powered features into a single platform so you can
               find the right roles, apply faster, and interview with confidence. Every feature
               is designed to save you hours each week and dramatically increase your callback rate.
@@ -105,13 +105,13 @@ export default function FeaturesPage() {
             <div className="mt-10 flex items-center justify-center gap-4">
               <Link
                 href="/signup"
-                className="rounded-full bg-purple-600 px-8 py-3 text-sm font-semibold text-white shadow-lg hover:bg-purple-500 transition-colors"
+                className="rounded-full bg-[var(--accent-solid)] px-8 py-3 text-sm font-semibold text-ink shadow-lg hover:bg-[var(--accent-solid)] transition-colors"
               >
                 Get Started Free
               </Link>
               <Link
                 href="/pricing"
-                className="rounded-full border border-gray-600 px-8 py-3 text-sm font-semibold text-gray-300 hover:border-purple-400 hover:text-white transition-colors"
+                className="rounded-full border border-[var(--border-hover)] px-8 py-3 text-sm font-semibold text-[var(--text-secondary)] hover:border-[var(--accent)] hover:text-ink transition-colors"
               >
                 View Pricing
               </Link>
@@ -125,7 +125,7 @@ export default function FeaturesPage() {
             <h2 className="text-3xl font-bold text-center mb-4">
               Everything You Need to Land Your Next Role
             </h2>
-            <p className="text-center text-gray-400 mb-16 max-w-2xl mx-auto">
+            <p className="text-center text-[var(--text-muted)] mb-16 max-w-2xl mx-auto">
               Each feature works independently or together as a unified workflow.
               Start with what you need and unlock more as your search intensifies.
             </p>
@@ -135,24 +135,24 @@ export default function FeaturesPage() {
                 <Link
                   key={feature.href}
                   href={feature.href}
-                  className="group rounded-2xl border border-gray-800 bg-gray-900/50 p-8 hover:border-purple-500/50 hover:bg-gray-900/80 transition-all duration-300"
+                  className="group rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-8 hover:border-[var(--border-accent)] hover:bg-[var(--bg-card)] transition-all duration-300"
                 >
                   <div className="text-4xl mb-4">{feature.icon}</div>
-                  <h3 className="text-xl font-semibold mb-3 group-hover:text-purple-400 transition-colors">
+                  <h3 className="text-xl font-semibold mb-3 group-hover:text-[var(--accent)] transition-colors">
                     {feature.title}
                   </h3>
-                  <p className="text-gray-400 text-sm leading-relaxed mb-5">
+                  <p className="text-[var(--text-muted)] text-sm leading-relaxed mb-5">
                     {feature.description}
                   </p>
                   <ul className="space-y-2">
                     {feature.highlights.map((h) => (
-                      <li key={h} className="flex items-center gap-2 text-sm text-gray-300">
-                        <span className="h-1.5 w-1.5 rounded-full bg-purple-500" />
+                      <li key={h} className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
+                        <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent-solid)]" />
                         {h}
                       </li>
                     ))}
                   </ul>
-                  <p className="mt-6 text-sm font-medium text-purple-400 group-hover:text-purple-300">
+                  <p className="mt-6 text-sm font-medium text-[var(--accent)] group-hover:text-[var(--accent)]">
                     Learn more &rarr;
                   </p>
                 </Link>
@@ -162,7 +162,7 @@ export default function FeaturesPage() {
         </section>
 
         {/* How It Works */}
-        <section className="py-20 bg-gray-900/30">
+        <section className="py-20 bg-[var(--bg-card)]">
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
             <h2 className="text-3xl font-bold text-center mb-16">
               How ApplyMaster Works
@@ -175,11 +175,11 @@ export default function FeaturesPage() {
                 { step: '4', title: 'Prepare & Interview', desc: 'Use AI coaching and mock interviews to walk into every call fully prepared.' },
               ].map((item) => (
                 <div key={item.step} className="text-center">
-                  <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-purple-600 text-lg font-bold">
+                  <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[var(--accent-solid)] text-lg font-bold">
                     {item.step}
                   </div>
                   <h3 className="text-lg font-semibold mb-2">{item.title}</h3>
-                  <p className="text-sm text-gray-400">{item.desc}</p>
+                  <p className="text-sm text-[var(--text-muted)]">{item.desc}</p>
                 </div>
               ))}
             </div>
@@ -196,11 +196,11 @@ export default function FeaturesPage() {
                 { stat: '3x', label: 'More Interviews' },
                 { stat: '85%', label: 'ATS Pass Rate' },
               ].map((item) => (
-                <div key={item.label} className="text-center rounded-2xl border border-gray-800 bg-gray-900/40 p-8">
-                  <p className="text-4xl font-extrabold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+                <div key={item.label} className="text-center rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-8">
+                  <p className="text-4xl font-extrabold bg-gradient-to-r from-[var(--accent)] to-[var(--accent)] bg-clip-text text-transparent">
                     {item.stat}
                   </p>
-                  <p className="mt-2 text-sm text-gray-400">{item.label}</p>
+                  <p className="mt-2 text-sm text-[var(--text-muted)]">{item.label}</p>
                 </div>
               ))}
             </div>
@@ -208,18 +208,18 @@ export default function FeaturesPage() {
         </section>
 
         {/* CTA */}
-        <section className="py-24 bg-gradient-to-b from-transparent to-purple-900/20">
+        <section className="py-24 bg-gradient-to-b from-transparent to-[var(--accent-dim)]">
           <div className="mx-auto max-w-3xl px-6 text-center">
             <h2 className="text-3xl font-bold mb-6">
               Ready to Automate Your Job Search?
             </h2>
-            <p className="text-gray-400 mb-10 text-lg">
+            <p className="text-[var(--text-muted)] mb-10 text-lg">
               Join thousands of job seekers who use ApplyMaster to apply smarter, not harder.
               Start with our free plan and upgrade when you are ready.
             </p>
             <Link
               href="/signup"
-              className="rounded-full bg-purple-600 px-10 py-4 text-base font-semibold text-white shadow-lg hover:bg-purple-500 transition-colors"
+              className="rounded-full bg-[var(--accent-solid)] px-10 py-4 text-base font-semibold text-ink shadow-lg hover:bg-[var(--accent-solid)] transition-colors"
             >
               Start Applying for Free
             </Link>

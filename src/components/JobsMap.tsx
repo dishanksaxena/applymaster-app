@@ -81,11 +81,11 @@ interface MapPoint {
 
 function salaryColor(min: number | null, currency = 'USD') {
   const v = currency === 'INR' ? (min || 0) / 83 : (min || 0)
-  if (v >= 150000) return '#ffd700'
-  if (v >= 100000) return '#fd79a8'
-  if (v >= 60000) return '#a29bfe'
-  if (v >= 30000) return '#74b9ff'
-  return '#55efc4'
+  if (v >= 150000) return 'var(--yellow)'
+  if (v >= 100000) return 'var(--accent)'
+  if (v >= 60000) return 'var(--purple)'
+  if (v >= 30000) return 'var(--blue)'
+  return 'var(--green)'
 }
 
 function formatSalary(min: number | null, max: number | null, currency = 'USD') {
@@ -112,32 +112,32 @@ function JobCard({ job, onClose, onSave, onApply, isSaved, isApplied }: {
         <motion.div className="absolute top-0 left-0 right-0 h-[1px]"
           animate={{ backgroundPosition: ['200% 0', '-200% 0'] }}
           transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
-          style={{ backgroundImage: 'linear-gradient(90deg, transparent, #a29bfe, #fd79a8, #74b9ff, transparent)', backgroundSize: '200% 100%' }} />
+          style={{ backgroundImage: 'linear-gradient(90deg, transparent, var(--purple), var(--accent), var(--blue), transparent)', backgroundSize: '200% 100%' }} />
         <div className="p-5">
           <div className="flex items-start justify-between mb-3">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold text-white flex-shrink-0"
-              style={{ background: 'linear-gradient(135deg, #fd79a8, #a29bfe)' }}>
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold text-[var(--text-on-accent)] flex-shrink-0"
+              style={{ background: 'linear-gradient(135deg, var(--accent), var(--purple))' }}>
               {job.company[0]?.toUpperCase()}
             </div>
-            <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-white/5 text-[#4a4a6a] hover:text-white transition-all">
+            <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-[var(--bg-overlay)] text-[var(--text-faint)] hover:text-ink transition-all">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
             </button>
           </div>
-          <h3 className="font-bold text-white text-[14px] leading-snug mb-1 line-clamp-2">{job.title}</h3>
-          <p className="text-[12px] text-[#a29bfe] font-medium mb-3">{job.company}</p>
+          <h3 className="font-bold text-ink text-[14px] leading-snug mb-1 line-clamp-2">{job.title}</h3>
+          <p className="text-[12px] text-[var(--purple)] font-medium mb-3">{job.company}</p>
           <div className="flex flex-wrap gap-1.5 mb-4">
             <span className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium"
-              style={{ background: 'rgba(116,185,255,0.1)', color: '#74b9ff', border: '1px solid rgba(116,185,255,0.15)' }}>
+              style={{ background: 'rgba(116,185,255,0.1)', color: 'var(--blue)', border: '1px solid rgba(116,185,255,0.15)' }}>
               📍 {job.location || 'Remote'}
             </span>
             {job.remote_type && (
               <span className="px-2 py-1 rounded-lg text-[10px] font-medium"
-                style={{ background: 'rgba(85,239,196,0.1)', color: '#55efc4', border: '1px solid rgba(85,239,196,0.15)' }}>
+                style={{ background: 'rgba(85,239,196,0.1)', color: 'var(--green)', border: '1px solid rgba(85,239,196,0.15)' }}>
                 {job.remote_type}
               </span>
             )}
             <span className="px-2 py-1 rounded-lg text-[10px] font-bold"
-              style={{ background: 'rgba(253,203,94,0.1)', color: '#fdcb6e', border: '1px solid rgba(253,203,94,0.15)' }}>
+              style={{ background: 'rgba(253,203,94,0.1)', color: 'var(--yellow)', border: '1px solid rgba(253,203,94,0.15)' }}>
               {formatSalary(job.salary_min, job.salary_max, job.salary_currency)}
             </span>
           </div>
@@ -145,15 +145,15 @@ function JobCard({ job, onClose, onSave, onApply, isSaved, isApplied }: {
             <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} onClick={onSave}
               className="flex-1 py-2 rounded-xl text-[11px] font-semibold transition-all"
               style={isSaved
-                ? { background: 'rgba(162,155,254,0.15)', color: '#a29bfe', border: '1px solid rgba(162,155,254,0.3)' }
-                : { background: 'rgba(255,255,255,0.04)', color: '#7a7a9a', border: '1px solid rgba(255,255,255,0.07)' }}>
+                ? { background: 'rgba(162,155,254,0.15)', color: 'var(--purple)', border: '1px solid rgba(162,155,254,0.3)' }
+                : { background: 'var(--bg-overlay)', color: 'var(--text-faint)', border: '1px solid var(--border)' }}>
               {isSaved ? '✓ Saved' : 'Save'}
             </motion.button>
             <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} onClick={onApply}
-              className="flex-1 py-2 rounded-xl text-[11px] font-bold text-white"
+              className="flex-1 py-2 rounded-xl text-[11px] font-bold text-[var(--text-on-accent)]"
               style={isApplied
-                ? { background: 'rgba(85,239,196,0.15)', border: '1px solid rgba(85,239,196,0.3)', color: '#55efc4' }
-                : { background: 'linear-gradient(135deg, #fd79a8, #e84393)', boxShadow: '0 0 20px rgba(253,121,168,0.3)' }}>
+                ? { background: 'rgba(85,239,196,0.15)', border: '1px solid rgba(85,239,196,0.3)', color: 'var(--green)' }
+                : { background: 'linear-gradient(135deg, var(--accent), var(--accent-solid))', boxShadow: '0 0 20px rgba(253,121,168,0.3)' }}>
               {isApplied ? '✓ Applied' : 'Apply Now →'}
             </motion.button>
           </div>
@@ -263,7 +263,7 @@ export default function JobsMap({ jobs, onSave, onApply, savedJobs, appliedJobs 
         source: 'job-lines',
         paint: {
           'line-color': ['case',
-            ['boolean', ['feature-state', 'hover'], false], '#fd79a8', '#a29bfe'
+            ['boolean', ['feature-state', 'hover'], false], 'var(--accent)', 'var(--purple)'
           ],
           'line-width': ['case',
             ['boolean', ['feature-state', 'hover'], false], 2, 0.8
@@ -288,11 +288,11 @@ export default function JobsMap({ jobs, onSave, onApply, savedJobs, appliedJobs 
         <div style="
           width: ${size}px; height: ${size}px;
           background: ${p.color};
-          border: 2px solid rgba(255,255,255,0.9);
+          border: 2px solid var(--border);
           border-radius: 50%;
           box-shadow: 0 0 ${isHovered ? '20' : '10'}px ${p.color}80;
           display: flex; align-items: center; justify-center;
-          font-weight: bold; color: rgba(255,255,255,0.9); font-size: 12px;
+          font-weight: bold; color: var(--bg-overlay); font-size: 12px;
           transition: all 0.2s ease;
         ">
           💼
@@ -343,7 +343,7 @@ export default function JobsMap({ jobs, onSave, onApply, savedJobs, appliedJobs 
       {/* Stats bar */}
       <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
         className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-4 px-5 py-2.5 rounded-2xl whitespace-nowrap"
-        style={{ background: 'rgba(8,8,20,0.88)', border: '1px solid rgba(255,255,255,0.06)', backdropFilter: 'blur(20px)' }}>
+        style={{ background: 'rgba(8,8,20,0.88)', border: '1px solid var(--border)', backdropFilter: 'blur(20px)' }}>
         {[
           { label: 'Pinned', value: points.length },
           { label: 'Total', value: jobs.length },
@@ -351,10 +351,10 @@ export default function JobsMap({ jobs, onSave, onApply, savedJobs, appliedJobs 
           { label: 'Avg Salary', value: avgSalary ? `$${Math.round(avgSalary / 1000)}K` : 'N/A' },
         ].map((s, i) => (
           <div key={s.label} className="flex items-center gap-4">
-            {i > 0 && <div className="w-px h-3.5 bg-white/10" />}
+            {i > 0 && <div className="w-px h-3.5 bg-[var(--bg-overlay)]" />}
             <div className="text-center">
-              <div className="text-[14px] font-bold text-white">{s.value}</div>
-              <div className="text-[9px] text-[#4a4a6a] font-medium uppercase tracking-wide">{s.label}</div>
+              <div className="text-[14px] font-bold text-ink">{s.value}</div>
+              <div className="text-[9px] text-[var(--text-faint)] font-medium uppercase tracking-wide">{s.label}</div>
             </div>
           </div>
         ))}
@@ -363,18 +363,18 @@ export default function JobsMap({ jobs, onSave, onApply, savedJobs, appliedJobs 
       {/* Salary Legend */}
       <motion.div initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5 }}
         className="absolute bottom-6 left-5 z-20 rounded-xl p-3.5"
-        style={{ background: 'rgba(8,8,20,0.88)', border: '1px solid rgba(255,255,255,0.06)', backdropFilter: 'blur(20px)' }}>
-        <p className="text-[9px] font-bold tracking-widest uppercase text-[#4a4a6a] mb-2.5">Salary</p>
+        style={{ background: 'rgba(8,8,20,0.88)', border: '1px solid var(--border)', backdropFilter: 'blur(20px)' }}>
+        <p className="text-[9px] font-bold tracking-widest uppercase text-[var(--text-faint)] mb-2.5">Salary</p>
         {[
-          { color: '#ffd700', label: '$150K+' }, { color: '#fd79a8', label: '$100K–150K' },
-          { color: '#a29bfe', label: '$60K–100K' }, { color: '#74b9ff', label: '$30K–60K' },
-          { color: '#55efc4', label: 'Below $30K' },
+          { color: 'var(--yellow)', label: '$150K+' }, { color: 'var(--accent)', label: '$100K–150K' },
+          { color: 'var(--purple)', label: '$60K–100K' }, { color: 'var(--blue)', label: '$30K–60K' },
+          { color: 'var(--green)', label: 'Below $30K' },
         ].map(t => (
           <div key={t.label} className="flex items-center gap-2 mb-1.5 last:mb-0">
             <motion.div className="w-2.5 h-2.5 rounded-full flex-shrink-0"
               style={{ background: t.color, boxShadow: `0 0 6px ${t.color}80` }}
               animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 2, repeat: Infinity, delay: Math.random() }} />
-            <span className="text-[10px] text-white/60">{t.label}</span>
+            <span className="text-[10px] text-ink/60">{t.label}</span>
           </div>
         ))}
       </motion.div>
@@ -382,13 +382,13 @@ export default function JobsMap({ jobs, onSave, onApply, savedJobs, appliedJobs 
       {/* No pins message */}
       {points.length === 0 && jobs.length > 0 && (
         <div className="absolute bottom-6 right-6 z-20 text-right pointer-events-none">
-          <p className="text-[11px] text-[#4a4a6a]">{jobs.length} jobs found but locations couldn't be mapped</p>
+          <p className="text-[11px] text-[var(--text-faint)]">{jobs.length} jobs found but locations couldn't be mapped</p>
         </div>
       )}
 
       {jobs.length === 0 && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <p className="text-[#3a3a5a] text-sm">Search for jobs to see them on the map</p>
+          <p className="text-[var(--border-hover)] text-sm">Search for jobs to see them on the map</p>
         </div>
       )}
 
@@ -396,7 +396,7 @@ export default function JobsMap({ jobs, onSave, onApply, savedJobs, appliedJobs 
       {points.length > 0 && !selectedJob && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.5 }}
           className="absolute bottom-6 right-5 z-20 text-right pointer-events-none">
-          <p className="text-[10px] text-[#3a3a5a]">Click a pin · Drag to pan · Scroll to zoom</p>
+          <p className="text-[10px] text-[var(--border-hover)]">Click a pin · Drag to pan · Scroll to zoom</p>
         </motion.div>
       )}
 

@@ -53,8 +53,8 @@ export default function TrendLineChart({ applications, height = 280 }: TrendLine
     .join(' ')
 
   return (
-    <div className="rounded-2xl border border-[rgba(255,255,255,0.06)] bg-[#0d0d15] p-6">
-      <h3 className="text-[14px] font-bold text-white mb-4">7-Day Trend</h3>
+    <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg)] p-6">
+      <h3 className="text-[14px] font-bold text-ink mb-4">7-Day Trend</h3>
 
       <svg width="100%" height={height} viewBox={`0 0 320 ${height}`} className="overflow-visible">
         {/* Y-axis */}
@@ -63,7 +63,7 @@ export default function TrendLineChart({ applications, height = 280 }: TrendLine
           y1={padding.top}
           x2={padding.left - 5}
           y2={height - padding.bottom}
-          stroke="rgba(255,255,255,0.1)"
+          stroke="var(--bg-overlay)"
           strokeWidth="1"
         />
 
@@ -73,7 +73,7 @@ export default function TrendLineChart({ applications, height = 280 }: TrendLine
           y1={height - padding.bottom}
           x2={320 - padding.right}
           y2={height - padding.bottom}
-          stroke="rgba(255,255,255,0.1)"
+          stroke="var(--bg-overlay)"
           strokeWidth="1"
         />
 
@@ -88,7 +88,7 @@ export default function TrendLineChart({ applications, height = 280 }: TrendLine
                 y1={y}
                 x2={320 - padding.right}
                 y2={y}
-                stroke="rgba(255,255,255,0.05)"
+                stroke="var(--bg-overlay)"
                 strokeWidth="1"
                 strokeDasharray="4,4"
               />
@@ -96,7 +96,7 @@ export default function TrendLineChart({ applications, height = 280 }: TrendLine
                 x={padding.left - 10}
                 y={y + 4}
                 fontSize="11"
-                fill="#5a5a6a"
+                fill="var(--text-faint)"
                 textAnchor="end"
                 dominantBaseline="middle"
               >
@@ -109,8 +109,8 @@ export default function TrendLineChart({ applications, height = 280 }: TrendLine
         {/* Line with gradient fill */}
         <defs>
           <linearGradient id="lineGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#74b9ff" stopOpacity="0.3" />
-            <stop offset="100%" stopColor="#74b9ff" stopOpacity="0" />
+            <stop offset="0%" stopColor="var(--blue)" stopOpacity="0.3" />
+            <stop offset="100%" stopColor="var(--blue)" stopOpacity="0" />
           </linearGradient>
         </defs>
 
@@ -124,7 +124,7 @@ export default function TrendLineChart({ applications, height = 280 }: TrendLine
         <polyline
           points={points}
           fill="none"
-          stroke="#74b9ff"
+          stroke="var(--blue)"
           strokeWidth="2.5"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -140,7 +140,7 @@ export default function TrendLineChart({ applications, height = 280 }: TrendLine
                 cx={x}
                 cy={y}
                 r="4"
-                fill="#74b9ff"
+                fill="var(--blue)"
                 opacity="0.8"
               />
               <circle
@@ -148,7 +148,7 @@ export default function TrendLineChart({ applications, height = 280 }: TrendLine
                 cy={y}
                 r="4"
                 fill="none"
-                stroke="#74b9ff"
+                stroke="var(--blue)"
                 strokeWidth="2"
                 opacity="0.3"
               />
@@ -162,7 +162,7 @@ export default function TrendLineChart({ applications, height = 280 }: TrendLine
                   x={x}
                   y={y - 10}
                   fontSize="11"
-                  fill="#74b9ff"
+                  fill="var(--blue)"
                   textAnchor="middle"
                   fontWeight="bold"
                 >
@@ -182,7 +182,7 @@ export default function TrendLineChart({ applications, height = 280 }: TrendLine
               x={x}
               y={height - padding.bottom + 20}
               fontSize="11"
-              fill="#6a6a7a"
+              fill="var(--text-faint)"
               textAnchor="middle"
             >
               {d.label.split(' ')[0]}

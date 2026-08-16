@@ -48,18 +48,18 @@ export default function JobMatchingPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <main className="min-h-screen bg-[#0a0a12] text-white">
+      <main className="min-h-screen bg-[var(--bg)] text-ink">
         {/* Hero */}
         <section className="relative overflow-hidden py-24 sm:py-32">
-          <div className="absolute inset-0 bg-gradient-to-b from-cyan-900/20 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[var(--blue-dim)] to-transparent" />
           <div className="relative mx-auto max-w-7xl px-6 lg:px-8">
-            <Link href="/features" className="text-sm text-purple-400 hover:text-purple-300 mb-6 inline-block">
+            <Link href="/features" className="text-sm text-[var(--accent)] hover:text-[var(--accent)] mb-6 inline-block">
               &larr; All Features
             </Link>
-            <h1 className="text-4xl font-extrabold tracking-tight sm:text-6xl bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
+            <h1 className="text-4xl font-extrabold tracking-tight sm:text-6xl bg-gradient-to-r from-[var(--blue)] to-[var(--blue)] bg-clip-text text-transparent">
               AI Job Matching
             </h1>
-            <p className="mt-6 max-w-2xl text-lg text-gray-300 leading-relaxed">
+            <p className="mt-6 max-w-2xl text-lg text-[var(--text-secondary)] leading-relaxed">
               Scrolling through hundreds of listings to find the right roles wastes time and
               energy. ApplyMaster&apos;s job recommendation engine analyzes your entire
               professional profile — skills, experience, career goals, and work preferences —
@@ -69,7 +69,7 @@ export default function JobMatchingPage() {
             <div className="mt-10 flex items-center gap-4">
               <Link
                 href="/signup"
-                className="rounded-full bg-purple-600 px-8 py-3 text-sm font-semibold text-white shadow-lg hover:bg-purple-500 transition-colors"
+                className="rounded-full bg-[var(--accent-solid)] px-8 py-3 text-sm font-semibold text-ink shadow-lg hover:bg-[var(--accent-solid)] transition-colors"
               >
                 Find Your Best Matches Free
               </Link>
@@ -102,9 +102,9 @@ export default function JobMatchingPage() {
                   desc: 'As you interact with recommendations — applying to some and skipping others — the engine learns your preferences and refines future suggestions accordingly.',
                 },
               ].map((item) => (
-                <div key={item.title} className="rounded-2xl border border-gray-800 bg-gray-900/50 p-8">
-                  <h3 className="text-xl font-semibold mb-3 text-cyan-400">{item.title}</h3>
-                  <p className="text-gray-400 leading-relaxed">{item.desc}</p>
+                <div key={item.title} className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-8">
+                  <h3 className="text-xl font-semibold mb-3 text-[var(--blue)]">{item.title}</h3>
+                  <p className="text-[var(--text-muted)] leading-relaxed">{item.desc}</p>
                 </div>
               ))}
             </div>
@@ -112,12 +112,12 @@ export default function JobMatchingPage() {
         </section>
 
         {/* Matching Criteria */}
-        <section className="py-20 bg-gray-900/30">
+        <section className="py-20 bg-[var(--bg-card)]">
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
             <h2 className="text-3xl font-bold text-center mb-4">
               What the Engine Considers
             </h2>
-            <p className="text-center text-gray-400 mb-16 max-w-2xl mx-auto">
+            <p className="text-center text-[var(--text-muted)] mb-16 max-w-2xl mx-auto">
               Unlike simple keyword matching, ApplyMaster evaluates holistic fit.
             </p>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -132,9 +132,9 @@ export default function JobMatchingPage() {
                 { title: 'Growth Potential', desc: 'Prioritizes roles with clear advancement paths and learning opportunities.' },
                 { title: 'Application Success Rate', desc: 'Uses historical data to estimate your likelihood of progressing past the initial screen.' },
               ].map((item) => (
-                <div key={item.title} className="rounded-xl border border-gray-800 bg-gray-900/40 p-6">
-                  <h3 className="font-semibold mb-2 text-white">{item.title}</h3>
-                  <p className="text-sm text-gray-400 leading-relaxed">{item.desc}</p>
+                <div key={item.title} className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-6">
+                  <h3 className="font-semibold mb-2 text-ink">{item.title}</h3>
+                  <p className="text-sm text-[var(--text-muted)] leading-relaxed">{item.desc}</p>
                 </div>
               ))}
             </div>
@@ -162,9 +162,9 @@ export default function JobMatchingPage() {
                   desc: 'See trends in your job market: which skills are in demand, salary movements, and how your profile compares to other applicants.',
                 },
               ].map((item) => (
-                <div key={item.title} className="text-center rounded-2xl border border-gray-800 bg-gray-900/40 p-8">
-                  <h3 className="text-lg font-semibold mb-3 text-cyan-400">{item.title}</h3>
-                  <p className="text-sm text-gray-400 leading-relaxed">{item.desc}</p>
+                <div key={item.title} className="text-center rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-8">
+                  <h3 className="text-lg font-semibold mb-3 text-[var(--blue)]">{item.title}</h3>
+                  <p className="text-sm text-[var(--text-muted)] leading-relaxed">{item.desc}</p>
                 </div>
               ))}
             </div>
@@ -172,18 +172,18 @@ export default function JobMatchingPage() {
         </section>
 
         {/* Integration */}
-        <section className="py-20 bg-gray-900/30">
+        <section className="py-20 bg-[var(--bg-card)]">
           <div className="mx-auto max-w-4xl px-6 lg:px-8 text-center">
             <h2 className="text-3xl font-bold mb-6">
               Find, Apply, and Interview — All in One Place
             </h2>
-            <p className="text-gray-400 mb-4 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-[var(--text-muted)] mb-4 max-w-2xl mx-auto leading-relaxed">
               When the AI finds a great match, you can apply with one click using{' '}
-              <Link href="/features/auto-apply" className="text-purple-400 underline hover:text-purple-300">auto-apply</Link>.
-              Your <Link href="/features/resume-optimizer" className="text-purple-400 underline hover:text-purple-300">resume</Link> and{' '}
-              <Link href="/features/cover-letter-generator" className="text-purple-400 underline hover:text-purple-300">cover letter</Link> are
+              <Link href="/features/auto-apply" className="text-[var(--accent)] underline hover:text-[var(--accent)]">auto-apply</Link>.
+              Your <Link href="/features/resume-optimizer" className="text-[var(--accent)] underline hover:text-[var(--accent)]">resume</Link> and{' '}
+              <Link href="/features/cover-letter-generator" className="text-[var(--accent)] underline hover:text-[var(--accent)]">cover letter</Link> are
               tailored automatically. And when you get the interview, the{' '}
-              <Link href="/features/interview-coach" className="text-purple-400 underline hover:text-purple-300">interview coach</Link> has
+              <Link href="/features/interview-coach" className="text-[var(--accent)] underline hover:text-[var(--accent)]">interview coach</Link> has
               already prepared your talking points.
             </p>
           </div>
@@ -215,8 +215,8 @@ export default function JobMatchingPage() {
                 },
               ].map((item) => (
                 <div key={item.q}>
-                  <h3 className="font-semibold text-white mb-2">{item.q}</h3>
-                  <p className="text-sm text-gray-400 leading-relaxed">{item.a}</p>
+                  <h3 className="font-semibold text-ink mb-2">{item.q}</h3>
+                  <p className="text-sm text-[var(--text-muted)] leading-relaxed">{item.a}</p>
                 </div>
               ))}
             </div>
@@ -224,17 +224,17 @@ export default function JobMatchingPage() {
         </section>
 
         {/* CTA */}
-        <section className="py-24 bg-gradient-to-b from-transparent to-purple-900/20">
+        <section className="py-24 bg-gradient-to-b from-transparent to-[var(--accent-dim)]">
           <div className="mx-auto max-w-3xl px-6 text-center">
             <h2 className="text-3xl font-bold mb-6">
               Stop Searching. Start Matching.
             </h2>
-            <p className="text-gray-400 mb-10 text-lg">
+            <p className="text-[var(--text-muted)] mb-10 text-lg">
               Set up your profile and get your first batch of AI-curated job matches in minutes.
             </p>
             <Link
               href="/signup"
-              className="rounded-full bg-purple-600 px-10 py-4 text-base font-semibold text-white shadow-lg hover:bg-purple-500 transition-colors"
+              className="rounded-full bg-[var(--accent-solid)] px-10 py-4 text-base font-semibold text-ink shadow-lg hover:bg-[var(--accent-solid)] transition-colors"
             >
               Get Matched Free
             </Link>

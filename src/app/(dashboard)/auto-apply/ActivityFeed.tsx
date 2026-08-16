@@ -13,12 +13,12 @@ interface ActivityLog {
 }
 
 const activityColors = {
-  queued_applications: { bg: 'rgba(116,185,255,0.1)', text: '#74b9ff', icon: '⏳' },
-  auto_applied: { bg: 'rgba(52,211,153,0.1)', text: '#34d399', icon: '✨' },
-  scanning: { bg: 'rgba(167,139,250,0.1)', text: '#a78bfa', icon: '🔍' },
-  matched: { bg: 'rgba(59,130,246,0.1)', text: '#3b82f6', icon: '✅' },
-  analyzing: { bg: 'rgba(244,114,182,0.1)', text: '#f472b6', icon: '🔬' },
-  default: { bg: 'rgba(255,255,255,0.05)', text: '#6a6a7a', icon: '📝' }
+  queued_applications: { bg: 'rgba(116,185,255,0.1)', text: 'var(--blue)', icon: '⏳' },
+  auto_applied: { bg: 'rgba(52,211,153,0.1)', text: 'var(--green)', icon: '✨' },
+  scanning: { bg: 'rgba(167,139,250,0.1)', text: 'var(--purple)', icon: '🔍' },
+  matched: { bg: 'rgba(59,130,246,0.1)', text: 'var(--blue)', icon: '✅' },
+  analyzing: { bg: 'rgba(244,114,182,0.1)', text: 'var(--accent)', icon: '🔬' },
+  default: { bg: 'var(--bg-overlay)', text: 'var(--text-faint)', icon: '📝' }
 }
 
 export default function ActivityFeed() {
@@ -107,23 +107,23 @@ export default function ActivityFeed() {
   }
 
   return (
-    <div className="rounded-2xl border border-[rgba(255,255,255,0.06)] bg-[#0d0d15] p-6 h-fit">
+    <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg)] p-6 h-fit">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-[14px] font-bold text-white">Live Activity Feed</h3>
+        <h3 className="text-[14px] font-bold text-ink">Live Activity Feed</h3>
         <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-[#00b894] animate-pulse" />
-          <span className="text-[10px] text-[#00b894] font-medium">auto-refreshing</span>
+          <span className="w-2 h-2 rounded-full bg-[var(--green)] animate-pulse" />
+          <span className="text-[10px] text-[var(--green)] font-medium">auto-refreshing</span>
         </div>
       </div>
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <div className="w-5 h-5 rounded-full border-2 border-[rgba(116,185,255,0.2)] border-t-[#74b9ff] animate-spin" />
+          <div className="w-5 h-5 rounded-full border-2 border-[rgba(116,185,255,0.2)] border-t-[var(--blue)] animate-spin" />
         </div>
       ) : activities.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-[12px] text-[#5a5a6a] font-medium">No activity yet</p>
-          <p className="text-[10px] text-[#3a3a4a] mt-2">Run auto-apply to see live activity</p>
+          <p className="text-[12px] text-[var(--text-faint)] font-medium">No activity yet</p>
+          <p className="text-[10px] text-[var(--text-faint)] mt-2">Run auto-apply to see live activity</p>
         </div>
       ) : (
         <div className="space-y-1 max-h-[500px] overflow-y-auto font-mono text-[11px]">
@@ -136,21 +136,21 @@ export default function ActivityFeed() {
                 key={activity.id}
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="p-2 rounded-lg transition-all hover:bg-[rgba(255,255,255,0.03)]"
+                className="p-2 rounded-lg transition-all hover:bg-[var(--bg-overlay)]"
                 style={{ backgroundColor: style.bg }}
               >
                 <div className="flex items-start gap-2">
                   <span className="text-lg flex-shrink-0">{style.icon}</span>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-baseline gap-2">
-                      <span style={{ color: '#5a5a6a' }} className="text-[10px]">{time}</span>
+                      <span style={{ color: 'var(--text-faint)' }} className="text-[10px]">{time}</span>
                       <span style={{ color: style.text }} className="font-semibold">→</span>
                       <span style={{ color: style.text }}>
                         {activity.action.replace(/_/g, ' ').charAt(0).toUpperCase() + activity.action.replace(/_/g, ' ').slice(1)}
                       </span>
                     </div>
                     {activity.details && (
-                      <div style={{ color: '#8a8a9a' }} className="text-[10px] mt-0.5 line-clamp-1">
+                      <div style={{ color: 'var(--text-muted)' }} className="text-[10px] mt-0.5 line-clamp-1">
                         {activity.details}
                       </div>
                     )}
