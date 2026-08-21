@@ -258,3 +258,35 @@ export interface InterviewSession {
   duration_seconds: number | null
   created_at: string
 }
+
+export interface ScreeningAnswer {
+  question: string
+  answer: string
+  /** Where the answer came from, e.g. 'profile.work_authorization' or 'ai'. */
+  source?: string
+}
+
+/**
+ * A verifiable record of exactly what was submitted for an application:
+ * which resume, the cover letter as sent, every screening answer, and where
+ * it went. Written at submission time from the same values used for the
+ * submission itself, so it cannot drift from what actually happened.
+ */
+export interface ApplicationReceipt {
+  id: string
+  user_id: string
+  application_id: string
+  resume_id: string | null
+  resume_version_label: string | null
+  resume_file_url: string | null
+  cover_letter_id: string | null
+  cover_letter_text: string | null
+  screening_answers: ScreeningAnswer[]
+  destination: string | null
+  destination_url: string | null
+  submission_method: 'auto' | 'assisted' | 'manual'
+  status: 'submitted' | 'failed' | 'needs_review'
+  failure_reason: string | null
+  submitted_at: string
+  created_at: string
+}

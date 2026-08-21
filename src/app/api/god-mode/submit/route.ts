@@ -332,10 +332,36 @@ Write a professional cover letter. Return only the letter text, no subject line.
       portal_submitted: submitted,
     }
 
+    let applicationId = existingApp?.id ?? null
     if (existingApp) {
       await supabase.from('applications').update(appData).eq('id', existingApp.id)
     } else {
-      await supabase.from('applications').insert(appData)
+      const { data: inserted } = await supabase
+        .from('applications').insert(appData).select('id').single()
+      applicationId = inserted?.id ?? null
+    }
+
+    /* Receipt: a verifiable record of exactly what was sent. Written from the
+       same values used for the submission itself, so it cannot drift from
+       reality. Best-effort — a receipt failure must never fail the apply. */
+    if (applicationId) {
+      try {
+        await supabase.from('application_receipts').insert({
+          user_id: user.id,
+          application_id: applicationId,
+          resume_id: tailored_resume_id || primaryResume?.id || null,
+          resume_version_label: god_mode ? 'Tailored for this role' : 'Base resume',
+          cover_letter_text: coverLetterText || null,
+          screening_answers: [],
+          destination: portal || null,
+          destination_url: apply_url || null,
+          submission_method: submitted ? 'auto' : 'manual',
+          status: submitted ? 'submitted' : (submissionError ? 'failed' : 'needs_review'),
+          failure_reason: submissionError || null,
+        })
+      } catch (receiptErr) {
+        console.error('Receipt write failed (non-fatal):', receiptErr)
+      }
     }
 
     // Log the activity
