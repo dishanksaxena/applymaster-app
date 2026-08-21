@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
+import ReceiptDrawer from '@/components/ReceiptDrawer'
 import { createClient } from '@/lib/supabase-browser'
 import type { Application } from '@/lib/database.types'
 import Link from 'next/link'
@@ -134,6 +135,7 @@ function daysAgo(dateStr: string | null): string {
 // ─── Main Component ─────────────────────────────────────────────────────────
 export default function ApplicationsPage() {
   const [applications, setApplications] = useState<Map<string, Application[]>>(new Map())
+  const [receiptFor, setReceiptFor] = useState<{ id: string; title?: string; company?: string } | null>(null)
   const [allApps, setAllApps] = useState<Application[]>([])
   const [loading, setLoading] = useState(true)
   const [view, setView] = useState<'kanban' | 'list'>('kanban')
@@ -487,7 +489,7 @@ export default function ApplicationsPage() {
             {[
               { label: 'Total Applications', value: stats.total, suffix: '', color: '#4c9aff' },
               { label: 'Interview Rate', value: stats.interviewRate, suffix: '%', color: 'var(--accent)' },
-              { label: 'Avg Response Time', value: stats.avgResponseDays, suffix: 'd', color: 'var(--purple)' },
+              { label: 'Avg Response Time', value: stats.avgResponseDays, suffix: ' days', color: 'var(--purple)' },
             ].map((stat, i) => (
               <div
                 key={stat.label}
@@ -772,6 +774,14 @@ export default function ApplicationsPage() {
                               </div>
                             )}
 
+                            <button
+                              onClick={() => setReceiptFor({ id: app.id, title: app.job?.title, company: app.job?.company })}
+                              className="mt-2 text-[10px] font-semibold underline underline-offset-2"
+                              style={{ color: 'var(--text-muted)' }}
+                            >
+                              Receipt
+                            </button>
+
                             {/* Status Control */}
                             {status !== 'rejected' && status !== 'offer' ? (
                               <div className="mt-3 relative">
@@ -932,6 +942,13 @@ export default function ApplicationsPage() {
                           {app.status === 'offer' ? 'Offer Received!' : 'Closed'}
                         </span>
                       )}
+                      <button
+                        onClick={() => setReceiptFor({ id: app.id, title: app.job?.title, company: app.job?.company })}
+                        className="mt-1.5 text-[10px] font-semibold underline underline-offset-2"
+                        style={{ color: 'var(--text-muted)' }}
+                      >
+                        Receipt
+                      </button>
                     </div>
                   </div>
                 )
@@ -945,6 +962,15 @@ export default function ApplicationsPage() {
             </div>
           )}
         </>
+      )}
+    
+      {receiptFor && (
+        <ReceiptDrawer
+          applicationId={receiptFor.id}
+          jobTitle={receiptFor.title}
+          company={receiptFor.company}
+          onClose={() => setReceiptFor(null)}
+        />
       )}
     </div>
   )

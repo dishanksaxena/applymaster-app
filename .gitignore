@@ -13,3 +13,4 @@ shoot.review.mjs
 .review-shots/
 verify.palette.mjs
 probe.mjs
+verify.receipt.mjs
