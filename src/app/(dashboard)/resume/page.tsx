@@ -384,7 +384,7 @@ export default function ResumePage() {
         {/* Header */}
         <div>
           <div className="flex items-center gap-3 mb-1">
-            <h2 className="text-2xl font-black tracking-tight">Resume Optimizer</h2>
+            <h2 className="font-display text-[1.6rem]">Resume Optimizer</h2>
             <span
               className="text-[10px] font-bold px-2.5 py-1 rounded-full tracking-wider"
               style={{

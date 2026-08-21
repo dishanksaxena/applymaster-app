@@ -131,11 +131,11 @@ export default function SavedJobsPage() {
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.8"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
           </div>
           <div>
-            <h1 className="text-2xl lg:text-3xl font-black tracking-tight">Saved Jobs</h1>
+            <h1 className="font-display text-[clamp(1.7rem,3vw,2.2rem)]">Saved Jobs</h1>
             <p className="text-[14px] text-[var(--text-muted)] mt-1">View and manage all your saved job opportunities</p>
           </div>
           <div className="ml-auto">
-            <span className="text-2xl font-black" style={{ color: 'var(--accent)' }}>{jobs.length}</span>
+            <span className="font-display text-[1.6rem]" style={{ color: 'var(--accent)' }}>{jobs.length}</span>
             <p className="text-[12px] text-[var(--text-faint)] text-right">saved jobs</p>
           </div>
         </div>

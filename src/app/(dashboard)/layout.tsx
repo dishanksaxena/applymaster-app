@@ -238,7 +238,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 }}
               />
               <div className="absolute inset-[1px] rounded-[7px] flex items-center justify-center" style={{ background: 'var(--bg-sidebar)' }}>
-                <span className="text-[10px] font-black bg-gradient-to-r from-[var(--accent)] to-[var(--accent-solid)] bg-clip-text text-transparent">AM</span>
+                <span className="text-[10px] font-black" style={{ color: 'var(--accent)' }}>AM</span>
               </div>
             </div>
             {sidebarOpen && (

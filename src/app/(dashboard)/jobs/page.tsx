@@ -392,7 +392,7 @@ export default function JobsPage() {
         <div className="relative z-10">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h1 className="text-2xl lg:text-3xl font-black tracking-tight mb-2 text-[var(--text)]">Job Search</h1>
+              <h1 className="font-display text-[clamp(1.7rem,3vw,2.2rem)] mb-2 text-[var(--text)]">Job Search</h1>
               <p className="text-[14px] text-[var(--text-secondary)]">Search across 50+ job portals with AI-powered matching</p>
             </div>
             {/* View Toggle */}

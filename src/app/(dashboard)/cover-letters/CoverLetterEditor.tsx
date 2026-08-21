@@ -168,7 +168,7 @@ export default function CoverLetterEditor({ initialLetter, onClose, onSave }: Co
       {/* Toolbar */}
       <motion.div variants={fadeInUp} className="flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-3xl font-black text-ink mb-1">Cover Letter Editor</h1>
+          <h1 className="font-display text-[1.9rem] mb-1">Cover Letter Editor</h1>
           <p className="text-sm text-[var(--text-faint)]">
             {isDirty ? '✏️ Unsaved changes' : '✓ All saved'}
           </p>

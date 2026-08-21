@@ -276,7 +276,7 @@ export default function AutoApplyPage() {
               </motion.div>
             </div>
             <div>
-              <h1 className="text-2xl lg:text-3xl font-black tracking-tight">Auto-Apply Engine</h1>
+              <h1 className="font-display text-[clamp(1.7rem,3vw,2.2rem)]">Auto-Apply Engine</h1>
               <p className="text-[14px] text-[var(--text-secondary)] mt-1">Let AI handle applications while you prepare for interviews</p>
             </div>
           </div>
@@ -673,13 +673,13 @@ export default function AutoApplyPage() {
               <div className="space-y-4">
                 <div>
                   <div className="text-[13px] text-[var(--text-secondary)] mb-1">Applications</div>
-                  <div className="text-3xl font-black text-[var(--text)]">
+                  <div className="font-display text-[1.9rem] text-[var(--text)]">
                     <AnimatedNumber value={stat.apps} delay={i * 150} />
                   </div>
                 </div>
                 <div>
                   <div className="text-[13px] text-[var(--text-secondary)] mb-1">Success Rate</div>
-                  <div className="text-3xl font-black" style={{ color: stat.color }}>
+                  <div className="font-display text-[1.9rem]" style={{ color: stat.color }}>
                     <AnimatedNumber value={stat.rate} delay={i * 150 + 100} />%
                   </div>
                 </div>

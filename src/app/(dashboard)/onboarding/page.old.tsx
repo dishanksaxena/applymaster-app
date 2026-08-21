@@ -421,7 +421,7 @@ export default function OnboardingPage() {
                 {step === 0 && (
                   <motion.div key="step-0" custom={direction} variants={slideVariants} initial="enter" animate="center" exit="exit" className="space-y-6">
                     <div>
-                      <h2 className="text-2xl font-black text-ink mb-2">Upload Your Resume</h2>
+                      <h2 className="font-display text-[1.6rem] mb-2">Upload Your Resume</h2>
                       <p className="text-[13px] text-[var(--text-muted)]">We'll parse your experience to help match better jobs</p>
                     </div>
                     <div
@@ -458,7 +458,7 @@ export default function OnboardingPage() {
                 {step === 1 && (
                   <motion.div key="step-1" custom={direction} variants={slideVariants} initial="enter" animate="center" exit="exit" className="space-y-6">
                     <div>
-                      <h2 className="text-2xl font-black text-ink mb-2">Job Preferences</h2>
+                      <h2 className="font-display text-[1.6rem] mb-2">Job Preferences</h2>
                       <p className="text-[13px] text-[var(--text-muted)]">What are you looking for?</p>
                     </div>
 
@@ -558,7 +558,7 @@ export default function OnboardingPage() {
                 {step === 2 && (
                   <motion.div key="step-2" custom={direction} variants={slideVariants} initial="enter" animate="center" exit="exit" className="space-y-6">
                     <div>
-                      <h2 className="text-2xl font-black text-ink mb-2">Career Details</h2>
+                      <h2 className="font-display text-[1.6rem] mb-2">Career Details</h2>
                       <p className="text-[13px] text-[var(--text-muted)]">Tell us more about your situation</p>
                     </div>
 
@@ -645,7 +645,7 @@ export default function OnboardingPage() {
                 {step === 3 && (
                   <motion.div key="step-3" custom={direction} variants={slideVariants} initial="enter" animate="center" exit="exit" className="space-y-6">
                     <div>
-                      <h2 className="text-2xl font-black text-ink mb-2">Industries & Skills</h2>
+                      <h2 className="font-display text-[1.6rem] mb-2">Industries & Skills</h2>
                       <p className="text-[13px] text-[var(--text-muted)]">What are your strengths and interests?</p>
                     </div>
 
@@ -714,7 +714,7 @@ export default function OnboardingPage() {
                 {step === 5 && (
                   <motion.div key="step-4" custom={direction} variants={slideVariants} initial="enter" animate="center" exit="exit" className="space-y-6">
                     <div>
-                      <h2 className="text-2xl font-black text-ink mb-2">Choose Your Plan</h2>
+                      <h2 className="font-display text-[1.6rem] mb-2">Choose Your Plan</h2>
                       <p className="text-[13px] text-[var(--text-muted)]">Start free, upgrade anytime</p>
                     </div>
 

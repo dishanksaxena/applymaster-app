@@ -136,7 +136,7 @@ export default function SettingsPage() {
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-8 max-w-[900px] mx-auto">
       <motion.div variants={fadeUp}>
-        <h1 className="text-2xl font-black tracking-tight" style={{ color: 'var(--text)' }}>Settings</h1>
+        <h1 className="font-display text-[1.6rem]" style={{ color: 'var(--text)' }}>Settings</h1>
         <p className="text-[14px] mt-1" style={{ color: 'var(--text-muted)' }}>Manage your account, billing, and preferences</p>
       </motion.div>
 
@@ -211,7 +211,7 @@ export default function SettingsPage() {
               <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4" style={{ background: `${plan.color}12`, color: plan.color }}>{plan.icon}</div>
               <div className="text-[13px] font-bold capitalize mb-1" style={{ color: plan.color }}>{plan.name}</div>
               <div className="flex items-baseline gap-1 mb-4">
-                <span className="text-3xl font-black" style={{ color: 'var(--text)' }}>${plan.price}</span>
+                <span className="font-display text-[1.9rem]" style={{ color: 'var(--text)' }}>${plan.price}</span>
                 <span className="text-[12px]" style={{ color: 'var(--text-muted)' }}>{plan.period}</span>
               </div>
               <div className="space-y-2 mb-5">

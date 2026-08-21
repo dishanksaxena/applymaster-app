@@ -198,7 +198,7 @@ export default function DashboardPage() {
         <div className="absolute bottom-[-50%] left-[-10%] w-[250px] h-[250px] rounded-full opacity-[0.05]" style={{ background: 'radial-gradient(circle, var(--purple), transparent 70%)' }} />
         <div className="relative z-10">
           <motion.h1 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-            className="text-3xl lg:text-4xl font-black tracking-tight mb-2">
+            className="font-display text-[clamp(2rem,3.4vw,2.6rem)] mb-2">
             {greeting}{userName ? `, ${userName}` : ''}
           </motion.h1>
           <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}
@@ -227,7 +227,7 @@ export default function DashboardPage() {
                   <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${s.color}12`, color: s.color }}>{s.icon}</div>
                   <Sparkline data={s.sparkData} color={s.color} height={32} />
                 </div>
-                <div className="text-3xl font-black tracking-tight" style={{ color: s.color }}>
+                <div className="font-display text-[1.9rem]" style={{ color: s.color }}>
                   <AnimatedNumber value={typeof s.value === 'number' ? s.value : 0} suffix={s.suffix} />
                 </div>
                 <div className="text-[12px] text-[var(--text-muted)] mt-1 font-medium">{s.label}</div>

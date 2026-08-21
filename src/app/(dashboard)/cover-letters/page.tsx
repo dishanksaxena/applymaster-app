@@ -167,7 +167,7 @@ export default function CoverLettersPage() {
         <div className="absolute top-[-50%] right-[-10%] w-[300px] h-[300px] rounded-full opacity-[0.07]" style={{ background: 'radial-gradient(circle, var(--accent), transparent 70%)' }} />
         <div className="relative z-10 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl lg:text-3xl font-black tracking-tight mb-2 text-[var(--text)]">Cover Letters</h1>
+            <h1 className="font-display text-[clamp(1.7rem,3vw,2.2rem)] mb-2 text-[var(--text)]">Cover Letters</h1>
             <p className="text-[14px] text-[var(--text-secondary)]">Create, edit, and manage AI-powered cover letters</p>
           </div>
           <PremiumButton

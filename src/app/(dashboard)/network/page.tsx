@@ -517,7 +517,7 @@ export default function NetworkPage() {
                 <span style={{ color: 'var(--accent)' }}>{icons.globe}</span>
               </div>
               <div>
-                <h1 className="text-2xl font-black" style={{ color: 'var(--text)' }}>Referral Network</h1>
+                <h1 className="font-display text-[1.6rem]" style={{ color: 'var(--text)' }}>Referral Network</h1>
                 <p className="text-[12px]" style={{ color: 'var(--text-muted)' }}>AI-powered people search — find who can refer you to your dream job</p>
               </div>
             </div>

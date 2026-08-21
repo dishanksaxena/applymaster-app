@@ -422,7 +422,7 @@ export default function ApplicationsPage() {
       {/* ─── Header ─────────────────────────────────────────────────── */}
       <div className="flex items-end justify-between">
         <div>
-          <h2 className="text-3xl font-black tracking-tight mb-1 bg-gradient-to-r from-white via-white to-gray-400 bg-clip-text text-transparent">
+          <h2 className="font-display text-[1.9rem] mb-1 bg-gradient-to-r from-white via-white to-gray-400 bg-clip-text text-transparent">
             Application Tracker
           </h2>
           <p className="text-[14px] text-[var(--text-secondary)]">
@@ -496,7 +496,7 @@ export default function ApplicationsPage() {
               >
                 <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r opacity-60" style={{ backgroundImage: `linear-gradient(to right, transparent, ${stat.color}, transparent)` }} />
                 <div className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2">{stat.label}</div>
-                <div className="text-3xl font-black text-[var(--text)]">
+                <div className="font-display text-[1.9rem] text-[var(--text)]">
                   <AnimatedNumber value={stat.value} delay={i * 150} />{stat.suffix}
                 </div>
               </div>

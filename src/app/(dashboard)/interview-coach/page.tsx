@@ -171,7 +171,7 @@ export default function InterviewCoachPage() {
             </motion.div>
           </div>
           <div>
-            <h1 className="text-2xl lg:text-3xl font-black tracking-tight">AI Interview Coach</h1>
+            <h1 className="font-display text-[clamp(1.7rem,3vw,2.2rem)]">AI Interview Coach</h1>
             <p className="text-[14px] text-[var(--text-secondary)] mt-1">Practice with AI-powered mock interviews and get instant feedback</p>
           </div>
         </div>
@@ -244,7 +244,7 @@ export default function InterviewCoachPage() {
               <div className="grid grid-cols-4 gap-3">
                 {[{ l: 'S', w: 'Situation', d: 'Set the scene' }, { l: 'T', w: 'Task', d: 'The challenge' }, { l: 'A', w: 'Action', d: 'What you did' }, { l: 'R', w: 'Result', d: 'The outcome' }].map(s => (
                   <div key={s.l} className="text-center p-3 rounded-xl" style={{ background: 'var(--bg-overlay)' }}>
-                    <div className="text-2xl font-black bg-gradient-to-r from-[var(--accent)] to-[var(--purple)] bg-clip-text text-transparent">{s.l}</div>
+                    <div className="font-display text-[1.6rem] bg-gradient-to-r from-[var(--accent)] to-[var(--purple)] bg-clip-text text-transparent">{s.l}</div>
                     <div className="text-[11px] font-bold text-ink mt-1">{s.w}</div>
                     <div className="text-[10px] text-[var(--text-faint)] mt-0.5">{s.d}</div>
                   </div>
