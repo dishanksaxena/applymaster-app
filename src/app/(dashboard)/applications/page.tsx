@@ -720,7 +720,7 @@ export default function ApplicationsPage() {
                               draggedCardId === app.id ? 'opacity-50 scale-95' : 'opacity-100 scale-100'
                             }`}
                             style={{
-                              background: 'linear-gradient(135deg, rgba(18,18,28,0.9), rgba(13,13,21,0.95))',
+                              background: 'linear-gradient(135deg, var(--bg-card), var(--bg-card))',
                               backdropFilter: 'blur(20px)',
                               animation: `floatUp 0.4s ease ${0.4 + cardIndex * 0.06}s both`,
                             }}

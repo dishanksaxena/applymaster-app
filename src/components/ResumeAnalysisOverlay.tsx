@@ -400,7 +400,7 @@ export default function ResumeAnalysisOverlay({ isVisible, currentStep, fileName
       {isVisible && (
         <motion.div
           className="fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden"
-          style={{ background: 'rgba(2,2,12,0.96)', backdropFilter: 'blur(30px)' }}
+          style={{ background: 'var(--bg-card)', backdropFilter: 'blur(30px)' }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}

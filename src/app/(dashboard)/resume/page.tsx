@@ -409,7 +409,7 @@ export default function ResumePage() {
             <div
               className="rounded-2xl overflow-hidden"
               style={{
-                background: 'linear-gradient(135deg, rgba(18,18,26,0.95), rgba(14,14,22,0.98))',
+                background: 'linear-gradient(135deg, var(--bg-card), var(--bg-card))',
                 border: '1px solid var(--border)',
               }}
             >
@@ -719,7 +719,7 @@ export default function ResumePage() {
               <div
                 className="rounded-2xl overflow-hidden"
                 style={{
-                  background: 'linear-gradient(135deg, rgba(18,18,26,0.95), rgba(14,14,22,0.98))',
+                  background: 'linear-gradient(135deg, var(--bg-card), var(--bg-card))',
                   border: '1px solid var(--border)',
                   animation: 'card-fade-in 0.4s ease',
                 }}
@@ -858,7 +858,7 @@ export default function ResumePage() {
                 <div
                   className="rounded-2xl text-center py-8"
                   style={{
-                    background: 'linear-gradient(135deg, rgba(18,18,26,0.95), rgba(14,14,22,0.98))',
+                    background: 'linear-gradient(135deg, var(--bg-card), var(--bg-card))',
                     border: '1px solid var(--border)',
                     animation: 'glow-border 3s ease-in-out infinite',
                   }}
@@ -876,7 +876,7 @@ export default function ResumePage() {
                 <div
                   className="rounded-2xl p-6"
                   style={{
-                    background: 'linear-gradient(135deg, rgba(18,18,26,0.95), rgba(14,14,22,0.98))',
+                    background: 'linear-gradient(135deg, var(--bg-card), var(--bg-card))',
                     border: '1px solid rgba(0,184,148,0.1)',
                   }}
                 >
@@ -913,7 +913,7 @@ export default function ResumePage() {
                 <div
                   className="rounded-2xl p-6"
                   style={{
-                    background: 'linear-gradient(135deg, rgba(18,18,26,0.95), rgba(14,14,22,0.98))',
+                    background: 'linear-gradient(135deg, var(--bg-card), var(--bg-card))',
                     border: '1px solid rgba(253,203,110,0.1)',
                   }}
                 >
@@ -950,7 +950,7 @@ export default function ResumePage() {
                 <div
                   className="rounded-2xl overflow-hidden"
                   style={{
-                    background: 'linear-gradient(135deg, rgba(18,18,26,0.95), rgba(14,14,22,0.98))',
+                    background: 'linear-gradient(135deg, var(--bg-card), var(--bg-card))',
                     border: '1px solid var(--border)',
                   }}
                 >
@@ -1040,7 +1040,7 @@ export default function ResumePage() {
             <div
               className="rounded-2xl overflow-hidden"
               style={{
-                background: 'linear-gradient(135deg, rgba(18,18,26,0.95), rgba(14,14,22,0.98))',
+                background: 'linear-gradient(135deg, var(--bg-card), var(--bg-card))',
                 border: '1px solid rgba(253,121,168,0.1)',
               }}
             >
@@ -1132,7 +1132,7 @@ export default function ResumePage() {
             <div
               className="rounded-2xl overflow-hidden"
               style={{
-                background: 'linear-gradient(135deg, rgba(18,18,26,0.95), rgba(14,14,22,0.98))',
+                background: 'linear-gradient(135deg, var(--bg-card), var(--bg-card))',
                 border: '1px solid var(--border)',
               }}
             >

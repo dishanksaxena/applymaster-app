@@ -145,7 +145,7 @@ function makeFlagTexture(job: Job, color: string): THREE.CanvasTexture {
   ctx.shadowColor = `rgba(${r},${g},${b},0.6)`
   ctx.shadowBlur = 12
   rrect(ctx, 2, 2, W - 4, H - 4, 9)
-  ctx.fillStyle = 'rgba(6,8,22,0.96)'
+  ctx.fillStyle = 'var(--bg-card)'
   ctx.fill()
   ctx.shadowBlur = 0
 
@@ -281,7 +281,7 @@ function JobCard({ job, onClose, onSave, onApply, isSaved, isApplied }: any) {
       className="absolute top-4 right-4 z-30 w-[320px]"
     >
       <div className="relative rounded-2xl overflow-hidden" style={{
-        background: 'rgba(8,8,20,0.98)',
+        background: 'var(--bg-card)',
         border: '1px solid rgba(162,155,254,0.3)',
         backdropFilter: 'blur(30px)',
         boxShadow: '0 0 40px rgba(162,155,254,0.15), 0 20px 60px rgba(0,0,0,0.6)',
@@ -692,7 +692,7 @@ export default function JobsGlobe({ jobs, onSave, onApply, savedJobs, appliedJob
       {/* Stats bar */}
       <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
         className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-6 px-6 py-3 rounded-2xl"
-        style={{ background: 'rgba(5,5,18,0.92)', border: '1px solid rgba(59,130,246,0.2)', backdropFilter: 'blur(20px)', boxShadow: '0 4px 30px rgba(0,0,0,0.4)' }}>
+        style={{ background: 'var(--bg-card)', border: '1px solid rgba(59,130,246,0.2)', backdropFilter: 'blur(20px)', boxShadow: '0 4px 30px rgba(0,0,0,0.4)' }}>
         {[
           { label: 'Pinned',     value: points.length, color: 'var(--blue)' },
           { label: 'Total',      value: jobs.length,   color: 'var(--purple)' },
@@ -712,7 +712,7 @@ export default function JobsGlobe({ jobs, onSave, onApply, savedJobs, appliedJob
       {/* Salary legend */}
       <motion.div initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5 }}
         className="absolute bottom-6 left-5 z-20 rounded-xl p-4"
-        style={{ background: 'rgba(5,5,18,0.92)', border: '1px solid rgba(59,130,246,0.15)', backdropFilter: 'blur(20px)' }}>
+        style={{ background: 'var(--bg-card)', border: '1px solid rgba(59,130,246,0.15)', backdropFilter: 'blur(20px)' }}>
         <p className="text-[9px] font-bold tracking-widest uppercase text-[var(--border-hover)] mb-3">Salary Range</p>
         {[
           { color: 'var(--yellow)', label: '$150K+' },
@@ -742,7 +742,7 @@ export default function JobsGlobe({ jobs, onSave, onApply, savedJobs, appliedJob
         <button
           onClick={zoomIn}
           className="w-10 h-10 rounded-xl flex items-center justify-center text-ink font-bold text-lg select-none transition-all hover:scale-105 active:scale-95"
-          style={{ background: 'rgba(5,5,18,0.92)', border: '1px solid rgba(59,130,246,0.25)', backdropFilter: 'blur(20px)', boxShadow: '0 4px 20px rgba(0,0,0,0.3)' }}
+          style={{ background: 'var(--bg-card)', border: '1px solid rgba(59,130,246,0.25)', backdropFilter: 'blur(20px)', boxShadow: '0 4px 20px rgba(0,0,0,0.3)' }}
           title="Zoom In"
         >
           +
@@ -750,7 +750,7 @@ export default function JobsGlobe({ jobs, onSave, onApply, savedJobs, appliedJob
         <button
           onClick={zoomOut}
           className="w-10 h-10 rounded-xl flex items-center justify-center text-ink font-bold text-xl select-none transition-all hover:scale-105 active:scale-95"
-          style={{ background: 'rgba(5,5,18,0.92)', border: '1px solid rgba(59,130,246,0.25)', backdropFilter: 'blur(20px)', boxShadow: '0 4px 20px rgba(0,0,0,0.3)' }}
+          style={{ background: 'var(--bg-card)', border: '1px solid rgba(59,130,246,0.25)', backdropFilter: 'blur(20px)', boxShadow: '0 4px 20px rgba(0,0,0,0.3)' }}
           title="Zoom Out"
         >
           −

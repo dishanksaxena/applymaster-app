@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import type { Profile } from '@/lib/database.types'
 import ThemeToggle from '@/components/ThemeToggle'
+import CommandPalette from '@/components/CommandPalette'
 
 /* ─── SVG Icon Components ─── */
 const icons = {
@@ -219,6 +220,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: animationStyles }} />
+      <CommandPalette />
       <div className="min-h-screen flex" style={{ background: 'var(--bg)' }}>
 
         {/* ─── Sidebar ─── */}
@@ -436,6 +438,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             {/* Right: actions */}
             <div className="flex items-center gap-2">
               <button
+                onClick={() => window.dispatchEvent(new Event('applymaster:open-command-palette'))}
+                aria-label="Open command palette"
                 className="hidden md:flex items-center gap-2 h-8 px-3 rounded-lg text-[12px] transition-all duration-200 group"
                 style={{
                   border: '1px solid var(--border)',

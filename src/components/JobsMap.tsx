@@ -108,7 +108,7 @@ function JobCard({ job, onClose, onSave, onApply, isSaved, isApplied }: {
       transition={{ type: 'spring', stiffness: 320, damping: 28 }}
       className="absolute top-4 right-4 z-30 w-[320px]">
       <div className="relative rounded-2xl overflow-hidden"
-        style={{ background: 'rgba(10,10,22,0.97)', border: '1px solid rgba(162,155,254,0.25)', backdropFilter: 'blur(30px)', boxShadow: '0 0 60px rgba(162,155,254,0.1), 0 30px 60px rgba(0,0,0,0.6)' }}>
+        style={{ background: 'var(--bg-card)', border: '1px solid rgba(162,155,254,0.25)', backdropFilter: 'blur(30px)', boxShadow: '0 0 60px rgba(162,155,254,0.1), 0 30px 60px rgba(0,0,0,0.6)' }}>
         <motion.div className="absolute top-0 left-0 right-0 h-[1px]"
           animate={{ backgroundPosition: ['200% 0', '-200% 0'] }}
           transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
@@ -343,7 +343,7 @@ export default function JobsMap({ jobs, onSave, onApply, savedJobs, appliedJobs 
       {/* Stats bar */}
       <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
         className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-4 px-5 py-2.5 rounded-2xl whitespace-nowrap"
-        style={{ background: 'rgba(8,8,20,0.88)', border: '1px solid var(--border)', backdropFilter: 'blur(20px)' }}>
+        style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', backdropFilter: 'blur(20px)' }}>
         {[
           { label: 'Pinned', value: points.length },
           { label: 'Total', value: jobs.length },
@@ -363,7 +363,7 @@ export default function JobsMap({ jobs, onSave, onApply, savedJobs, appliedJobs 
       {/* Salary Legend */}
       <motion.div initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5 }}
         className="absolute bottom-6 left-5 z-20 rounded-xl p-3.5"
-        style={{ background: 'rgba(8,8,20,0.88)', border: '1px solid var(--border)', backdropFilter: 'blur(20px)' }}>
+        style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', backdropFilter: 'blur(20px)' }}>
         <p className="text-[9px] font-bold tracking-widest uppercase text-[var(--text-faint)] mb-2.5">Salary</p>
         {[
           { color: 'var(--yellow)', label: '$150K+' }, { color: 'var(--accent)', label: '$100K–150K' },

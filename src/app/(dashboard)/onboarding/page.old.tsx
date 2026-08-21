@@ -362,7 +362,7 @@ export default function OnboardingPage() {
       {/* Background */}
       <div className="absolute inset-0">
         <div className="absolute inset-0" style={{
-          background: 'linear-gradient(-45deg, rgba(253,121,168,0.08), rgba(10,10,20,1), rgba(162,155,254,0.06), rgba(10,10,20,1), rgba(116,185,255,0.05))',
+          background: 'linear-gradient(-45deg, rgba(253,121,168,0.08), var(--bg-card), rgba(162,155,254,0.06), var(--bg-card), rgba(116,185,255,0.05))',
           backgroundSize: '400% 400%', animation: 'mesh-shift 20s ease infinite',
         }} />
       </div>
