@@ -67,6 +67,7 @@ function Reveal({
   return (
     <div
       ref={ref}
+      data-reveal
       className={className}
       style={{
         opacity: shown ? 1 : 0,
@@ -277,7 +278,7 @@ const FLOATERS = [
     tone: 'var(--green)',
     dim: 'var(--green-dim)',
     icon: ICON.check,
-    pos: '-top-5 -right-4',
+    pos: '-top-6 -right-5',
     delay: '0s',
   },
   {
@@ -286,7 +287,7 @@ const FLOATERS = [
     tone: 'var(--accent)',
     dim: 'var(--accent-dim)',
     icon: ICON.bolt,
-    pos: '-bottom-5 -left-5',
+    pos: '-bottom-7 -right-4',
     delay: '-2.3s',
   },
   {
@@ -295,7 +296,7 @@ const FLOATERS = [
     tone: 'var(--blue)',
     dim: 'var(--blue-dim)',
     icon: ICON.mail,
-    pos: 'top-1/2 -right-7',
+    pos: '-bottom-7 -left-6',
     delay: '-4.6s',
   },
 ]
@@ -477,7 +478,7 @@ export default function Home() {
 
       <main id="main">
         {/* ===== HERO ===== */}
-        <section className="pt-[132px] pb-20 lg:pt-[152px]">
+        <section className="pt-[104px] pb-16 lg:pt-[116px]">
           <div className="max-w-[1240px] mx-auto px-6 lg:px-8">
             <div className="grid lg:grid-cols-[1fr_1.05fr] gap-14 lg:gap-20 items-center">
               <div>

@@ -72,7 +72,7 @@ export default function AIJobApplicationGuidePage() {
       />
 
       <main className="">
-        <article className="max-w-3xl mx-auto px-6 py-24">
+        <article className="max-w-3xl mx-auto px-6 py-16">
           {/* Navigation */}
           <Link
             href="/blog"

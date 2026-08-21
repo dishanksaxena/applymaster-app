@@ -58,7 +58,7 @@ export default function AutoApplyPage() {
 
       <main className="">
         {/* Hero */}
-        <section className="relative overflow-hidden py-24 sm:py-32">
+        <section className="relative overflow-hidden py-16 sm:py-14">
           <div className="absolute inset-0 bg-gradient-to-b from-[var(--blue-dim)] to-transparent" />
           <div className="relative mx-auto max-w-7xl px-6 lg:px-8">
             <Link href="/features" className="text-sm text-[var(--accent)] hover:text-[var(--accent)] mb-6 inline-block">
@@ -91,7 +91,7 @@ export default function AutoApplyPage() {
         </section>
 
         {/* Copilot vs Autopilot */}
-        <section className="py-20">
+        <section className="py-14">
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
             <h2 className="font-display text-[clamp(1.8rem,3.6vw,2.5rem)] text-center mb-4">
               Two Modes, One Goal: More Applications, Less Effort
@@ -157,7 +157,7 @@ export default function AutoApplyPage() {
         </section>
 
         {/* How It Works */}
-        <section className="py-20 bg-[var(--bg-card)]">
+        <section className="py-14 bg-[var(--bg-card)]">
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
             <h2 className="font-display text-[clamp(1.8rem,3.6vw,2.5rem)] text-center mb-14">
               How Auto-Apply Works
@@ -193,7 +193,7 @@ export default function AutoApplyPage() {
         </section>
 
         {/* Supported Portals */}
-        <section className="py-20">
+        <section className="py-14">
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
             <h2 className="font-display text-[clamp(1.8rem,3.6vw,2.5rem)] text-center mb-4">
               50+ Supported Job Portals
@@ -219,7 +219,7 @@ export default function AutoApplyPage() {
         </section>
 
         {/* Smart Features */}
-        <section className="py-20 bg-[var(--bg-card)]">
+        <section className="py-14 bg-[var(--bg-card)]">
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
             <h2 className="font-display text-[clamp(1.8rem,3.6vw,2.5rem)] text-center mb-14">
               Intelligent Application Logic
@@ -243,7 +243,7 @@ export default function AutoApplyPage() {
         </section>
 
         {/* FAQ */}
-        <section className="py-20">
+        <section className="py-14">
           <div className="mx-auto max-w-3xl px-6 lg:px-8">
             <h2 className="font-display text-[clamp(1.8rem,3.6vw,2.5rem)] text-center mb-10">
               Frequently Asked Questions
@@ -277,7 +277,7 @@ export default function AutoApplyPage() {
         </section>
 
         {/* CTA */}
-        <section className="py-24 bg-gradient-to-b from-transparent to-[var(--accent-dim)]">
+        <section className="py-16 bg-gradient-to-b from-transparent to-[var(--accent-dim)]">
           <div className="mx-auto max-w-3xl px-6 text-center">
             <h2 className="font-display text-[clamp(1.8rem,3.6vw,2.5rem)] mb-5">
               Stop Applying Manually. Let AI Do the Heavy Lifting.

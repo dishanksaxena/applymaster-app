@@ -50,7 +50,7 @@ export default function JobMatchingPage() {
 
       <main className="">
         {/* Hero */}
-        <section className="relative overflow-hidden py-24 sm:py-32">
+        <section className="relative overflow-hidden py-16 sm:py-14">
           <div className="absolute inset-0 bg-gradient-to-b from-[var(--blue-dim)] to-transparent" />
           <div className="relative mx-auto max-w-7xl px-6 lg:px-8">
             <Link href="/features" className="text-sm text-[var(--accent)] hover:text-[var(--accent)] mb-6 inline-block">
@@ -78,7 +78,7 @@ export default function JobMatchingPage() {
         </section>
 
         {/* How Matching Works */}
-        <section className="py-20">
+        <section className="py-14">
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
             <h2 className="font-display text-[clamp(1.8rem,3.6vw,2.5rem)] text-center mb-14">
               How AI Job Matching Works
@@ -112,7 +112,7 @@ export default function JobMatchingPage() {
         </section>
 
         {/* Matching Criteria */}
-        <section className="py-20 bg-[var(--bg-card)]">
+        <section className="py-14 bg-[var(--bg-card)]">
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
             <h2 className="font-display text-[clamp(1.8rem,3.6vw,2.5rem)] text-center mb-4">
               What the Engine Considers
@@ -142,7 +142,7 @@ export default function JobMatchingPage() {
         </section>
 
         {/* Daily Recommendations */}
-        <section className="py-20">
+        <section className="py-14">
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
             <h2 className="font-display text-[clamp(1.8rem,3.6vw,2.5rem)] text-center mb-14">
               Daily Recommendations, Not Endless Scrolling
@@ -172,7 +172,7 @@ export default function JobMatchingPage() {
         </section>
 
         {/* Integration */}
-        <section className="py-20 bg-[var(--bg-card)]">
+        <section className="py-14 bg-[var(--bg-card)]">
           <div className="mx-auto max-w-4xl px-6 lg:px-8 text-center">
             <h2 className="font-display text-[clamp(1.8rem,3.6vw,2.5rem)] mb-5">
               Find, Apply, and Interview — All in One Place
@@ -190,7 +190,7 @@ export default function JobMatchingPage() {
         </section>
 
         {/* FAQ */}
-        <section className="py-20">
+        <section className="py-14">
           <div className="mx-auto max-w-3xl px-6 lg:px-8">
             <h2 className="font-display text-[clamp(1.8rem,3.6vw,2.5rem)] text-center mb-10">
               Frequently Asked Questions
@@ -224,7 +224,7 @@ export default function JobMatchingPage() {
         </section>
 
         {/* CTA */}
-        <section className="py-24 bg-gradient-to-b from-transparent to-[var(--accent-dim)]">
+        <section className="py-16 bg-gradient-to-b from-transparent to-[var(--accent-dim)]">
           <div className="mx-auto max-w-3xl px-6 text-center">
             <h2 className="font-display text-[clamp(1.8rem,3.6vw,2.5rem)] mb-5">
               Stop Searching. Start Matching.

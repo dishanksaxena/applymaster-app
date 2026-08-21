@@ -126,6 +126,24 @@ const tiers = [
     limitations: [],
   },
   {
+    name: 'Elite',
+    price: '$59',
+    period: '/month',
+    description: 'Maximum firepower for an urgent search.',
+    cta: 'Go Elite',
+    highlight: false,
+    features: [
+      'Everything in Pro',
+      'Live interview coach',
+      'A/B resume testing',
+      'Recruiter outreach',
+      'Referral request emails',
+      'Autopilot mode',
+      'Dedicated support',
+    ],
+    limitations: [],
+  },
+  {
     name: 'Lifetime',
     price: '$199',
     period: 'one-time',
@@ -196,7 +214,7 @@ export default function PricingPage() {
 
       <main className="">
         {/* Hero */}
-        <section className="relative overflow-hidden py-24 sm:py-32">
+        <section className="relative overflow-hidden py-16 sm:py-14">
           <div className="absolute inset-0 bg-gradient-to-b from-[var(--accent-dim)] to-transparent" />
           <div className="relative mx-auto max-w-7xl px-6 lg:px-8 text-center">
             <h1 className="font-display text-[clamp(2.4rem,5vw,3.6rem)]">
@@ -212,7 +230,7 @@ export default function PricingPage() {
         {/* Pricing Cards */}
         <section className="py-4 pb-20">
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
-            <div className="grid gap-8 md:grid-cols-3">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
               {tiers.map((tier) => (
                 <div
                   key={tier.name}
@@ -266,7 +284,7 @@ export default function PricingPage() {
         </section>
 
         {/* Comparison Table */}
-        <section className="py-20 bg-[var(--bg-card)]">
+        <section className="py-14 bg-[var(--bg-card)]">
           <div className="mx-auto max-w-5xl px-6 lg:px-8">
             <h2 className="font-display text-[clamp(1.8rem,3.6vw,2.5rem)] text-center mb-10">
               Feature Comparison
@@ -297,7 +315,7 @@ export default function PricingPage() {
         </section>
 
         {/* Money-back guarantee */}
-        <section className="py-20">
+        <section className="py-14">
           <div className="mx-auto max-w-4xl px-6 lg:px-8 text-center">
             <div className="rounded-2xl border border-[var(--border)] bg-[var(--green-dim)] p-12">
               <h2 className="text-2xl font-bold mb-4">14-Day Money-Back Guarantee</h2>
@@ -310,7 +328,7 @@ export default function PricingPage() {
         </section>
 
         {/* FAQ */}
-        <section className="py-20 bg-[var(--bg-card)]">
+        <section className="py-14 bg-[var(--bg-card)]">
           <div className="mx-auto max-w-3xl px-6 lg:px-8">
             <h2 className="font-display text-[clamp(1.8rem,3.6vw,2.5rem)] text-center mb-10">
               Pricing FAQ
@@ -327,7 +345,7 @@ export default function PricingPage() {
         </section>
 
         {/* Feature links */}
-        <section className="py-20">
+        <section className="py-14">
           <div className="mx-auto max-w-4xl px-6 lg:px-8 text-center">
             <h2 className="text-2xl font-bold mb-8">Explore What You Get</h2>
             <div className="flex flex-wrap justify-center gap-4">
@@ -351,7 +369,7 @@ export default function PricingPage() {
         </section>
 
         {/* CTA */}
-        <section className="py-24 bg-gradient-to-b from-transparent to-[var(--accent-dim)]">
+        <section className="py-16 bg-gradient-to-b from-transparent to-[var(--accent-dim)]">
           <div className="mx-auto max-w-3xl px-6 text-center">
             <h2 className="font-display text-[clamp(1.8rem,3.6vw,2.5rem)] mb-5">
               Start Your Smarter Job Search Today

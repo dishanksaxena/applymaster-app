@@ -275,6 +275,13 @@ export default function RootLayout({
             flashes the wrong theme. Keep this first in <head>. */}
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
 
+        {/* Scroll-reveal wrappers render at opacity 0 and are un-hidden by
+            JS. Without this, a script failure or a no-JS client sees a blank
+            page. */}
+        <noscript>
+          <style>{'[data-reveal]{opacity:1 !important;transform:none !important}'}</style>
+        </noscript>
+
         {/* Preconnect to critical origins */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

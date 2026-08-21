@@ -44,7 +44,7 @@ export default function TermsPage() {
       />
 
       <main className="">
-        <div className="mx-auto max-w-4xl px-6 py-24 lg:px-8">
+        <div className="mx-auto max-w-4xl px-6 py-16 lg:px-8">
           <h1 className="font-display text-[clamp(2rem,4vw,2.8rem)] mb-2">Terms of Service</h1>
           <p className="text-[var(--text-muted)] mb-12">Last updated: April 7, 2026</p>
 
