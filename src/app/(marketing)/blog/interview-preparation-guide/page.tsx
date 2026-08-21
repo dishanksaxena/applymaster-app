@@ -575,7 +575,7 @@ export default function InterviewPreparationGuidePage() {
             </p>
             <Link
               href="/signup"
-              className="inline-block px-8 py-4 bg-[var(--green)] hover:bg-[var(--green)] text-[var(--bg)] font-semibold rounded-xl transition-colors"
+              className="inline-block px-8 py-4 bg-[var(--green)] hover:bg-[var(--green)] text-[var(--text)] font-semibold rounded-xl transition-colors"
             >
               Start Practicing &mdash; Free
             </Link>

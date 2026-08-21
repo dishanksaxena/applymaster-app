@@ -379,7 +379,7 @@ export default function PricingPage() {
             </p>
             <Link
               href="/signup"
-              className="rounded-full bg-[var(--accent-solid)] px-10 py-4 text-base font-semibold text-ink shadow-lg hover:bg-[var(--accent-solid)] transition-colors"
+              className="rounded-full bg-[var(--accent-solid)] px-10 py-4 text-base font-semibold text-[var(--text-on-accent)] shadow-lg hover:bg-[var(--accent-solid)] transition-colors"
             >
               Sign Up Free
             </Link>

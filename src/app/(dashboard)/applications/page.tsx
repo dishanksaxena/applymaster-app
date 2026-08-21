@@ -475,7 +475,7 @@ export default function ApplicationsPage() {
           </p>
           <Link
             href="/jobs"
-            className="px-6 py-2.5 rounded-xl text-[13px] font-bold text-ink bg-gradient-to-r from-[var(--accent)] to-[var(--accent)] hover:from-[var(--accent)] hover:to-[var(--accent)] transition-all shadow-lg shadow-pink-500/20 hover:shadow-pink-500/40 hover:scale-105 active:scale-95"
+            className="px-6 py-2.5 rounded-xl text-[13px] font-bold text-[var(--text-on-accent)] bg-gradient-to-r from-[var(--accent)] to-[var(--accent)] hover:from-[var(--accent)] hover:to-[var(--accent)] transition-all shadow-lg shadow-pink-500/20 hover:shadow-pink-500/40 hover:scale-105 active:scale-95"
           >
             Browse Jobs
           </Link>

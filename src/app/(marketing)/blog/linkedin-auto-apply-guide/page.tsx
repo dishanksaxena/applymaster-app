@@ -626,7 +626,7 @@ export default function LinkedInAutoApplyGuidePage() {
             </p>
             <Link
               href="/signup"
-              className="inline-block px-8 py-4 bg-[var(--yellow)] hover:bg-[var(--red)] text-[var(--bg)] font-semibold rounded-xl transition-colors"
+              className="inline-block px-8 py-4 bg-[var(--yellow)] hover:bg-[var(--red)] text-[var(--text)] font-semibold rounded-xl transition-colors"
             >
               Start Applying Safely &mdash; Free
             </Link>

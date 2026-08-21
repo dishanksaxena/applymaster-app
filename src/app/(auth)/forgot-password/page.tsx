@@ -34,7 +34,7 @@ export default function ForgotPasswordPage() {
 
       <div className="relative z-10 w-full max-w-md px-6">
         <Link href="/" className="flex items-center justify-center gap-3 mb-10">
-          <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[var(--accent)] to-[var(--accent-solid)] flex items-center justify-center text-ink font-black text-sm">AM</div>
+          <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[var(--accent)] to-[var(--accent-solid)] flex items-center justify-center text-[var(--text-on-accent)] font-black text-sm">AM</div>
           <span className="text-xl font-extrabold tracking-tight text-ink">Apply<span className="text-[var(--accent)]">Master</span></span>
         </Link>
 
@@ -70,7 +70,7 @@ export default function ForgotPasswordPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[var(--accent)] to-[var(--accent-solid)] text-ink font-bold text-[14px] hover:shadow-[0_8px_30px_rgba(253,121,168,0.3)] hover:translate-y-[-1px] transition-all disabled:opacity-50"
+                  className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[var(--accent)] to-[var(--accent-solid)] text-[var(--text-on-accent)] font-bold text-[14px] hover:shadow-[0_8px_30px_rgba(253,121,168,0.3)] hover:translate-y-[-1px] transition-all disabled:opacity-50"
                 >
                   {loading ? 'Sending...' : 'Send Reset Link'}
                 </button>

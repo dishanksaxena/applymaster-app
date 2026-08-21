@@ -757,7 +757,7 @@ export default function JobsGlobe({ jobs, onSave, onApply, savedJobs, appliedJob
         </button>
         <div className="w-10 h-px" style={{ background: 'rgba(59,130,246,0.1)' }} />
         <div className="text-center">
-          <span className="text-[8px] text-[var(--bg-elevated)] font-medium uppercase tracking-widest">Zoom</span>
+          <span className="text-[8px] text-[var(--text)] font-medium uppercase tracking-widest">Zoom</span>
         </div>
       </motion.div>
 
@@ -765,7 +765,7 @@ export default function JobsGlobe({ jobs, onSave, onApply, savedJobs, appliedJob
       {!selectedJob && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2.5 }}
           className="absolute bottom-[72px] right-5 z-20 pointer-events-none text-right">
-          <p className="text-[10px] text-[var(--bg-elevated)]">Drag to rotate · Click flag for details</p>
+          <p className="text-[10px] text-[var(--text)]">Drag to rotate · Click flag for details</p>
         </motion.div>
       )}
 

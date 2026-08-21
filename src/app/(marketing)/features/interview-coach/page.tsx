@@ -68,7 +68,7 @@ export default function InterviewCoachPage() {
             <div className="mt-10 flex items-center gap-4">
               <Link
                 href="/signup"
-                className="rounded-full bg-[var(--accent-solid)] px-8 py-3 text-sm font-semibold text-ink shadow-lg hover:bg-[var(--accent-solid)] transition-colors"
+                className="rounded-full bg-[var(--accent-solid)] px-8 py-3 text-sm font-semibold text-[var(--text-on-accent)] shadow-lg hover:bg-[var(--accent-solid)] transition-colors"
               >
                 Start Practicing Free
               </Link>
@@ -279,7 +279,7 @@ export default function InterviewCoachPage() {
             </p>
             <Link
               href="/signup"
-              className="rounded-full bg-[var(--accent-solid)] px-10 py-4 text-base font-semibold text-ink shadow-lg hover:bg-[var(--accent-solid)] transition-colors"
+              className="rounded-full bg-[var(--accent-solid)] px-10 py-4 text-base font-semibold text-[var(--text-on-accent)] shadow-lg hover:bg-[var(--accent-solid)] transition-colors"
             >
               Start Practicing Free
             </Link>
