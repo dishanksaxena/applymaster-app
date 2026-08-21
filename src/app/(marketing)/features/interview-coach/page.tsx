@@ -178,7 +178,7 @@ export default function InterviewCoachPage() {
                     <li key={item.title} className="flex items-start gap-3">
                       <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[var(--accent-solid)]" />
                       <div>
-                        <span className="font-semibold text-ink">{item.title}:</span>{' '}
+                        <span className="font-semibold text-[var(--text-on-accent)]">{item.title}:</span>{' '}
                         <span className="text-sm text-[var(--text-muted)]">{item.desc}</span>
                       </div>
                     </li>

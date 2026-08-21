@@ -112,7 +112,7 @@ export default function FeaturesPage() {
               </Link>
               <Link
                 href="/pricing"
-                className="rounded-full border border-[var(--border-hover)] px-8 py-3 text-sm font-semibold text-[var(--text-secondary)] hover:border-[var(--accent)] hover:text-ink transition-colors"
+                className="rounded-full border border-[var(--border-hover)] px-8 py-3 text-sm font-semibold text-[var(--text-secondary)] hover:border-[var(--accent)] hover:text-[var(--text-on-accent)] transition-colors"
               >
                 View Pricing
               </Link>

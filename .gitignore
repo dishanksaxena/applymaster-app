@@ -12,3 +12,5 @@ next-env.d.ts
 shoot.review.mjs
 .review-shots/
 verify.palette.mjs
+audit.contrast.mjs
+probe.mjs

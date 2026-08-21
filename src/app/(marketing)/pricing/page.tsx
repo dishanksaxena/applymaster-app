@@ -256,7 +256,7 @@ export default function PricingPage() {
                     href="/signup"
                     className={`block rounded-full py-3 text-center text-sm font-semibold transition-colors mb-8 ${
                       tier.highlight
-                        ? 'bg-[var(--accent-solid)] text-ink hover:bg-[var(--accent-solid)]'
+                        ? 'bg-[var(--accent-solid)] text-[var(--text-on-accent)] hover:bg-[var(--accent-solid)]'
                         : 'border border-[var(--border-hover)] text-[var(--text-secondary)] hover:border-[var(--accent)] hover:text-ink'
                     }`}
                   >

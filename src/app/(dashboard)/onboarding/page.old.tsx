@@ -725,7 +725,7 @@ export default function OnboardingPage() {
                           className={`p-4 rounded-xl border-2 transition-all text-left ${selectedPlan === plan.name ? 'border-[var(--accent)] bg-[rgba(253,121,168,0.1)]' : 'border-[var(--border)] bg-[var(--bg-overlay)] hover:border-[rgba(253,121,168,0.3)]'}`}>
                           <div className="flex justify-between items-start mb-3">
                             <div>
-                              <h3 className="font-bold text-ink">{plan.label}</h3>
+                              <h3 className="font-bold text-[var(--text-on-accent)]">{plan.label}</h3>
                               <p className="text-[13px] font-bold" style={{ color: plan.color }}>{plan.price}<span className="text-[11px] text-[var(--text-faint)]">{plan.period}</span></p>
                             </div>
                             {selectedPlan === plan.name && <div className="w-5 h-5 rounded-full bg-[var(--accent)]" />}
