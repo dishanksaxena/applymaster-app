@@ -43,15 +43,15 @@ export default function PrivacyPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <main className="min-h-screen bg-[var(--bg)] text-ink">
+      <main className="">
         <div className="mx-auto max-w-4xl px-6 py-24 lg:px-8">
-          <h1 className="text-4xl font-extrabold tracking-tight mb-2">Privacy Policy</h1>
+          <h1 className="font-display text-[clamp(2rem,4vw,2.8rem)] mb-2">Privacy Policy</h1>
           <p className="text-[var(--text-muted)] mb-12">Last updated: April 7, 2026</p>
 
           <div className="prose prose-invert max-w-none space-y-10 text-[var(--text-secondary)] leading-relaxed">
             {/* Introduction */}
             <section>
-              <h2 className="text-2xl font-bold text-ink mb-4">1. Introduction</h2>
+              <h2 className="font-display text-[1.6rem] mb-4">1. Introduction</h2>
               <p>
                 ApplyMaster (&ldquo;we,&rdquo; &ldquo;our,&rdquo; or &ldquo;us&rdquo;) operates the website
                 applymaster.ai and related services (collectively, the &ldquo;Service&rdquo;). This Privacy
@@ -66,7 +66,7 @@ export default function PrivacyPage() {
 
             {/* Data Collection */}
             <section>
-              <h2 className="text-2xl font-bold text-ink mb-4">2. Information We Collect</h2>
+              <h2 className="font-display text-[1.6rem] mb-4">2. Information We Collect</h2>
 
               <h3 className="text-lg font-semibold text-ink mt-6 mb-3">2.1 Information You Provide</h3>
               <ul className="list-disc pl-6 space-y-2">
@@ -93,7 +93,7 @@ export default function PrivacyPage() {
 
             {/* How We Use Data */}
             <section>
-              <h2 className="text-2xl font-bold text-ink mb-4">3. How We Use Your Information</h2>
+              <h2 className="font-display text-[1.6rem] mb-4">3. How We Use Your Information</h2>
               <p>We use your personal information to:</p>
               <ul className="list-disc pl-6 space-y-2 mt-4">
                 <li>Provide, operate, and maintain the Service, including auto-apply, resume optimization, cover letter generation, job matching, and interview coaching.</li>
@@ -108,7 +108,7 @@ export default function PrivacyPage() {
 
             {/* Third-Party Services */}
             <section>
-              <h2 className="text-2xl font-bold text-ink mb-4">4. Third-Party Services</h2>
+              <h2 className="font-display text-[1.6rem] mb-4">4. Third-Party Services</h2>
               <p>We use the following third-party services to operate ApplyMaster:</p>
               <ul className="list-disc pl-6 space-y-3 mt-4">
                 <li>
@@ -139,7 +139,7 @@ export default function PrivacyPage() {
 
             {/* Cookies */}
             <section>
-              <h2 className="text-2xl font-bold text-ink mb-4">5. Cookies and Tracking Technologies</h2>
+              <h2 className="font-display text-[1.6rem] mb-4">5. Cookies and Tracking Technologies</h2>
               <p>We use the following types of cookies:</p>
               <ul className="list-disc pl-6 space-y-2 mt-4">
                 <li><strong>Essential Cookies:</strong> Required for authentication, security, and basic functionality. These cannot be disabled.</li>
@@ -154,7 +154,7 @@ export default function PrivacyPage() {
 
             {/* Data Sharing */}
             <section>
-              <h2 className="text-2xl font-bold text-ink mb-4">6. Data Sharing and Disclosure</h2>
+              <h2 className="font-display text-[1.6rem] mb-4">6. Data Sharing and Disclosure</h2>
               <p>We do not sell your personal information. We may share data in these circumstances:</p>
               <ul className="list-disc pl-6 space-y-2 mt-4">
                 <li><strong>Service Providers:</strong> With third-party vendors who process data on our behalf (see Section 4), under strict data processing agreements.</li>
@@ -166,7 +166,7 @@ export default function PrivacyPage() {
 
             {/* Data Security */}
             <section>
-              <h2 className="text-2xl font-bold text-ink mb-4">7. Data Security</h2>
+              <h2 className="font-display text-[1.6rem] mb-4">7. Data Security</h2>
               <p>
                 We implement industry-standard security measures including encryption in transit (TLS 1.3),
                 encryption at rest (AES-256), access controls, and regular security audits. However, no
@@ -177,7 +177,7 @@ export default function PrivacyPage() {
 
             {/* Data Retention */}
             <section>
-              <h2 className="text-2xl font-bold text-ink mb-4">8. Data Retention</h2>
+              <h2 className="font-display text-[1.6rem] mb-4">8. Data Retention</h2>
               <p>
                 We retain your personal data for as long as your account is active or as needed to
                 provide the Service. If you delete your account, we will delete your personal data
@@ -188,7 +188,7 @@ export default function PrivacyPage() {
 
             {/* GDPR */}
             <section>
-              <h2 className="text-2xl font-bold text-ink mb-4">9. Your Rights (GDPR and CCPA)</h2>
+              <h2 className="font-display text-[1.6rem] mb-4">9. Your Rights (GDPR and CCPA)</h2>
               <p>Depending on your location, you may have the following rights:</p>
               <ul className="list-disc pl-6 space-y-2 mt-4">
                 <li><strong>Access:</strong> Request a copy of the personal data we hold about you.</li>
@@ -207,7 +207,7 @@ export default function PrivacyPage() {
 
             {/* International Transfers */}
             <section>
-              <h2 className="text-2xl font-bold text-ink mb-4">10. International Data Transfers</h2>
+              <h2 className="font-display text-[1.6rem] mb-4">10. International Data Transfers</h2>
               <p>
                 Your data may be processed in countries outside your jurisdiction, including the United States.
                 We ensure appropriate safeguards are in place, including Standard Contractual Clauses (SCCs)
@@ -217,7 +217,7 @@ export default function PrivacyPage() {
 
             {/* Children */}
             <section>
-              <h2 className="text-2xl font-bold text-ink mb-4">11. Children&apos;s Privacy</h2>
+              <h2 className="font-display text-[1.6rem] mb-4">11. Children&apos;s Privacy</h2>
               <p>
                 ApplyMaster is not intended for users under the age of 16. We do not knowingly collect
                 personal data from children. If you believe a child has provided us with personal data,
@@ -227,7 +227,7 @@ export default function PrivacyPage() {
 
             {/* Changes */}
             <section>
-              <h2 className="text-2xl font-bold text-ink mb-4">12. Changes to This Policy</h2>
+              <h2 className="font-display text-[1.6rem] mb-4">12. Changes to This Policy</h2>
               <p>
                 We may update this Privacy Policy from time to time. We will notify you of material
                 changes by posting the new policy on this page and updating the &ldquo;Last updated&rdquo;
@@ -237,7 +237,7 @@ export default function PrivacyPage() {
 
             {/* Contact */}
             <section>
-              <h2 className="text-2xl font-bold text-ink mb-4">13. Contact Us</h2>
+              <h2 className="font-display text-[1.6rem] mb-4">13. Contact Us</h2>
               <p>If you have questions or concerns about this Privacy Policy, contact us at:</p>
               <div className="mt-4 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-6">
                 <p><strong>ApplyMaster</strong></p>

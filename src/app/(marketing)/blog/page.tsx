@@ -63,12 +63,12 @@ const posts = [
 
 export default function BlogPage() {
   return (
-    <main className="min-h-screen bg-[var(--bg)] text-ink">
+    <main className="">
       <div className="max-w-5xl mx-auto px-6 py-24">
         {/* Header */}
         <div className="mb-16">
           <Link href="/" className="text-sm text-[var(--accent)] hover:text-[var(--accent-solid)] font-medium mb-8 inline-block">&larr; Back to ApplyMaster</Link>
-          <h1 className="text-5xl font-extrabold mb-4 bg-gradient-to-r from-white to-white/70 bg-clip-text text-transparent">Blog</h1>
+          <h1 className="font-display text-[clamp(2.3rem,5vw,3.4rem)] mb-4">Blog</h1>
           <p className="text-lg text-[var(--text-faint)] max-w-2xl">Expert guides on job search automation, resume optimization, and AI-powered career tools. Everything you need to get hired faster.</p>
         </div>
 

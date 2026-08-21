@@ -48,7 +48,7 @@ export default function CoverLetterGeneratorPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <main className="min-h-screen bg-[var(--bg)] text-ink">
+      <main className="">
         {/* Hero */}
         <section className="relative overflow-hidden py-24 sm:py-32">
           <div className="absolute inset-0 bg-gradient-to-b from-[var(--accent-dim)] to-transparent" />
@@ -56,7 +56,7 @@ export default function CoverLetterGeneratorPage() {
             <Link href="/features" className="text-sm text-[var(--accent)] hover:text-[var(--accent)] mb-6 inline-block">
               &larr; All Features
             </Link>
-            <h1 className="text-4xl font-extrabold tracking-tight sm:text-6xl bg-gradient-to-r from-[var(--accent)] to-[var(--accent)] bg-clip-text text-transparent">
+            <h1 className="font-display text-[clamp(2.4rem,5vw,3.6rem)]">
               AI Cover Letter Generator
             </h1>
             <p className="mt-6 max-w-2xl text-lg text-[var(--text-secondary)] leading-relaxed">
@@ -79,7 +79,7 @@ export default function CoverLetterGeneratorPage() {
         {/* Key Features */}
         <section className="py-20">
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
-            <h2 className="text-3xl font-bold text-center mb-16">
+            <h2 className="font-display text-[clamp(1.8rem,3.6vw,2.5rem)] text-center mb-14">
               What Makes ApplyMaster&apos;s Cover Letters Different
             </h2>
             <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
@@ -121,7 +121,7 @@ export default function CoverLetterGeneratorPage() {
         {/* How It Works */}
         <section className="py-20 bg-[var(--bg-card)]">
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
-            <h2 className="text-3xl font-bold text-center mb-16">
+            <h2 className="font-display text-[clamp(1.8rem,3.6vw,2.5rem)] text-center mb-14">
               Generate a Cover Letter in 3 Steps
             </h2>
             <div className="grid gap-10 md:grid-cols-3">
@@ -157,7 +157,7 @@ export default function CoverLetterGeneratorPage() {
         {/* Tone Examples */}
         <section className="py-20">
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
-            <h2 className="text-3xl font-bold text-center mb-4">
+            <h2 className="font-display text-[clamp(1.8rem,3.6vw,2.5rem)] text-center mb-4">
               Tone Control for Every Situation
             </h2>
             <p className="text-center text-[var(--text-muted)] mb-12 max-w-2xl mx-auto">
@@ -183,7 +183,7 @@ export default function CoverLetterGeneratorPage() {
         {/* Integration */}
         <section className="py-20 bg-[var(--bg-card)]">
           <div className="mx-auto max-w-4xl px-6 lg:px-8 text-center">
-            <h2 className="text-3xl font-bold mb-6">
+            <h2 className="font-display text-[clamp(1.8rem,3.6vw,2.5rem)] mb-5">
               Part of the Complete Application Package
             </h2>
             <p className="text-[var(--text-muted)] mb-4 max-w-2xl mx-auto leading-relaxed">
@@ -203,7 +203,7 @@ export default function CoverLetterGeneratorPage() {
         {/* FAQ */}
         <section className="py-20">
           <div className="mx-auto max-w-3xl px-6 lg:px-8">
-            <h2 className="text-3xl font-bold text-center mb-12">
+            <h2 className="font-display text-[clamp(1.8rem,3.6vw,2.5rem)] text-center mb-10">
               Frequently Asked Questions
             </h2>
             <div className="space-y-8">
@@ -237,7 +237,7 @@ export default function CoverLetterGeneratorPage() {
         {/* CTA */}
         <section className="py-24 bg-gradient-to-b from-transparent to-[var(--accent-dim)]">
           <div className="mx-auto max-w-3xl px-6 text-center">
-            <h2 className="text-3xl font-bold mb-6">
+            <h2 className="font-display text-[clamp(1.8rem,3.6vw,2.5rem)] mb-5">
               Write Cover Letters That Get Callbacks
             </h2>
             <p className="text-[var(--text-muted)] mb-10 text-lg">

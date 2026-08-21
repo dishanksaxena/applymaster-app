@@ -194,12 +194,12 @@ export default function PricingPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <main className="min-h-screen bg-[var(--bg)] text-ink">
+      <main className="">
         {/* Hero */}
         <section className="relative overflow-hidden py-24 sm:py-32">
           <div className="absolute inset-0 bg-gradient-to-b from-[var(--accent-dim)] to-transparent" />
           <div className="relative mx-auto max-w-7xl px-6 lg:px-8 text-center">
-            <h1 className="text-4xl font-extrabold tracking-tight sm:text-6xl bg-gradient-to-r from-[var(--accent)] via-[var(--accent)] to-[var(--blue)] bg-clip-text text-transparent">
+            <h1 className="font-display text-[clamp(2.4rem,5vw,3.6rem)]">
               Simple, Transparent Pricing
             </h1>
             <p className="mt-6 max-w-2xl mx-auto text-lg text-[var(--text-secondary)] leading-relaxed">
@@ -268,7 +268,7 @@ export default function PricingPage() {
         {/* Comparison Table */}
         <section className="py-20 bg-[var(--bg-card)]">
           <div className="mx-auto max-w-5xl px-6 lg:px-8">
-            <h2 className="text-3xl font-bold text-center mb-12">
+            <h2 className="font-display text-[clamp(1.8rem,3.6vw,2.5rem)] text-center mb-10">
               Feature Comparison
             </h2>
             <div className="overflow-x-auto">
@@ -312,7 +312,7 @@ export default function PricingPage() {
         {/* FAQ */}
         <section className="py-20 bg-[var(--bg-card)]">
           <div className="mx-auto max-w-3xl px-6 lg:px-8">
-            <h2 className="text-3xl font-bold text-center mb-12">
+            <h2 className="font-display text-[clamp(1.8rem,3.6vw,2.5rem)] text-center mb-10">
               Pricing FAQ
             </h2>
             <div className="space-y-8">
@@ -353,7 +353,7 @@ export default function PricingPage() {
         {/* CTA */}
         <section className="py-24 bg-gradient-to-b from-transparent to-[var(--accent-dim)]">
           <div className="mx-auto max-w-3xl px-6 text-center">
-            <h2 className="text-3xl font-bold mb-6">
+            <h2 className="font-display text-[clamp(1.8rem,3.6vw,2.5rem)] mb-5">
               Start Your Smarter Job Search Today
             </h2>
             <p className="text-[var(--text-muted)] mb-10 text-lg">

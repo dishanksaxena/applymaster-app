@@ -73,7 +73,7 @@ export default function ATSResumeOptimizationPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <main className="min-h-screen bg-[var(--bg)] text-ink">
+      <main className="">
         <article className="max-w-3xl mx-auto px-6 py-24">
           {/* Navigation */}
           <Link
@@ -94,7 +94,7 @@ export default function ATSResumeOptimizationPage() {
               </time>
               <span className="text-xs text-[var(--text-faint)]">15 min read</span>
             </div>
-            <h1 className="text-4xl md:text-5xl font-extrabold mb-6 bg-gradient-to-r from-white to-white/70 bg-clip-text text-transparent leading-tight">
+            <h1 className="font-display text-[clamp(2.3rem,5vw,3.4rem)] mb-6">
               {title}
             </h1>
             <p className="text-lg text-[var(--text-muted)] leading-relaxed">
@@ -130,7 +130,7 @@ export default function ATSResumeOptimizationPage() {
           <div className="space-y-10">
             {/* Section 1 */}
             <section>
-              <h2 className="text-2xl font-bold text-ink mb-4">
+              <h2 className="font-display text-[1.6rem] mb-4">
                 1. What Is an Applicant Tracking System?
               </h2>
               <p className="text-[var(--text-secondary)] leading-relaxed mb-4">
@@ -153,7 +153,7 @@ export default function ATSResumeOptimizationPage() {
 
             {/* Section 2 */}
             <section>
-              <h2 className="text-2xl font-bold text-ink mb-4">
+              <h2 className="font-display text-[1.6rem] mb-4">
                 2. How ATS Scoring Actually Works
               </h2>
               <p className="text-[var(--text-secondary)] leading-relaxed mb-4">
@@ -193,7 +193,7 @@ export default function ATSResumeOptimizationPage() {
 
             {/* Section 3 */}
             <section>
-              <h2 className="text-2xl font-bold text-ink mb-4">
+              <h2 className="font-display text-[1.6rem] mb-4">
                 3. The Formatting Rules That Matter
               </h2>
               <p className="text-[var(--text-secondary)] leading-relaxed mb-4">
@@ -238,7 +238,7 @@ export default function ATSResumeOptimizationPage() {
 
             {/* Section 4 */}
             <section>
-              <h2 className="text-2xl font-bold text-ink mb-4">
+              <h2 className="font-display text-[1.6rem] mb-4">
                 4. File Format: PDF vs. DOCX
               </h2>
               <p className="text-[var(--text-secondary)] leading-relaxed mb-4">
@@ -267,7 +267,7 @@ export default function ATSResumeOptimizationPage() {
 
             {/* Section 5 */}
             <section>
-              <h2 className="text-2xl font-bold text-ink mb-4">
+              <h2 className="font-display text-[1.6rem] mb-4">
                 5. Keyword Strategy: Beyond Simple Matching
               </h2>
               <p className="text-[var(--text-secondary)] leading-relaxed mb-4">
@@ -304,7 +304,7 @@ export default function ATSResumeOptimizationPage() {
 
             {/* Section 6 */}
             <section>
-              <h2 className="text-2xl font-bold text-ink mb-4">
+              <h2 className="font-display text-[1.6rem] mb-4">
                 6. Section Structure That ATS Systems Expect
               </h2>
               <p className="text-[var(--text-secondary)] leading-relaxed mb-4">
@@ -344,7 +344,7 @@ export default function ATSResumeOptimizationPage() {
 
             {/* Section 7 */}
             <section>
-              <h2 className="text-2xl font-bold text-ink mb-4">
+              <h2 className="font-display text-[1.6rem] mb-4">
                 7. The 10 Most Common ATS Mistakes
               </h2>
               <ol className="space-y-3 text-[var(--text-secondary)]">
@@ -396,7 +396,7 @@ export default function ATSResumeOptimizationPage() {
 
             {/* Section 8 */}
             <section>
-              <h2 className="text-2xl font-bold text-ink mb-4">
+              <h2 className="font-display text-[1.6rem] mb-4">
                 8. Testing Your Resume Against ATS
               </h2>
               <p className="text-[var(--text-secondary)] leading-relaxed mb-4">
@@ -423,7 +423,7 @@ export default function ATSResumeOptimizationPage() {
 
             {/* Section 9 */}
             <section>
-              <h2 className="text-2xl font-bold text-ink mb-4">
+              <h2 className="font-display text-[1.6rem] mb-4">
                 9. How ApplyMaster Auto-Optimizes for ATS
               </h2>
               <p className="text-[var(--text-secondary)] leading-relaxed mb-4">
@@ -462,7 +462,7 @@ export default function ATSResumeOptimizationPage() {
 
             {/* Section 10 */}
             <section>
-              <h2 className="text-2xl font-bold text-ink mb-4">
+              <h2 className="font-display text-[1.6rem] mb-4">
                 10. Industry-Specific ATS Tips
               </h2>
               <h3 className="text-lg font-semibold text-ink mb-3">Technology</h3>
@@ -494,7 +494,7 @@ export default function ATSResumeOptimizationPage() {
 
             {/* Section 11 */}
             <section>
-              <h2 className="text-2xl font-bold text-ink mb-4">
+              <h2 className="font-display text-[1.6rem] mb-4">
                 11. ATS Optimization Checklist
               </h2>
               <p className="text-[var(--text-secondary)] leading-relaxed mb-4">
@@ -518,7 +518,7 @@ export default function ATSResumeOptimizationPage() {
 
             {/* Section 12 */}
             <section>
-              <h2 className="text-2xl font-bold text-ink mb-4">12. FAQ</h2>
+              <h2 className="font-display text-[1.6rem] mb-4">12. FAQ</h2>
               <div className="space-y-6">
                 <div>
                   <h3 className="text-lg font-semibold text-ink mb-2">
@@ -570,7 +570,7 @@ export default function ATSResumeOptimizationPage() {
 
           {/* CTA Section */}
           <section className="mt-16 p-8 md:p-12 rounded-2xl border border-[var(--border)] bg-gradient-to-br from-[var(--purple-dim)] to-transparent text-center">
-            <h2 className="text-2xl md:text-3xl font-bold text-ink mb-4">
+            <h2 className="font-display text-[clamp(1.6rem,3vw,2.1rem)] mb-4">
               Stop Guessing. Get Your ATS Score Instantly.
             </h2>
             <p className="text-[var(--text-muted)] mb-8 max-w-lg mx-auto">

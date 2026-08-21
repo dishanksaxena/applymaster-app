@@ -463,3 +463,15 @@ body {
     scroll-behavior: auto !important;
   }
 }
+
+/* ==============================================================
+   HERO PROOF CARDS
+   A 6px drift, slow enough to read as "alive" rather than busy.
+   The class is only applied when the user has not asked for
+   reduced motion, and the global reduce block neutralises it too.
+   ============================================================== */
+@keyframes am-drift {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+.am-drift { animation: am-drift 7s ease-in-out infinite; }

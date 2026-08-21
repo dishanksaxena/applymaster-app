@@ -266,6 +266,40 @@ function Icon({ path, size = 18 }: { path: React.ReactNode; size?: number }) {
   )
 }
 
+/* ---------- hero proof cards ----------
+   Restored after the first redesign pass stripped them. The particle
+   canvas and 3D tilt deserved to go; these did not — each states a
+   concrete outcome, which is the strongest thing the hero can say. */
+const FLOATERS = [
+  {
+    label: 'Resume optimised',
+    sub: 'ATS score 97/100',
+    tone: 'var(--green)',
+    dim: 'var(--green-dim)',
+    icon: ICON.check,
+    pos: '-top-5 -right-4',
+    delay: '0s',
+  },
+  {
+    label: 'Auto-applied to 3 jobs',
+    sub: 'in the last hour',
+    tone: 'var(--accent)',
+    dim: 'var(--accent-dim)',
+    icon: ICON.bolt,
+    pos: '-bottom-5 -left-5',
+    delay: '-2.3s',
+  },
+  {
+    label: 'Interview invite',
+    sub: 'Google DeepMind',
+    tone: 'var(--blue)',
+    dim: 'var(--blue-dim)',
+    icon: ICON.mail,
+    pos: 'top-1/2 -right-7',
+    delay: '-4.6s',
+  },
+]
+
 /* ---------- feature card ---------- */
 type Accent = 'accent' | 'green' | 'blue' | 'purple' | 'yellow'
 
@@ -308,6 +342,7 @@ export default function Home() {
   const [mobileMenu, setMobileMenu] = useState(false)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [billing, setBilling] = useState<'mo' | 'yr'>('mo')
+  const reduced = useReducedMotion()
 
   useEffect(() => {
     const check = async () => {
@@ -496,6 +531,7 @@ export default function Home() {
 
               {/* Dashboard mockup */}
               <Reveal delay={140}>
+                <div className="relative">
                 <div
                   className="rounded-2xl overflow-hidden"
                   style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-xl)' }}
@@ -556,6 +592,31 @@ export default function Home() {
                       <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>12 sent today &middot; 3 interviews</span>
                     </div>
                   </div>
+                </div>
+
+                {/* Floating proof cards. These earn their place — each one
+                    names a concrete outcome the product produced. The drift
+                    is 6px over 7s and is disabled under reduced-motion. */}
+                {FLOATERS.map(f => (
+                  <div
+                    key={f.label}
+                    className={`hidden md:flex items-center gap-2.5 absolute z-20 px-3 py-2.5 rounded-xl ${f.pos} ${reduced ? '' : 'am-drift'}`}
+                    style={{
+                      background: 'var(--bg-card)',
+                      border: '1px solid var(--border)',
+                      boxShadow: 'var(--shadow-lg)',
+                      animationDelay: f.delay,
+                    }}
+                  >
+                    <span className="grid place-items-center w-7 h-7 rounded-lg shrink-0" style={{ background: f.dim, color: f.tone }}>
+                      <Icon path={f.icon} size={14} />
+                    </span>
+                    <span>
+                      <span className="block text-[11.5px] font-bold leading-tight" style={{ color: f.tone }}>{f.label}</span>
+                      <span className="block text-[10px] leading-tight mt-0.5" style={{ color: 'var(--text-muted)' }}>{f.sub}</span>
+                    </span>
+                  </div>
+                ))}
                 </div>
               </Reveal>
             </div>

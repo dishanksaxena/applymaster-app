@@ -113,11 +113,11 @@ const jsonLd = {
 
 export default function IntegrationsPage() {
   return (
-    <div className="min-h-screen" style={{ background: 'var(--bg)', color: 'var(--text)' }}>
+    <div>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       {/* Hero */}
-      <section className="pt-28 pb-16">
+      <section className="pt-16 pb-16">
         <div className="mx-auto max-w-5xl px-6 lg:px-8">
           <Link
             href="/features"

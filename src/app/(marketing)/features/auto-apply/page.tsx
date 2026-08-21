@@ -56,7 +56,7 @@ export default function AutoApplyPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <main className="min-h-screen bg-[var(--bg)] text-ink">
+      <main className="">
         {/* Hero */}
         <section className="relative overflow-hidden py-24 sm:py-32">
           <div className="absolute inset-0 bg-gradient-to-b from-[var(--blue-dim)] to-transparent" />
@@ -64,7 +64,7 @@ export default function AutoApplyPage() {
             <Link href="/features" className="text-sm text-[var(--accent)] hover:text-[var(--accent)] mb-6 inline-block">
               &larr; All Features
             </Link>
-            <h1 className="text-4xl font-extrabold tracking-tight sm:text-6xl bg-gradient-to-r from-[var(--blue)] to-[var(--accent)] bg-clip-text text-transparent">
+            <h1 className="font-display text-[clamp(2.4rem,5vw,3.6rem)]">
               Apply to Jobs Automatically
             </h1>
             <p className="mt-6 max-w-2xl text-lg text-[var(--text-secondary)] leading-relaxed">
@@ -93,7 +93,7 @@ export default function AutoApplyPage() {
         {/* Copilot vs Autopilot */}
         <section className="py-20">
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
-            <h2 className="text-3xl font-bold text-center mb-4">
+            <h2 className="font-display text-[clamp(1.8rem,3.6vw,2.5rem)] text-center mb-4">
               Two Modes, One Goal: More Applications, Less Effort
             </h2>
             <p className="text-center text-[var(--text-muted)] mb-16 max-w-2xl mx-auto">
@@ -159,7 +159,7 @@ export default function AutoApplyPage() {
         {/* How It Works */}
         <section className="py-20 bg-[var(--bg-card)]">
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
-            <h2 className="text-3xl font-bold text-center mb-16">
+            <h2 className="font-display text-[clamp(1.8rem,3.6vw,2.5rem)] text-center mb-14">
               How Auto-Apply Works
             </h2>
             <div className="grid gap-10 md:grid-cols-3">
@@ -195,7 +195,7 @@ export default function AutoApplyPage() {
         {/* Supported Portals */}
         <section className="py-20">
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
-            <h2 className="text-3xl font-bold text-center mb-4">
+            <h2 className="font-display text-[clamp(1.8rem,3.6vw,2.5rem)] text-center mb-4">
               50+ Supported Job Portals
             </h2>
             <p className="text-center text-[var(--text-muted)] mb-12 max-w-2xl mx-auto">
@@ -221,7 +221,7 @@ export default function AutoApplyPage() {
         {/* Smart Features */}
         <section className="py-20 bg-[var(--bg-card)]">
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
-            <h2 className="text-3xl font-bold text-center mb-16">
+            <h2 className="font-display text-[clamp(1.8rem,3.6vw,2.5rem)] text-center mb-14">
               Intelligent Application Logic
             </h2>
             <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
@@ -245,7 +245,7 @@ export default function AutoApplyPage() {
         {/* FAQ */}
         <section className="py-20">
           <div className="mx-auto max-w-3xl px-6 lg:px-8">
-            <h2 className="text-3xl font-bold text-center mb-12">
+            <h2 className="font-display text-[clamp(1.8rem,3.6vw,2.5rem)] text-center mb-10">
               Frequently Asked Questions
             </h2>
             <div className="space-y-8">
@@ -279,7 +279,7 @@ export default function AutoApplyPage() {
         {/* CTA */}
         <section className="py-24 bg-gradient-to-b from-transparent to-[var(--accent-dim)]">
           <div className="mx-auto max-w-3xl px-6 text-center">
-            <h2 className="text-3xl font-bold mb-6">
+            <h2 className="font-display text-[clamp(1.8rem,3.6vw,2.5rem)] mb-5">
               Stop Applying Manually. Let AI Do the Heavy Lifting.
             </h2>
             <p className="text-[var(--text-muted)] mb-10 text-lg">
