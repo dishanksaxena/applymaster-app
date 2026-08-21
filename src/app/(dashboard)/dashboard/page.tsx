@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import {useEffect, useState, useRef, useId } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { createClient } from '@/lib/supabase-browser'
 import Link from 'next/link'
@@ -32,26 +32,47 @@ function Sparkline({ data, color, height = 40 }: { data: number[]; color: string
   const min = Math.min(...data)
   const range = max - min || 1
   const w = 120
-  const points = data.map((v, i) => `${(i / (data.length - 1)) * w},${height - ((v - min) / range) * (height - 4) - 2}`).join(' ')
-  const gradId = `sg-${color.replace('#', '')}`
+  const pts = data.map((v, i) => ({
+    x: (i / (data.length - 1)) * w,
+    y: height - ((v - min) / range) * (height - 4) - 2,
+  }))
+  const points = pts.map(p => `${p.x},${p.y}`).join(' ')
+  const last = pts[pts.length - 1]
+
+  /* The gradient id must be a valid SVG identifier. It used to be derived from
+     the colour, which broke the moment colours became CSS variables:
+     "sg-var(--accent)" is not a valid id, so url(#...) resolved to nothing and
+     the area fill rendered as a grey smudge. useId gives a stable, safe id.
+
+     stop-color is also set through style rather than the presentation
+     attribute, because CSS variables do not resolve in presentation
+     attributes — that was the second half of the same bug. */
+  const uid = useId().replace(/:/g, '')
+  const gradId = `spark-${uid}`
+
   return (
-    <svg width={w} height={height} className="overflow-visible">
+    <svg width={w} height={height} className="overflow-visible" aria-hidden="true">
       <defs>
         <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity="0.3" />
-          <stop offset="100%" stopColor={color} stopOpacity="0" />
+          <stop offset="0%" style={{ stopColor: color, stopOpacity: 0.22 }} />
+          <stop offset="100%" style={{ stopColor: color, stopOpacity: 0 }} />
         </linearGradient>
       </defs>
+      <polygon points={`0,${height} ${points} ${w},${height}`} fill={`url(#${gradId})`} />
       <motion.polyline
-        fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+        fill="none" style={{ stroke: color }} strokeWidth="2"
+        strokeLinecap="round" strokeLinejoin="round"
         initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: 1, opacity: 1 }}
-        transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
+        transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
         points={points}
       />
-      <polygon points={`0,${height} ${points} ${w},${height}`} fill={`url(#${gradId})`} opacity="0.5" />
+      {/* Emphasised endpoint: the current value is the one that matters. */}
+      <circle cx={last.x} cy={last.y} r="3" style={{ fill: color }} />
+      <circle cx={last.x} cy={last.y} r="5.5" style={{ fill: color }} opacity="0.18" />
     </svg>
   )
 }
+
 
 /* ─── Live Activity Terminal ─── */
 function LiveTerminal({ activities }: { activities: { action: string; details: string | null; created_at: string }[] }) {
