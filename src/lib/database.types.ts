@@ -290,3 +290,29 @@ export interface ApplicationReceipt {
   submitted_at: string
   created_at: string
 }
+
+/**
+ * A referral ask: one contact, one job. Referrals convert at roughly 30%
+ * against 0.1-2% for a cold application, which is why this path is scored
+ * and surfaced before the auto-apply engine falls back to applying cold.
+ */
+export interface ReferralRequest {
+  id: string
+  user_id: string
+  connection_id: string
+  job_id: string | null
+  application_id: string | null
+  job_title: string | null
+  company: string | null
+  match_reason: string | null
+  /** Deterministic 0-100. Computed server-side, never by the model. */
+  match_strength: number | null
+  message_draft: string | null
+  message_sent: string | null
+  channel: 'email' | 'linkedin' | 'other' | null
+  status: 'suggested' | 'drafted' | 'sent' | 'accepted' | 'declined' | 'no_response'
+  sent_at: string | null
+  responded_at: string | null
+  created_at: string
+  updated_at: string
+}

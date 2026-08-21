@@ -14,3 +14,4 @@ shoot.review.mjs
 verify.palette.mjs
 probe.mjs
 verify.receipt.mjs
+verify.referrals.mjs
