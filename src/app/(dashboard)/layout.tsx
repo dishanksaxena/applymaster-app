@@ -136,8 +136,8 @@ const animationStyles = `
   100% { background-position: 200% center; }
 }
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 4px rgba(0, 184, 148, 0.4), 0 0 8px rgba(0, 184, 148, 0.2); }
-  50% { box-shadow: 0 0 8px rgba(0, 184, 148, 0.6), 0 0 20px rgba(0, 184, 148, 0.3); }
+  0%, 100% { box-shadow: 0 0 4px rgb(var(--green-rgb) / 0.4), 0 0 8px rgb(var(--green-rgb) / calc(0.2 * var(--tint-scale))); }
+  50% { box-shadow: 0 0 8px rgb(var(--green-rgb) / 0.6), 0 0 20px rgb(var(--green-rgb) / 0.3); }
 }
 @keyframes avatar-ring {
   0% { background-position: 0% 50%; }
@@ -461,7 +461,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 title="Notifications"
               >
                 {icons.bell}
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[var(--accent-solid)]" style={{ boxShadow: '0 0 6px rgba(232,67,147,0.5)' }} />
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[var(--accent-solid)]" style={{ boxShadow: '0 0 6px rgb(var(--accent-rgb) / 0.5)' }} />
               </button>
 
               <ThemeToggle />

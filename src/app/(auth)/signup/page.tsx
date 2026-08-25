@@ -53,7 +53,7 @@ export default function SignupPage() {
       <div className="min-h-screen flex items-center justify-center bg-[var(--bg)] relative overflow-hidden">
         <div className="absolute top-[-30%] right-[-20%] w-[600px] h-[600px] rounded-full opacity-[0.06]" style={{ background: 'radial-gradient(circle, var(--green), transparent 70%)' }} />
         <div className="relative z-10 max-w-md px-6 text-center">
-          <div className="w-16 h-16 rounded-2xl bg-[rgba(0,184,148,0.1)] border border-[rgba(0,184,148,0.2)] flex items-center justify-center text-3xl mx-auto mb-6">✓</div>
+          <div className="w-16 h-16 rounded-2xl bg-[rgb(var(--green-rgb)/0.1)] border border-[rgb(var(--green-rgb)/0.2)] flex items-center justify-center text-3xl mx-auto mb-6">✓</div>
           <h1 className="text-2xl font-black mb-3">Check your email</h1>
           <p className="text-[14px] text-[var(--text-muted)] leading-relaxed mb-8">
             We sent a confirmation link to <span className="text-ink font-semibold">{email}</span>. Click it to activate your account and start applying.
@@ -109,7 +109,7 @@ export default function SignupPage() {
                 value={name}
                 onChange={e => setName(e.target.value)}
                 required
-                className="w-full px-4 py-3 rounded-xl bg-[var(--bg-input)] border border-[var(--bg-overlay)] text-ink text-[14px] placeholder-[var(--text-faint)] focus:outline-none focus:border-[rgba(253,121,168,0.3)] focus:ring-1 focus:ring-[rgba(253,121,168,0.15)] transition-all"
+                className="w-full px-4 py-3 rounded-xl bg-[var(--bg-input)] border border-[var(--bg-overlay)] text-ink text-[14px] placeholder-[var(--text-faint)] focus:outline-none focus:border-[rgb(var(--accent-rgb)/0.3)] focus:ring-1 focus:ring-[rgb(var(--accent-rgb)/0.15)] transition-all"
                 placeholder="John Doe"
               />
             </div>
@@ -120,7 +120,7 @@ export default function SignupPage() {
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 required
-                className="w-full px-4 py-3 rounded-xl bg-[var(--bg-input)] border border-[var(--bg-overlay)] text-ink text-[14px] placeholder-[var(--text-faint)] focus:outline-none focus:border-[rgba(253,121,168,0.3)] focus:ring-1 focus:ring-[rgba(253,121,168,0.15)] transition-all"
+                className="w-full px-4 py-3 rounded-xl bg-[var(--bg-input)] border border-[var(--bg-overlay)] text-ink text-[14px] placeholder-[var(--text-faint)] focus:outline-none focus:border-[rgb(var(--accent-rgb)/0.3)] focus:ring-1 focus:ring-[rgb(var(--accent-rgb)/0.15)] transition-all"
                 placeholder="you@email.com"
               />
             </div>
@@ -132,14 +132,14 @@ export default function SignupPage() {
                 onChange={e => setPassword(e.target.value)}
                 required
                 minLength={6}
-                className="w-full px-4 py-3 rounded-xl bg-[var(--bg-input)] border border-[var(--bg-overlay)] text-ink text-[14px] placeholder-[var(--text-faint)] focus:outline-none focus:border-[rgba(253,121,168,0.3)] focus:ring-1 focus:ring-[rgba(253,121,168,0.15)] transition-all"
+                className="w-full px-4 py-3 rounded-xl bg-[var(--bg-input)] border border-[var(--bg-overlay)] text-ink text-[14px] placeholder-[var(--text-faint)] focus:outline-none focus:border-[rgb(var(--accent-rgb)/0.3)] focus:ring-1 focus:ring-[rgb(var(--accent-rgb)/0.15)] transition-all"
                 placeholder="Min 6 characters"
               />
             </div>
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[var(--accent)] to-[var(--accent-solid)] text-[var(--text-on-accent)] font-bold text-[14px] hover:shadow-[0_8px_30px_rgba(253,121,168,0.3)] hover:translate-y-[-1px] transition-all disabled:opacity-50"
+              className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[var(--accent)] to-[var(--accent-solid)] text-[var(--text-on-accent)] font-bold text-[14px] hover:shadow-[0_8px_30px_rgb(var(--accent-rgb) / 0.3)] hover:translate-y-[-1px] transition-all disabled:opacity-50"
             >
               {loading ? 'Creating account...' : 'Create Account'}
             </button>

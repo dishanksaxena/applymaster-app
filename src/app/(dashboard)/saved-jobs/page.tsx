@@ -122,12 +122,12 @@ export default function SavedJobsPage() {
 
       {/* Header */}
       <motion.div variants={fadeUp} className="relative overflow-hidden rounded-2xl p-8" style={{
-        background: 'linear-gradient(135deg, rgba(253,121,168,0.08) 0%, rgba(162,155,254,0.06) 100%)',
-        border: '1px solid rgba(253,121,168,0.1)',
+        background: 'linear-gradient(135deg, rgb(var(--accent-rgb) / calc(0.08 * var(--tint-scale))) 0%, rgb(var(--purple-rgb) / calc(0.06 * var(--tint-scale))) 100%)',
+        border: '1px solid rgb(var(--accent-rgb) / calc(0.1 * var(--tint-scale)))',
       }}>
         <div className="absolute top-[-50%] right-[-10%] w-[300px] h-[300px] rounded-full opacity-[0.07]" style={{ background: 'radial-gradient(circle, var(--accent), transparent 70%)' }} />
         <div className="relative z-10 flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: 'rgba(253,121,168,0.15)' }}>
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: 'rgb(var(--accent-rgb) / calc(0.15 * var(--tint-scale)))' }}>
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.8"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
           </div>
           <div>
@@ -148,7 +148,7 @@ export default function SavedJobsPage() {
           placeholder="Search by job title or company..."
           value={searchTerm}
           onChange={e => setSearchTerm(e.target.value)}
-          className="w-full px-4 py-3.5 rounded-xl bg-[var(--bg-input)] border border-[var(--border)] text-ink text-[14px] placeholder-[var(--text-faint)] focus:outline-none focus:border-[rgba(253,121,168,0.3)] transition-all"
+          className="w-full px-4 py-3.5 rounded-xl bg-[var(--bg-input)] border border-[var(--border)] text-ink text-[14px] placeholder-[var(--text-faint)] focus:outline-none focus:border-[rgb(var(--accent-rgb)/0.3)] transition-all"
         />
       </motion.div>
 
@@ -156,7 +156,7 @@ export default function SavedJobsPage() {
       {loading ? (
         <motion.div variants={fadeUp} className="flex items-center justify-center py-20">
           <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-            className="w-8 h-8 rounded-full" style={{ border: '2px solid rgba(253,121,168,0.1)', borderTopColor: 'var(--accent)' }} />
+            className="w-8 h-8 rounded-full" style={{ border: '2px solid rgb(var(--accent-rgb) / calc(0.1 * var(--tint-scale)))', borderTopColor: 'var(--accent)' }} />
         </motion.div>
       ) : filteredJobs.length === 0 ? (
         <motion.div variants={fadeUp} className="text-center py-20">
@@ -178,7 +178,7 @@ export default function SavedJobsPage() {
               className="p-5 rounded-xl border transition-all hover:border-opacity-100"
               style={{
                 background: 'linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-elevated) 100%)',
-                border: '1px solid rgba(253,121,168,0.1)',
+                border: '1px solid rgb(var(--accent-rgb) / calc(0.1 * var(--tint-scale)))',
               }}
             >
               <div className="flex items-start justify-between gap-4">
@@ -188,21 +188,21 @@ export default function SavedJobsPage() {
 
                   <div className="flex flex-wrap gap-2 mt-3 text-[11px]">
                     {job.location && (
-                      <span className="px-2.5 py-1 rounded-lg" style={{ background: 'rgba(116,185,255,0.1)', color: 'var(--blue)' }}>
+                      <span className="px-2.5 py-1 rounded-lg" style={{ background: 'rgb(var(--blue-rgb) / calc(0.1 * var(--tint-scale)))', color: 'var(--blue)' }}>
                         📍 {job.location}
                       </span>
                     )}
                     {job.remote_type && (
-                      <span className="px-2.5 py-1 rounded-lg" style={{ background: 'rgba(0,184,148,0.1)', color: 'var(--green)' }}>
+                      <span className="px-2.5 py-1 rounded-lg" style={{ background: 'rgb(var(--green-rgb) / calc(0.1 * var(--tint-scale)))', color: 'var(--green)' }}>
                         🌐 {job.remote_type}
                       </span>
                     )}
                     {formatSalary(job) && (
-                      <span className="px-2.5 py-1 rounded-lg" style={{ background: 'rgba(253,203,110,0.1)', color: 'var(--yellow)' }}>
+                      <span className="px-2.5 py-1 rounded-lg" style={{ background: 'rgb(var(--yellow-rgb) / calc(0.1 * var(--tint-scale)))', color: 'var(--yellow)' }}>
                         💰 {formatSalary(job)}
                       </span>
                     )}
-                    <span className="px-2.5 py-1 rounded-lg" style={{ background: 'rgba(162,155,254,0.1)', color: 'var(--purple)' }}>
+                    <span className="px-2.5 py-1 rounded-lg" style={{ background: 'rgb(var(--purple-rgb) / calc(0.1 * var(--tint-scale)))', color: 'var(--purple)' }}>
                       {job.source}
                     </span>
                   </div>
@@ -212,14 +212,14 @@ export default function SavedJobsPage() {
                   <button
                     onClick={() => applyToJob(job)}
                     className="px-4 py-2.5 rounded-xl text-[12px] font-bold transition-all"
-                    style={{ background: 'rgba(0,184,148,0.1)', color: 'var(--green)', border: '1px solid rgba(0,184,148,0.2)' }}
+                    style={{ background: 'rgb(var(--green-rgb) / calc(0.1 * var(--tint-scale)))', color: 'var(--green)', border: '1px solid rgb(var(--green-rgb) / calc(0.2 * var(--tint-scale)))' }}
                   >
                     Apply Now
                   </button>
                   <button
                     onClick={() => removeJob(job.id)}
                     className="px-4 py-2.5 rounded-xl text-[12px] font-bold transition-all"
-                    style={{ background: 'rgba(255,107,107,0.1)', color: 'var(--red)', border: '1px solid rgba(255,107,107,0.2)' }}
+                    style={{ background: 'rgb(var(--red-rgb) / calc(0.1 * var(--tint-scale)))', color: 'var(--red)', border: '1px solid rgb(var(--red-rgb) / calc(0.2 * var(--tint-scale)))' }}
                   >
                     Remove
                   </button>

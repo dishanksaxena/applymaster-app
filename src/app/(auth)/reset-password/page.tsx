@@ -55,7 +55,7 @@ export default function ResetPasswordPage() {
         <div className="p-8 rounded-2xl bg-[var(--bg-card)] border border-[var(--bg-overlay)] shadow-[0_40px_100px_rgba(0,0,0,0.5)]">
           {!done ? (
             <>
-              <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5 mx-auto" style={{ background: 'rgba(162,155,254,0.1)' }}>
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5 mx-auto" style={{ background: 'rgb(var(--purple-rgb) / calc(0.1 * var(--tint-scale)))' }}>
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" strokeWidth="1.8">
                   <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
                 </svg>
@@ -79,7 +79,7 @@ export default function ResetPasswordPage() {
                       onChange={e => setPassword(e.target.value)}
                       required
                       minLength={8}
-                      className="w-full px-4 py-3 pr-12 rounded-xl bg-[var(--bg-input)] border border-[var(--bg-overlay)] text-ink text-[14px] placeholder-[var(--text-faint)] focus:outline-none focus:border-[rgba(162,155,254,0.3)] transition-all"
+                      className="w-full px-4 py-3 pr-12 rounded-xl bg-[var(--bg-input)] border border-[var(--bg-overlay)] text-ink text-[14px] placeholder-[var(--text-faint)] focus:outline-none focus:border-[rgb(var(--purple-rgb)/0.3)] transition-all"
                       placeholder="Minimum 8 characters"
                     />
                     <button type="button" onClick={() => setShow(s => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-faint)] hover:text-ink transition-colors">
@@ -98,7 +98,7 @@ export default function ResetPasswordPage() {
                     value={confirm}
                     onChange={e => setConfirm(e.target.value)}
                     required
-                    className="w-full px-4 py-3 rounded-xl bg-[var(--bg-input)] border border-[var(--bg-overlay)] text-ink text-[14px] placeholder-[var(--text-faint)] focus:outline-none focus:border-[rgba(162,155,254,0.3)] transition-all"
+                    className="w-full px-4 py-3 rounded-xl bg-[var(--bg-input)] border border-[var(--bg-overlay)] text-ink text-[14px] placeholder-[var(--text-faint)] focus:outline-none focus:border-[rgb(var(--purple-rgb)/0.3)] transition-all"
                     placeholder="Re-enter password"
                   />
                 </div>
@@ -108,9 +108,9 @@ export default function ResetPasswordPage() {
                       const checks = [password.length >= 8, /[A-Z]/.test(password), /\d/.test(password)]
                       return (
                         <span key={req} className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{
-                          background: checks[i] ? 'rgba(0,184,148,0.1)' : 'var(--bg-overlay)',
+                          background: checks[i] ? 'rgb(var(--green-rgb) / calc(0.1 * var(--tint-scale)))' : 'var(--bg-overlay)',
                           color: checks[i] ? 'var(--green)' : 'var(--text-faint)',
-                          border: `1px solid ${checks[i] ? 'rgba(0,184,148,0.2)' : 'var(--bg-overlay)'}`
+                          border: `1px solid ${checks[i] ? 'rgb(var(--green-rgb) / calc(0.2 * var(--tint-scale)))' : 'var(--bg-overlay)'}`
                         }}>{checks[i] ? '✓' : '·'} {req}</span>
                       )
                     })}
@@ -119,7 +119,7 @@ export default function ResetPasswordPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[var(--purple)] to-[var(--purple)] text-[var(--text-on-accent)] font-bold text-[14px] hover:shadow-[0_8px_30px_rgba(162,155,254,0.3)] hover:translate-y-[-1px] transition-all disabled:opacity-50"
+                  className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[var(--purple)] to-[var(--purple)] text-[var(--text-on-accent)] font-bold text-[14px] hover:shadow-[0_8px_30px_rgb(var(--purple-rgb) / 0.3)] hover:translate-y-[-1px] transition-all disabled:opacity-50"
                 >
                   {loading ? 'Updating...' : 'Update Password'}
                 </button>
@@ -127,7 +127,7 @@ export default function ResetPasswordPage() {
             </>
           ) : (
             <div className="text-center py-4">
-              <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-5" style={{ background: 'rgba(0,184,148,0.1)' }}>
+              <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-5" style={{ background: 'rgb(var(--green-rgb) / calc(0.1 * var(--tint-scale)))' }}>
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2">
                   <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
                 </svg>

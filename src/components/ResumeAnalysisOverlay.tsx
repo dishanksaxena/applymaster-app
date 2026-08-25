@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion'
 import { useState, useEffect, useMemo, useRef } from 'react'
+import { withAlpha } from '@/lib/tone'
 
 interface ResumeAnalysisOverlayProps {
   isVisible: boolean
@@ -49,7 +50,7 @@ function FloatingParticle3D({ index }: { index: number }) {
         width: size,
         height: size,
         background: `radial-gradient(circle, ${color}, transparent)`,
-        boxShadow: `0 0 ${size * 4}px ${color}60`,
+        boxShadow: `0 0 ${size * 4}px ${withAlpha(color, 0.38)}`,
         left: `${startX}%`,
         top: `${startY}%`,
         transform: `translateZ(${depth}px)`,
@@ -134,14 +135,14 @@ function OrbitalRing3D({ radius, duration, color, dotCount, tiltX = 0, tiltY = 0
           <motion.div
             key={i}
             className="absolute rounded-full"
-            style={{ width: 8, height: 8, left: x, top: y, background: color, boxShadow: `0 0 20px ${color}, 0 0 40px ${color}40` }}
+            style={{ width: 8, height: 8, left: x, top: y, background: color, boxShadow: `0 0 20px ${color}, 0 0 40px ${withAlpha(color, 0.26)}` }}
             animate={{ opacity: [0.3, 1, 0.3], scale: [0.7, 1.4, 0.7] }}
             transition={{ duration: 2, delay: i * (duration / dotCount / 5), repeat: Infinity, ease: 'easeInOut' }}
           />
         )
       })}
       {/* Ring path */}
-      <div className="absolute inset-0 rounded-full" style={{ border: `1px solid ${color}20` }} />
+      <div className="absolute inset-0 rounded-full" style={{ border: `1px solid ${withAlpha(color, 0.14, true)}` }} />
     </motion.div>
   )
 }
@@ -262,7 +263,7 @@ function StepCheckmark() {
   return (
     <motion.div className="flex items-center justify-center" style={{ width: 28, height: 28 }}
       initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 400, damping: 15 }}>
-      <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ background: 'rgba(52,211,153,0.15)', boxShadow: '0 0 15px rgba(52,211,153,0.3)' }}>
+      <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ background: 'rgb(var(--green-rgb) / calc(0.15 * var(--tint-scale)))', boxShadow: '0 0 15px rgb(var(--green-rgb) / 0.3)' }}>
         <motion.svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
           <motion.path d="M5 13l4 4L19 7" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.4, ease: 'easeOut' }} />
         </motion.svg>
@@ -288,7 +289,7 @@ function ConfettiBurst() {
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
       {particles.map((p, i) => (
         <motion.div key={i} className={`absolute ${p.shape === 'circle' ? 'rounded-full' : 'rounded-sm'}`}
-          style={{ width: p.size, height: p.shape === 'circle' ? p.size : p.size * 0.5, background: p.color, boxShadow: `0 0 8px ${p.color}80` }}
+          style={{ width: p.size, height: p.shape === 'circle' ? p.size : p.size * 0.5, background: p.color, boxShadow: `0 0 8px ${withAlpha(p.color, 0.5)}` }}
           initial={{ x: 0, y: 0, opacity: 1, rotate: 0, scale: 1 }}
           animate={{ x: p.x, y: p.y, opacity: [1, 1, 0], rotate: p.rotation, scale: [1, 1.3, 0.3] }}
           transition={{ duration: 2, delay: p.delay, ease: 'easeOut' }} />
@@ -309,8 +310,8 @@ function SuccessIcon() {
           initial={{ borderColor: 'var(--green)', borderWidth: 2, borderStyle: 'solid' }} />
       ))}
       <motion.div className="relative flex items-center justify-center rounded-full"
-        style={{ width: 90, height: 90, background: 'linear-gradient(135deg, rgba(52,211,153,0.2), rgba(16,185,129,0.1))', boxShadow: '0 0 60px rgba(52,211,153,0.4), 0 0 120px rgba(52,211,153,0.2)' }}
-        animate={{ boxShadow: ['0 0 60px rgba(52,211,153,0.4)', '0 0 80px rgba(52,211,153,0.6)', '0 0 60px rgba(52,211,153,0.4)'] }}
+        style={{ width: 90, height: 90, background: 'linear-gradient(135deg, rgb(var(--green-rgb) / calc(0.2 * var(--tint-scale))), rgba(16,185,129,0.1))', boxShadow: '0 0 60px rgb(var(--green-rgb) / 0.4), 0 0 120px rgb(var(--green-rgb) / calc(0.2 * var(--tint-scale)))' }}
+        animate={{ boxShadow: ['0 0 60px rgb(var(--green-rgb) / 0.4)', '0 0 80px rgb(var(--green-rgb) / 0.6)', '0 0 60px rgb(var(--green-rgb) / 0.4)'] }}
         transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}>
         <motion.svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
           <motion.path d="M5 13l4 4L19 7" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.6, delay: 0.3, ease: 'easeOut' }} />
@@ -457,14 +458,14 @@ export default function ResumeAnalysisOverlay({ isVisible, currentStep, fileName
 
                 {/* Outer glow */}
                 <motion.div className="absolute -inset-2 rounded-3xl pointer-events-none"
-                  style={{ background: 'linear-gradient(135deg, rgba(253,121,168,0.2), rgba(162,155,254,0.2), rgba(116,185,255,0.2))', filter: 'blur(30px)' }}
+                  style={{ background: 'linear-gradient(135deg, rgb(var(--accent-rgb) / calc(0.2 * var(--tint-scale))), rgb(var(--purple-rgb) / calc(0.2 * var(--tint-scale))), rgb(var(--blue-rgb) / calc(0.2 * var(--tint-scale))))', filter: 'blur(30px)' }}
                   animate={{ opacity: [0.4, 0.8, 0.4] }} transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }} />
 
                 {/* Card content */}
                 <div className="relative rounded-3xl px-8 py-10 overflow-hidden" style={{ background: 'linear-gradient(170deg, var(--bg-card) 0%, var(--bg) 50%, var(--bg-card) 100%)' }}>
                   {/* Inner aurora */}
                   <motion.div className="absolute top-0 left-0 right-0 h-48 pointer-events-none"
-                    style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(253,121,168,0.12) 0%, rgba(162,155,254,0.08) 40%, transparent 70%)' }}
+                    style={{ background: 'radial-gradient(ellipse at 50% 0%, rgb(var(--accent-rgb) / calc(0.12 * var(--tint-scale))) 0%, rgb(var(--purple-rgb) / calc(0.08 * var(--tint-scale))) 40%, transparent 70%)' }}
                     animate={{ opacity: [0.5, 1, 0.5] }} transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }} />
 
                   {/* Shimmer line at top */}
@@ -562,24 +563,24 @@ export default function ResumeAnalysisOverlay({ isVisible, currentStep, fileName
                           return (
                             <motion.div key={step.key} className="relative flex items-center gap-4 px-4 py-3.5 rounded-xl"
                               style={{
-                                background: isActive ? 'rgba(253,121,168,0.08)' : isComplete ? 'rgba(52,211,153,0.04)' : 'transparent',
+                                background: isActive ? 'rgb(var(--accent-rgb) / calc(0.08 * var(--tint-scale)))' : isComplete ? 'rgb(var(--green-rgb) / calc(0.04 * var(--tint-scale)))' : 'transparent',
                                 borderWidth: 1, borderStyle: 'solid',
-                                borderColor: isActive ? 'rgba(253,121,168,0.25)' : isComplete ? 'rgba(52,211,153,0.1)' : 'var(--bg-overlay)',
+                                borderColor: isActive ? 'rgb(var(--accent-rgb) / 0.25)' : isComplete ? 'rgb(var(--green-rgb) / calc(0.1 * var(--tint-scale)))' : 'var(--bg-overlay)',
                               }}
                               initial={false}
                               animate={{ opacity: isPending ? 0.35 : 1, y: isActive ? -1 : 0 }}
                               transition={{ duration: 0.3 }}>
                               {isActive && (
                                 <motion.div className="absolute inset-0 rounded-xl pointer-events-none"
-                                  style={{ boxShadow: '0 0 30px rgba(253,121,168,0.1), inset 0 0 30px rgba(253,121,168,0.03)' }}
+                                  style={{ boxShadow: '0 0 30px rgb(var(--accent-rgb) / calc(0.1 * var(--tint-scale))), inset 0 0 30px rgb(var(--accent-rgb) / calc(0.03 * var(--tint-scale)))' }}
                                   animate={{ opacity: [0.5, 1, 0.5] }}
                                   transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }} />
                               )}
                               <motion.div className="relative flex-shrink-0 flex items-center justify-center w-11 h-11 rounded-xl"
                                 style={{
-                                  background: isComplete ? 'rgba(52,211,153,0.1)' : isActive ? 'rgba(253,121,168,0.12)' : 'var(--bg-overlay)',
+                                  background: isComplete ? 'rgb(var(--green-rgb) / calc(0.1 * var(--tint-scale)))' : isActive ? 'rgb(var(--accent-rgb) / calc(0.12 * var(--tint-scale)))' : 'var(--bg-overlay)',
                                   color: isComplete ? 'var(--green)' : isActive ? 'var(--accent)' : 'var(--bg-overlay)',
-                                  boxShadow: isActive ? '0 0 20px rgba(253,121,168,0.15)' : 'none',
+                                  boxShadow: isActive ? '0 0 20px rgb(var(--accent-rgb) / calc(0.15 * var(--tint-scale)))' : 'none',
                                 }}>
                                 <IconComponent />
                               </motion.div>

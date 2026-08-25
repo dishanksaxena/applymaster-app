@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase-browser'
 import { useRouter } from 'next/navigation'
+import { withAlpha } from '@/lib/tone'
 
 /* ─── Types ─── */
 interface OptimizationResult {
@@ -55,12 +56,12 @@ const pageStyles = `
   100% { top: 100%; }
 }
 @keyframes glow-border {
-  0%, 100% { box-shadow: 0 0 15px rgba(253,121,168,0.15), 0 0 30px rgba(253,121,168,0.05); }
-  50% { box-shadow: 0 0 25px rgba(253,121,168,0.3), 0 0 50px rgba(253,121,168,0.1); }
+  0%, 100% { box-shadow: 0 0 15px rgb(var(--accent-rgb) / calc(0.15 * var(--tint-scale))), 0 0 30px rgb(var(--accent-rgb) / calc(0.05 * var(--tint-scale))); }
+  50% { box-shadow: 0 0 25px rgb(var(--accent-rgb) / 0.3), 0 0 50px rgb(var(--accent-rgb) / calc(0.1 * var(--tint-scale))); }
 }
 @keyframes drop-glow {
-  0%, 100% { box-shadow: inset 0 0 30px rgba(253,121,168,0.05); }
-  50% { box-shadow: inset 0 0 60px rgba(253,121,168,0.12); }
+  0%, 100% { box-shadow: inset 0 0 30px rgb(var(--accent-rgb) / calc(0.05 * var(--tint-scale))); }
+  50% { box-shadow: inset 0 0 60px rgb(var(--accent-rgb) / calc(0.12 * var(--tint-scale))); }
 }
 @keyframes tip-icon-float {
   0%, 100% { transform: translateY(0) rotate(0deg); }
@@ -121,7 +122,7 @@ function ATSScoreRing({ score, size = 120, strokeWidth = 8 }: { score: number; s
   const circumference = 2 * Math.PI * radius
   const offset = circumference - (score / 100) * circumference
   const color = score >= 85 ? 'var(--green)' : score >= 70 ? 'var(--yellow)' : 'var(--red)'
-  const glowColor = score >= 85 ? 'rgba(0,184,148,0.4)' : score >= 70 ? 'rgba(253,203,110,0.4)' : 'rgba(255,107,107,0.4)'
+  const glowColor = score >= 85 ? 'rgb(var(--green-rgb) / 0.4)' : score >= 70 ? 'rgb(var(--yellow-rgb) / 0.4)' : 'rgb(var(--red-rgb) / 0.4)'
 
   return (
     <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
@@ -165,8 +166,8 @@ function FileTypeBadge({ type, active }: { type: string; active?: boolean }) {
     <span
       className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all duration-300"
       style={{
-        background: active ? 'rgba(253,121,168,0.12)' : 'var(--bg-overlay)',
-        border: `1px solid ${active ? 'rgba(253,121,168,0.25)' : 'var(--border)'}`,
+        background: active ? 'rgb(var(--accent-rgb) / calc(0.12 * var(--tint-scale)))' : 'var(--bg-overlay)',
+        border: `1px solid ${active ? 'rgb(var(--accent-rgb) / 0.25)' : 'var(--border)'}`,
         color: active ? 'var(--accent)' : 'var(--text-muted)',
       }}
     >
@@ -369,7 +370,7 @@ export default function ResumePage() {
       <style dangerouslySetInnerHTML={{ __html: pageStyles }} />
       {deleteConfirm && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50" onClick={() => setDeleteConfirm(null)}>
-          <div className="bg-[var(--bg-card)] border border-[rgba(255,107,107,0.2)] rounded-2xl p-6 max-w-sm w-full mx-4" onClick={e => e.stopPropagation()}>
+          <div className="bg-[var(--bg-card)] border border-[rgb(var(--red-rgb)/0.2)] rounded-2xl p-6 max-w-sm w-full mx-4" onClick={e => e.stopPropagation()}>
             <h3 className="text-lg font-bold text-[var(--text)] mb-2">Delete Resume?</h3>
             <p className="text-[var(--text-secondary)] text-sm mb-6">This action cannot be undone.</p>
             <div className="flex gap-3">
@@ -388,8 +389,8 @@ export default function ResumePage() {
             <span
               className="text-[10px] font-bold px-2.5 py-1 rounded-full tracking-wider"
               style={{
-                background: 'linear-gradient(135deg, rgba(253,121,168,0.12), rgba(232,67,147,0.08))',
-                border: '1px solid rgba(253,121,168,0.2)',
+                background: 'linear-gradient(135deg, rgb(var(--accent-rgb) / calc(0.12 * var(--tint-scale))), rgb(var(--accent-rgb) / calc(0.08 * var(--tint-scale))))',
+                border: '1px solid rgb(var(--accent-rgb) / calc(0.2 * var(--tint-scale)))',
                 color: 'var(--accent)',
               }}
             >
@@ -439,7 +440,7 @@ export default function ResumePage() {
                   style={{
                     padding: resumes.length === 0 ? '48px 24px' : '24px',
                     background: isDragOver
-                      ? 'rgba(253,121,168,0.04)'
+                      ? 'rgb(var(--accent-rgb) / calc(0.04 * var(--tint-scale)))'
                       : 'var(--bg-overlay)',
                     animation: isDragOver ? 'drop-glow 1.5s ease-in-out infinite' : undefined,
                   }}
@@ -456,7 +457,7 @@ export default function ResumePage() {
                   <div
                     className="absolute inset-0 rounded-2xl pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500"
                     style={{
-                      background: 'radial-gradient(ellipse at center, rgba(253,121,168,0.06) 0%, transparent 70%)',
+                      background: 'radial-gradient(ellipse at center, rgb(var(--accent-rgb) / calc(0.06 * var(--tint-scale))) 0%, transparent 70%)',
                     }}
                   />
 
@@ -493,7 +494,7 @@ export default function ResumePage() {
                           background: 'linear-gradient(90deg, var(--accent), var(--accent-solid), var(--accent))',
                           backgroundSize: '200% 100%',
                           animation: 'progress-gradient 1.5s linear infinite',
-                          boxShadow: '0 0 12px rgba(253,121,168,0.4)',
+                          boxShadow: '0 0 12px rgb(var(--accent-rgb) / 0.4)',
                         }}
                       />
                     </div>
@@ -513,10 +514,10 @@ export default function ResumePage() {
                           animation: `card-fade-in 0.4s ease ${idx * 0.08}s both`,
                           padding: '16px',
                           background: selectedResume?.id === r.id
-                            ? 'linear-gradient(135deg, rgba(253,121,168,0.06), rgba(232,67,147,0.03))'
+                            ? 'linear-gradient(135deg, rgb(var(--accent-rgb) / calc(0.06 * var(--tint-scale))), rgb(var(--accent-rgb) / calc(0.03 * var(--tint-scale))))'
                             : 'var(--bg-overlay)',
-                          border: `1px solid ${selectedResume?.id === r.id ? 'rgba(253,121,168,0.2)' : 'var(--border)'}`,
-                          boxShadow: selectedResume?.id === r.id ? '0 4px 24px rgba(253,121,168,0.08)' : 'none',
+                          border: `1px solid ${selectedResume?.id === r.id ? 'rgb(var(--accent-rgb) / calc(0.2 * var(--tint-scale)))' : 'var(--border)'}`,
+                          boxShadow: selectedResume?.id === r.id ? '0 4px 24px rgb(var(--accent-rgb) / calc(0.08 * var(--tint-scale)))' : 'none',
                           transform: 'translateY(0)',
                         }}
                         onMouseEnter={e => {
@@ -560,11 +561,11 @@ export default function ResumePage() {
                                 <span
                                   className="shrink-0 text-[9px] font-bold px-2 py-0.5 rounded-full tracking-wider"
                                   style={{
-                                    background: 'linear-gradient(90deg, rgba(0,184,148,0.12), rgba(0,184,148,0.2), rgba(0,184,148,0.12))',
+                                    background: 'linear-gradient(90deg, rgb(var(--green-rgb) / calc(0.12 * var(--tint-scale))), rgb(var(--green-rgb) / calc(0.2 * var(--tint-scale))), rgb(var(--green-rgb) / calc(0.12 * var(--tint-scale))))',
                                     backgroundSize: '200% auto',
                                     animation: 'shimmer-badge 3s linear infinite',
                                     color: 'var(--green)',
-                                    border: '1px solid rgba(0,184,148,0.2)',
+                                    border: '1px solid rgb(var(--green-rgb) / calc(0.2 * var(--tint-scale)))',
                                   }}
                                 >
                                   PRIMARY
@@ -611,7 +612,7 @@ export default function ResumePage() {
                             {!r.is_primary && (
                               <button
                                 onClick={(e) => { e.stopPropagation(); setPrimary(r.id) }}
-                                className="p-2 rounded-lg text-[var(--text-muted)] hover:text-[var(--green)] hover:bg-[rgba(0,184,148,0.08)] transition-all duration-200"
+                                className="p-2 rounded-lg text-[var(--text-muted)] hover:text-[var(--green)] hover:bg-[rgb(var(--green-rgb)/0.08)] transition-all duration-200"
                                 title="Set as primary"
                               >
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -621,7 +622,7 @@ export default function ResumePage() {
                             )}
                             <button
                               onClick={(e) => { e.stopPropagation(); setDeleteConfirm(r.id) }}
-                              className="p-2 rounded-lg text-[var(--text-muted)] hover:text-[var(--red)] hover:bg-[rgba(255,107,107,0.08)] transition-all duration-200"
+                              className="p-2 rounded-lg text-[var(--text-muted)] hover:text-[var(--red)] hover:bg-[rgb(var(--red-rgb)/0.08)] transition-all duration-200"
                               title="Delete"
                             >
                               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -640,8 +641,8 @@ export default function ResumePage() {
                       className="mt-3 px-4 py-3 rounded-xl text-[13px] font-medium"
                       style={{
                         background: reparseMsg.includes('success') || reparseMsg.includes('ready')
-                          ? 'rgba(0,184,148,0.08)' : 'rgba(255,107,107,0.08)',
-                        border: `1px solid ${reparseMsg.includes('success') || reparseMsg.includes('ready') ? 'rgba(0,184,148,0.2)' : 'rgba(255,107,107,0.2)'}`,
+                          ? 'rgb(var(--green-rgb) / calc(0.08 * var(--tint-scale)))' : 'rgb(var(--red-rgb) / calc(0.08 * var(--tint-scale)))',
+                        border: `1px solid ${reparseMsg.includes('success') || reparseMsg.includes('ready') ? 'rgb(var(--green-rgb) / calc(0.2 * var(--tint-scale)))' : 'rgb(var(--red-rgb) / calc(0.2 * var(--tint-scale)))'}`,
                         color: reparseMsg.includes('success') || reparseMsg.includes('ready') ? 'var(--green)' : 'var(--red)',
                       }}
                     >
@@ -659,25 +660,25 @@ export default function ResumePage() {
                       <div
                         className="absolute inset-0 rounded-lg"
                         style={{
-                          background: 'linear-gradient(135deg, rgba(253,121,168,0.08), rgba(232,67,147,0.04))',
-                          border: '1px solid rgba(253,121,168,0.15)',
+                          background: 'linear-gradient(135deg, rgb(var(--accent-rgb) / calc(0.08 * var(--tint-scale))), rgb(var(--accent-rgb) / calc(0.04 * var(--tint-scale))))',
+                          border: '1px solid rgb(var(--accent-rgb) / calc(0.15 * var(--tint-scale)))',
                           animation: 'empty-doc-float 4s ease-in-out infinite',
                         }}
                       >
                         {/* Lines */}
                         <div className="absolute top-4 left-3 right-3 space-y-2">
-                          <div className="h-1 rounded bg-[rgba(253,121,168,0.15)] w-3/4" />
+                          <div className="h-1 rounded bg-[rgb(var(--accent-rgb)/0.15)] w-3/4" />
                           <div className="h-1 rounded bg-[var(--bg-overlay)] w-full" />
                           <div className="h-1 rounded bg-[var(--bg-overlay)] w-5/6" />
                           <div className="h-1 rounded bg-[var(--bg-overlay)] w-full" />
                           <div className="h-1 rounded bg-[var(--bg-overlay)] w-2/3" />
-                          <div className="mt-3 h-1 rounded bg-[rgba(253,121,168,0.1)] w-1/2" />
+                          <div className="mt-3 h-1 rounded bg-[rgb(var(--accent-rgb)/0.1)] w-1/2" />
                           <div className="h-1 rounded bg-[var(--bg-overlay)] w-full" />
                           <div className="h-1 rounded bg-[var(--bg-overlay)] w-4/5" />
                         </div>
                         {/* Corner fold */}
                         <div className="absolute top-0 right-0 w-5 h-5">
-                          <div className="absolute top-0 right-0 w-0 h-0" style={{ borderLeft: '20px solid transparent', borderTop: '20px solid rgba(253,121,168,0.1)' }} />
+                          <div className="absolute top-0 right-0 w-0 h-0" style={{ borderLeft: '20px solid transparent', borderTop: '20px solid rgb(var(--accent-rgb) / calc(0.1 * var(--tint-scale)))' }} />
                         </div>
                       </div>
                     </div>
@@ -690,7 +691,7 @@ export default function ResumePage() {
 
             {/* ─── Next Steps Workflow Banner ─── */}
             {resumes.length > 0 && !selectedResume && (
-              <div className="rounded-2xl p-5" style={{ background: 'linear-gradient(135deg, rgba(0,184,148,0.06), rgba(0,184,148,0.02))', border: '1px solid rgba(0,184,148,0.12)' }}>
+              <div className="rounded-2xl p-5" style={{ background: 'linear-gradient(135deg, rgb(var(--green-rgb) / calc(0.06 * var(--tint-scale))), rgb(var(--green-rgb) / calc(0.02 * var(--tint-scale))))', border: '1px solid rgb(var(--green-rgb) / calc(0.12 * var(--tint-scale)))' }}>
                 <div className="flex items-center gap-2 mb-3">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22,4 12,14.01 9,11.01"/></svg>
                   <span className="text-[13px] font-bold text-[var(--green)]">Resume uploaded! What to do next:</span>
@@ -702,7 +703,7 @@ export default function ResumePage() {
                     { step: '3', label: 'Generate Cover Letter', desc: 'Let AI write a personalized cover letter for each application', color: 'var(--blue)', href: '/cover-letters' },
                   ].map(s => (
                     <div key={s.step} className="p-3 rounded-xl" style={{ background: 'var(--bg-overlay)', border: '1px solid var(--border)' }}>
-                      <div className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-black mb-2" style={{ background: `${s.color}18`, color: s.color }}>{s.step}</div>
+                      <div className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-black mb-2" style={{ background: `${withAlpha(s.color, 0.11, true)}`, color: s.color }}>{s.step}</div>
                       <div className="text-[12px] font-bold text-[var(--text)] mb-1">{s.label}</div>
                       <div className="text-[11px] text-[var(--text-muted)] leading-relaxed">{s.desc}</div>
                       {s.href && (
@@ -734,7 +735,7 @@ export default function ResumePage() {
                   <div
                     className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold tracking-wider"
                     style={{
-                      background: 'linear-gradient(135deg, rgba(108,92,231,0.08), rgba(162,155,254,0.05))',
+                      background: 'linear-gradient(135deg, rgba(108,92,231,0.08), rgb(var(--purple-rgb) / calc(0.05 * var(--tint-scale))))',
                       border: '1px solid rgba(108,92,231,0.15)',
                       color: 'var(--purple)',
                     }}
@@ -756,8 +757,8 @@ export default function ResumePage() {
                       className="peer w-full px-4 pt-5 pb-2 rounded-xl text-[14px] text-[var(--text)] transition-all duration-300 focus:outline-none"
                       style={{
                         background: 'var(--bg-overlay)',
-                        border: `1px solid ${jobTitleFocused ? 'rgba(253,121,168,0.3)' : 'var(--border)'}`,
-                        boxShadow: jobTitleFocused ? '0 0 20px rgba(253,121,168,0.06)' : 'none',
+                        border: `1px solid ${jobTitleFocused ? 'rgb(var(--accent-rgb) / 0.3)' : 'var(--border)'}`,
+                        boxShadow: jobTitleFocused ? '0 0 20px rgb(var(--accent-rgb) / calc(0.06 * var(--tint-scale)))' : 'none',
                       }}
                     />
                     <label
@@ -781,10 +782,10 @@ export default function ResumePage() {
                     className="relative w-full py-3.5 rounded-xl text-[var(--text-on-accent)] font-bold text-[14px] transition-all duration-300 overflow-hidden disabled:opacity-40"
                     style={{
                       background: 'linear-gradient(135deg, var(--accent), var(--accent-solid))',
-                      boxShadow: !optimizing && jobTitle ? '0 4px 20px rgba(253,121,168,0.3)' : 'none',
+                      boxShadow: !optimizing && jobTitle ? '0 4px 20px rgb(var(--accent-rgb) / 0.3)' : 'none',
                     }}
-                    onMouseEnter={e => { if (!optimizing && jobTitle) e.currentTarget.style.boxShadow = '0 8px 40px rgba(253,121,168,0.4)' }}
-                    onMouseLeave={e => { e.currentTarget.style.boxShadow = !optimizing && jobTitle ? '0 4px 20px rgba(253,121,168,0.3)' : 'none' }}
+                    onMouseEnter={e => { if (!optimizing && jobTitle) e.currentTarget.style.boxShadow = '0 8px 40px rgb(var(--accent-rgb) / 0.4)' }}
+                    onMouseLeave={e => { e.currentTarget.style.boxShadow = !optimizing && jobTitle ? '0 4px 20px rgb(var(--accent-rgb) / 0.3)' : 'none' }}
                   >
                     {optimizing ? (
                       <span className="flex items-center justify-center gap-2">
@@ -819,16 +820,16 @@ export default function ResumePage() {
                       <div
                         className="absolute left-0 right-0 h-[2px] pointer-events-none"
                         style={{
-                          background: 'linear-gradient(90deg, transparent, rgba(253,121,168,0.4), transparent)',
+                          background: 'linear-gradient(90deg, transparent, rgb(var(--accent-rgb) / 0.4), transparent)',
                           animation: 'scan-line 2s linear infinite',
-                          boxShadow: '0 0 15px rgba(253,121,168,0.3)',
+                          boxShadow: '0 0 15px rgb(var(--accent-rgb) / 0.3)',
                         }}
                       />
                       {/* Content placeholders */}
                       <div className="p-4 space-y-3">
                         {[80, 65, 90, 50].map((w, i) => (
                           <div key={i} className="flex items-center gap-3">
-                            <div className="w-3 h-3 rounded-full" style={{ background: 'rgba(253,121,168,0.1)', animation: `pulse-brain 1.5s ease-in-out ${i * 0.2}s infinite` }} />
+                            <div className="w-3 h-3 rounded-full" style={{ background: 'rgb(var(--accent-rgb) / calc(0.1 * var(--tint-scale)))', animation: `pulse-brain 1.5s ease-in-out ${i * 0.2}s infinite` }} />
                             <div className="h-2 rounded-full" style={{ width: `${w}%`, background: 'var(--bg-overlay)' }} />
                           </div>
                         ))}
@@ -839,7 +840,7 @@ export default function ResumePage() {
                           className="text-[var(--accent)]"
                           style={{
                             animation: 'pulse-brain 1.5s ease-in-out infinite',
-                            filter: 'drop-shadow(0 0 12px rgba(253,121,168,0.5))',
+                            filter: 'drop-shadow(0 0 12px rgb(var(--accent-rgb) / 0.5))',
                           }}
                         >
                           <BrainIcon size={36} />
@@ -877,7 +878,7 @@ export default function ResumePage() {
                   className="rounded-2xl p-6"
                   style={{
                     background: 'linear-gradient(135deg, var(--bg-card), var(--bg-card))',
-                    border: '1px solid rgba(0,184,148,0.1)',
+                    border: '1px solid rgb(var(--green-rgb) / calc(0.1 * var(--tint-scale)))',
                   }}
                 >
                   <h4 className="text-[13px] font-bold text-[var(--green)] mb-4 flex items-center gap-2">
@@ -885,20 +886,20 @@ export default function ResumePage() {
                       <path d="M22 11.08V12a10 10 0 11-5.93-9.14" /><polyline points="22,4 12,14.01 9,11.01" />
                     </svg>
                     Strengths
-                    <span className="ml-auto text-[10px] font-semibold text-[var(--text-faint)] bg-[rgba(0,184,148,0.06)] px-2 py-0.5 rounded-md">{(optimization.strengths ?? []).length} found</span>
+                    <span className="ml-auto text-[10px] font-semibold text-[var(--text-faint)] bg-[rgb(var(--green-rgb)/0.06)] px-2 py-0.5 rounded-md">{(optimization.strengths ?? []).length} found</span>
                   </h4>
                   <div className="space-y-2">
                     {(optimization.strengths ?? []).map((s, i) => (
                       <div
                         key={i}
-                        className="flex items-start gap-3 p-3 rounded-xl transition-all duration-300 hover:bg-[rgba(0,184,148,0.03)]"
+                        className="flex items-start gap-3 p-3 rounded-xl transition-all duration-300 hover:bg-[rgb(var(--green-rgb)/0.03)]"
                         style={{
-                          background: 'rgba(0,184,148,0.02)',
-                          border: '1px solid rgba(0,184,148,0.06)',
+                          background: 'rgb(var(--green-rgb) / calc(0.02 * var(--tint-scale)))',
+                          border: '1px solid rgb(var(--green-rgb) / calc(0.06 * var(--tint-scale)))',
                           animation: `card-fade-in 0.4s ease ${i * 0.1}s both`,
                         }}
                       >
-                        <div className="shrink-0 mt-0.5 w-5 h-5 rounded-full flex items-center justify-center" style={{ background: 'rgba(0,184,148,0.12)' }}>
+                        <div className="shrink-0 mt-0.5 w-5 h-5 rounded-full flex items-center justify-center" style={{ background: 'rgb(var(--green-rgb) / calc(0.12 * var(--tint-scale)))' }}>
                           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                             <polyline points="20,6 9,17 4,12" />
                           </svg>
@@ -914,7 +915,7 @@ export default function ResumePage() {
                   className="rounded-2xl p-6"
                   style={{
                     background: 'linear-gradient(135deg, var(--bg-card), var(--bg-card))',
-                    border: '1px solid rgba(253,203,110,0.1)',
+                    border: '1px solid rgb(var(--yellow-rgb) / calc(0.1 * var(--tint-scale)))',
                   }}
                 >
                   <h4 className="text-[13px] font-bold text-[var(--yellow)] mb-4 flex items-center gap-2">
@@ -922,20 +923,20 @@ export default function ResumePage() {
                       <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
                     </svg>
                     Improvements
-                    <span className="ml-auto text-[10px] font-semibold text-[var(--text-faint)] bg-[rgba(253,203,110,0.06)] px-2 py-0.5 rounded-md">{(optimization.improvements ?? []).length} suggested</span>
+                    <span className="ml-auto text-[10px] font-semibold text-[var(--text-faint)] bg-[rgb(var(--yellow-rgb)/0.06)] px-2 py-0.5 rounded-md">{(optimization.improvements ?? []).length} suggested</span>
                   </h4>
                   <div className="space-y-2">
                     {(optimization.improvements ?? []).map((imp, i) => (
                       <div
                         key={i}
-                        className="flex items-start gap-3 p-3 rounded-xl transition-all duration-300 hover:bg-[rgba(253,203,110,0.03)]"
+                        className="flex items-start gap-3 p-3 rounded-xl transition-all duration-300 hover:bg-[rgb(var(--yellow-rgb)/0.03)]"
                         style={{
-                          background: 'rgba(253,203,110,0.02)',
-                          border: '1px solid rgba(253,203,110,0.06)',
+                          background: 'rgb(var(--yellow-rgb) / calc(0.02 * var(--tint-scale)))',
+                          border: '1px solid rgb(var(--yellow-rgb) / calc(0.06 * var(--tint-scale)))',
                           animation: `card-fade-in 0.4s ease ${i * 0.1}s both`,
                         }}
                       >
-                        <div className="shrink-0 mt-0.5 w-5 h-5 rounded-full flex items-center justify-center" style={{ background: 'rgba(253,203,110,0.12)' }}>
+                        <div className="shrink-0 mt-0.5 w-5 h-5 rounded-full flex items-center justify-center" style={{ background: 'rgb(var(--yellow-rgb) / calc(0.12 * var(--tint-scale)))' }}>
                           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                             <line x1="12" y1="5" x2="12" y2="19" /><polyline points="19,12 12,5 5,12" />
                           </svg>
@@ -978,8 +979,8 @@ export default function ResumePage() {
                         onClick={copyTailored}
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all duration-300"
                         style={{
-                          background: copiedTailored ? 'rgba(0,184,148,0.1)' : 'var(--bg-overlay)',
-                          border: `1px solid ${copiedTailored ? 'rgba(0,184,148,0.2)' : 'var(--bg-overlay)'}`,
+                          background: copiedTailored ? 'rgb(var(--green-rgb) / calc(0.1 * var(--tint-scale)))' : 'var(--bg-overlay)',
+                          border: `1px solid ${copiedTailored ? 'rgb(var(--green-rgb) / calc(0.2 * var(--tint-scale)))' : 'var(--bg-overlay)'}`,
                           color: copiedTailored ? 'var(--green)' : 'var(--text-secondary)',
                         }}
                       >
@@ -1000,12 +1001,12 @@ export default function ResumePage() {
                       <button
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all duration-300"
                         style={{
-                          background: 'rgba(253,121,168,0.08)',
-                          border: '1px solid rgba(253,121,168,0.15)',
+                          background: 'rgb(var(--accent-rgb) / calc(0.08 * var(--tint-scale)))',
+                          border: '1px solid rgb(var(--accent-rgb) / calc(0.15 * var(--tint-scale)))',
                           color: 'var(--accent)',
                         }}
-                        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(253,121,168,0.15)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(253,121,168,0.15)' }}
-                        onMouseLeave={e => { e.currentTarget.style.background = 'rgba(253,121,168,0.08)'; e.currentTarget.style.boxShadow = 'none' }}
+                        onMouseEnter={e => { e.currentTarget.style.background = 'rgb(var(--accent-rgb) / calc(0.15 * var(--tint-scale)))'; e.currentTarget.style.boxShadow = '0 4px 16px rgb(var(--accent-rgb) / calc(0.15 * var(--tint-scale)))' }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'rgb(var(--accent-rgb) / calc(0.08 * var(--tint-scale)))'; e.currentTarget.style.boxShadow = 'none' }}
                       >
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="7,10 12,15 17,10" /><line x1="12" y1="15" x2="12" y2="3" />
@@ -1016,7 +1017,7 @@ export default function ResumePage() {
                   </div>
 
                   {/* Document content */}
-                  <div className="p-6 max-h-[400px] overflow-y-auto" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(253,121,168,0.2) transparent' }}>
+                  <div className="p-6 max-h-[400px] overflow-y-auto" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgb(var(--accent-rgb) / calc(0.2 * var(--tint-scale))) transparent' }}>
                     {/* Page styling */}
                     <div
                       className="p-6 rounded-xl min-h-[200px]"
@@ -1041,14 +1042,14 @@ export default function ResumePage() {
               className="rounded-2xl overflow-hidden"
               style={{
                 background: 'linear-gradient(135deg, var(--bg-card), var(--bg-card))',
-                border: '1px solid rgba(253,121,168,0.1)',
+                border: '1px solid rgb(var(--accent-rgb) / calc(0.1 * var(--tint-scale)))',
               }}
             >
               <div
                 className="px-5 py-3 flex items-center gap-2"
                 style={{
-                  background: 'linear-gradient(135deg, rgba(253,121,168,0.06), rgba(232,67,147,0.03))',
-                  borderBottom: '1px solid rgba(253,121,168,0.08)',
+                  background: 'linear-gradient(135deg, rgb(var(--accent-rgb) / calc(0.06 * var(--tint-scale))), rgb(var(--accent-rgb) / calc(0.03 * var(--tint-scale))))',
+                  borderBottom: '1px solid rgb(var(--accent-rgb) / calc(0.08 * var(--tint-scale)))',
                 }}
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -1091,10 +1092,10 @@ export default function ResumePage() {
                 ].map((tip, i) => (
                   <div
                     key={i}
-                    className="group/tip p-3 rounded-xl transition-all duration-300 hover:bg-[rgba(253,121,168,0.03)]"
+                    className="group/tip p-3 rounded-xl transition-all duration-300 hover:bg-[rgb(var(--accent-rgb)/0.03)]"
                     style={{
                       animation: `card-fade-in 0.4s ease ${i * 0.1}s both`,
-                      borderLeft: '2px solid rgba(253,121,168,0.2)',
+                      borderLeft: '2px solid rgb(var(--accent-rgb) / calc(0.2 * var(--tint-scale)))',
                     }}
                   >
                     <div className="flex items-start gap-3">
@@ -1111,9 +1112,9 @@ export default function ResumePage() {
                             <span
                               className="text-[8px] font-bold px-1.5 py-0.5 rounded tracking-wider"
                               style={{
-                                background: 'linear-gradient(135deg, rgba(253,121,168,0.15), rgba(232,67,147,0.1))',
+                                background: 'linear-gradient(135deg, rgb(var(--accent-rgb) / calc(0.15 * var(--tint-scale))), rgb(var(--accent-rgb) / calc(0.1 * var(--tint-scale))))',
                                 color: 'var(--accent)',
-                                border: '1px solid rgba(253,121,168,0.2)',
+                                border: '1px solid rgb(var(--accent-rgb) / calc(0.2 * var(--tint-scale)))',
                               }}
                             >
                               PRO
@@ -1182,7 +1183,7 @@ export default function ResumePage() {
                     className="group/tip p-3 rounded-xl transition-all duration-300 hover:bg-[var(--bg-overlay)]"
                     style={{
                       animation: `card-fade-in 0.4s ease ${(i + 3) * 0.1}s both`,
-                      borderLeft: '2px solid rgba(0,184,148,0.15)',
+                      borderLeft: '2px solid rgb(var(--green-rgb) / calc(0.15 * var(--tint-scale)))',
                     }}
                   >
                     <div className="flex items-start gap-3">
@@ -1207,8 +1208,8 @@ export default function ResumePage() {
               <div
                 className="rounded-2xl p-4"
                 style={{
-                  background: 'linear-gradient(135deg, rgba(253,121,168,0.04), rgba(232,67,147,0.02))',
-                  border: '1px solid rgba(253,121,168,0.1)',
+                  background: 'linear-gradient(135deg, rgb(var(--accent-rgb) / calc(0.04 * var(--tint-scale))), rgb(var(--accent-rgb) / calc(0.02 * var(--tint-scale))))',
+                  border: '1px solid rgb(var(--accent-rgb) / calc(0.1 * var(--tint-scale)))',
                   animation: 'card-fade-in 0.3s ease',
                 }}
               >

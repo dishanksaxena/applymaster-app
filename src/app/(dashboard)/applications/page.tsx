@@ -5,6 +5,7 @@ import ReceiptDrawer from '@/components/ReceiptDrawer'
 import { createClient } from '@/lib/supabase-browser'
 import type { Application } from '@/lib/database.types'
 import Link from 'next/link'
+import { withAlpha } from '@/lib/tone'
 
 // ─── Status Configuration ───────────────────────────────────────────────────
 const statuses = ['saved', 'queued', 'applied', 'screening', 'interview', 'offer', 'rejected'] as const
@@ -13,13 +14,16 @@ type Status = (typeof statuses)[number]
 const pipelineStatuses: Status[] = ['saved', 'queued', 'applied', 'screening', 'interview', 'offer']
 
 const statusConfig: Record<Status, { label: string; color: string; gradient: string; icon: React.ReactNode; bg: string }> = {
-  saved:     { label: 'Saved',     color: 'var(--text-muted)', gradient: 'from-gray-500 to-gray-600',     bg: 'rgba(138,138,154,0.10)', icon: <BookmarkIcon /> },
-  queued:    { label: 'Queued',    color: 'var(--yellow)', gradient: 'from-[var(--yellow)] to-[var(--yellow)]',   bg: 'rgba(240,180,41,0.10)',  icon: <ClockIcon /> },
-  applied:   { label: 'Applied',   color: '#4c9aff', gradient: 'from-[var(--blue)] to-[var(--blue)]',     bg: 'rgba(76,154,255,0.10)',  icon: <SendIcon /> },
-  screening: { label: 'Screening', color: 'var(--purple)', gradient: 'from-[var(--accent)] to-[var(--accent)]', bg: 'rgba(167,139,250,0.10)', icon: <EyeIcon /> },
-  interview: { label: 'Interview', color: 'var(--accent)', gradient: 'from-[var(--accent)] to-[var(--red)]',     bg: 'rgba(244,114,182,0.10)', icon: <MicIcon /> },
-  offer:     { label: 'Offer',     color: 'var(--green)', gradient: 'from-[var(--green)] to-[var(--green)]',  bg: 'rgba(52,211,153,0.10)',  icon: <TrophyIcon /> },
-  rejected:  { label: 'Rejected',  color: 'var(--red)', gradient: 'from-[var(--red)] to-[var(--red)]',       bg: 'rgba(248,113,113,0.10)', icon: <XCircleIcon /> },
+  // bg used to hold rgba() literals lifted from the old dark palette, so the
+  // pills stayed the previous product's colours after the retheme. They are
+  // now derived from the same token as .color, which keeps the two in step.
+  saved:     { label: 'Saved',     color: 'var(--text-muted)', gradient: 'from-[var(--text-muted)] to-[var(--text-muted)]', bg: 'var(--bg-overlay)',        icon: <BookmarkIcon /> },
+  queued:    { label: 'Queued',    color: 'var(--yellow)',     gradient: 'from-[var(--yellow)] to-[var(--yellow)]',         bg: 'var(--yellow-dim)',        icon: <ClockIcon /> },
+  applied:   { label: 'Applied',   color: 'var(--blue)',       gradient: 'from-[var(--blue)] to-[var(--blue)]',             bg: 'var(--blue-dim)',          icon: <SendIcon /> },
+  screening: { label: 'Screening', color: 'var(--purple)',     gradient: 'from-[var(--purple)] to-[var(--purple)]',         bg: 'var(--purple-dim)',        icon: <EyeIcon /> },
+  interview: { label: 'Interview', color: 'var(--accent)',     gradient: 'from-[var(--accent)] to-[var(--accent)]',         bg: 'var(--accent-dim)',        icon: <MicIcon /> },
+  offer:     { label: 'Offer',     color: 'var(--green)',      gradient: 'from-[var(--green)] to-[var(--green)]',           bg: 'var(--green-dim)',         icon: <TrophyIcon /> },
+  rejected:  { label: 'Rejected',  color: 'var(--red)',        gradient: 'from-[var(--red)] to-[var(--red)]',               bg: 'var(--red-dim)',           icon: <XCircleIcon /> },
 }
 
 // ─── SVG Icons ──────────────────────────────────────────────────────────────
@@ -424,7 +428,7 @@ export default function ApplicationsPage() {
       {/* ─── Header ─────────────────────────────────────────────────── */}
       <div className="flex items-end justify-between">
         <div>
-          <h2 className="font-display text-[1.9rem] mb-1 bg-gradient-to-r from-white via-white to-gray-400 bg-clip-text text-transparent">
+          <h2 className="font-display text-[1.9rem] mb-1" style={{ color: 'var(--text)' }}>
             Application Tracker
           </h2>
           <p className="text-[14px] text-[var(--text-secondary)]">
@@ -436,7 +440,7 @@ export default function ApplicationsPage() {
         {!isEmpty && (
           <div className="relative flex items-center bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-1">
             <div
-              className="absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-lg bg-gradient-to-r from-[rgba(244,114,182,0.15)] to-[rgba(167,139,250,0.15)] border border-[var(--border)] view-toggle-slider"
+              className="absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-lg bg-gradient-to-r from-[rgb(var(--accent-rgb)/0.15)] to-[rgb(var(--purple-rgb)/0.15)] border border-[var(--border)] view-toggle-slider"
               style={{ transform: view === 'kanban' ? 'translateX(0)' : 'translateX(calc(100% + 4px))' }}
             />
             <button
@@ -458,7 +462,7 @@ export default function ApplicationsPage() {
       {loading ? (
         <div className="flex items-center justify-center py-24">
           <div className="flex flex-col items-center gap-4">
-            <div className="w-10 h-10 rounded-full border-2 border-[rgba(244,114,182,0.3)] border-t-[var(--accent)] animate-spin" />
+            <div className="w-10 h-10 rounded-full border-2 border-[rgb(var(--accent-rgb)/0.3)] border-t-[var(--accent)] animate-spin" />
             <span className="text-[13px] text-[var(--text-muted)] font-medium">Loading applications...</span>
           </div>
         </div>
@@ -511,7 +515,7 @@ export default function ApplicationsPage() {
             style={{ animation: 'floatUp 0.5s ease 0.2s both' }}
           >
             <div className="absolute inset-0 opacity-30" style={{
-              background: 'radial-gradient(ellipse at 50% 0%, rgba(167,139,250,0.1) 0%, transparent 60%)',
+              background: 'radial-gradient(ellipse at 50% 0%, rgb(var(--purple-rgb) / calc(0.1 * var(--tint-scale))) 0%, transparent 60%)',
             }} />
             <div className="relative flex items-center justify-between">
               {pipelineStatuses.map((status, i) => {
@@ -528,8 +532,8 @@ export default function ApplicationsPage() {
                         className="relative flex items-center justify-center w-12 h-12 rounded-full border-2 transition-all duration-500"
                         style={{
                           borderColor: isActive ? config.color : 'var(--bg-overlay)',
-                          background: isActive ? `${config.color}15` : 'var(--bg-overlay)',
-                          boxShadow: isActive ? `0 0 20px ${config.color}25, 0 0 40px ${config.color}10` : 'none',
+                          background: isActive ? `${withAlpha(config.color, 0.11, true)}` : 'var(--bg-overlay)',
+                          boxShadow: isActive ? `0 0 20px ${withAlpha(config.color, 0.14, true)}, 0 0 40px ${withAlpha(config.color, 0.09, true)}` : 'none',
                         }}
                       >
                         {isActive && (
@@ -587,7 +591,7 @@ export default function ApplicationsPage() {
               <select
                 value={statusFilter}
                 onChange={e => setStatusFilter(e.target.value)}
-                className="filter-select pl-3 pr-8 py-2 rounded-xl bg-[var(--bg-card)] border border-[var(--border)] text-[12px] font-semibold text-[var(--text)] focus:outline-none focus:border-[rgba(167,139,250,0.3)] transition-colors cursor-pointer"
+                className="filter-select pl-3 pr-8 py-2 rounded-xl bg-[var(--bg-card)] border border-[var(--border)] text-[12px] font-semibold text-[var(--text)] focus:outline-none focus:border-[rgb(var(--purple-rgb)/0.3)] transition-colors cursor-pointer"
               >
                 <option value="all">All Statuses</option>
                 {statuses.map(s => (
@@ -604,7 +608,7 @@ export default function ApplicationsPage() {
               <select
                 value={sortBy}
                 onChange={e => setSortBy(e.target.value as 'newest' | 'oldest' | 'match')}
-                className="filter-select pl-3 pr-8 py-2 rounded-xl bg-[var(--bg-card)] border border-[var(--border)] text-[12px] font-semibold text-[var(--text)] focus:outline-none focus:border-[rgba(167,139,250,0.3)] transition-colors cursor-pointer"
+                className="filter-select pl-3 pr-8 py-2 rounded-xl bg-[var(--bg-card)] border border-[var(--border)] text-[12px] font-semibold text-[var(--text)] focus:outline-none focus:border-[rgb(var(--purple-rgb)/0.3)] transition-colors cursor-pointer"
               >
                 <option value="newest">Newest First</option>
                 <option value="oldest">Oldest First</option>
@@ -627,7 +631,7 @@ export default function ApplicationsPage() {
               {canScrollLeft && (
                 <button
                   onClick={() => scroll('left')}
-                  className="absolute left-0 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-[rgba(253,121,168,0.2)] to-[rgba(162,155,254,0.2)] border border-[var(--border)] hover:border-[rgba(253,121,168,0.3)] transition-all hover:scale-110 active:scale-95 group"
+                  className="absolute left-0 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-[rgb(var(--accent-rgb)/0.2)] to-[rgb(var(--purple-rgb)/0.2)] border border-[var(--border)] hover:border-[rgb(var(--accent-rgb)/0.3)] transition-all hover:scale-110 active:scale-95 group"
                   title="Scroll left"
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-[var(--accent)] group-hover:text-[var(--accent)] transition-colors">
@@ -640,7 +644,7 @@ export default function ApplicationsPage() {
               {canScrollRight && (
                 <button
                   onClick={() => scroll('right')}
-                  className="absolute right-0 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-[rgba(162,155,254,0.2)] to-[rgba(116,185,255,0.2)] border border-[var(--border)] hover:border-[rgba(116,185,255,0.3)] transition-all hover:scale-110 active:scale-95 group"
+                  className="absolute right-0 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-[rgb(var(--purple-rgb)/0.2)] to-[rgb(var(--blue-rgb)/0.2)] border border-[var(--border)] hover:border-[rgb(var(--blue-rgb)/0.3)] transition-all hover:scale-110 active:scale-95 group"
                   title="Scroll right"
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-[var(--blue)] group-hover:text-[var(--blue)] transition-colors">
@@ -728,8 +732,8 @@ export default function ApplicationsPage() {
                             }}
                             onMouseEnter={e => {
                               const el = e.currentTarget
-                              el.style.borderColor = `${config.color}30`
-                              el.style.boxShadow = `0 8px 32px ${config.color}15, 0 0 0 1px ${config.color}10`
+                              el.style.borderColor = `${withAlpha(config.color, 0.18, true)}`
+                              el.style.boxShadow = `0 8px 32px ${withAlpha(config.color, 0.11, true)}, 0 0 0 1px ${withAlpha(config.color, 0.09, true)}`
                             }}
                             onMouseLeave={e => {
                               const el = e.currentTarget
@@ -742,8 +746,8 @@ export default function ApplicationsPage() {
                               <div
                                 className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center text-[14px] font-black text-[var(--text-on-accent)]"
                                 style={{
-                                  background: `linear-gradient(135deg, ${config.color}40, ${config.color}20)`,
-                                  border: `1px solid ${config.color}20`,
+                                  background: `linear-gradient(135deg, ${withAlpha(config.color, 0.26)}, ${withAlpha(config.color, 0.14, true)})`,
+                                  border: `1px solid ${withAlpha(config.color, 0.14, true)}`,
                                 }}
                               >
                                 {(app.job?.company || 'C')[0].toUpperCase()}
@@ -776,9 +780,12 @@ export default function ApplicationsPage() {
 
                             <button
                               onClick={() => setReceiptFor({ id: app.id, title: app.job?.title, company: app.job?.company })}
-                              className="mt-2 text-[10px] font-semibold underline underline-offset-2"
-                              style={{ color: 'var(--text-muted)' }}
+                              className="mt-2.5 inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10.5px] font-semibold transition-colors"
+                              style={{ background: 'var(--bg-overlay)', color: 'var(--text-secondary)' }}
                             >
+                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zM14 2v6h6M9 13h6M9 17h4" />
+                              </svg>
                               Receipt
                             </button>
 
@@ -792,7 +799,7 @@ export default function ApplicationsPage() {
                                   style={{
                                     color: config.color,
                                     backgroundColor: config.bg,
-                                    borderColor: `${config.color}20`,
+                                    borderColor: `${withAlpha(config.color, 0.14, true)}`,
                                   }}
                                 >
                                   {statuses.map(s => (
@@ -866,7 +873,7 @@ export default function ApplicationsPage() {
                     <div className="flex items-center gap-3">
                       <div
                         className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-[12px] font-black text-[var(--text-on-accent)]"
-                        style={{ background: `linear-gradient(135deg, ${config.color}40, ${config.color}20)` }}
+                        style={{ background: `linear-gradient(135deg, ${withAlpha(config.color, 0.26)}, ${withAlpha(config.color, 0.14, true)})` }}
                       >
                         {(app.job?.company || 'C')[0].toUpperCase()}
                       </div>
@@ -924,7 +931,7 @@ export default function ApplicationsPage() {
                             style={{
                               color: config.color,
                               backgroundColor: config.bg,
-                              borderColor: `${config.color}20`,
+                              borderColor: `${withAlpha(config.color, 0.14, true)}`,
                             }}
                           >
                             {statuses.map(s => (

@@ -11,7 +11,7 @@ import { readFileSync } from 'node:fs'
  * painted backdrop falls below AA.
  */
 
-const BASE = 'http://localhost:3400'
+const BASE = process.env.BASE ?? 'http://localhost:3000'
 /* Credentials come from the environment in CI; the local dev file is a
    convenience fallback and is gitignored. */
 const cred = process.env.AUDIT_EMAIL

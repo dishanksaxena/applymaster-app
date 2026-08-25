@@ -133,6 +133,23 @@
   --font-sans:    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-mono:    'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 
+  /* ---- Elevation & tint --------------------------------------
+     --tint-scale multiplies every semantic tint. A 8% wash over
+     white reads clearly; the same 8% over near-black is invisible,
+     so dark mode scales it up rather than every call site
+     branching on theme. ---------------------------------------- */
+  --tint-scale: 1;
+
+  /* Card interior. A flat fill reads cheap on a light ground, so
+     cards carry a whisper of vertical gradient and a bright top
+     edge — the way a physical card catches light. */
+  --card-face:      linear-gradient(180deg, #ffffff 0%, #fdfbf9 100%);
+  --card-edge-top:  rgba(255, 255, 255, 0.9);
+  --card-ring:      rgba(20, 17, 15, 0.07);
+  --card-ring-hover:rgba(20, 17, 15, 0.13);
+  --card-lift:      0 1px 1px rgba(20,17,15,0.04), 0 2px 6px -2px rgba(20,17,15,0.06), 0 12px 28px -12px rgba(20,17,15,0.10);
+  --card-lift-hover:0 1px 1px rgba(20,17,15,0.04), 0 4px 10px -2px rgba(20,17,15,0.07), 0 22px 44px -16px rgba(20,17,15,0.16);
+
   color-scheme: light;
 }
 
@@ -229,6 +246,15 @@ html.dark-theme {
   --scrollbar-thumb:        rgba(245, 241, 236, 0.12);
   --scrollbar-thumb-hover:  rgba(245, 241, 236, 0.22);
 
+  --tint-scale: 1.9;
+
+  --card-face:      linear-gradient(180deg, rgb(30 26 23) 0%, rgb(24 21 18) 100%);
+  --card-edge-top:  rgba(245, 241, 236, 0.07);
+  --card-ring:      rgba(245, 241, 236, 0.09);
+  --card-ring-hover:rgba(245, 241, 236, 0.17);
+  --card-lift:      0 1px 1px rgba(0,0,0,0.30), 0 2px 8px -2px rgba(0,0,0,0.36), 0 14px 32px -14px rgba(0,0,0,0.50);
+  --card-lift-hover:0 1px 1px rgba(0,0,0,0.32), 0 6px 14px -2px rgba(0,0,0,0.42), 0 26px 52px -18px rgba(0,0,0,0.62);
+
   color-scheme: dark;
 }
 
@@ -318,6 +344,15 @@ html.dark-theme {
     --input-focus:            rgba(240, 146, 180, 0.28);
     --scrollbar-thumb:        rgba(245, 241, 236, 0.12);
     --scrollbar-thumb-hover:  rgba(245, 241, 236, 0.22);
+
+    --tint-scale: 1.9;
+
+    --card-face:      linear-gradient(180deg, rgb(30 26 23) 0%, rgb(24 21 18) 100%);
+    --card-edge-top:  rgba(245, 241, 236, 0.07);
+    --card-ring:      rgba(245, 241, 236, 0.09);
+    --card-ring-hover:rgba(245, 241, 236, 0.17);
+    --card-lift:      0 1px 1px rgba(0,0,0,0.30), 0 2px 8px -2px rgba(0,0,0,0.36), 0 14px 32px -14px rgba(0,0,0,0.50);
+    --card-lift-hover:0 1px 1px rgba(0,0,0,0.32), 0 6px 14px -2px rgba(0,0,0,0.42), 0 26px 52px -18px rgba(0,0,0,0.62);
 
     color-scheme: dark;
   }

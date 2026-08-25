@@ -11,10 +11,10 @@ interface CoverLetterPreviewProps {
 }
 
 const TONE_COLORS = {
-  professional: { border: 'var(--blue)', bg: 'rgba(116,185,255,0.05)' },
-  casual: { border: 'var(--green)', bg: 'rgba(0,184,148,0.05)' },
-  enthusiastic: { border: 'var(--accent)', bg: 'rgba(253,121,168,0.05)' },
-  confident: { border: 'var(--yellow)', bg: 'rgba(253,203,110,0.05)' },
+  professional: { border: 'var(--blue)', bg: 'rgb(var(--blue-rgb) / calc(0.05 * var(--tint-scale)))' },
+  casual: { border: 'var(--green)', bg: 'rgb(var(--green-rgb) / calc(0.05 * var(--tint-scale)))' },
+  enthusiastic: { border: 'var(--accent)', bg: 'rgb(var(--accent-rgb) / calc(0.05 * var(--tint-scale)))' },
+  confident: { border: 'var(--yellow)', bg: 'rgb(var(--yellow-rgb) / calc(0.05 * var(--tint-scale)))' },
 }
 
 export default function CoverLetterPreview({ title, content, tone }: CoverLetterPreviewProps) {

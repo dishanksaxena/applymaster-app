@@ -27,7 +27,7 @@ export default async function Image() {
           style={{
             position: 'absolute',
             inset: 0,
-            backgroundImage: 'linear-gradient(rgba(253,121,168,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(253,121,168,0.04) 1px, transparent 1px)',
+            backgroundImage: 'linear-gradient(rgb(var(--accent-rgb) / calc(0.04 * var(--tint-scale))) 1px, transparent 1px), linear-gradient(90deg, rgb(var(--accent-rgb) / calc(0.04 * var(--tint-scale))) 1px, transparent 1px)',
             backgroundSize: '40px 40px',
             display: 'flex',
           }}
@@ -40,7 +40,7 @@ export default async function Image() {
             width: 500,
             height: 500,
             borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(253,121,168,0.15) 0%, rgba(162,155,254,0.08) 40%, transparent 70%)',
+            background: 'radial-gradient(circle, rgb(var(--accent-rgb) / calc(0.15 * var(--tint-scale))) 0%, rgb(var(--purple-rgb) / calc(0.08 * var(--tint-scale))) 40%, transparent 70%)',
             top: '10%',
             left: '50%',
             transform: 'translateX(-50%)',
@@ -62,7 +62,7 @@ export default async function Image() {
             fontWeight: 800,
             color: 'white',
             marginBottom: 32,
-            boxShadow: '0 0 60px rgba(253,121,168,0.4)',
+            boxShadow: '0 0 60px rgb(var(--accent-rgb) / 0.4)',
           }}
         >
           AM
@@ -115,8 +115,8 @@ export default async function Image() {
               style={{
                 padding: '10px 22px',
                 borderRadius: 100,
-                border: '1px solid rgba(253,121,168,0.3)',
-                background: 'rgba(253,121,168,0.08)',
+                border: '1px solid rgb(var(--accent-rgb) / 0.3)',
+                background: 'rgb(var(--accent-rgb) / calc(0.08 * var(--tint-scale)))',
                 color: '#F092B4',
                 fontSize: 16,
                 fontWeight: 600,

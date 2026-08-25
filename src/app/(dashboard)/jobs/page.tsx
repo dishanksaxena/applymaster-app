@@ -377,7 +377,7 @@ export default function JobsPage() {
 
   if (!mounted) return <div className="p-8" />
 
-  const inputCls = "px-4 py-3 rounded-xl bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text)] text-[13px] placeholder-[var(--text-faint)] focus:outline-none focus:border-[rgba(253,121,168,0.3)] transition-all"
+  const inputCls = "px-4 py-3 rounded-xl bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text)] text-[13px] placeholder-[var(--text-faint)] focus:outline-none focus:border-[rgb(var(--accent-rgb)/0.3)] transition-all"
   const selectCls = `${inputCls} cursor-pointer`
 
   return (
@@ -385,8 +385,8 @@ export default function JobsPage() {
 
       {/* Header */}
       <motion.div variants={fadeInUp} className="relative overflow-hidden rounded-2xl p-8" style={{
-        background: 'linear-gradient(135deg, rgba(253,121,168,0.08) 0%, rgba(116,185,255,0.06) 100%)',
-        border: '1px solid rgba(253,121,168,0.1)',
+        background: 'linear-gradient(135deg, rgb(var(--accent-rgb) / calc(0.08 * var(--tint-scale))) 0%, rgb(var(--blue-rgb) / calc(0.06 * var(--tint-scale))) 100%)',
+        border: '1px solid rgb(var(--accent-rgb) / calc(0.1 * var(--tint-scale)))',
       }}>
         <div className="absolute top-[-50%] right-[-10%] w-[300px] h-[300px] rounded-full opacity-[0.07]" style={{ background: 'radial-gradient(circle, var(--blue), transparent 70%)' }} />
         <div className="relative z-10">
@@ -400,7 +400,7 @@ export default function JobsPage() {
               <motion.button whileTap={{ scale: 0.95 }} onClick={() => setViewMode('list')}
                 className="flex items-center gap-2 px-4 py-2 rounded-lg text-[12px] font-semibold transition-all"
                 style={viewMode === 'list'
-                  ? { background: 'linear-gradient(135deg, var(--accent), var(--accent-solid))', color: '#fff', boxShadow: '0 0 20px rgba(253,121,168,0.3)' }
+                  ? { background: 'linear-gradient(135deg, var(--accent), var(--accent-solid))', color: '#fff', boxShadow: '0 0 20px rgb(var(--accent-rgb) / 0.3)' }
                   : { color: 'var(--text-secondary)' }}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
                 List
@@ -408,7 +408,7 @@ export default function JobsPage() {
               <motion.button whileTap={{ scale: 0.95 }} onClick={() => setViewMode('globe')}
                 className="flex items-center gap-2 px-4 py-2 rounded-lg text-[12px] font-semibold transition-all"
                 style={viewMode === 'globe'
-                  ? { background: 'linear-gradient(135deg, var(--purple), var(--purple))', color: '#fff', boxShadow: '0 0 20px rgba(162,155,254,0.3)' }
+                  ? { background: 'linear-gradient(135deg, var(--purple), var(--purple))', color: '#fff', boxShadow: '0 0 20px rgb(var(--purple-rgb) / 0.3)' }
                   : { color: 'var(--text-secondary)' }}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
                 Globe View
@@ -427,7 +427,7 @@ export default function JobsPage() {
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="1.8" className="absolute left-4 top-1/2 -translate-y-1/2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
             <input value={searchTerm} onChange={e => setSearchTerm(e.target.value)} onKeyDown={e => e.key === 'Enter' && searchJobs()}
               placeholder="Job title, skill, or keyword..."
-              className="w-full pl-12 pr-4 py-4 rounded-xl bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text)] text-[15px] placeholder-[var(--text-faint)] focus:outline-none focus:border-[rgba(253,121,168,0.3)] transition-all" />
+              className="w-full pl-12 pr-4 py-4 rounded-xl bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text)] text-[15px] placeholder-[var(--text-faint)] focus:outline-none focus:border-[rgb(var(--accent-rgb)/0.3)] transition-all" />
           </div>
 
           {/* Row 1: Country + City */}
@@ -491,7 +491,7 @@ export default function JobsPage() {
             initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
             className="rounded-2xl overflow-hidden"
-            style={{ height: '80vh', border: '1px solid rgba(162,155,254,0.15)', boxShadow: '0 0 80px rgba(162,155,254,0.08)' }}>
+            style={{ height: '80vh', border: '1px solid rgb(var(--purple-rgb) / calc(0.15 * var(--tint-scale)))', boxShadow: '0 0 80px rgb(var(--purple-rgb) / calc(0.08 * var(--tint-scale)))' }}>
             <JobsGlobe
               jobs={jobs}
               onSave={(job) => saveJob(job)}
@@ -525,7 +525,7 @@ export default function JobsPage() {
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex gap-4 flex-1">
                         <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 text-[14px] font-bold"
-                          style={{ background: 'linear-gradient(135deg, rgba(253,121,168,0.1), rgba(162,155,254,0.1))', color: 'var(--accent)' }}>
+                          style={{ background: 'linear-gradient(135deg, rgb(var(--accent-rgb) / calc(0.1 * var(--tint-scale))), rgb(var(--purple-rgb) / calc(0.1 * var(--tint-scale))))', color: 'var(--accent)' }}>
                           {job.company[0]}
                         </div>
                         <div className="flex-1 min-w-0">
@@ -536,11 +536,11 @@ export default function JobsPage() {
                           )}
                           <div className="flex flex-wrap gap-2 mt-3">
                             {job.remote_type && (
-                              <span className="text-[11px] font-bold px-2.5 py-1 rounded-lg" style={{ background: 'rgba(0,184,148,0.08)', color: 'var(--green)' }}>
+                              <span className="text-[11px] font-bold px-2.5 py-1 rounded-lg" style={{ background: 'rgb(var(--green-rgb) / calc(0.08 * var(--tint-scale)))', color: 'var(--green)' }}>
                                 {job.remote_type}
                               </span>
                             )}
-                            <span className="text-[11px] font-bold px-2.5 py-1 rounded-lg" style={{ background: 'rgba(116,185,255,0.08)', color: 'var(--blue)' }}>{job.source}</span>
+                            <span className="text-[11px] font-bold px-2.5 py-1 rounded-lg" style={{ background: 'rgb(var(--blue-rgb) / calc(0.08 * var(--tint-scale)))', color: 'var(--blue)' }}>{job.source}</span>
                             {job.posted_at && (
                               <span className="text-[11px] text-[var(--text-muted)]">{formatPosted(job.posted_at)}</span>
                             )}

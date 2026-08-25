@@ -9,8 +9,8 @@ export default function NotificationsPage() {
     <motion.div initial="hidden" animate="show" variants={fadeUp} className="space-y-8 max-w-4xl mx-auto">
       {/* Header */}
       <div className="relative overflow-hidden rounded-2xl p-8" style={{
-        background: 'linear-gradient(135deg, rgba(253,121,168,0.08) 0%, rgba(116,185,255,0.06) 100%)',
-        border: '1px solid rgba(253,121,168,0.1)',
+        background: 'linear-gradient(135deg, rgb(var(--accent-rgb) / calc(0.08 * var(--tint-scale))) 0%, rgb(var(--blue-rgb) / calc(0.06 * var(--tint-scale))) 100%)',
+        border: '1px solid rgb(var(--accent-rgb) / calc(0.1 * var(--tint-scale)))',
       }}>
         <div className="absolute top-[-50%] right-[-10%] w-[300px] h-[300px] rounded-full opacity-[0.07]" style={{ background: 'radial-gradient(circle, var(--blue), transparent 70%)' }} />
         <div className="relative z-10">

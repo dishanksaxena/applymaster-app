@@ -66,10 +66,10 @@ export default function PremiumInput({
         animate={{
           boxShadow: isFocused
             ? error
-              ? '0 0 20px rgba(255,107,107,0.2)'
+              ? '0 0 20px rgb(var(--red-rgb) / calc(0.2 * var(--tint-scale)))'
               : success
-              ? '0 0 20px rgba(0,184,148,0.2)'
-              : '0 0 20px rgba(253,121,168,0.2)'
+              ? '0 0 20px rgb(var(--green-rgb) / calc(0.2 * var(--tint-scale)))'
+              : '0 0 20px rgb(var(--accent-rgb) / calc(0.2 * var(--tint-scale)))'
             : '0 0 0px rgba(0,0,0,0)',
         }}
       >
@@ -80,10 +80,10 @@ export default function PremiumInput({
           animate={{
             opacity: isFocused ? 0.05 : 0,
             background: error
-              ? 'rgba(255,107,107,0.05)'
+              ? 'rgb(var(--red-rgb) / calc(0.05 * var(--tint-scale)))'
               : success
-              ? 'rgba(0,184,148,0.05)'
-              : 'rgba(253,121,168,0.05)',
+              ? 'rgb(var(--green-rgb) / calc(0.05 * var(--tint-scale)))'
+              : 'rgb(var(--accent-rgb) / calc(0.05 * var(--tint-scale)))',
           }}
           transition={{ duration: 0.2 }}
         />
@@ -118,10 +118,10 @@ export default function PremiumInput({
             focus:outline-none disabled:cursor-not-allowed
             ${
               error
-                ? 'border-[rgba(255,107,107,0.3)] focus:border-[rgba(255,107,107,0.5)]'
+                ? 'border-[rgb(var(--red-rgb)/0.3)] focus:border-[rgb(var(--red-rgb)/0.5)]'
                 : success
-                ? 'border-[rgba(0,184,148,0.3)] focus:border-[rgba(0,184,148,0.5)]'
-                : 'border-[var(--border)] focus:border-[rgba(253,121,168,0.3)]'
+                ? 'border-[rgb(var(--green-rgb)/0.3)] focus:border-[rgb(var(--green-rgb)/0.5)]'
+                : 'border-[var(--border)] focus:border-[rgb(var(--accent-rgb)/0.3)]'
             }
           `}
         />
@@ -148,10 +148,10 @@ export default function PremiumInput({
           animate={{
             border: isFocused
               ? error
-                ? '2px solid rgba(255,107,107,0.3)'
+                ? '2px solid rgb(var(--red-rgb) / 0.3)'
                 : success
-                ? '2px solid rgba(0,184,148,0.3)'
-                : '2px solid rgba(253,121,168,0.3)'
+                ? '2px solid rgb(var(--green-rgb) / 0.3)'
+                : '2px solid rgb(var(--accent-rgb) / 0.3)'
               : '2px solid transparent',
           }}
         />

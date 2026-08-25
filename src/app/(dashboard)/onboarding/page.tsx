@@ -17,7 +17,7 @@ function Particles() {
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
       {particles.map(p => (
         <motion.div key={p.id} className="absolute rounded-full"
-          style={{ left: `${p.x}%`, top: `${p.y}%`, width: p.size, height: p.size, background: `rgba(253,121,168,${p.opacity})` }}
+          style={{ left: `${p.x}%`, top: `${p.y}%`, width: p.size, height: p.size, background: `rgb(var(--accent-rgb) / ${p.opacity})` }}
           animate={{ y: [0, -30, 10, -20, 0], x: [0, 15, -10, 20, 0], opacity: [p.opacity, p.opacity * 2, p.opacity * 0.5, p.opacity * 1.5, p.opacity] }}
           transition={{ duration: p.duration, repeat: Infinity, ease: 'linear', delay: p.delay }} />
       ))}
@@ -38,15 +38,15 @@ function GlowCard({ children, className = '' }: { children: React.ReactNode; cla
     <div className={`relative group ${className}`} onMouseMove={handleMouseMove}>
       <div className="absolute -inset-[1px] rounded-[28px] overflow-hidden">
         <motion.div className="absolute inset-0" animate={{ rotate: 360 }} transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
-          style={{ background: 'conic-gradient(from 0deg, transparent 0%, rgba(253,121,168,0.4) 10%, transparent 20%, rgba(162,155,254,0.3) 30%, transparent 40%, rgba(116,185,255,0.3) 50%, transparent 60%, rgba(253,121,168,0.4) 70%, transparent 80%, rgba(253,203,94,0.2) 90%, transparent 100%)' }} />
+          style={{ background: 'conic-gradient(from 0deg, transparent 0%, rgb(var(--accent-rgb) / 0.4) 10%, transparent 20%, rgb(var(--purple-rgb) / 0.3) 30%, transparent 40%, rgb(var(--blue-rgb) / 0.3) 50%, transparent 60%, rgb(var(--accent-rgb) / 0.4) 70%, transparent 80%, rgba(253,203,94,0.2) 90%, transparent 100%)' }} />
       </div>
       <div className="relative rounded-[27px] overflow-hidden" style={{ background: 'linear-gradient(170deg, var(--bg-card) 0%, var(--bg) 50%, var(--bg) 100%)' }}>
         <motion.div className="absolute w-[400px] h-[400px] rounded-full pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-          style={{ left: spotlightX, top: spotlightY, x: '-50%', y: '-50%', background: 'radial-gradient(circle, rgba(253,121,168,0.06) 0%, transparent 60%)' }} />
+          style={{ left: spotlightX, top: spotlightY, x: '-50%', y: '-50%', background: 'radial-gradient(circle, rgb(var(--accent-rgb) / calc(0.06 * var(--tint-scale))) 0%, transparent 60%)' }} />
         <motion.div className="absolute top-0 left-0 right-0 h-[1px]"
           animate={{ backgroundPosition: ['200% 0', '-200% 0'] }}
           transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
-          style={{ backgroundImage: 'linear-gradient(90deg, transparent, rgba(253,121,168,0.5), rgba(162,155,254,0.5), transparent)', backgroundSize: '200% 100%' }} />
+          style={{ backgroundImage: 'linear-gradient(90deg, transparent, rgb(var(--accent-rgb) / 0.5), rgb(var(--purple-rgb) / 0.5), transparent)', backgroundSize: '200% 100%' }} />
         <div className="relative z-10">{children}</div>
       </div>
     </div>
@@ -658,7 +658,7 @@ export default function OnboardingPage() {
       `}</style>
 
       <div className="absolute inset-0">
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(-45deg, rgba(253,121,168,0.08), var(--bg-card), rgba(162,155,254,0.06), var(--bg-card), rgba(116,185,255,0.05))', backgroundSize: '400% 400%', animation: 'mesh-shift 20s ease infinite' }} />
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(-45deg, rgb(var(--accent-rgb) / calc(0.08 * var(--tint-scale))), var(--bg-card), rgb(var(--purple-rgb) / calc(0.06 * var(--tint-scale))), var(--bg-card), rgb(var(--blue-rgb) / calc(0.05 * var(--tint-scale))))', backgroundSize: '400% 400%', animation: 'mesh-shift 20s ease infinite' }} />
       </div>
 
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -679,7 +679,7 @@ export default function OnboardingPage() {
         <motion.div className="flex items-center justify-center mb-10 gap-1" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.3 }}>
           {stepLabels.map((label, i) => (
             <div key={label} className="flex items-center gap-1">
-              <div className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold" style={i < step ? { background: 'linear-gradient(135deg, var(--accent), var(--accent-solid))' } : i === step ? { background: 'rgba(253,121,168,0.2)', border: '1px solid rgba(253,121,168,0.4)', color: 'var(--accent)' } : { background: 'var(--bg-overlay)', color: 'var(--text-faint)' }}>
+              <div className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold" style={i < step ? { background: 'linear-gradient(135deg, var(--accent), var(--accent-solid))' } : i === step ? { background: 'rgb(var(--accent-rgb) / calc(0.2 * var(--tint-scale)))', border: '1px solid rgb(var(--accent-rgb) / 0.4)', color: 'var(--accent)' } : { background: 'var(--bg-overlay)', color: 'var(--text-faint)' }}>
                 {i < step ? '✓' : i + 1}
               </div>
               {i < 4 && <div className="w-6 h-px" style={{ background: i < step ? 'linear-gradient(90deg, var(--accent), var(--accent-solid))' : 'var(--bg-overlay)' }} />}
@@ -690,7 +690,7 @@ export default function OnboardingPage() {
         {/* Small floating badge while resume processes in background (steps 1-4) */}
         {resumeProcessing && !completing && (
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-center gap-2 mb-3 px-4 py-2 rounded-full text-[11px] font-medium mx-auto w-fit"
-            style={{ background: 'rgba(253,121,168,0.1)', border: '1px solid rgba(253,121,168,0.2)' }}>
+            style={{ background: 'rgb(var(--accent-rgb) / calc(0.1 * var(--tint-scale)))', border: '1px solid rgb(var(--accent-rgb) / calc(0.2 * var(--tint-scale)))' }}>
             <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }} className="w-3 h-3 border-[1.5px] border-[var(--accent)] border-t-transparent rounded-full" />
             <span className="text-[var(--accent)]">
               {overlayStep === 'done' ? '✓ Resume analyzed' : overlayError ? '⚠ Resume error' : 'AI analyzing resume...'}
@@ -724,7 +724,7 @@ export default function OnboardingPage() {
                               </div>
                               <div className="flex items-center gap-2">
                                 {resume.is_primary ? (
-                                  <span className="text-[10px] px-2 py-1 rounded bg-[rgba(253,121,168,0.2)] text-[var(--accent)] font-semibold">PRIMARY</span>
+                                  <span className="text-[10px] px-2 py-1 rounded bg-[rgb(var(--accent-rgb)/0.2)] text-[var(--accent)] font-semibold">PRIMARY</span>
                                 ) : (
                                   <button onClick={() => setResumePrimary(resume.id)} className="text-[10px] px-2 py-1 rounded bg-[var(--bg-overlay)] text-[var(--text-muted)] hover:bg-[var(--bg-overlay)] transition-all">
                                     Set Primary
@@ -746,14 +746,14 @@ export default function OnboardingPage() {
                         <div onDrop={onDrop} onDragOver={e => { e.preventDefault(); setDragging(true) }} onDragLeave={() => setDragging(false)}
                           onClick={() => fileRef.current?.click()}
                           className="border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer select-none"
-                          style={{ borderColor: dragging ? 'rgba(253,121,168,0.5)' : 'var(--bg-overlay)', background: dragging ? 'rgba(253,121,168,0.05)' : 'var(--bg-overlay)' }}>
+                          style={{ borderColor: dragging ? 'rgb(var(--accent-rgb) / 0.5)' : 'var(--bg-overlay)', background: dragging ? 'rgb(var(--accent-rgb) / calc(0.05 * var(--tint-scale)))' : 'var(--bg-overlay)' }}>
                           <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="mx-auto mb-3 text-[var(--accent)]">
                             <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" />
                           </svg>
                           <p className="text-ink font-semibold mb-1">Drag & drop your resume</p>
                           <p className="text-[12px] text-[var(--text-faint)] mb-3">PDF, DOCX, or TXT</p>
                           <input type="file" ref={fileRef} onChange={e => e.target.files && setResumeFile(e.target.files[0])} className="hidden" accept=".pdf,.docx,.txt" onClick={e => e.stopPropagation()} />
-                          <span className="text-[12px] px-3 py-1.5 rounded-lg bg-[rgba(253,121,168,0.1)] text-[var(--accent)] pointer-events-none inline-block">
+                          <span className="text-[12px] px-3 py-1.5 rounded-lg bg-[rgb(var(--accent-rgb)/0.1)] text-[var(--accent)] pointer-events-none inline-block">
                             Or browse
                           </span>
                         </div>
@@ -789,7 +789,7 @@ export default function OnboardingPage() {
                       <div className="grid grid-cols-2 gap-2">
                         {ROLES.map(role => (
                           <button key={role} onClick={() => toggleChip(selectedRoles, setSelectedRoles, role, 5)}
-                            className={`px-3 py-2 rounded-lg text-[12px] font-medium transition-all ${selectedRoles.includes(role) ? 'bg-[rgba(253,121,168,0.15)] text-[var(--accent)] border border-[rgba(253,121,168,0.3)]' : 'bg-[var(--bg-overlay)] text-[var(--text-muted)] hover:bg-[var(--bg-overlay)]'}`}>
+                            className={`px-3 py-2 rounded-lg text-[12px] font-medium transition-all ${selectedRoles.includes(role) ? 'bg-[rgb(var(--accent-rgb)/0.15)] text-[var(--accent)] border border-[rgb(var(--accent-rgb)/0.3)]' : 'bg-[var(--bg-overlay)] text-[var(--text-muted)] hover:bg-[var(--bg-overlay)]'}`}>
                             {role}
                           </button>
                         ))}
@@ -820,10 +820,10 @@ export default function OnboardingPage() {
                         </div>
                         <input type="range" min="30000" max="500000" step="5000" value={minSalary}
                           onChange={e => setMinSalary(Math.min(parseInt(e.target.value), maxSalary - 5000))}
-                          className="w-full h-2 bg-[rgba(253,121,168,0.3)] rounded-lg appearance-none cursor-pointer accent-[var(--accent)]" />
+                          className="w-full h-2 bg-[rgb(var(--accent-rgb)/0.3)] rounded-lg appearance-none cursor-pointer accent-[var(--accent)]" />
                         <input type="range" min="30000" max="500000" step="5000" value={maxSalary}
                           onChange={e => setMaxSalary(Math.max(parseInt(e.target.value), minSalary + 5000))}
-                          className="w-full h-2 bg-[rgba(253,121,168,0.3)] rounded-lg appearance-none cursor-pointer accent-[var(--accent)]" />
+                          className="w-full h-2 bg-[rgb(var(--accent-rgb)/0.3)] rounded-lg appearance-none cursor-pointer accent-[var(--accent)]" />
                       </div>
                     </div>
 
@@ -874,7 +874,7 @@ export default function OnboardingPage() {
                     <div>
                       <label className="block text-[12px] font-bold text-[var(--accent)] mb-2">EMPLOYMENT STATUS *</label>
                       <select value={employmentStatus} onChange={e => setEmploymentStatus(e.target.value)}
-                        className="w-full px-4 py-2.5 rounded-lg border border-[var(--border)] text-ink text-[13px] focus:border-[rgba(253,121,168,0.3)] focus:outline-none transition-all cursor-pointer"
+                        className="w-full px-4 py-2.5 rounded-lg border border-[var(--border)] text-ink text-[13px] focus:border-[rgb(var(--accent-rgb)/0.3)] focus:outline-none transition-all cursor-pointer"
                         style={{ background: 'var(--bg-card)' }}>
                         {EMPLOYMENT.map(e => <option key={e} value={e} style={{ background: 'var(--bg-card)', color: 'white' }}>{e}</option>)}
                       </select>
@@ -884,7 +884,7 @@ export default function OnboardingPage() {
                     <div>
                       <label className="block text-[12px] font-bold text-[var(--accent)] mb-2">WORK AUTHORIZATION *</label>
                       <select value={workAuth} onChange={e => setWorkAuth(e.target.value)}
-                        className="w-full px-4 py-2.5 rounded-lg border border-[var(--border)] text-ink text-[13px] focus:border-[rgba(253,121,168,0.3)] focus:outline-none transition-all cursor-pointer"
+                        className="w-full px-4 py-2.5 rounded-lg border border-[var(--border)] text-ink text-[13px] focus:border-[rgb(var(--accent-rgb)/0.3)] focus:outline-none transition-all cursor-pointer"
                         style={{ background: 'var(--bg-card)' }}>
                         {WORK_AUTH.map(auth => <option key={auth} value={auth} style={{ background: 'var(--bg-card)', color: 'white' }}>{auth}</option>)}
                       </select>
@@ -894,7 +894,7 @@ export default function OnboardingPage() {
                     <div>
                       <label className="block text-[12px] font-bold text-[var(--accent)] mb-2">DESIRED JOB TITLE *</label>
                       <input type="text" value={desiredJobTitle} onChange={e => setDesiredJobTitle(e.target.value)} placeholder="e.g., Senior Software Engineer"
-                        className="w-full px-4 py-2.5 rounded-lg bg-[var(--bg-overlay)] border border-[var(--border)] text-ink placeholder-[var(--text-faint)] text-[13px] focus:border-[rgba(253,121,168,0.3)] focus:outline-none transition-all" />
+                        className="w-full px-4 py-2.5 rounded-lg bg-[var(--bg-overlay)] border border-[var(--border)] text-ink placeholder-[var(--text-faint)] text-[13px] focus:border-[rgb(var(--accent-rgb)/0.3)] focus:outline-none transition-all" />
                       {desiredJobTitle.trim().length === 0 && <p className="text-[11px] text-[var(--red)] mt-1">❌ Required</p>}
                     </div>
 
@@ -902,7 +902,7 @@ export default function OnboardingPage() {
                     <div>
                       <label className="block text-[12px] font-bold text-[var(--accent)] mb-2">WHEN CAN YOU START? *</label>
                       <select value={availableStartDate} onChange={e => setAvailableStartDate(e.target.value)}
-                        className="w-full px-4 py-2.5 rounded-lg border border-[var(--border)] text-ink text-[13px] focus:border-[rgba(253,121,168,0.3)] focus:outline-none transition-all cursor-pointer"
+                        className="w-full px-4 py-2.5 rounded-lg border border-[var(--border)] text-ink text-[13px] focus:border-[rgb(var(--accent-rgb)/0.3)] focus:outline-none transition-all cursor-pointer"
                         style={{ background: 'var(--bg-card)' }}>
                         {START_DATES.map(date => <option key={date} value={date} style={{ background: 'var(--bg-card)', color: 'white' }}>{date}</option>)}
                       </select>
@@ -927,7 +927,7 @@ export default function OnboardingPage() {
                     <div>
                       <label className="block text-[12px] font-bold text-[var(--accent)] mb-2">PREFERRED COUNTRY *</label>
                       <select value={selectedCountry} onChange={e => { setSelectedCountry(e.target.value); setSelectedCities([]) }}
-                        className="w-full px-4 py-2.5 rounded-lg border border-[var(--border)] text-[13px] focus:border-[rgba(253,121,168,0.3)] focus:outline-none transition-all cursor-pointer"
+                        className="w-full px-4 py-2.5 rounded-lg border border-[var(--border)] text-[13px] focus:border-[rgb(var(--accent-rgb)/0.3)] focus:outline-none transition-all cursor-pointer"
                         style={{ background: 'var(--bg-card)', color: selectedCountry ? 'white' : 'var(--text-faint)' }}>
                         <option value="" style={{ background: 'var(--bg-card)', color: 'var(--text-faint)' }}>Select a country...</option>
                         {Object.keys(CITIES_BY_COUNTRY).map(c => <option key={c} value={c} style={{ background: 'var(--bg-card)', color: 'white' }}>{c}</option>)}
@@ -942,7 +942,7 @@ export default function OnboardingPage() {
                         <div className="grid grid-cols-2 gap-2 max-h-[220px] overflow-y-auto pr-2">
                           {CITIES_BY_COUNTRY[selectedCountry].map(city => (
                             <button key={city} onClick={() => toggleChip(selectedCities, setSelectedCities, city, 3)}
-                              className={`px-3 py-2 rounded-lg text-[12px] font-medium transition-all text-left ${selectedCities.includes(city) ? 'bg-[rgba(253,121,168,0.15)] text-[var(--accent)] border border-[rgba(253,121,168,0.3)]' : 'bg-[var(--bg-overlay)] text-[var(--text-muted)] hover:bg-[var(--bg-overlay)]'}`}>
+                              className={`px-3 py-2 rounded-lg text-[12px] font-medium transition-all text-left ${selectedCities.includes(city) ? 'bg-[rgb(var(--accent-rgb)/0.15)] text-[var(--accent)] border border-[rgb(var(--accent-rgb)/0.3)]' : 'bg-[var(--bg-overlay)] text-[var(--text-muted)] hover:bg-[var(--bg-overlay)]'}`}>
                               {city}
                             </button>
                           ))}
@@ -956,7 +956,7 @@ export default function OnboardingPage() {
                     <div>
                       <label className="block text-[12px] font-bold text-[var(--text-muted)] mb-2">ETHNICITY (Optional)</label>
                       <select value={ethnicity} onChange={e => setEthnicity(e.target.value)}
-                        className="w-full px-4 py-2.5 rounded-lg border border-[var(--border)] text-ink text-[13px] focus:border-[rgba(253,121,168,0.3)] focus:outline-none transition-all cursor-pointer"
+                        className="w-full px-4 py-2.5 rounded-lg border border-[var(--border)] text-ink text-[13px] focus:border-[rgb(var(--accent-rgb)/0.3)] focus:outline-none transition-all cursor-pointer"
                         style={{ background: 'var(--bg-card)' }}>
                         {ETHNICITIES.map(e => <option key={e} value={e} style={{ background: 'var(--bg-card)', color: 'white' }}>{e}</option>)}
                       </select>
@@ -985,7 +985,7 @@ export default function OnboardingPage() {
                       <div className="grid grid-cols-2 gap-2 max-h-[240px] overflow-y-auto pr-2">
                         {INDUSTRIES.map(ind => (
                           <button key={ind} onClick={() => toggleChip(selectedIndustries, setSelectedIndustries, ind, 5)}
-                            className={`px-3 py-2 rounded-lg text-[12px] font-medium transition-all text-left ${selectedIndustries.includes(ind) ? 'bg-[rgba(253,121,168,0.15)] text-[var(--accent)] border border-[rgba(253,121,168,0.3)]' : 'bg-[var(--bg-overlay)] text-[var(--text-muted)] hover:bg-[var(--bg-overlay)]'}`}>
+                            className={`px-3 py-2 rounded-lg text-[12px] font-medium transition-all text-left ${selectedIndustries.includes(ind) ? 'bg-[rgb(var(--accent-rgb)/0.15)] text-[var(--accent)] border border-[rgb(var(--accent-rgb)/0.3)]' : 'bg-[var(--bg-overlay)] text-[var(--text-muted)] hover:bg-[var(--bg-overlay)]'}`}>
                             {ind}
                           </button>
                         ))}
@@ -999,7 +999,7 @@ export default function OnboardingPage() {
                       <div className="grid grid-cols-2 gap-2">
                         {SKILLS.map(skill => (
                           <button key={skill} onClick={() => toggleChip(selectedSkills, setSelectedSkills, skill, 8)}
-                            className={`px-3 py-2 rounded-lg text-[12px] font-medium transition-all ${selectedSkills.includes(skill) ? 'bg-[rgba(253,121,168,0.15)] text-[var(--accent)] border border-[rgba(253,121,168,0.3)]' : 'bg-[var(--bg-overlay)] text-[var(--text-muted)] hover:bg-[var(--bg-overlay)]'}`}>
+                            className={`px-3 py-2 rounded-lg text-[12px] font-medium transition-all ${selectedSkills.includes(skill) ? 'bg-[rgb(var(--accent-rgb)/0.15)] text-[var(--accent)] border border-[rgb(var(--accent-rgb)/0.3)]' : 'bg-[var(--bg-overlay)] text-[var(--text-muted)] hover:bg-[var(--bg-overlay)]'}`}>
                             {skill}
                           </button>
                         ))}
@@ -1053,7 +1053,7 @@ export default function OnboardingPage() {
                     <div className="grid gap-4">
                       {plans.map(plan => (
                         <motion.button key={plan.name} onClick={() => setSelectedPlan(plan.name)} whileHover={{ scale: 1.02 }}
-                          className={`p-4 rounded-xl border-2 transition-all text-left ${selectedPlan === plan.name ? 'border-[var(--accent)] bg-[rgba(253,121,168,0.1)]' : 'border-[var(--border)] bg-[var(--bg-overlay)] hover:border-[rgba(253,121,168,0.3)]'}`}>
+                          className={`p-4 rounded-xl border-2 transition-all text-left ${selectedPlan === plan.name ? 'border-[var(--accent)] bg-[rgb(var(--accent-rgb)/0.1)]' : 'border-[var(--border)] bg-[var(--bg-overlay)] hover:border-[rgb(var(--accent-rgb)/0.3)]'}`}>
                           <div className="flex justify-between items-start mb-3">
                             <div>
                               <h3 className="font-bold text-[var(--text-on-accent)]">{plan.label}</h3>

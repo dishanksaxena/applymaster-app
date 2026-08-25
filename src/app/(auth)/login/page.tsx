@@ -112,7 +112,7 @@ function LoginForm() {
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 required
-                className="w-full px-4 py-3 rounded-xl bg-[var(--bg-input)] border border-[var(--bg-overlay)] text-ink text-[14px] placeholder-[var(--text-faint)] focus:outline-none focus:border-[rgba(253,121,168,0.3)] focus:ring-1 focus:ring-[rgba(253,121,168,0.15)] transition-all"
+                className="w-full px-4 py-3 rounded-xl bg-[var(--bg-input)] border border-[var(--bg-overlay)] text-ink text-[14px] placeholder-[var(--text-faint)] focus:outline-none focus:border-[rgb(var(--accent-rgb)/0.3)] focus:ring-1 focus:ring-[rgb(var(--accent-rgb)/0.15)] transition-all"
                 placeholder="you@email.com"
               />
             </div>
@@ -126,14 +126,14 @@ function LoginForm() {
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 required
-                className="w-full px-4 py-3 rounded-xl bg-[var(--bg-input)] border border-[var(--bg-overlay)] text-ink text-[14px] placeholder-[var(--text-faint)] focus:outline-none focus:border-[rgba(253,121,168,0.3)] focus:ring-1 focus:ring-[rgba(253,121,168,0.15)] transition-all"
+                className="w-full px-4 py-3 rounded-xl bg-[var(--bg-input)] border border-[var(--bg-overlay)] text-ink text-[14px] placeholder-[var(--text-faint)] focus:outline-none focus:border-[rgb(var(--accent-rgb)/0.3)] focus:ring-1 focus:ring-[rgb(var(--accent-rgb)/0.15)] transition-all"
                 placeholder="••••••••"
               />
             </div>
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[var(--accent)] to-[var(--accent-solid)] text-[var(--text-on-accent)] font-bold text-[14px] hover:shadow-[0_8px_30px_rgba(253,121,168,0.3)] hover:translate-y-[-1px] transition-all disabled:opacity-50"
+              className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[var(--accent)] to-[var(--accent-solid)] text-[var(--text-on-accent)] font-bold text-[14px] hover:shadow-[0_8px_30px_rgb(var(--accent-rgb) / 0.3)] hover:translate-y-[-1px] transition-all disabled:opacity-50"
             >
               {loading ? 'Signing in...' : 'Sign In'}
             </button>

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { withAlpha } from '@/lib/tone'
 
 export const metadata: Metadata = {
   title: 'Blog — Job Search Tips, AI Career Advice & Resume Guides',
@@ -78,7 +79,7 @@ export default function BlogPage() {
             <Link key={post.slug} href={`/blog/${post.slug}`} className="group block">
               <article className="rounded-2xl p-8 border border-[var(--border)] hover:border-[var(--border)] transition-all duration-300" style={{ background: 'var(--bg-overlay)' }}>
                 <div className="flex items-center gap-3 mb-4">
-                  <span className="px-3 py-1 rounded-full text-xs font-semibold" style={{ background: `${post.color}15`, color: post.color }}>{post.category}</span>
+                  <span className="px-3 py-1 rounded-full text-xs font-semibold" style={{ background: `${withAlpha(post.color, 0.11, true)}`, color: post.color }}>{post.category}</span>
                   <span className="text-xs text-[var(--text-faint)]">{post.date}</span>
                   <span className="text-xs text-[var(--text-faint)]">{post.readTime}</span>
                 </div>

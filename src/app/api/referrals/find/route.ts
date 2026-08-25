@@ -80,13 +80,18 @@ export async function POST(req: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return Response.json({ error: 'Not authenticated' }, { status: 401 })
 
-    const { job_id, job_title, company, application_id } = await req.json()
+    const { job_id, job_title, company, application_id, connection_id } = await req.json()
     if (!company) return Response.json({ error: 'company required' }, { status: 400 })
 
-    const { data: connections } = await supabase
+    let query = supabase
       .from('network_connections')
       .select('id, name, company, title, relationship, email, linkedin_url, seniority, can_refer, last_contacted_at')
       .eq('user_id', user.id)
+
+    // Asking about one specific person, rather than "who at this company".
+    if (connection_id) query = query.eq('id', connection_id)
+
+    const { data: connections } = await query
 
     const scored = ((connections ?? []) as Conn[])
       // Must actually be at the company — that is what makes it a referral.
@@ -135,24 +140,34 @@ Return only the message body: no subject line, no signature.`,
         draft = ''
       }
 
-      const { data: saved } = await supabase
-        .from('referral_requests')
-        .upsert({
-          user_id: user.id,
-          connection_id: conn.id,
-          job_id: job_id || null,
-          application_id: application_id || null,
-          job_title: job_title || null,
-          company,
-          match_reason: reason,
-          match_strength: strength,
-          message_draft: draft || null,
-          status: draft ? 'drafted' : 'suggested',
-          channel: conn.email ? 'email' : conn.linkedin_url ? 'linkedin' : 'other',
-          updated_at: new Date().toISOString(),
-        }, { onConflict: 'user_id,connection_id,job_id' })
-        .select('id, status')
-        .maybeSingle()
+      const row = {
+        user_id: user.id,
+        connection_id: conn.id,
+        job_id: job_id || null,
+        application_id: application_id || null,
+        job_title: job_title || null,
+        company,
+        match_reason: reason,
+        match_strength: strength,
+        message_draft: draft || null,
+        status: draft ? 'drafted' : 'suggested',
+        channel: conn.email ? 'email' : conn.linkedin_url ? 'linkedin' : 'other',
+        updated_at: new Date().toISOString(),
+      }
+
+      /* The unique index on (user_id, connection_id, job_id) is partial —
+         `where job_id is not null` — because two asks to the same person
+         about no particular job are two different asks. Upserting against a
+         conflict target the row cannot match returns nothing, which left the
+         caller with no id and no way to mark the ask as sent. So: upsert only
+         when there is a job to deduplicate against. */
+      const { data: saved } = job_id
+        ? await supabase
+            .from('referral_requests')
+            .upsert(row, { onConflict: 'user_id,connection_id,job_id' })
+            .select('id, status')
+            .maybeSingle()
+        : await supabase.from('referral_requests').insert(row).select('id, status').maybeSingle()
 
       paths.push({
         id: saved?.id ?? null,

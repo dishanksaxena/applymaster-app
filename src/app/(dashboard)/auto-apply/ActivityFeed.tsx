@@ -13,11 +13,11 @@ interface ActivityLog {
 }
 
 const activityColors = {
-  queued_applications: { bg: 'rgba(116,185,255,0.1)', text: 'var(--blue)', icon: '⏳' },
-  auto_applied: { bg: 'rgba(52,211,153,0.1)', text: 'var(--green)', icon: '✨' },
-  scanning: { bg: 'rgba(167,139,250,0.1)', text: 'var(--purple)', icon: '🔍' },
+  queued_applications: { bg: 'rgb(var(--blue-rgb) / calc(0.1 * var(--tint-scale)))', text: 'var(--blue)', icon: '⏳' },
+  auto_applied: { bg: 'rgb(var(--green-rgb) / calc(0.1 * var(--tint-scale)))', text: 'var(--green)', icon: '✨' },
+  scanning: { bg: 'rgb(var(--purple-rgb) / calc(0.1 * var(--tint-scale)))', text: 'var(--purple)', icon: '🔍' },
   matched: { bg: 'rgba(59,130,246,0.1)', text: 'var(--blue)', icon: '✅' },
-  analyzing: { bg: 'rgba(244,114,182,0.1)', text: 'var(--accent)', icon: '🔬' },
+  analyzing: { bg: 'rgb(var(--accent-rgb) / calc(0.1 * var(--tint-scale)))', text: 'var(--accent)', icon: '🔬' },
   default: { bg: 'var(--bg-overlay)', text: 'var(--text-faint)', icon: '📝' }
 }
 
@@ -118,7 +118,7 @@ export default function ActivityFeed() {
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <div className="w-5 h-5 rounded-full border-2 border-[rgba(116,185,255,0.2)] border-t-[var(--blue)] animate-spin" />
+          <div className="w-5 h-5 rounded-full border-2 border-[rgb(var(--blue-rgb)/0.2)] border-t-[var(--blue)] animate-spin" />
         </div>
       ) : activities.length === 0 ? (
         <div className="text-center py-12">

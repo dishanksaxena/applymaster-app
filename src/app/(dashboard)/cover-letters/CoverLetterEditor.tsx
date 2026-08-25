@@ -223,7 +223,7 @@ export default function CoverLetterEditor({ initialLetter, onClose, onSave }: Co
                   value={title}
                   onChange={(e) => handleTitleChange(e.target.value)}
                   placeholder="e.g., Senior Software Engineer"
-                  className="w-full px-4 py-3 rounded-xl bg-[var(--bg-input)] border border-[var(--border)] text-ink text-sm placeholder-[var(--text-faint)] focus:outline-none focus:border-[rgba(116,185,255,0.3)] transition-all"
+                  className="w-full px-4 py-3 rounded-xl bg-[var(--bg-input)] border border-[var(--border)] text-ink text-sm placeholder-[var(--text-faint)] focus:outline-none focus:border-[rgb(var(--blue-rgb)/0.3)] transition-all"
                 />
               </div>
 
@@ -240,7 +240,7 @@ export default function CoverLetterEditor({ initialLetter, onClose, onSave }: Co
                       className={`px-3 py-2 rounded-lg text-xs font-bold transition-all ${
                         tone === t.value
                           ? 'bg-[var(--blue)] text-black'
-                          : 'bg-[rgba(116,185,255,0.1)] text-[var(--blue)] hover:bg-[rgba(116,185,255,0.2)]'
+                          : 'bg-[rgb(var(--blue-rgb)/0.1)] text-[var(--blue)] hover:bg-[rgb(var(--blue-rgb)/0.2)]'
                       }`}
                     >
                       {t.label}
@@ -258,7 +258,7 @@ export default function CoverLetterEditor({ initialLetter, onClose, onSave }: Co
                   value={content}
                   onChange={(e) => handleContentChange(e.target.value)}
                   placeholder="Write or edit your cover letter here..."
-                  className="w-full h-[450px] px-4 py-3 rounded-xl bg-[var(--bg-input)] border border-[var(--border)] text-ink text-sm placeholder-[var(--text-faint)] focus:outline-none focus:border-[rgba(116,185,255,0.3)] transition-all resize-none font-mono"
+                  className="w-full h-[450px] px-4 py-3 rounded-xl bg-[var(--bg-input)] border border-[var(--border)] text-ink text-sm placeholder-[var(--text-faint)] focus:outline-none focus:border-[rgb(var(--blue-rgb)/0.3)] transition-all resize-none font-mono"
                 />
                 <p className="text-xs text-[var(--text-faint)] mt-2">
                   {content.length} characters

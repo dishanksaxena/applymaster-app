@@ -282,9 +282,9 @@ function JobCard({ job, onClose, onSave, onApply, isSaved, isApplied }: any) {
     >
       <div className="relative rounded-2xl overflow-hidden" style={{
         background: 'var(--bg-card)',
-        border: '1px solid rgba(162,155,254,0.3)',
+        border: '1px solid rgb(var(--purple-rgb) / 0.3)',
         backdropFilter: 'blur(30px)',
-        boxShadow: '0 0 40px rgba(162,155,254,0.15), 0 20px 60px rgba(0,0,0,0.6)',
+        boxShadow: '0 0 40px rgb(var(--purple-rgb) / calc(0.15 * var(--tint-scale))), 0 20px 60px rgba(0,0,0,0.6)',
       }}>
         <div className="p-5">
           <div className="flex items-start justify-between mb-3">
@@ -305,7 +305,7 @@ function JobCard({ job, onClose, onSave, onApply, isSaved, isApplied }: any) {
               📍 {job.location || 'Remote'}
             </span>
             {job.remote_type && (
-              <span className="px-2 py-1 rounded-lg text-[10px]" style={{ background: 'rgba(52,211,153,0.12)', color: 'var(--green)' }}>
+              <span className="px-2 py-1 rounded-lg text-[10px]" style={{ background: 'rgb(var(--green-rgb) / calc(0.12 * var(--tint-scale)))', color: 'var(--green)' }}>
                 {job.remote_type}
               </span>
             )}
@@ -316,14 +316,14 @@ function JobCard({ job, onClose, onSave, onApply, isSaved, isApplied }: any) {
           <div className="flex gap-2">
             <button onClick={onSave} className="flex-1 py-2 rounded-xl text-[11px] font-semibold transition-all"
               style={isSaved
-                ? { background: 'rgba(162,155,254,0.2)', color: 'var(--purple)', border: '1px solid rgba(162,155,254,0.3)' }
+                ? { background: 'rgb(var(--purple-rgb) / calc(0.2 * var(--tint-scale)))', color: 'var(--purple)', border: '1px solid rgb(var(--purple-rgb) / 0.3)' }
                 : { background: 'var(--bg-overlay)', color: 'var(--text-faint)', border: '1px solid var(--border)' }}>
               {isSaved ? '✓ Saved' : 'Save'}
             </button>
             <button onClick={onApply} className="flex-1 py-2 rounded-xl text-[11px] font-bold text-[var(--text-on-accent)] transition-all"
               style={isApplied
-                ? { background: 'rgba(52,211,153,0.2)', color: 'var(--green)', border: '1px solid rgba(52,211,153,0.3)' }
-                : { background: 'linear-gradient(135deg, var(--accent), var(--accent-solid))', boxShadow: '0 4px 20px rgba(232,67,147,0.4)' }}>
+                ? { background: 'rgb(var(--green-rgb) / calc(0.2 * var(--tint-scale)))', color: 'var(--green)', border: '1px solid rgb(var(--green-rgb) / 0.3)' }
+                : { background: 'linear-gradient(135deg, var(--accent), var(--accent-solid))', boxShadow: '0 4px 20px rgb(var(--accent-rgb) / 0.4)' }}>
               {isApplied ? '✓ Applied' : 'Apply Now →'}
             </button>
           </div>

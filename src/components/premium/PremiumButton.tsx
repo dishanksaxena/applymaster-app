@@ -17,7 +17,7 @@ const variantStyles = {
   primary: {
     bg: 'linear-gradient(135deg, var(--accent-solid), var(--accent-solid))',
     text: '#ffffff',
-    shadow: '0 4px 14px rgba(232,67,147,0.25)',
+    shadow: '0 4px 14px rgb(var(--accent-rgb) / 0.25)',
   },
   secondary: {
     bg: 'var(--bg-overlay)',
@@ -32,12 +32,12 @@ const variantStyles = {
   danger: {
     bg: 'linear-gradient(135deg, var(--red), var(--red))',
     text: '#ffffff',
-    shadow: '0 4px 14px rgba(255,107,107,0.25)',
+    shadow: '0 4px 14px rgb(var(--red-rgb) / 0.25)',
   },
   success: {
     bg: 'linear-gradient(135deg, var(--green), var(--green))',
     text: '#ffffff',
-    shadow: '0 4px 14px rgba(0,184,148,0.25)',
+    shadow: '0 4px 14px rgb(var(--green-rgb) / 0.25)',
   },
 }
 

@@ -55,10 +55,10 @@ function EditField({ label, value, onChange, type = 'text', multiline }: any) {
       <label className="text-[11px] font-bold text-[var(--accent)] uppercase">{label}</label>
       {multiline ? (
         <textarea value={value} onChange={e => onChange(e.target.value)} rows={3}
-          className="w-full px-3 py-2 rounded-lg bg-[var(--bg-overlay)] border border-[var(--border)] text-ink text-[12px] focus:border-[rgba(253,121,168,0.3)] outline-none resize-none" />
+          className="w-full px-3 py-2 rounded-lg bg-[var(--bg-overlay)] border border-[var(--border)] text-ink text-[12px] focus:border-[rgb(var(--accent-rgb)/0.3)] outline-none resize-none" />
       ) : (
         <input type={type} value={value} onChange={e => onChange(e.target.value)}
-          className="w-full px-3 py-2 rounded-lg bg-[var(--bg-overlay)] border border-[var(--border)] text-ink text-[12px] focus:border-[rgba(253,121,168,0.3)] outline-none" />
+          className="w-full px-3 py-2 rounded-lg bg-[var(--bg-overlay)] border border-[var(--border)] text-ink text-[12px] focus:border-[rgb(var(--accent-rgb)/0.3)] outline-none" />
       )}
     </div>
   )
@@ -69,7 +69,7 @@ function SelectField({ label, value, onChange, options }: any) {
     <div className="space-y-1">
       <label className="text-[11px] font-bold text-[var(--accent)] uppercase">{label}</label>
       <select value={value} onChange={e => onChange(e.target.value)}
-        className="w-full px-3 py-2 rounded-lg border border-[var(--border)] text-ink text-[12px] focus:border-[rgba(253,121,168,0.3)] outline-none"
+        className="w-full px-3 py-2 rounded-lg border border-[var(--border)] text-ink text-[12px] focus:border-[rgb(var(--accent-rgb)/0.3)] outline-none"
         style={{ background: 'var(--bg-card)' }}>
         {options.map((opt: string) => <option key={opt} value={opt} style={{ background: 'var(--bg-card)', color: 'white' }}>{opt}</option>)}
       </select>
@@ -87,7 +87,7 @@ function ChipSelector({ label, selected, options, onChange, max }: any) {
             if (selected.includes(opt)) onChange(selected.filter((s: string) => s !== opt))
             else if (!max || selected.length < max) onChange([...selected, opt])
           }}
-            className={`px-3 py-2 rounded-lg text-[11px] font-medium transition-all ${selected.includes(opt) ? 'bg-[rgba(253,121,168,0.15)] text-[var(--accent)] border border-[rgba(253,121,168,0.3)]' : 'bg-[var(--bg-overlay)] text-[var(--text-muted)] border border-transparent hover:bg-[var(--bg-overlay)]'}`}>
+            className={`px-3 py-2 rounded-lg text-[11px] font-medium transition-all ${selected.includes(opt) ? 'bg-[rgb(var(--accent-rgb)/0.15)] text-[var(--accent)] border border-[rgb(var(--accent-rgb)/0.3)]' : 'bg-[var(--bg-overlay)] text-[var(--text-muted)] border border-transparent hover:bg-[var(--bg-overlay)]'}`}>
             {opt}
           </button>
         ))}
@@ -309,7 +309,7 @@ export default function ProfilePage() {
             </div>
           ))}
           <button onClick={() => setWorkExperience([...workExperience, { company: '', title: '', startDate: '', endDate: '', description: '' }])}
-            className="px-3 py-2 rounded-lg text-[12px] font-medium bg-[rgba(253,121,168,0.1)] text-[var(--accent)] hover:bg-[rgba(253,121,168,0.2)]">
+            className="px-3 py-2 rounded-lg text-[12px] font-medium bg-[rgb(var(--accent-rgb)/0.1)] text-[var(--accent)] hover:bg-[rgb(var(--accent-rgb)/0.2)]">
             + Add Experience
           </button>
         </div>
@@ -328,7 +328,7 @@ export default function ProfilePage() {
             </div>
           ))}
           <button onClick={() => setEducation([...education, { school: '', degree: '', field: '', endDate: '' }])}
-            className="px-3 py-2 rounded-lg text-[12px] font-medium bg-[rgba(253,121,168,0.1)] text-[var(--accent)] hover:bg-[rgba(253,121,168,0.2)]">
+            className="px-3 py-2 rounded-lg text-[12px] font-medium bg-[rgb(var(--accent-rgb)/0.1)] text-[var(--accent)] hover:bg-[rgb(var(--accent-rgb)/0.2)]">
             + Add Education
           </button>
         </div>
@@ -345,7 +345,7 @@ export default function ProfilePage() {
             </div>
           ))}
           <button onClick={() => setCertifications([...certifications, ''])}
-            className="px-3 py-2 rounded-lg text-[12px] font-medium bg-[rgba(253,121,168,0.1)] text-[var(--accent)] hover:bg-[rgba(253,121,168,0.2)]">
+            className="px-3 py-2 rounded-lg text-[12px] font-medium bg-[rgb(var(--accent-rgb)/0.1)] text-[var(--accent)] hover:bg-[rgb(var(--accent-rgb)/0.2)]">
             + Add Certification
           </button>
         </div>
@@ -389,11 +389,11 @@ export default function ProfilePage() {
             <label className="text-[11px] font-bold text-[var(--accent)] uppercase block">Willing to Relocate?</label>
             <div className="flex gap-2">
               <button onClick={() => setWillingToRelocate(true)}
-                className={`flex-1 px-3 py-2 rounded-lg font-medium transition-all ${willingToRelocate ? 'bg-[rgba(253,121,168,0.2)] text-[var(--accent)] border border-[var(--accent)]' : 'bg-[var(--bg-overlay)] text-[var(--text-muted)] border border-transparent'}`}>
+                className={`flex-1 px-3 py-2 rounded-lg font-medium transition-all ${willingToRelocate ? 'bg-[rgb(var(--accent-rgb)/0.2)] text-[var(--accent)] border border-[var(--accent)]' : 'bg-[var(--bg-overlay)] text-[var(--text-muted)] border border-transparent'}`}>
                 Yes
               </button>
               <button onClick={() => setWillingToRelocate(false)}
-                className={`flex-1 px-3 py-2 rounded-lg font-medium transition-all ${!willingToRelocate ? 'bg-[rgba(253,121,168,0.2)] text-[var(--accent)] border border-[var(--accent)]' : 'bg-[var(--bg-overlay)] text-[var(--text-muted)] border border-transparent'}`}>
+                className={`flex-1 px-3 py-2 rounded-lg font-medium transition-all ${!willingToRelocate ? 'bg-[rgb(var(--accent-rgb)/0.2)] text-[var(--accent)] border border-[var(--accent)]' : 'bg-[var(--bg-overlay)] text-[var(--text-muted)] border border-transparent'}`}>
                 No
               </button>
             </div>

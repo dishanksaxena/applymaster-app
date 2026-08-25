@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import dynamic from 'next/dynamic'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
+import { withAlpha } from '@/lib/tone'
 
 // Mapbox access token (using free tile service as fallback)
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || ''
@@ -108,7 +109,7 @@ function JobCard({ job, onClose, onSave, onApply, isSaved, isApplied }: {
       transition={{ type: 'spring', stiffness: 320, damping: 28 }}
       className="absolute top-4 right-4 z-30 w-[320px]">
       <div className="relative rounded-2xl overflow-hidden"
-        style={{ background: 'var(--bg-card)', border: '1px solid rgba(162,155,254,0.25)', backdropFilter: 'blur(30px)', boxShadow: '0 0 60px rgba(162,155,254,0.1), 0 30px 60px rgba(0,0,0,0.6)' }}>
+        style={{ background: 'var(--bg-card)', border: '1px solid rgb(var(--purple-rgb) / 0.25)', backdropFilter: 'blur(30px)', boxShadow: '0 0 60px rgb(var(--purple-rgb) / calc(0.1 * var(--tint-scale))), 0 30px 60px rgba(0,0,0,0.6)' }}>
         <motion.div className="absolute top-0 left-0 right-0 h-[1px]"
           animate={{ backgroundPosition: ['200% 0', '-200% 0'] }}
           transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
@@ -127,7 +128,7 @@ function JobCard({ job, onClose, onSave, onApply, isSaved, isApplied }: {
           <p className="text-[12px] text-[var(--purple)] font-medium mb-3">{job.company}</p>
           <div className="flex flex-wrap gap-1.5 mb-4">
             <span className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium"
-              style={{ background: 'rgba(116,185,255,0.1)', color: 'var(--blue)', border: '1px solid rgba(116,185,255,0.15)' }}>
+              style={{ background: 'rgb(var(--blue-rgb) / calc(0.1 * var(--tint-scale)))', color: 'var(--blue)', border: '1px solid rgb(var(--blue-rgb) / calc(0.15 * var(--tint-scale)))' }}>
               📍 {job.location || 'Remote'}
             </span>
             {job.remote_type && (
@@ -145,7 +146,7 @@ function JobCard({ job, onClose, onSave, onApply, isSaved, isApplied }: {
             <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} onClick={onSave}
               className="flex-1 py-2 rounded-xl text-[11px] font-semibold transition-all"
               style={isSaved
-                ? { background: 'rgba(162,155,254,0.15)', color: 'var(--purple)', border: '1px solid rgba(162,155,254,0.3)' }
+                ? { background: 'rgb(var(--purple-rgb) / calc(0.15 * var(--tint-scale)))', color: 'var(--purple)', border: '1px solid rgb(var(--purple-rgb) / 0.3)' }
                 : { background: 'var(--bg-overlay)', color: 'var(--text-faint)', border: '1px solid var(--border)' }}>
               {isSaved ? '✓ Saved' : 'Save'}
             </motion.button>
@@ -153,7 +154,7 @@ function JobCard({ job, onClose, onSave, onApply, isSaved, isApplied }: {
               className="flex-1 py-2 rounded-xl text-[11px] font-bold text-[var(--text-on-accent)]"
               style={isApplied
                 ? { background: 'rgba(85,239,196,0.15)', border: '1px solid rgba(85,239,196,0.3)', color: 'var(--green)' }
-                : { background: 'linear-gradient(135deg, var(--accent), var(--accent-solid))', boxShadow: '0 0 20px rgba(253,121,168,0.3)' }}>
+                : { background: 'linear-gradient(135deg, var(--accent), var(--accent-solid))', boxShadow: '0 0 20px rgb(var(--accent-rgb) / 0.3)' }}>
               {isApplied ? '✓ Applied' : 'Apply Now →'}
             </motion.button>
           </div>
@@ -290,7 +291,7 @@ export default function JobsMap({ jobs, onSave, onApply, savedJobs, appliedJobs 
           background: ${p.color};
           border: 2px solid var(--border);
           border-radius: 50%;
-          box-shadow: 0 0 ${isHovered ? '20' : '10'}px ${p.color}80;
+          box-shadow: 0 0 ${isHovered ? '20' : '10'}px ${withAlpha(p.color, 0.5)};
           display: flex; align-items: center; justify-center;
           font-weight: bold; color: var(--bg-overlay); font-size: 12px;
           transition: all 0.2s ease;
@@ -372,7 +373,7 @@ export default function JobsMap({ jobs, onSave, onApply, savedJobs, appliedJobs 
         ].map(t => (
           <div key={t.label} className="flex items-center gap-2 mb-1.5 last:mb-0">
             <motion.div className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-              style={{ background: t.color, boxShadow: `0 0 6px ${t.color}80` }}
+              style={{ background: t.color, boxShadow: `0 0 6px ${withAlpha(t.color, 0.5)}` }}
               animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 2, repeat: Infinity, delay: Math.random() }} />
             <span className="text-[10px] text-ink/60">{t.label}</span>
           </div>

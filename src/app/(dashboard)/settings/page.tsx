@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import { createClient } from '@/lib/supabase-browser'
 import { useRouter } from 'next/navigation'
 import { applyTheme, getStoredTheme, type Theme } from '@/lib/theme'
+import { withAlpha } from '@/lib/tone'
 
 const container = { hidden: {}, show: { transition: { staggerChildren: 0.08 } } }
 const fadeUp = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] as const } } }
@@ -206,9 +207,9 @@ export default function SettingsPage() {
         <p className="text-[12px] mb-6" style={{ color: 'var(--text-muted)' }}>Unlock more features</p>
         <div className="grid sm:grid-cols-3 gap-4">
           {plans.map(plan => (
-            <motion.div key={plan.name} whileHover={{ y: -4, scale: 1.02 }} className="relative p-5 rounded-2xl group" style={{ background: 'var(--bg-card)', border: `1px solid ${plan.popular ? `${plan.color}30` : 'var(--border)'}`, boxShadow: 'var(--shadow-sm)' }}>
+            <motion.div key={plan.name} whileHover={{ y: -4, scale: 1.02 }} className="relative p-5 rounded-2xl group" style={{ background: 'var(--bg-card)', border: `1px solid ${plan.popular ? `${withAlpha(plan.color, 0.18, true)}` : 'var(--border)'}`, boxShadow: 'var(--shadow-sm)' }}>
               {plan.popular && <div className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] font-bold px-3 py-1 rounded-full text-[var(--text-on-accent)]" style={{ background: 'linear-gradient(135deg, var(--purple), var(--purple))' }}>POPULAR</div>}
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4" style={{ background: `${plan.color}12`, color: plan.color }}>{plan.icon}</div>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4" style={{ background: `${withAlpha(plan.color, 0.09, true)}`, color: plan.color }}>{plan.icon}</div>
               <div className="text-[13px] font-bold capitalize mb-1" style={{ color: plan.color }}>{plan.name}</div>
               <div className="flex items-baseline gap-1 mb-4">
                 <span className="font-display text-[1.9rem]" style={{ color: 'var(--text)' }}>${plan.price}</span>
@@ -221,7 +222,7 @@ export default function SettingsPage() {
                   </div>
                 ))}
               </div>
-              <motion.button whileTap={{ scale: 0.95 }} onClick={() => handleCheckout(plan.name)} disabled={profile?.plan === plan.name} className="w-full py-2.5 rounded-xl text-[12px] font-bold disabled:opacity-30" style={{ background: `${plan.color}12`, color: plan.color, border: `1px solid ${plan.color}25` }}>
+              <motion.button whileTap={{ scale: 0.95 }} onClick={() => handleCheckout(plan.name)} disabled={profile?.plan === plan.name} className="w-full py-2.5 rounded-xl text-[12px] font-bold disabled:opacity-30" style={{ background: `${withAlpha(plan.color, 0.09, true)}`, color: plan.color, border: `1px solid ${withAlpha(plan.color, 0.14, true)}` }}>
                 {profile?.plan === plan.name ? 'Current Plan' : 'Upgrade'}
               </motion.button>
             </motion.div>
@@ -274,7 +275,7 @@ export default function SettingsPage() {
       {/* Danger Zone */}
       <motion.div variants={fadeUp} className="p-6 rounded-2xl" style={{ background: 'var(--bg-card)', border: '1px solid rgba(255,95,87,0.15)', boxShadow: 'var(--shadow-sm)' }}>
         <h3 className="text-[15px] font-bold text-[var(--red)] mb-4">Danger Zone</h3>
-        <motion.button whileTap={{ scale: 0.95 }} onClick={handleSignOut} className="px-6 py-2.5 rounded-xl text-[13px] font-bold text-[var(--red)] hover:bg-[rgba(255,107,107,0.06)]" style={{ border: '1px solid rgba(255,107,107,0.2)' }}>
+        <motion.button whileTap={{ scale: 0.95 }} onClick={handleSignOut} className="px-6 py-2.5 rounded-xl text-[13px] font-bold text-[var(--red)] hover:bg-[rgb(var(--red-rgb)/0.06)]" style={{ border: '1px solid rgb(var(--red-rgb) / calc(0.2 * var(--tint-scale)))' }}>
           Sign Out
         </motion.button>
       </motion.div>

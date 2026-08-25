@@ -7,6 +7,7 @@ import ApplicationSourceChart from './ApplicationSourceChart'
 import TrendLineChart from './TrendLineChart'
 import SuccessDonutChart from './SuccessDonutChart'
 import ActivityFeed from './ActivityFeed'
+import { withAlpha } from '@/lib/tone'
 
 const container = { hidden: {}, show: { transition: { staggerChildren: 0.08 } } }
 const fadeUp = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] as const } } }
@@ -264,13 +265,13 @@ export default function AutoApplyPage() {
 
       {/* Header */}
       <motion.div variants={fadeUp} className="relative overflow-hidden rounded-2xl p-8" style={{
-        background: 'linear-gradient(135deg, rgba(0,184,148,0.08) 0%, rgba(253,121,168,0.06) 100%)',
-        border: `1px solid ${mode === 'autopilot' ? 'rgba(0,184,148,0.15)' : mode === 'copilot' ? 'rgba(116,185,255,0.15)' : 'var(--bg-overlay)'}`,
+        background: 'linear-gradient(135deg, rgb(var(--green-rgb) / calc(0.08 * var(--tint-scale))) 0%, rgb(var(--accent-rgb) / calc(0.06 * var(--tint-scale))) 100%)',
+        border: `1px solid ${mode === 'autopilot' ? 'rgb(var(--green-rgb) / calc(0.15 * var(--tint-scale)))' : mode === 'copilot' ? 'rgb(var(--blue-rgb) / calc(0.15 * var(--tint-scale)))' : 'var(--bg-overlay)'}`,
       }}>
         <div className="absolute top-[-50%] right-[-10%] w-[300px] h-[300px] rounded-full opacity-[0.07]" style={{ background: 'radial-gradient(circle, var(--green), transparent 70%)' }} />
         <div className="relative z-10 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: mode === 'autopilot' ? 'rgba(0,184,148,0.15)' : mode === 'copilot' ? 'rgba(116,185,255,0.15)' : 'var(--bg-overlay)' }}>
+            <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: mode === 'autopilot' ? 'rgb(var(--green-rgb) / calc(0.15 * var(--tint-scale)))' : mode === 'copilot' ? 'rgb(var(--blue-rgb) / calc(0.15 * var(--tint-scale)))' : 'var(--bg-overlay)' }}>
               <motion.div animate={mode !== 'off' ? { scale: [1, 1.15, 1] } : {}} transition={{ duration: 1.5, repeat: Infinity }}>
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={mode === 'autopilot' ? 'var(--green)' : mode === 'copilot' ? 'var(--blue)' : 'var(--text-faint)'} strokeWidth="1.8"><polygon points="13,2 3,14 12,14 11,22 21,10 12,10"/></svg>
               </motion.div>
@@ -281,7 +282,7 @@ export default function AutoApplyPage() {
             </div>
           </div>
           {mode !== 'off' && (
-            <div className="flex items-center gap-2 px-4 py-2 rounded-xl" style={{ background: mode === 'autopilot' ? 'rgba(0,184,148,0.1)' : 'rgba(116,185,255,0.1)', border: `1px solid ${mode === 'autopilot' ? 'rgba(0,184,148,0.2)' : 'rgba(116,185,255,0.2)'}` }}>
+            <div className="flex items-center gap-2 px-4 py-2 rounded-xl" style={{ background: mode === 'autopilot' ? 'rgb(var(--green-rgb) / calc(0.1 * var(--tint-scale)))' : 'rgb(var(--blue-rgb) / calc(0.1 * var(--tint-scale)))', border: `1px solid ${mode === 'autopilot' ? 'rgb(var(--green-rgb) / calc(0.2 * var(--tint-scale)))' : 'rgb(var(--blue-rgb) / calc(0.2 * var(--tint-scale)))'}` }}>
               <span className="relative flex h-2 w-2">
                 <span className="absolute inline-flex h-full w-full rounded-full opacity-60 animate-ping" style={{ background: mode === 'autopilot' ? 'var(--green)' : 'var(--blue)' }} />
                 <span className="relative inline-flex rounded-full h-2 w-2" style={{ background: mode === 'autopilot' ? 'var(--green)' : 'var(--blue)' }} />
@@ -294,11 +295,11 @@ export default function AutoApplyPage() {
 
       {/* ── Review Queue: shown when copilot has queued applications ── */}
       {queuedApps.length > 0 && (
-        <motion.div variants={fadeUp} className="rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(240,180,41,0.25)', background: 'linear-gradient(135deg, rgba(240,180,41,0.06) 0%, rgba(240,180,41,0.02) 100%)' }}>
+        <motion.div variants={fadeUp} className="rounded-2xl overflow-hidden" style={{ border: '1px solid rgb(var(--yellow-rgb) / 0.25)', background: 'linear-gradient(135deg, rgb(var(--yellow-rgb) / calc(0.06 * var(--tint-scale))) 0%, rgb(var(--yellow-rgb) / calc(0.02 * var(--tint-scale))) 100%)' }}>
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-[rgba(240,180,41,0.12)]">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-[rgb(var(--yellow-rgb)/0.12)]">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(240,180,41,0.15)' }}>
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgb(var(--yellow-rgb) / calc(0.15 * var(--tint-scale)))' }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
               </div>
               <div>
@@ -316,7 +317,7 @@ export default function AutoApplyPage() {
             {queuedApps.map((app: any) => (
               <div key={app.id} className="flex items-center gap-4 px-6 py-4">
                 {/* Company avatar */}
-                <div className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center text-[13px] font-black text-[var(--text-on-accent)]" style={{ background: 'linear-gradient(135deg, rgba(240,180,41,0.3), rgba(240,180,41,0.1))' }}>
+                <div className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center text-[13px] font-black text-[var(--text-on-accent)]" style={{ background: 'linear-gradient(135deg, rgb(var(--yellow-rgb) / 0.3), rgb(var(--yellow-rgb) / calc(0.1 * var(--tint-scale))))' }}>
                   {(app.job?.company || 'C')[0].toUpperCase()}
                 </div>
 
@@ -376,13 +377,13 @@ export default function AutoApplyPage() {
           </div>
 
           {/* Footer */}
-          <div className="px-6 py-3 border-t border-[rgba(240,180,41,0.08)] flex items-center justify-between">
+          <div className="px-6 py-3 border-t border-[rgb(var(--yellow-rgb)/0.08)] flex items-center justify-between">
             <span className="text-[11px] text-[var(--text-muted)]">Approving marks the application as sent and moves it to Applied.</span>
             <div className="flex gap-2">
               <button
                 onClick={async () => { for (const app of queuedApps) await approveApp(app.id) }}
                 className="text-[11px] font-bold px-3 py-1.5 rounded-lg transition-all hover:opacity-80"
-                style={{ background: 'rgba(0,184,148,0.15)', color: 'var(--green)', border: '1px solid rgba(0,184,148,0.2)' }}
+                style={{ background: 'rgb(var(--green-rgb) / calc(0.15 * var(--tint-scale)))', color: 'var(--green)', border: '1px solid rgb(var(--green-rgb) / calc(0.2 * var(--tint-scale)))' }}
               >
                 ✓ Approve All
               </button>
@@ -409,9 +410,9 @@ export default function AutoApplyPage() {
               {modes.map(m => (
                 <motion.button key={m.id} whileHover={{ y: -3, scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => setMode(m.id)}
                   className="p-5 rounded-xl text-left transition-all duration-300"
-                  style={mode === m.id ? { background: `${m.color}10`, border: `1px solid ${m.color}30`, boxShadow: `0 0 20px ${m.color}08` } : { background: 'var(--bg-overlay)', border: '1px solid var(--border)' }}>
+                  style={mode === m.id ? { background: `${withAlpha(m.color, 0.09, true)}`, border: `1px solid ${withAlpha(m.color, 0.18, true)}`, boxShadow: `0 0 20px ${withAlpha(m.color, 0.06, true)}` } : { background: 'var(--bg-overlay)', border: '1px solid var(--border)' }}>
                   <div className="flex items-center justify-between mb-3">
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${m.color}15`, color: m.color }}>{m.icon}</div>
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${withAlpha(m.color, 0.11, true)}`, color: m.color }}>{m.icon}</div>
                     {mode === m.id && <div className="w-3 h-3 rounded-full" style={{ background: m.color, boxShadow: `0 0 8px ${m.color}` }} />}
                   </div>
                   <div className="text-[14px] font-bold" style={{ color: mode === m.id ? 'var(--text)' : 'var(--text-secondary)' }}>{m.label}</div>
@@ -456,9 +457,9 @@ export default function AutoApplyPage() {
                   <motion.button key={source.name} whileTap={{ scale: 0.95 }}
                     onClick={() => setActiveSources(active ? activeSources.filter(s => s !== source.name) : [...activeSources, source.name])}
                     className="p-4 rounded-xl text-center transition-all duration-300"
-                    style={active ? { background: `${source.color}10`, border: `1px solid ${source.color}30` } : { background: 'var(--bg-overlay)', border: '1px solid var(--border)' }}>
+                    style={active ? { background: `${withAlpha(source.color, 0.09, true)}`, border: `1px solid ${withAlpha(source.color, 0.18, true)}` } : { background: 'var(--bg-overlay)', border: '1px solid var(--border)' }}>
                     <div className="w-8 h-8 rounded-lg flex items-center justify-center mx-auto mb-2 text-[11px] font-black"
-                      style={{ background: active ? `${source.color}20` : 'var(--bg-overlay)', color: active ? source.color : 'var(--text-muted)' }}>{source.icon}</div>
+                      style={{ background: active ? `${withAlpha(source.color, 0.14, true)}` : 'var(--bg-overlay)', color: active ? source.color : 'var(--text-muted)' }}>{source.icon}</div>
                     <div className="text-[12px] font-bold" style={{ color: active ? 'var(--text)' : 'var(--text-muted)' }}>{source.name}</div>
                   </motion.button>
                 )
@@ -503,7 +504,7 @@ export default function AutoApplyPage() {
             {/* Test Auto-Apply Button - Always Available */}
             <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }} onClick={testAutoApply} disabled={testingAuto}
               className="w-full py-3 rounded-xl font-bold text-[13px] text-ink disabled:opacity-50 transition-all flex items-center justify-center gap-2"
-              style={{ background: 'rgba(116,185,255,0.1)', border: '1px solid rgba(116,185,255,0.2)' }}>
+              style={{ background: 'rgb(var(--blue-rgb) / calc(0.1 * var(--tint-scale)))', border: '1px solid rgb(var(--blue-rgb) / calc(0.2 * var(--tint-scale)))' }}>
               {testingAuto ? (
                 <>
                   <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }} className="w-3 h-3 rounded-full border-2 border-[var(--border)] border-t-[var(--blue)]" />
@@ -518,14 +519,14 @@ export default function AutoApplyPage() {
             </motion.button>
             {testResult && (
               <div className="text-center text-[12px] font-medium py-2 px-4 rounded-lg"
-                style={{ background: testResult.startsWith('✅') ? 'rgba(0,184,148,0.1)' : 'rgba(255,100,100,0.1)', color: testResult.startsWith('✅') ? 'var(--green)' : 'var(--red)' }}>
+                style={{ background: testResult.startsWith('✅') ? 'rgb(var(--green-rgb) / calc(0.1 * var(--tint-scale)))' : 'rgba(255,100,100,0.1)', color: testResult.startsWith('✅') ? 'var(--green)' : 'var(--red)' }}>
                 {testResult}
               </div>
             )}
           </motion.div>
 
           {/* Info Banner */}
-          <motion.div variants={fadeUp} className="p-5 rounded-2xl" style={{ background: 'rgba(116,185,255,0.04)', border: '1px solid rgba(116,185,255,0.1)' }}>
+          <motion.div variants={fadeUp} className="p-5 rounded-2xl" style={{ background: 'rgb(var(--blue-rgb) / calc(0.04 * var(--tint-scale)))', border: '1px solid rgb(var(--blue-rgb) / calc(0.1 * var(--tint-scale)))' }}>
             <div className="flex items-start gap-3">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" strokeWidth="2" className="shrink-0 mt-0.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
               <div>
@@ -548,15 +549,15 @@ export default function AutoApplyPage() {
 
       {/* ── God Mode Panel ───────────────────────────────────────────── */}
       <motion.div variants={fadeUp} className="rounded-2xl overflow-hidden" style={{
-        border: godModeEnabled ? '1px solid rgba(232,67,147,0.25)' : '1px solid var(--border)',
+        border: godModeEnabled ? '1px solid rgb(var(--accent-rgb) / 0.25)' : '1px solid var(--border)',
         background: godModeEnabled
-          ? 'linear-gradient(135deg, rgba(232,67,147,0.06) 0%, rgba(108,92,231,0.04) 100%)'
+          ? 'linear-gradient(135deg, rgb(var(--accent-rgb) / calc(0.06 * var(--tint-scale))) 0%, rgba(108,92,231,0.04) 100%)'
           : 'var(--bg-card)',
       }}>
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-5 border-b" style={{ borderColor: godModeEnabled ? 'rgba(232,67,147,0.12)' : 'var(--border)' }}>
+        <div className="flex items-center justify-between px-6 py-5 border-b" style={{ borderColor: godModeEnabled ? 'rgb(var(--accent-rgb) / calc(0.12 * var(--tint-scale)))' : 'var(--border)' }}>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: godModeEnabled ? 'rgba(232,67,147,0.15)' : 'var(--bg-overlay)' }}>
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: godModeEnabled ? 'rgb(var(--accent-rgb) / calc(0.15 * var(--tint-scale)))' : 'var(--bg-overlay)' }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={godModeEnabled ? 'var(--accent-solid)' : 'var(--text-muted)'} strokeWidth="2">
                 <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
               </svg>
@@ -600,8 +601,8 @@ export default function AutoApplyPage() {
                   onClick={item.toggle}
                   className={`rounded-xl p-4 transition-all duration-200 ${i < 2 ? 'cursor-pointer' : 'cursor-default'}`}
                   style={{
-                    background: item.active ? 'rgba(232,67,147,0.06)' : 'var(--bg-overlay)',
-                    border: `1px solid ${item.active ? 'rgba(232,67,147,0.2)' : 'var(--border)'}`,
+                    background: item.active ? 'rgb(var(--accent-rgb) / calc(0.06 * var(--tint-scale)))' : 'var(--bg-overlay)',
+                    border: `1px solid ${item.active ? 'rgb(var(--accent-rgb) / calc(0.2 * var(--tint-scale)))' : 'var(--border)'}`,
                   }}
                 >
                   <div className="flex items-start justify-between mb-2">
@@ -611,7 +612,7 @@ export default function AutoApplyPage() {
                         {item.active && <div className="w-2 h-2 rounded-full bg-[var(--accent-solid)]" />}
                       </div>
                     )}
-                    {i === 2 && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded text-[var(--green)]" style={{ background: 'rgba(0,184,148,0.1)' }}>Always on</span>}
+                    {i === 2 && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded text-[var(--green)]" style={{ background: 'rgb(var(--green-rgb) / calc(0.1 * var(--tint-scale)))' }}>Always on</span>}
                   </div>
                   <div className="text-[12px] font-bold" style={{ color: item.active ? 'var(--text)' : 'var(--text-muted)' }}>{item.title}</div>
                   <div className="text-[11px] mt-0.5" style={{ color: 'var(--text-faint)' }}>{item.desc}</div>
@@ -635,7 +636,7 @@ export default function AutoApplyPage() {
                     onClick={() => setGodModeScoreThreshold(grade)}
                     className="flex-1 py-2.5 rounded-xl text-[13px] font-bold transition-all duration-200"
                     style={godModeScoreThreshold === grade
-                      ? { background: 'linear-gradient(135deg, var(--accent-solid), var(--accent-solid))', color: '#fff', boxShadow: '0 4px 14px rgba(232,67,147,0.25)' }
+                      ? { background: 'linear-gradient(135deg, var(--accent-solid), var(--accent-solid))', color: '#fff', boxShadow: '0 4px 14px rgb(var(--accent-rgb) / 0.25)' }
                       : { background: 'var(--bg-overlay)', color: 'var(--text-muted)', border: '1px solid var(--border)' }}
                   >
                     {grade === 'A' ? 'A (85%+) — Elite only' : grade === 'B' ? 'B (70%+) — Recommended' : 'C (55%+) — Wider net'}
