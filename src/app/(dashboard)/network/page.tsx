@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { PremiumCard } from '@/components/premium'
+import NetworkGraph from '@/components/NetworkGraph'
 import { tone, toneA, toneSurface, type Tone } from '@/lib/tone'
 
 /**
@@ -748,16 +749,45 @@ export default function NetworkPage() {
             </p>
           )}
 
-          {/* Before any search, show the doors the network already opens.
-              An empty page under a search box teaches nothing about what is
-              in there to find. */}
+          {/* The graph is the point of this page: a fan of paths converging on
+              you says "these are your routes in" faster than any list. Every
+              node is a real row; the right column only fills from a real search. */}
+          {connections.length > 0 && (
+            <PremiumCard accent="none" hover={false}>
+              <div className="px-2 pt-2 pb-4">
+                <NetworkGraph
+                  connections={connections}
+                  hits={
+                    hits === null
+                      ? null
+                      : hits.map(h => ({
+                          id: h.connection.id,
+                          name: h.connection.name,
+                          title: h.connection.title,
+                          company: h.connection.company,
+                          score: h.score,
+                          canRefer: h.connection.can_refer !== false,
+                        }))
+                  }
+                  searching={searching}
+                  onPick={id => {
+                    const c = connections.find(x => x.id === id)
+                    if (c) setDrafting(c)
+                  }}
+                />
+              </div>
+            </PremiumCard>
+          )}
+
+          {/* The companies you already have a way into — the fastest read on
+              what this network is actually worth for a search. */}
           {hits === null && companies.length > 0 && (
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {companies.map(([name, count], i) => {
                 const people = connections.filter(c => c.company === name)
                 const t = toneFor(name)
                 return (
-                  <PremiumCard key={name} accent={t === 'accent' ? 'pink' : t} hover={false} animationDelay={i * 0.05}>
+                  <PremiumCard key={name} accent={t === 'accent' ? 'pink' : t} hover={false} animationDelay={i * 0.04}>
                     <button
                       onClick={() => {
                         const q = `Who can refer me at ${name}?`
@@ -766,69 +796,29 @@ export default function NetworkPage() {
                       }}
                       className="w-full text-left p-4"
                     >
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="text-[13.5px] font-semibold" style={{ color: 'var(--text)' }}>
+                      <div className="flex items-center justify-between gap-2 mb-2.5">
+                        <span className="text-[13px] font-semibold truncate" style={{ color: 'var(--text)' }}>
                           {name}
                         </span>
                         <span
-                          className="px-2 py-0.5 rounded-full text-[10.5px] font-semibold tabular-nums"
+                          className="px-2 py-0.5 rounded-full text-[10.5px] font-semibold tabular-nums shrink-0"
                           style={{ background: toneSurface(t, 0.13), color: tone(t) }}
                         >
                           {count} {count === 1 ? 'path' : 'paths'}
                         </span>
                       </div>
                       <div className="flex -space-x-2">
-                        {people.slice(0, 5).map(p => (
-                          <span key={p.id} style={{ boxShadow: '0 0 0 2px var(--bg-card)', borderRadius: '9999px' }}>
-                            <Avatar name={p.name} id={p.id} size={28} />
+                        {people.slice(0, 5).map(pp => (
+                          <span key={pp.id} style={{ boxShadow: '0 0 0 2px var(--bg-card)', borderRadius: '9999px' }}>
+                            <Avatar name={pp.name} id={pp.id} size={26} />
                           </span>
                         ))}
                       </div>
-                      <p className="text-[11.5px] mt-2.5 truncate" style={{ color: 'var(--text-muted)' }}>
-                        {people
-                          .slice(0, 2)
-                          .map(p => p.title || p.name)
-                          .join(', ')}
-                        {people.length > 2 ? ` +${people.length - 2}` : ''}
-                      </p>
                     </button>
                   </PremiumCard>
                 )
               })}
             </div>
-          )}
-
-          {gaps.length > 0 && (
-            <PremiumCard accent="yellow" hover={false}>
-              <div className="p-4 flex gap-3">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0 mt-0.5" style={{ color: 'var(--yellow)' }} aria-hidden="true">
-                  <circle cx="12" cy="12" r="9" />
-                  <path d="M12 8v4M12 16h.01" />
-                </svg>
-                <p className="text-[12.5px] leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                  You have nobody at <strong style={{ color: 'var(--text)' }}>{gaps.join(', ')}</strong>. Applying cold there is
-                  fine — just add anyone you meet at those companies so the next search can find them.
-                </p>
-              </div>
-            </PremiumCard>
-          )}
-
-          {hits !== null && hits.length === 0 && !searchError && (
-            <PremiumCard accent="none" hover={false}>
-              <div className="p-8 text-center">
-                <p className="text-[14px] mb-1" style={{ color: 'var(--text)' }}>
-                  {connections.length === 0 ? 'Your network is empty' : 'No matches in your network'}
-                </p>
-                <p className="text-[12.5px] max-w-md mx-auto leading-relaxed" style={{ color: 'var(--text-muted)' }}>
-                  {connections.length === 0
-                    ? 'Add the people you already know — former colleagues, classmates, anyone you have worked with. Referral paths are built from them.'
-                    : 'Nobody in your network matches that. Try a different company, or add more contacts.'}
-                </p>
-                <div className="max-w-sm mx-auto mt-5">
-                  <AddConnection onAdded={c => setConnections(cs => [c, ...cs])} />
-                </div>
-              </div>
-            </PremiumCard>
           )}
 
           <AnimatePresence>
