@@ -144,21 +144,12 @@ export default function ProfilePage() {
       try {
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) {
-          console.log('❌ No user found')
           return
         }
-        console.log('👤 Loading profile for user:', user.id)
 
-        const { data: profile, error: profileError } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-        console.log('📋 Profile query error:', profileError)
-        console.log('📋 Profile data:', profile)
+        const { data: profile, error: profileError } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle()
 
         if (profile) {
-          console.log('✓ Full name:', profile.full_name)
-          console.log('✓ Professional summary:', profile.professional_summary)
-          console.log('✓ Education:', profile.education)
-          console.log('✓ Certifications:', profile.certifications)
-          console.log('✓ Work experience:', profile.work_experience)
 
           setName(profile.full_name || '')
           setEmail(profile.email || user.email || '')
@@ -167,19 +158,12 @@ export default function ProfilePage() {
           setCertifications(profile.certifications || [])
           setWorkExperience(profile.work_experience || [])
         } else {
-          console.log('⚠️ No profile record found')
           setEmail(user.email || '')
         }
 
-        const { data: prefs, error: prefsError } = await supabase.from('job_preferences').select('*').eq('user_id', user.id).single()
-        console.log('🎯 Job preferences query error:', prefsError)
-        console.log('🎯 Job preferences data:', prefs)
+        const { data: prefs, error: prefsError } = await supabase.from('job_preferences').select('*').eq('user_id', user.id).maybeSingle()
 
         if (prefs) {
-          console.log('✓ Target roles:', prefs.target_roles)
-          console.log('✓ Experience level:', prefs.experience_level)
-          console.log('✓ Industries:', prefs.industries)
-          console.log('✓ Key skills:', prefs.key_skills)
 
           if (prefs.target_roles?.length) setSelectedRoles(prefs.target_roles)
           if (prefs.min_salary) setMinSalary(prefs.min_salary)
@@ -200,10 +184,7 @@ export default function ProfilePage() {
           if (prefs.company_size_preference) setCompanySize(prefs.company_size_preference)
           if (prefs.interview_strength) setInterviewStyle(prefs.interview_strength)
         } else {
-          console.log('⚠️ No job preferences record found')
         }
-
-        console.log('✓ Profile loading completed')
       } catch (err) { console.error('❌ Error loading profile:', err) }
       setLoading(false)
     }
@@ -219,9 +200,6 @@ export default function ProfilePage() {
         return
       }
 
-      console.log('💾 Saving profile for user:', user.id)
-      console.log('📝 Profile data:', { name, summary, education, certifications, work_experience: workExperience })
-
       const { error: profileError } = await supabase.from('profiles').update({
         full_name: name,
         professional_summary: summary,
@@ -233,7 +211,6 @@ export default function ProfilePage() {
       if (profileError) {
         console.error('❌ Profile update error:', profileError)
       } else {
-        console.log('✓ Profile updated successfully')
       }
 
       console.log('🎯 Saving job preferences:', {
@@ -268,10 +245,7 @@ export default function ProfilePage() {
       if (prefsError) {
         console.error('❌ Job preferences update error:', prefsError)
       } else {
-        console.log('✓ Job preferences updated successfully')
       }
-
-      console.log('✓ All data saved successfully')
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
     } catch (err) { console.error('❌ Error saving:', err) }

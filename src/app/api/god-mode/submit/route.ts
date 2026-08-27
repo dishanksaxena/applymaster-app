@@ -206,16 +206,16 @@ export async function POST(req: NextRequest) {
 
     // Get user data
     const [{ data: profile }, { data: prefs }] = await Promise.all([
-      supabase.from('profiles').select('*').eq('id', user.id).single(),
-      supabase.from('job_preferences').select('*').eq('user_id', user.id).single(),
+      supabase.from('profiles').select('*').eq('id', user.id).maybeSingle(),
+      supabase.from('job_preferences').select('*').eq('user_id', user.id).maybeSingle(),
     ])
 
     let parsedResume: any = null
     const { data: primaryResume } = await supabase
-      .from('resumes').select('id').eq('user_id', user.id).eq('is_primary', true).single()
+      .from('resumes').select('id').eq('user_id', user.id).eq('is_primary', true).maybeSingle()
     if (primaryResume) {
       const { data } = await supabase
-        .from('parsed_resumes').select('*').eq('resume_id', primaryResume.id).single()
+        .from('parsed_resumes').select('*').eq('resume_id', primaryResume.id).maybeSingle()
       parsedResume = data
     }
 
@@ -236,7 +236,7 @@ export async function POST(req: NextRequest) {
       // If tailored resume exists, use it
       if (tailored_resume_id) {
         const { data: tailored } = await supabase
-          .from('tailored_resumes').select('*').eq('id', tailored_resume_id).single()
+          .from('tailored_resumes').select('*').eq('id', tailored_resume_id).maybeSingle()
         if (tailored) {
           // Reconstruct tailored resume text by applying tailored bullets
           resumeText = buildTailoredResumeText(parsedResume, tailored)
@@ -318,7 +318,7 @@ Write a professional cover letter. Return only the letter text, no subject line.
       .select('id')
       .eq('user_id', user.id)
       .eq('job_id', job_id)
-      .single()
+      .maybeSingle()
 
     const appData = {
       user_id: user.id,
@@ -337,7 +337,7 @@ Write a professional cover letter. Return only the letter text, no subject line.
       await supabase.from('applications').update(appData).eq('id', existingApp.id)
     } else {
       const { data: inserted } = await supabase
-        .from('applications').insert(appData).select('id').single()
+        .from('applications').insert(appData).select('id').maybeSingle()
       applicationId = inserted?.id ?? null
     }
 

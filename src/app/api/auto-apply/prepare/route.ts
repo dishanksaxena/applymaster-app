@@ -35,8 +35,8 @@ export async function POST(req: NextRequest) {
 
     // Get user's profile + parsed resume
     const [{ data: profile }, { data: primaryResume }] = await Promise.all([
-      supabase.from('profiles').select('*').eq('id', user.id).single(),
-      supabase.from('resumes').select('id').eq('user_id', user.id).eq('is_primary', true).single(),
+      supabase.from('profiles').select('*').eq('id', user.id).maybeSingle(),
+      supabase.from('resumes').select('id').eq('user_id', user.id).eq('is_primary', true).maybeSingle(),
     ])
 
     let parsedResume = null
@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
         .from('parsed_resumes')
         .select('*')
         .eq('resume_id', primaryResume.id)
-        .single()
+        .maybeSingle()
       parsedResume = data
     }
 
@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
       .from('job_preferences')
       .select('*')
       .eq('user_id', user.id)
-      .single()
+      .maybeSingle()
 
     // Detect portal
     const portal = apply_url ? detectPortal(apply_url) : { type: 'direct', name: 'Company Website', estimatedSeconds: 120 }
@@ -162,7 +162,7 @@ Generate form answers as JSON (no markdown):
         applied_at: new Date().toISOString(),
       })
       .select('id')
-      .single()
+      .maybeSingle()
 
     // Create auto-apply task
     const { data: task } = await supabase
@@ -178,7 +178,7 @@ Generate form answers as JSON (no markdown):
         estimated_time_seconds: portal.estimatedSeconds,
       })
       .select('id')
-      .single()
+      .maybeSingle()
 
     return Response.json({
       success: true,

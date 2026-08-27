@@ -123,7 +123,7 @@ export default function JobsPage() {
 
       // Load God Mode setting
       const { data: prefs } = await supabase
-        .from('job_preferences').select('god_mode_enabled').eq('user_id', user.id).single()
+        .from('job_preferences').select('god_mode_enabled').eq('user_id', user.id).maybeSingle()
       if (prefs?.god_mode_enabled) setGodModeEnabled(true)
     }
     load()

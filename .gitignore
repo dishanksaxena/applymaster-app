@@ -11,7 +11,5 @@ next-env.d.ts
 .review-cred.json
 shoot.review.mjs
 .review-shots/
-verify.palette.mjs
+verify.*.mjs
 probe.mjs
-verify.receipt.mjs
-verify.referrals.mjs

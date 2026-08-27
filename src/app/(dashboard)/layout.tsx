@@ -172,7 +172,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           setLoading(false)
           return
         }
-        const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+        const { data } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle()
         if (data) {
           const profileData = data as Profile
           setProfile(profileData)

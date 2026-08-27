@@ -208,7 +208,7 @@ export async function POST(req: NextRequest) {
         parsed_data: parsed,
       })
       .select()
-      .single()
+      .maybeSingle()
 
     if (resumeError) {
       console.error('Resume DB error:', resumeError)

@@ -173,7 +173,7 @@ export default function OnboardingPage() {
         if (!user) return
 
         // Check if onboarding is already complete
-        const { data: profile } = await supabase.from('profiles').select('onboarding_complete, resume_name').eq('id', user.id).single()
+        const { data: profile } = await supabase.from('profiles').select('onboarding_complete, resume_name').eq('id', user.id).maybeSingle()
         if (profile?.onboarding_complete) {
           console.log('[onboarding] User already completed onboarding, redirecting to dashboard')
           router.push('/dashboard')
@@ -188,7 +188,7 @@ export default function OnboardingPage() {
         loadResumes()
 
         // Load job preferences
-        const { data: prefs } = await supabase.from('job_preferences').select('*').eq('user_id', user.id).single()
+        const { data: prefs } = await supabase.from('job_preferences').select('*').eq('user_id', user.id).maybeSingle()
         if (prefs) {
           if (prefs.target_roles?.length) setSelectedRoles(prefs.target_roles)
           if (prefs.min_salary) setMinSalary(prefs.min_salary)

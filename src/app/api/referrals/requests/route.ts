@@ -53,7 +53,7 @@ export async function PATCH(req: NextRequest) {
     .eq('id', id)
     .eq('user_id', user.id)
     .select('*, connection:network_connections(id, name, company, title, email, linkedin_url)')
-    .single()
+    .maybeSingle()
 
   if (error) return Response.json({ error: error.message }, { status: 500 })
 

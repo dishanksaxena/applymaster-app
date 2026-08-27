@@ -21,14 +21,14 @@ export async function POST(req: NextRequest) {
       .select('id')
       .eq('user_id', user.id)
       .eq('is_primary', true)
-      .single()
+      .maybeSingle()
 
     if (primary) {
       const { data: parsed } = await supabase
         .from('parsed_resumes')
         .select('full_name, skills, experience, summary')
         .eq('resume_id', primary.id)
-        .single()
+        .maybeSingle()
 
       if (parsed) {
         resumeContext = `
@@ -102,7 +102,7 @@ Make questions highly specific to this exact role and company. Avoid generic que
             feedback: [],
           })
           .select('id')
-          .single()
+          .maybeSingle()
         sessionId = session?.id
       } catch { /* table may not exist yet */ }
 
@@ -159,7 +159,7 @@ Return ONLY valid JSON:
             .select('answers, feedback')
             .eq('id', session_id)
             .eq('user_id', user.id)
-            .single()
+            .maybeSingle()
           if (session) {
             const answers = [...(session.answers || []), { question, answer, timestamp: new Date().toISOString() }]
             const feedbackArr = [...(session.feedback || []), feedback]

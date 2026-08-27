@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
   try {
     // Get primary resume
     const { data: resume, error: resumeErr } = await supabase
-      .from('resumes').select('*').eq('user_id', user.id).eq('is_primary', true).single()
+      .from('resumes').select('*').eq('user_id', user.id).eq('is_primary', true).maybeSingle()
 
     if (resumeErr || !resume) {
       return Response.json({ error: 'No primary resume found. Upload one first.' }, { status: 404 })

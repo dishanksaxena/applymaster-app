@@ -349,7 +349,7 @@ export default function DashboardPage() {
       if (!user) return
 
       const [{ data: profile }, { data: apps }, { data: resumes }, { data: logs }] = await Promise.all([
-        supabase.from('profiles').select('full_name').eq('id', user.id).single(),
+        supabase.from('profiles').select('full_name').eq('id', user.id).maybeSingle(),
         supabase.from('applications').select('status, match_score, created_at, applied_at').eq('user_id', user.id),
         supabase.from('resumes').select('id').eq('user_id', user.id).limit(1),
         supabase

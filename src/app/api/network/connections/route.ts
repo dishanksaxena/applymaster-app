@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
     .select(
       'id, name, company, title, relationship, email, linkedin_url, seniority, can_refer, last_contacted_at, notes, created_at'
     )
-    .single()
+    .maybeSingle()
 
   if (error) return Response.json({ error: error.message }, { status: 500 })
   return Response.json({ connection: data })
@@ -96,7 +96,7 @@ export async function PATCH(req: NextRequest) {
     .select(
       'id, name, company, title, relationship, email, linkedin_url, seniority, can_refer, last_contacted_at, notes, created_at'
     )
-    .single()
+    .maybeSingle()
 
   if (error) return Response.json({ error: error.message }, { status: 500 })
   return Response.json({ connection: data })

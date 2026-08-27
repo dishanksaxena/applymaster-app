@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
         .from('parsed_resumes')
         .select('*')
         .eq('resume_id', resume_id)
-        .single()
+        .maybeSingle()
       parsedResume = data
     } else {
       // Get primary resume
@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
         .select('id, parsed_data')
         .eq('user_id', user.id)
         .eq('is_primary', true)
-        .single()
+        .maybeSingle()
 
       if (primaryResume) {
         resumeRecordId = primaryResume.id
@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
           .from('parsed_resumes')
           .select('*')
           .eq('resume_id', primaryResume.id)
-          .single()
+          .maybeSingle()
         parsedResume = data
       }
     }

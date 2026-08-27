@@ -190,13 +190,13 @@ export async function POST(req: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   try {
-    let { data: prefs } = await supabase.from('job_preferences').select('*').eq('user_id', user.id).single()
+    let { data: prefs } = await supabase.from('job_preferences').select('*').eq('user_id', user.id).maybeSingle()
     if (!prefs) {
       const { data } = await supabase.from('job_preferences').insert([{
         user_id: user.id, match_threshold: 75, daily_apply_limit: 10,
         auto_apply_mode: 'copilot', target_roles: ['Software Engineer'],
         remote_preference: 'any', experience_level: 'mid',
-      }]).select().single()
+      }]).select().maybeSingle()
       prefs = data
     }
 
@@ -206,7 +206,7 @@ export async function POST(req: NextRequest) {
     const minScore = scoreThresholdMap[prefs.god_mode_score_threshold || 'B'] || 65
 
     // Plan limits
-    const { data: profile } = await supabase.from('profiles').select('plan').eq('id', user.id).single()
+    const { data: profile } = await supabase.from('profiles').select('plan').eq('id', user.id).maybeSingle()
     const isUnlimited = profile?.plan === 'lifetime' || profile?.plan === 'elite'
     const today = new Date(); today.setHours(0, 0, 0, 0)
     const { count: appsToday } = await supabase.from('applications').select('id', { count: 'exact', head: true }).eq('user_id', user.id).gte('created_at', today.toISOString())
@@ -216,10 +216,10 @@ export async function POST(req: NextRequest) {
     }
 
     // Load candidate data
-    const { data: userProfile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+    const { data: userProfile } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle()
     // Read parsed data from resumes.parsed_data (written by /api/resume/upload)
     const { data: primaryResume } = await supabase
-      .from('resumes').select('id, parsed_data, name').eq('user_id', user.id).eq('is_primary', true).single()
+      .from('resumes').select('id, parsed_data, name').eq('user_id', user.id).eq('is_primary', true).maybeSingle()
 
     let resumeData: any = null
     let rawResumeText = ''

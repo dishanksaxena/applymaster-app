@@ -89,7 +89,7 @@ export default function AutoApplyPage() {
       if (!user) return
 
       // Load preferences
-      const { data } = await supabase.from('job_preferences').select('*').eq('user_id', user.id).single()
+      const { data } = await supabase.from('job_preferences').select('*').eq('user_id', user.id).maybeSingle()
       if (data) {
         setMode(data.auto_apply_mode || 'off')
         setDailyLimit(data.daily_apply_limit || 10)

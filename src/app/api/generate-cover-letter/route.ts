@@ -27,14 +27,14 @@ export async function POST(req: NextRequest) {
       .select('id')
       .eq('user_id', user.id)
       .eq('is_primary', true)
-      .single()
+      .maybeSingle()
 
     if (primaryResume) {
       const { data: parsedResume } = await supabase
         .from('parsed_resumes')
         .select('*')
         .eq('resume_id', primaryResume.id)
-        .single()
+        .maybeSingle()
 
       if (parsedResume) {
         candidateName = parsedResume.full_name || 'the candidate'
@@ -104,7 +104,7 @@ REQUIREMENTS:
           company,
         })
         .select('id')
-        .single()
+        .maybeSingle()
 
       // If title column doesn't exist, try without it
       if (error && error.message?.includes('title')) {
@@ -119,7 +119,7 @@ REQUIREMENTS:
             company,
           })
           .select('id')
-          .single()
+          .maybeSingle()
         return Response.json({
           cover_letter: coverLetter,
           cover_letter_id: letter?.id || null,

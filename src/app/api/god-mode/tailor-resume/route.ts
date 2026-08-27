@@ -19,14 +19,14 @@ export async function POST(req: NextRequest) {
 
     // Get user's primary parsed resume
     const { data: primaryResume } = await supabase
-      .from('resumes').select('id').eq('user_id', user.id).eq('is_primary', true).single()
+      .from('resumes').select('id').eq('user_id', user.id).eq('is_primary', true).maybeSingle()
 
     if (!primaryResume) {
       return Response.json({ error: 'No primary resume found. Please upload your resume first.' }, { status: 404 })
     }
 
     const { data: parsedResume } = await supabase
-      .from('parsed_resumes').select('*').eq('resume_id', primaryResume.id).single()
+      .from('parsed_resumes').select('*').eq('resume_id', primaryResume.id).maybeSingle()
 
     if (!parsedResume) {
       return Response.json({ error: 'Resume not yet parsed. Please wait for parsing to complete.' }, { status: 404 })
@@ -99,7 +99,7 @@ Return ONLY valid JSON (no markdown):
         ats_score_after: tailored.ats_score_after || 0,
       })
       .select('id')
-      .single()
+      .maybeSingle()
 
     return Response.json({
       tailored_resume_id: tailoredRecord?.id,

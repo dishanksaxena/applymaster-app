@@ -37,11 +37,6 @@ const mockQuestions: Record<string, string[]> = {
   ],
 }
 
-const feedbackTemplates = [
-  { score: 8, strengths: ['Clear structure using STAR method', 'Specific metrics and outcomes', 'Good leadership demonstration'], improvements: ['Could elaborate on technical details', 'Mention team dynamics'], example: 'A stronger answer would start with the specific context, include metrics like "reduced deployment time by 40%", and conclude with what you learned.' },
-  { score: 7, strengths: ['Good problem-solving approach', 'Showed self-awareness', 'Connected to role requirements'], improvements: ['Add quantifiable results', 'Be more concise in opening'], example: 'Try: "In my role at [Company], I faced [specific challenge]. I took [specific action] which resulted in [measurable outcome]."' },
-  { score: 9, strengths: ['Excellent specific examples', 'Strong communication', 'Well-structured with clear takeaways'], improvements: ['Could mention alternative approaches considered'], example: 'This was strong. To make it perfect, briefly mention other approaches you considered and why you chose yours.' },
-]
 
 const container = { hidden: {}, show: { transition: { staggerChildren: 0.08 } } }
 const fadeUp = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] as const } } }
@@ -67,6 +62,7 @@ export default function InterviewCoachPage() {
   const [scores, setScores] = useState<number[]>([])
   const [questions, setQuestions] = useState<string[]>([])
   const [analyzing, setAnalyzing] = useState(false)
+  const [scoreError, setScoreError] = useState('')
   const [generatingQuestions, setGeneratingQuestions] = useState(false)
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [mounted, setMounted] = useState(false)
@@ -123,6 +119,7 @@ export default function InterviewCoachPage() {
   const submitAnswer = async () => {
     setTimerActive(false)
     setAnalyzing(true)
+    setScoreError('')
     try {
       const res = await fetch('/api/interview/prep', {
         method: 'POST',
@@ -133,10 +130,13 @@ export default function InterviewCoachPage() {
       const score = Math.round((data.score || 70) / 10)
       setFeedback({ score, strengths: data.strengths || [], improvements: data.improvements || [], example: data.better_answer || '' })
       setScores(prev => [...prev, score])
-    } catch {
-      const fb = feedbackTemplates[Math.floor(Math.random() * feedbackTemplates.length)]
-      setFeedback(fb)
-      setScores(prev => [...prev, fb.score])
+    } catch (err) {
+      /* This used to fall back to one of three canned reviews picked at
+         random and record its score as though it were real. A fabricated
+         score on your own interview answer is worse than no score: you would
+         act on it. Say the scoring failed instead. */
+      setScoreError(err instanceof Error ? err.message : 'Could not score that answer')
+      setFeedback(null)
     }
     setAnalyzing(false)
   }
@@ -301,6 +301,16 @@ export default function InterviewCoachPage() {
             {/* Answer */}
             {!feedback && !analyzing && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+                {scoreError && (
+                  <div role="alert" className="p-4 rounded-xl" style={{ background: 'var(--red-dim)' }}>
+                    <p className="text-[13px] font-semibold mb-0.5" style={{ color: 'var(--red)' }}>
+                      Could not score that answer
+                    </p>
+                    <p className="text-[12.5px] leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                      {scoreError}. Your answer is still in the box — press Submit to try again.
+                    </p>
+                  </div>
+                )}
                 <textarea value={answer} onChange={e => setAnswer(e.target.value)} rows={6} placeholder="Type your answer here..."
                   className="w-full px-5 py-4 rounded-2xl bg-[var(--bg-card)] border border-[var(--border)] text-ink text-[14px] leading-relaxed placeholder-[var(--text-faint)] focus:outline-none focus:border-[rgb(var(--purple-rgb)/0.3)] resize-none transition-all" />
                 <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }} onClick={submitAnswer} disabled={!answer.trim()}

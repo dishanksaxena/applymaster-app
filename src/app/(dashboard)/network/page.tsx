@@ -219,7 +219,7 @@ function AddConnection({ onAdded }: { onAdded: (c: Connection) => void }) {
 
   if (!open) {
     return (
-      <button
+      <button type="button"
         onClick={() => setOpen(true)}
         className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-[13px] font-semibold transition-colors"
         style={{
@@ -412,7 +412,7 @@ function DraftDialog({
               </p>
             </div>
           </div>
-          <button
+          <button type="button"
             ref={closeRef}
             onClick={onClose}
             aria-label="Close"
@@ -446,7 +446,7 @@ function DraftDialog({
           )}
 
           {!draft && (
-            <button
+            <button type="button"
               onClick={generate}
               disabled={loading || !connection.company}
               className="w-full mt-4 py-2.5 rounded-lg text-[13px] font-semibold disabled:opacity-50"
@@ -473,7 +473,7 @@ function DraftDialog({
               </div>
 
               <div className="flex flex-wrap gap-2 mt-3">
-                <button
+                <button type="button"
                   onClick={copy}
                   className="px-3.5 py-2 rounded-lg text-[12.5px] font-semibold"
                   style={{ background: 'var(--bg-overlay)', color: 'var(--text)' }}
@@ -502,7 +502,7 @@ function DraftDialog({
                     Open LinkedIn
                   </a>
                 )}
-                <button
+                <button type="button"
                   onClick={markSent}
                   className="px-3.5 py-2 rounded-lg text-[12.5px] font-semibold ml-auto"
                   style={{ background: 'var(--accent-solid)', color: 'var(--text-on-accent)' }}
@@ -664,7 +664,7 @@ export default function NetworkPage() {
         style={{ background: 'var(--bg-overlay)' }}
       >
         {TABS.map(t => (
-          <button
+          <button type="button"
             key={t.id}
             role="tab"
             aria-selected={tab === t.id}
@@ -788,7 +788,7 @@ export default function NetworkPage() {
                 const t = toneFor(name)
                 return (
                   <PremiumCard key={name} accent={t === 'accent' ? 'pink' : t} hover={false} animationDelay={i * 0.04}>
-                    <button
+                    <button type="button"
                       onClick={() => {
                         const q = `Who can refer me at ${name}?`
                         setQuery(q)
@@ -855,7 +855,7 @@ export default function NetworkPage() {
                       </div>
                       <div className="flex items-center gap-4 shrink-0">
                         <StrengthBar value={hit.score} t={t} />
-                        <button
+                        <button type="button"
                           onClick={() => setDrafting(hit.connection)}
                           className="px-3.5 py-2 rounded-lg text-[12.5px] font-semibold"
                           style={{ background: toneSurface(t, 0.14), color: tone(t) }}
@@ -922,7 +922,7 @@ export default function NetworkPage() {
                         </div>
                       </div>
                       <div className="flex flex-col gap-1.5 shrink-0">
-                        <button
+                        <button type="button"
                           onClick={() => setDrafting(c)}
                           disabled={!c.company}
                           className="px-2.5 py-1.5 rounded-lg text-[11.5px] font-semibold disabled:opacity-40"
@@ -930,7 +930,7 @@ export default function NetworkPage() {
                         >
                           Ask
                         </button>
-                        <button
+                        <button type="button"
                           onClick={() => removeConnection(c.id)}
                           aria-label={`Remove ${c.name}`}
                           className="px-2.5 py-1.5 rounded-lg text-[11.5px]"
@@ -995,7 +995,7 @@ export default function NetworkPage() {
                       </div>
                       <div className="flex gap-1.5 shrink-0">
                         {r.status !== 'sent' && r.status !== 'accepted' && r.status !== 'declined' && (
-                          <button
+                          <button type="button"
                             onClick={() => setRequestStatus(r.id, 'sent')}
                             className="px-2.5 py-1.5 rounded-lg text-[11.5px] font-semibold"
                             style={{ background: toneSurface('yellow', 0.14), color: tone('yellow') }}
@@ -1005,14 +1005,14 @@ export default function NetworkPage() {
                         )}
                         {r.status === 'sent' && (
                           <>
-                            <button
+                            <button type="button"
                               onClick={() => setRequestStatus(r.id, 'accepted')}
                               className="px-2.5 py-1.5 rounded-lg text-[11.5px] font-semibold"
                               style={{ background: toneSurface('green', 0.14), color: tone('green') }}
                             >
                               They said yes
                             </button>
-                            <button
+                            <button type="button"
                               onClick={() => setRequestStatus(r.id, 'no_response')}
                               className="px-2.5 py-1.5 rounded-lg text-[11.5px] font-semibold"
                               style={{ background: 'var(--bg-overlay)', color: 'var(--text-muted)' }}

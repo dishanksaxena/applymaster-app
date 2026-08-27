@@ -106,7 +106,7 @@ export async function POST(req: NextRequest) {
     }
 
     const { data: profile } = await supabase
-      .from('profiles').select('full_name').eq('id', user.id).single()
+      .from('profiles').select('full_name').eq('id', user.id).maybeSingle()
     const userName = profile?.full_name || 'I'
 
     // Draft one ask per path. Kept short deliberately: long referral requests
