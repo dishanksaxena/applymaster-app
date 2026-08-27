@@ -510,3 +510,40 @@ body {
   50%      { transform: translateY(-6px); }
 }
 .am-drift { animation: am-drift 7s ease-in-out infinite; }
+
+/* ==============================================================
+   DISABLED CONTROLS
+
+   Every disabled button in the app was styled by halving the
+   opacity of its enabled state. On a solid accent fill carrying
+   white text that fades both together: the text-to-fill ratio is
+   preserved, so it passes a contrast check, while the control as a
+   whole washes out against the page and reads as broken rather
+   than unavailable. /jobs shipped a white-on-pale-pink "Search
+   Jobs" that looked like a rendering fault.
+
+   A disabled control needs a different treatment, not a faded one:
+   a neutral fill with muted text. !important is deliberate here —
+   most of these set their fill through an inline style, which no
+   class can otherwise beat.
+
+   Opt out with .keep-disabled-face where a control genuinely needs
+   to hold its own colours while disabled.
+   ============================================================== */
+
+button:disabled:not(.keep-disabled-face),
+[role='button'][aria-disabled='true']:not(.keep-disabled-face) {
+  background: var(--bg-overlay) !important;
+  background-image: none !important;
+  color: var(--text-faint) !important;
+  box-shadow: none !important;
+  opacity: 1 !important;
+  cursor: not-allowed;
+}
+
+/* A control mid-request is running, not unavailable — it keeps its face. */
+button[aria-busy='true']:disabled:not(.keep-disabled-face) {
+  background: var(--accent-solid) !important;
+  color: var(--text-on-accent) !important;
+  cursor: progress;
+}
