@@ -17,7 +17,7 @@ function Particles() {
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
       {particles.map(p => (
         <motion.div key={p.id} className="absolute rounded-full"
-          style={{ left: `${p.x}%`, top: `${p.y}%`, width: p.size, height: p.size, background: `rgba(253,121,168,${p.opacity})` }}
+          style={{ left: `${p.x}%`, top: `${p.y}%`, width: p.size, height: p.size, background: `rgb(var(--accent-rgb) / ${p.opacity})` }}
           animate={{ y: [0, -30, 10, -20, 0], x: [0, 15, -10, 20, 0], opacity: [p.opacity, p.opacity * 2, p.opacity * 0.5, p.opacity * 1.5, p.opacity] }}
           transition={{ duration: p.duration, repeat: Infinity, ease: 'linear', delay: p.delay }} />
       ))}
@@ -38,15 +38,15 @@ function GlowCard({ children, className = '' }: { children: React.ReactNode; cla
     <div className={`relative group ${className}`} onMouseMove={handleMouseMove}>
       <div className="absolute -inset-[1px] rounded-[28px] overflow-hidden">
         <motion.div className="absolute inset-0" animate={{ rotate: 360 }} transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
-          style={{ background: 'conic-gradient(from 0deg, transparent 0%, rgba(253,121,168,0.4) 10%, transparent 20%, rgba(162,155,254,0.3) 30%, transparent 40%, rgba(116,185,255,0.3) 50%, transparent 60%, rgba(253,121,168,0.4) 70%, transparent 80%, rgba(253,203,94,0.2) 90%, transparent 100%)' }} />
+          style={{ background: 'conic-gradient(from 0deg, transparent 0%, rgb(var(--accent-rgb) / 0.4) 10%, transparent 20%, rgb(var(--purple-rgb) / 0.3) 30%, transparent 40%, rgb(var(--blue-rgb) / 0.3) 50%, transparent 60%, rgb(var(--accent-rgb) / 0.4) 70%, transparent 80%, rgba(253,203,94,0.2) 90%, transparent 100%)' }} />
       </div>
-      <div className="relative rounded-[27px] overflow-hidden" style={{ background: 'linear-gradient(170deg, #111120 0%, #0a0a15 50%, #0d0d1a 100%)' }}>
+      <div className="relative rounded-[27px] overflow-hidden" style={{ background: 'linear-gradient(170deg, var(--bg-card) 0%, var(--bg) 50%, var(--bg) 100%)' }}>
         <motion.div className="absolute w-[400px] h-[400px] rounded-full pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-          style={{ left: spotlightX, top: spotlightY, x: '-50%', y: '-50%', background: 'radial-gradient(circle, rgba(253,121,168,0.06) 0%, transparent 60%)' }} />
+          style={{ left: spotlightX, top: spotlightY, x: '-50%', y: '-50%', background: 'radial-gradient(circle, rgb(var(--accent-rgb) / calc(0.06 * var(--tint-scale))) 0%, transparent 60%)' }} />
         <motion.div className="absolute top-0 left-0 right-0 h-[1px]"
           animate={{ backgroundPosition: ['200% 0', '-200% 0'] }}
           transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
-          style={{ backgroundImage: 'linear-gradient(90deg, transparent, rgba(253,121,168,0.5), rgba(162,155,254,0.5), transparent)', backgroundSize: '200% 100%' }} />
+          style={{ backgroundImage: 'linear-gradient(90deg, transparent, rgb(var(--accent-rgb) / 0.5), rgb(var(--purple-rgb) / 0.5), transparent)', backgroundSize: '200% 100%' }} />
         <div className="relative z-10">{children}</div>
       </div>
     </div>
@@ -65,14 +65,14 @@ function MagneticButton({ children, onClick, disabled = false, variant = 'primar
       className={`relative overflow-hidden font-bold text-[13px] tracking-wide transition-all disabled:opacity-40 disabled:pointer-events-none ${className}`}>
       {variant === 'primary' ? (
         <>
-          <motion.div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, #fd79a8, #e84393, #d63384)' }} />
+          <motion.div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, var(--accent), var(--accent-solid), var(--accent-solid))' }} />
           <motion.div className="absolute inset-0 opacity-0 hover:opacity-100 transition-opacity" animate={{ backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'] }}
-            transition={{ duration: 3, repeat: Infinity }} style={{ backgroundImage: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent)', backgroundSize: '200% 100%' }} />
+            transition={{ duration: 3, repeat: Infinity }} style={{ backgroundImage: 'linear-gradient(90deg, transparent, var(--bg-overlay), transparent)', backgroundSize: '200% 100%' }} />
         </>
       ) : (
-        <div className="absolute inset-0" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }} />
+        <div className="absolute inset-0" style={{ background: 'var(--bg-overlay)', border: '1px solid var(--border)' }} />
       )}
-      <span className={`relative z-10 flex items-center justify-center gap-2 ${variant === 'primary' ? 'text-white' : 'text-[#8a8a9a]'}`}>{children}</span>
+      <span className={`relative z-10 flex items-center justify-center gap-2 ${variant === 'primary' ? 'text-ink' : 'text-[var(--text-muted)]'}`}>{children}</span>
     </motion.button>
   )
 }
@@ -173,7 +173,7 @@ export default function OnboardingPage() {
         if (!user) return
 
         // Check if onboarding is already complete
-        const { data: profile } = await supabase.from('profiles').select('onboarding_complete, resume_name').eq('id', user.id).single()
+        const { data: profile } = await supabase.from('profiles').select('onboarding_complete, resume_name').eq('id', user.id).maybeSingle()
         if (profile?.onboarding_complete) {
           console.log('[onboarding] User already completed onboarding, redirecting to dashboard')
           router.push('/dashboard')
@@ -188,7 +188,7 @@ export default function OnboardingPage() {
         loadResumes()
 
         // Load job preferences
-        const { data: prefs } = await supabase.from('job_preferences').select('*').eq('user_id', user.id).single()
+        const { data: prefs } = await supabase.from('job_preferences').select('*').eq('user_id', user.id).maybeSingle()
         if (prefs) {
           if (prefs.target_roles?.length) setSelectedRoles(prefs.target_roles)
           if (prefs.min_salary) setMinSalary(prefs.min_salary)
@@ -643,7 +643,7 @@ export default function OnboardingPage() {
   if (!mounted) return null
 
   return (
-    <div className="min-h-screen bg-[#050510] flex items-center justify-center relative overflow-hidden py-10 px-4">
+    <div className="min-h-screen bg-[var(--bg)] flex items-center justify-center relative overflow-hidden py-10 px-4">
       {/* Full-screen overlay — shown when completing if resume was uploaded */}
       <ResumeAnalysisOverlay
         isVisible={completing && resumeFile !== null}
@@ -658,31 +658,31 @@ export default function OnboardingPage() {
       `}</style>
 
       <div className="absolute inset-0">
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(-45deg, rgba(253,121,168,0.08), rgba(10,10,20,1), rgba(162,155,254,0.06), rgba(10,10,20,1), rgba(116,185,255,0.05))', backgroundSize: '400% 400%', animation: 'mesh-shift 20s ease infinite' }} />
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(-45deg, rgb(var(--accent-rgb) / calc(0.08 * var(--tint-scale))), var(--bg-card), rgb(var(--purple-rgb) / calc(0.06 * var(--tint-scale))), var(--bg-card), rgb(var(--blue-rgb) / calc(0.05 * var(--tint-scale))))', backgroundSize: '400% 400%', animation: 'mesh-shift 20s ease infinite' }} />
       </div>
 
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-40%] right-[-20%] w-[800px] h-[800px] rounded-full opacity-[0.04]" style={{ background: 'radial-gradient(circle, #fd79a8, transparent 60%)', animation: 'aurora 25s ease-in-out infinite' }} />
+        <div className="absolute top-[-40%] right-[-20%] w-[800px] h-[800px] rounded-full opacity-[0.04]" style={{ background: 'radial-gradient(circle, var(--accent), transparent 60%)', animation: 'aurora 25s ease-in-out infinite' }} />
       </div>
 
       <Particles />
-      <div className="absolute inset-0 opacity-[0.02]" style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,1) 1px, transparent 1px)', backgroundSize: '80px 80px' }} />
+      <div className="absolute inset-0 opacity-[0.02]" style={{ backgroundImage: 'linear-gradient(var(--bg-overlay) 1px, transparent 1px), linear-gradient(90deg, var(--bg-overlay) 1px, transparent 1px)', backgroundSize: '80px 80px' }} />
 
       <div className="relative z-10 w-full max-w-[650px]">
         <motion.div className="flex items-center justify-center gap-3 mb-10" initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.2 }}>
-          <div className="w-10 h-10 rounded-2xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #fd79a8, #e84393)' }}>
+          <div className="w-10 h-10 rounded-2xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, var(--accent), var(--accent-solid))' }}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><polygon points="13,2 3,14 12,14 11,22 21,10 12,10" /></svg>
           </div>
-          <span className="text-[18px] font-black tracking-tight text-white">ApplyMaster</span>
+          <span className="text-[18px] font-black tracking-tight text-ink">ApplyMaster</span>
         </motion.div>
 
         <motion.div className="flex items-center justify-center mb-10 gap-1" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.3 }}>
           {stepLabels.map((label, i) => (
             <div key={label} className="flex items-center gap-1">
-              <div className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold" style={i < step ? { background: 'linear-gradient(135deg, #fd79a8, #e84393)' } : i === step ? { background: 'rgba(253,121,168,0.2)', border: '1px solid rgba(253,121,168,0.4)', color: '#fd79a8' } : { background: 'rgba(255,255,255,0.05)', color: '#3a3a4a' }}>
+              <div className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold" style={i < step ? { background: 'linear-gradient(135deg, var(--accent), var(--accent-solid))' } : i === step ? { background: 'rgb(var(--accent-rgb) / calc(0.2 * var(--tint-scale)))', border: '1px solid rgb(var(--accent-rgb) / 0.4)', color: 'var(--accent)' } : { background: 'var(--bg-overlay)', color: 'var(--text-faint)' }}>
                 {i < step ? '✓' : i + 1}
               </div>
-              {i < 4 && <div className="w-6 h-px" style={{ background: i < step ? 'linear-gradient(90deg, #fd79a8, #e84393)' : 'rgba(255,255,255,0.1)' }} />}
+              {i < 4 && <div className="w-6 h-px" style={{ background: i < step ? 'linear-gradient(90deg, var(--accent), var(--accent-solid))' : 'var(--bg-overlay)' }} />}
             </div>
           ))}
         </motion.div>
@@ -690,9 +690,9 @@ export default function OnboardingPage() {
         {/* Small floating badge while resume processes in background (steps 1-4) */}
         {resumeProcessing && !completing && (
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-center gap-2 mb-3 px-4 py-2 rounded-full text-[11px] font-medium mx-auto w-fit"
-            style={{ background: 'rgba(253,121,168,0.1)', border: '1px solid rgba(253,121,168,0.2)' }}>
-            <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }} className="w-3 h-3 border-[1.5px] border-[#fd79a8] border-t-transparent rounded-full" />
-            <span className="text-[#fd79a8]">
+            style={{ background: 'rgb(var(--accent-rgb) / calc(0.1 * var(--tint-scale)))', border: '1px solid rgb(var(--accent-rgb) / calc(0.2 * var(--tint-scale)))' }}>
+            <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }} className="w-3 h-3 border-[1.5px] border-[var(--accent)] border-t-transparent rounded-full" />
+            <span className="text-[var(--accent)]">
               {overlayStep === 'done' ? '✓ Resume analyzed' : overlayError ? '⚠ Resume error' : 'AI analyzing resume...'}
             </span>
           </motion.div>
@@ -707,30 +707,30 @@ export default function OnboardingPage() {
                 {step === 0 && (
                   <motion.div key="step-0" custom={direction} variants={slideVariants} initial="enter" animate="center" exit="exit" className="space-y-6">
                     <div>
-                      <h2 className="text-2xl font-black text-white mb-2">Upload Your Resume</h2>
-                      <p className="text-[13px] text-[#8a8a9a]">We'll analyze your experience to find better matches (up to 5 resumes)</p>
+                      <h2 className="font-display text-[1.6rem] mb-2">Upload Your Resume</h2>
+                      <p className="text-[13px] text-[var(--text-muted)]">We'll analyze your experience to find better matches (up to 5 resumes)</p>
                     </div>
 
                     {/* Resume List */}
                     {resumes.length > 0 && (
                       <div className="space-y-2">
-                        <label className="block text-[12px] font-bold text-[#fd79a8]">YOUR RESUMES ({resumes.length}/5)</label>
+                        <label className="block text-[12px] font-bold text-[var(--accent)]">YOUR RESUMES ({resumes.length}/5)</label>
                         <div className="space-y-2">
                           {resumes.map(resume => (
-                            <div key={resume.id} className="flex items-center justify-between p-3 rounded-lg bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)]">
+                            <div key={resume.id} className="flex items-center justify-between p-3 rounded-lg bg-[var(--bg-overlay)] border border-[var(--border)]">
                               <div className="flex-1">
-                                <p className="text-[12px] text-white font-medium">{resume.name}</p>
-                                <p className="text-[11px] text-[#5a5a6a]">{new Date(resume.created_at).toLocaleDateString()}</p>
+                                <p className="text-[12px] text-ink font-medium">{resume.name}</p>
+                                <p className="text-[11px] text-[var(--text-faint)]">{new Date(resume.created_at).toLocaleDateString()}</p>
                               </div>
                               <div className="flex items-center gap-2">
                                 {resume.is_primary ? (
-                                  <span className="text-[10px] px-2 py-1 rounded bg-[rgba(253,121,168,0.2)] text-[#fd79a8] font-semibold">PRIMARY</span>
+                                  <span className="text-[10px] px-2 py-1 rounded bg-[rgb(var(--accent-rgb)/0.2)] text-[var(--accent)] font-semibold">PRIMARY</span>
                                 ) : (
-                                  <button onClick={() => setResumePrimary(resume.id)} className="text-[10px] px-2 py-1 rounded bg-[rgba(255,255,255,0.04)] text-[#8a8a9a] hover:bg-[rgba(255,255,255,0.08)] transition-all">
+                                  <button onClick={() => setResumePrimary(resume.id)} className="text-[10px] px-2 py-1 rounded bg-[var(--bg-overlay)] text-[var(--text-muted)] hover:bg-[var(--bg-overlay)] transition-all">
                                     Set Primary
                                   </button>
                                 )}
-                                <button onClick={() => deleteResume(resume.id)} className="text-[10px] px-2 py-1 rounded bg-[rgba(255,0,0,0.1)] text-[#ff6b6b] hover:bg-[rgba(255,0,0,0.2)] transition-all">
+                                <button onClick={() => deleteResume(resume.id)} className="text-[10px] px-2 py-1 rounded bg-[rgba(255,0,0,0.1)] text-[var(--red)] hover:bg-[rgba(255,0,0,0.2)] transition-all">
                                   Delete
                                 </button>
                               </div>
@@ -746,24 +746,24 @@ export default function OnboardingPage() {
                         <div onDrop={onDrop} onDragOver={e => { e.preventDefault(); setDragging(true) }} onDragLeave={() => setDragging(false)}
                           onClick={() => fileRef.current?.click()}
                           className="border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer select-none"
-                          style={{ borderColor: dragging ? 'rgba(253,121,168,0.5)' : 'rgba(255,255,255,0.1)', background: dragging ? 'rgba(253,121,168,0.05)' : 'rgba(255,255,255,0.01)' }}>
-                          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="mx-auto mb-3 text-[#fd79a8]">
+                          style={{ borderColor: dragging ? 'rgb(var(--accent-rgb) / 0.5)' : 'var(--bg-overlay)', background: dragging ? 'rgb(var(--accent-rgb) / calc(0.05 * var(--tint-scale)))' : 'var(--bg-overlay)' }}>
+                          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="mx-auto mb-3 text-[var(--accent)]">
                             <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" />
                           </svg>
-                          <p className="text-white font-semibold mb-1">Drag & drop your resume</p>
-                          <p className="text-[12px] text-[#5a5a6a] mb-3">PDF, DOCX, or TXT</p>
+                          <p className="text-ink font-semibold mb-1">Drag & drop your resume</p>
+                          <p className="text-[12px] text-[var(--text-faint)] mb-3">PDF, DOCX, or TXT</p>
                           <input type="file" ref={fileRef} onChange={e => e.target.files && setResumeFile(e.target.files[0])} className="hidden" accept=".pdf,.docx,.txt" onClick={e => e.stopPropagation()} />
-                          <span className="text-[12px] px-3 py-1.5 rounded-lg bg-[rgba(253,121,168,0.1)] text-[#fd79a8] pointer-events-none inline-block">
+                          <span className="text-[12px] px-3 py-1.5 rounded-lg bg-[rgb(var(--accent-rgb)/0.1)] text-[var(--accent)] pointer-events-none inline-block">
                             Or browse
                           </span>
                         </div>
-                        {resumeFile && <p className="text-[12px] text-[#00b894]">✓ {resumeFile.name} selected (new)</p>}
-                        {!resumeFile && loadedResumeName && resumes.length === 0 && <p className="text-[12px] text-[#00b894]">✓ {loadedResumeName} (uploaded)</p>}
+                        {resumeFile && <p className="text-[12px] text-[var(--green)]">✓ {resumeFile.name} selected (new)</p>}
+                        {!resumeFile && loadedResumeName && resumes.length === 0 && <p className="text-[12px] text-[var(--green)]">✓ {loadedResumeName} (uploaded)</p>}
                       </>
                     ) : (
                       <div className="p-4 rounded-lg bg-[rgba(255,0,0,0.1)] border border-[rgba(255,0,0,0.2)]">
-                        <p className="text-[12px] text-[#ff6b6b] font-semibold">⚠️ Resume limit reached (5/5)</p>
-                        <p className="text-[11px] text-[#ff6b6b] mt-1">Delete a resume to upload another</p>
+                        <p className="text-[12px] text-[var(--red)] font-semibold">⚠️ Resume limit reached (5/5)</p>
+                        <p className="text-[11px] text-[var(--red)] mt-1">Delete a resume to upload another</p>
                       </div>
                     )}
                     <div className="flex gap-3 pt-4">
@@ -779,31 +779,31 @@ export default function OnboardingPage() {
                 {step === 1 && (
                   <motion.div key="step-1" custom={direction} variants={slideVariants} initial="enter" animate="center" exit="exit" className="space-y-6">
                     <div>
-                      <h2 className="text-2xl font-black text-white mb-2">Job Preferences</h2>
-                      <p className="text-[13px] text-[#8a8a9a]">What are you looking for?</p>
+                      <h2 className="font-display text-[1.6rem] mb-2">Job Preferences</h2>
+                      <p className="text-[13px] text-[var(--text-muted)]">What are you looking for?</p>
                     </div>
 
                     {/* Target Roles */}
                     <div>
-                      <label className="block text-[12px] font-bold text-[#fd79a8] mb-3">TARGET ROLES (Select up to 5) *</label>
+                      <label className="block text-[12px] font-bold text-[var(--accent)] mb-3">TARGET ROLES (Select up to 5) *</label>
                       <div className="grid grid-cols-2 gap-2">
                         {ROLES.map(role => (
                           <button key={role} onClick={() => toggleChip(selectedRoles, setSelectedRoles, role, 5)}
-                            className={`px-3 py-2 rounded-lg text-[12px] font-medium transition-all ${selectedRoles.includes(role) ? 'bg-[rgba(253,121,168,0.15)] text-[#fd79a8] border border-[rgba(253,121,168,0.3)]' : 'bg-[rgba(255,255,255,0.04)] text-[#8a8a9a] hover:bg-[rgba(255,255,255,0.08)]'}`}>
+                            className={`px-3 py-2 rounded-lg text-[12px] font-medium transition-all ${selectedRoles.includes(role) ? 'bg-[rgb(var(--accent-rgb)/0.15)] text-[var(--accent)] border border-[rgb(var(--accent-rgb)/0.3)]' : 'bg-[var(--bg-overlay)] text-[var(--text-muted)] hover:bg-[var(--bg-overlay)]'}`}>
                             {role}
                           </button>
                         ))}
                       </div>
-                      {selectedRoles.length === 0 && <p className="text-[11px] text-[#ff6b6b] mt-2">❌ Required</p>}
+                      {selectedRoles.length === 0 && <p className="text-[11px] text-[var(--red)] mt-2">❌ Required</p>}
                     </div>
 
                     {/* Experience Level */}
                     <div>
-                      <label className="block text-[12px] font-bold text-[#fd79a8] mb-3">EXPERIENCE LEVEL *</label>
+                      <label className="block text-[12px] font-bold text-[var(--accent)] mb-3">EXPERIENCE LEVEL *</label>
                       <div className="grid grid-cols-3 gap-2">
                         {['entry', 'mid', 'senior', 'lead', 'executive'].map(level => (
                           <button key={level} onClick={() => setExperienceLevel(level)}
-                            className={`px-3 py-2 rounded-lg text-[12px] font-medium transition-all ${experienceLevel === level ? 'bg-gradient-to-r from-[#fd79a8] to-[#e84393] text-white' : 'bg-[rgba(255,255,255,0.04)] text-[#8a8a9a] hover:bg-[rgba(255,255,255,0.08)]'}`}>
+                            className={`px-3 py-2 rounded-lg text-[12px] font-medium transition-all ${experienceLevel === level ? 'bg-gradient-to-r from-[var(--accent)] to-[var(--accent-solid)] text-ink' : 'bg-[var(--bg-overlay)] text-[var(--text-muted)] hover:bg-[var(--bg-overlay)]'}`}>
                             {level.charAt(0).toUpperCase() + level.slice(1)}
                           </button>
                         ))}
@@ -812,28 +812,28 @@ export default function OnboardingPage() {
 
                     {/* Salary Range */}
                     <div>
-                      <label className="block text-[12px] font-bold text-[#fd79a8] mb-3">ANNUAL SALARY RANGE *</label>
+                      <label className="block text-[12px] font-bold text-[var(--accent)] mb-3">ANNUAL SALARY RANGE *</label>
                       <div className="space-y-3">
-                        <div className="flex justify-between text-[12px] text-[#8a8a9a] font-semibold">
+                        <div className="flex justify-between text-[12px] text-[var(--text-muted)] font-semibold">
                           <span>Min: ${(minSalary / 1000).toFixed(0)}k</span>
                           <span>Max: ${(maxSalary / 1000).toFixed(0)}k</span>
                         </div>
                         <input type="range" min="30000" max="500000" step="5000" value={minSalary}
                           onChange={e => setMinSalary(Math.min(parseInt(e.target.value), maxSalary - 5000))}
-                          className="w-full h-2 bg-[rgba(253,121,168,0.3)] rounded-lg appearance-none cursor-pointer accent-[#fd79a8]" />
+                          className="w-full h-2 bg-[rgb(var(--accent-rgb)/0.3)] rounded-lg appearance-none cursor-pointer accent-[var(--accent)]" />
                         <input type="range" min="30000" max="500000" step="5000" value={maxSalary}
                           onChange={e => setMaxSalary(Math.max(parseInt(e.target.value), minSalary + 5000))}
-                          className="w-full h-2 bg-[rgba(253,121,168,0.3)] rounded-lg appearance-none cursor-pointer accent-[#fd79a8]" />
+                          className="w-full h-2 bg-[rgb(var(--accent-rgb)/0.3)] rounded-lg appearance-none cursor-pointer accent-[var(--accent)]" />
                       </div>
                     </div>
 
                     {/* Remote Preference */}
                     <div>
-                      <label className="block text-[12px] font-bold text-[#fd79a8] mb-3">REMOTE PREFERENCE *</label>
+                      <label className="block text-[12px] font-bold text-[var(--accent)] mb-3">REMOTE PREFERENCE *</label>
                       <div className="grid grid-cols-2 gap-2">
                         {['remote', 'hybrid', 'onsite', 'any'].map(pref => (
                           <button key={pref} onClick={() => setRemotePreference(pref)}
-                            className={`px-3 py-2 rounded-lg text-[12px] font-medium transition-all ${remotePreference === pref ? 'bg-gradient-to-r from-[#fd79a8] to-[#e84393] text-white' : 'bg-[rgba(255,255,255,0.04)] text-[#8a8a9a] hover:bg-[rgba(255,255,255,0.08)]'}`}>
+                            className={`px-3 py-2 rounded-lg text-[12px] font-medium transition-all ${remotePreference === pref ? 'bg-gradient-to-r from-[var(--accent)] to-[var(--accent-solid)] text-ink' : 'bg-[var(--bg-overlay)] text-[var(--text-muted)] hover:bg-[var(--bg-overlay)]'}`}>
                             {pref.charAt(0).toUpperCase() + pref.slice(1)}
                           </button>
                         ))}
@@ -842,11 +842,11 @@ export default function OnboardingPage() {
 
                     {/* Work Type */}
                     <div>
-                      <label className="block text-[12px] font-bold text-[#fd79a8] mb-3">WORK TYPE *</label>
+                      <label className="block text-[12px] font-bold text-[var(--accent)] mb-3">WORK TYPE *</label>
                       <div className="grid grid-cols-2 gap-2">
                         {JOB_TYPES.map(type => (
                           <button key={type} onClick={() => setWorkType(type)}
-                            className={`px-3 py-2 rounded-lg text-[12px] font-medium transition-all ${workType === type ? 'bg-gradient-to-r from-[#fd79a8] to-[#e84393] text-white' : 'bg-[rgba(255,255,255,0.04)] text-[#8a8a9a] hover:bg-[rgba(255,255,255,0.08)]'}`}>
+                            className={`px-3 py-2 rounded-lg text-[12px] font-medium transition-all ${workType === type ? 'bg-gradient-to-r from-[var(--accent)] to-[var(--accent-solid)] text-ink' : 'bg-[var(--bg-overlay)] text-[var(--text-muted)] hover:bg-[var(--bg-overlay)]'}`}>
                             {type}
                           </button>
                         ))}
@@ -866,58 +866,58 @@ export default function OnboardingPage() {
                 {step === 2 && (
                   <motion.div key="step-2" custom={direction} variants={slideVariants} initial="enter" animate="center" exit="exit" className="space-y-6">
                     <div>
-                      <h2 className="text-2xl font-black text-white mb-2">Career Details</h2>
-                      <p className="text-[13px] text-[#8a8a9a]">Help us understand your situation</p>
+                      <h2 className="font-display text-[1.6rem] mb-2">Career Details</h2>
+                      <p className="text-[13px] text-[var(--text-muted)]">Help us understand your situation</p>
                     </div>
 
                     {/* Employment Status */}
                     <div>
-                      <label className="block text-[12px] font-bold text-[#fd79a8] mb-2">EMPLOYMENT STATUS *</label>
+                      <label className="block text-[12px] font-bold text-[var(--accent)] mb-2">EMPLOYMENT STATUS *</label>
                       <select value={employmentStatus} onChange={e => setEmploymentStatus(e.target.value)}
-                        className="w-full px-4 py-2.5 rounded-lg border border-[rgba(255,255,255,0.08)] text-white text-[13px] focus:border-[rgba(253,121,168,0.3)] focus:outline-none transition-all cursor-pointer"
-                        style={{ background: '#13131f' }}>
-                        {EMPLOYMENT.map(e => <option key={e} value={e} style={{ background: '#13131f', color: 'white' }}>{e}</option>)}
+                        className="w-full px-4 py-2.5 rounded-lg border border-[var(--border)] text-ink text-[13px] focus:border-[rgb(var(--accent-rgb)/0.3)] focus:outline-none transition-all cursor-pointer"
+                        style={{ background: 'var(--bg-card)' }}>
+                        {EMPLOYMENT.map(e => <option key={e} value={e} style={{ background: 'var(--bg-card)', color: 'white' }}>{e}</option>)}
                       </select>
                     </div>
 
                     {/* Work Authorization */}
                     <div>
-                      <label className="block text-[12px] font-bold text-[#fd79a8] mb-2">WORK AUTHORIZATION *</label>
+                      <label className="block text-[12px] font-bold text-[var(--accent)] mb-2">WORK AUTHORIZATION *</label>
                       <select value={workAuth} onChange={e => setWorkAuth(e.target.value)}
-                        className="w-full px-4 py-2.5 rounded-lg border border-[rgba(255,255,255,0.08)] text-white text-[13px] focus:border-[rgba(253,121,168,0.3)] focus:outline-none transition-all cursor-pointer"
-                        style={{ background: '#13131f' }}>
-                        {WORK_AUTH.map(auth => <option key={auth} value={auth} style={{ background: '#13131f', color: 'white' }}>{auth}</option>)}
+                        className="w-full px-4 py-2.5 rounded-lg border border-[var(--border)] text-ink text-[13px] focus:border-[rgb(var(--accent-rgb)/0.3)] focus:outline-none transition-all cursor-pointer"
+                        style={{ background: 'var(--bg-card)' }}>
+                        {WORK_AUTH.map(auth => <option key={auth} value={auth} style={{ background: 'var(--bg-card)', color: 'white' }}>{auth}</option>)}
                       </select>
                     </div>
 
                     {/* Desired Job Title */}
                     <div>
-                      <label className="block text-[12px] font-bold text-[#fd79a8] mb-2">DESIRED JOB TITLE *</label>
+                      <label className="block text-[12px] font-bold text-[var(--accent)] mb-2">DESIRED JOB TITLE *</label>
                       <input type="text" value={desiredJobTitle} onChange={e => setDesiredJobTitle(e.target.value)} placeholder="e.g., Senior Software Engineer"
-                        className="w-full px-4 py-2.5 rounded-lg bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] text-white placeholder-[#3a3a4a] text-[13px] focus:border-[rgba(253,121,168,0.3)] focus:outline-none transition-all" />
-                      {desiredJobTitle.trim().length === 0 && <p className="text-[11px] text-[#ff6b6b] mt-1">❌ Required</p>}
+                        className="w-full px-4 py-2.5 rounded-lg bg-[var(--bg-overlay)] border border-[var(--border)] text-ink placeholder-[var(--text-faint)] text-[13px] focus:border-[rgb(var(--accent-rgb)/0.3)] focus:outline-none transition-all" />
+                      {desiredJobTitle.trim().length === 0 && <p className="text-[11px] text-[var(--red)] mt-1">❌ Required</p>}
                     </div>
 
                     {/* Start Date */}
                     <div>
-                      <label className="block text-[12px] font-bold text-[#fd79a8] mb-2">WHEN CAN YOU START? *</label>
+                      <label className="block text-[12px] font-bold text-[var(--accent)] mb-2">WHEN CAN YOU START? *</label>
                       <select value={availableStartDate} onChange={e => setAvailableStartDate(e.target.value)}
-                        className="w-full px-4 py-2.5 rounded-lg border border-[rgba(255,255,255,0.08)] text-white text-[13px] focus:border-[rgba(253,121,168,0.3)] focus:outline-none transition-all cursor-pointer"
-                        style={{ background: '#13131f' }}>
-                        {START_DATES.map(date => <option key={date} value={date} style={{ background: '#13131f', color: 'white' }}>{date}</option>)}
+                        className="w-full px-4 py-2.5 rounded-lg border border-[var(--border)] text-ink text-[13px] focus:border-[rgb(var(--accent-rgb)/0.3)] focus:outline-none transition-all cursor-pointer"
+                        style={{ background: 'var(--bg-card)' }}>
+                        {START_DATES.map(date => <option key={date} value={date} style={{ background: 'var(--bg-card)', color: 'white' }}>{date}</option>)}
                       </select>
                     </div>
 
                     {/* Willing to Relocate */}
                     <div>
-                      <label className="block text-[12px] font-bold text-[#fd79a8] mb-2">WILLING TO RELOCATE? *</label>
+                      <label className="block text-[12px] font-bold text-[var(--accent)] mb-2">WILLING TO RELOCATE? *</label>
                       <div className="flex gap-2">
                         <button onClick={() => setWillingToRelocate(true)}
-                          className={`flex-1 px-4 py-2.5 rounded-lg border font-medium transition-all ${willingToRelocate ? 'bg-gradient-to-r from-[#fd79a8] to-[#e84393] text-white border-[#fd79a8]' : 'bg-[rgba(255,255,255,0.04)] text-[#8a8a9a] border-[rgba(255,255,255,0.08)] hover:bg-[rgba(255,255,255,0.08)]'}`}>
+                          className={`flex-1 px-4 py-2.5 rounded-lg border font-medium transition-all ${willingToRelocate ? 'bg-gradient-to-r from-[var(--accent)] to-[var(--accent-solid)] text-ink border-[var(--accent)]' : 'bg-[var(--bg-overlay)] text-[var(--text-muted)] border-[var(--border)] hover:bg-[var(--bg-overlay)]'}`}>
                           Yes
                         </button>
                         <button onClick={() => setWillingToRelocate(false)}
-                          className={`flex-1 px-4 py-2.5 rounded-lg border font-medium transition-all ${!willingToRelocate ? 'bg-gradient-to-r from-[#fd79a8] to-[#e84393] text-white border-[#fd79a8]' : 'bg-[rgba(255,255,255,0.04)] text-[#8a8a9a] border-[rgba(255,255,255,0.08)] hover:bg-[rgba(255,255,255,0.08)]'}`}>
+                          className={`flex-1 px-4 py-2.5 rounded-lg border font-medium transition-all ${!willingToRelocate ? 'bg-gradient-to-r from-[var(--accent)] to-[var(--accent-solid)] text-ink border-[var(--accent)]' : 'bg-[var(--bg-overlay)] text-[var(--text-muted)] border-[var(--border)] hover:bg-[var(--bg-overlay)]'}`}>
                           No
                         </button>
                       </div>
@@ -925,40 +925,40 @@ export default function OnboardingPage() {
 
                     {/* Country Preference */}
                     <div>
-                      <label className="block text-[12px] font-bold text-[#fd79a8] mb-2">PREFERRED COUNTRY *</label>
+                      <label className="block text-[12px] font-bold text-[var(--accent)] mb-2">PREFERRED COUNTRY *</label>
                       <select value={selectedCountry} onChange={e => { setSelectedCountry(e.target.value); setSelectedCities([]) }}
-                        className="w-full px-4 py-2.5 rounded-lg border border-[rgba(255,255,255,0.08)] text-[13px] focus:border-[rgba(253,121,168,0.3)] focus:outline-none transition-all cursor-pointer"
-                        style={{ background: '#13131f', color: selectedCountry ? 'white' : '#5a5a6a' }}>
-                        <option value="" style={{ background: '#13131f', color: '#5a5a6a' }}>Select a country...</option>
-                        {Object.keys(CITIES_BY_COUNTRY).map(c => <option key={c} value={c} style={{ background: '#13131f', color: 'white' }}>{c}</option>)}
+                        className="w-full px-4 py-2.5 rounded-lg border border-[var(--border)] text-[13px] focus:border-[rgb(var(--accent-rgb)/0.3)] focus:outline-none transition-all cursor-pointer"
+                        style={{ background: 'var(--bg-card)', color: selectedCountry ? 'white' : 'var(--text-faint)' }}>
+                        <option value="" style={{ background: 'var(--bg-card)', color: 'var(--text-faint)' }}>Select a country...</option>
+                        {Object.keys(CITIES_BY_COUNTRY).map(c => <option key={c} value={c} style={{ background: 'var(--bg-card)', color: 'white' }}>{c}</option>)}
                       </select>
-                      {!selectedCountry && <p className="text-[11px] text-[#ff6b6b] mt-1">❌ Required</p>}
+                      {!selectedCountry && <p className="text-[11px] text-[var(--red)] mt-1">❌ Required</p>}
                     </div>
 
                     {/* Top 3 Cities — only shown once country is selected */}
                     {selectedCountry && (
                       <div>
-                        <label className="block text-[12px] font-bold text-[#fd79a8] mb-2">TOP CITY PREFERENCES (up to 3) *</label>
+                        <label className="block text-[12px] font-bold text-[var(--accent)] mb-2">TOP CITY PREFERENCES (up to 3) *</label>
                         <div className="grid grid-cols-2 gap-2 max-h-[220px] overflow-y-auto pr-2">
                           {CITIES_BY_COUNTRY[selectedCountry].map(city => (
                             <button key={city} onClick={() => toggleChip(selectedCities, setSelectedCities, city, 3)}
-                              className={`px-3 py-2 rounded-lg text-[12px] font-medium transition-all text-left ${selectedCities.includes(city) ? 'bg-[rgba(253,121,168,0.15)] text-[#fd79a8] border border-[rgba(253,121,168,0.3)]' : 'bg-[rgba(255,255,255,0.04)] text-[#8a8a9a] hover:bg-[rgba(255,255,255,0.08)]'}`}>
+                              className={`px-3 py-2 rounded-lg text-[12px] font-medium transition-all text-left ${selectedCities.includes(city) ? 'bg-[rgb(var(--accent-rgb)/0.15)] text-[var(--accent)] border border-[rgb(var(--accent-rgb)/0.3)]' : 'bg-[var(--bg-overlay)] text-[var(--text-muted)] hover:bg-[var(--bg-overlay)]'}`}>
                               {city}
                             </button>
                           ))}
                         </div>
-                        {selectedCities.length === 0 && <p className="text-[11px] text-[#ff6b6b] mt-2">❌ Select at least 1 city</p>}
-                        {selectedCities.length > 0 && <p className="text-[11px] text-[#00b894] mt-2">✓ {selectedCities.join(', ')}</p>}
+                        {selectedCities.length === 0 && <p className="text-[11px] text-[var(--red)] mt-2">❌ Select at least 1 city</p>}
+                        {selectedCities.length > 0 && <p className="text-[11px] text-[var(--green)] mt-2">✓ {selectedCities.join(', ')}</p>}
                       </div>
                     )}
 
                     {/* Ethnicity */}
                     <div>
-                      <label className="block text-[12px] font-bold text-[#8a8a9a] mb-2">ETHNICITY (Optional)</label>
+                      <label className="block text-[12px] font-bold text-[var(--text-muted)] mb-2">ETHNICITY (Optional)</label>
                       <select value={ethnicity} onChange={e => setEthnicity(e.target.value)}
-                        className="w-full px-4 py-2.5 rounded-lg border border-[rgba(255,255,255,0.08)] text-white text-[13px] focus:border-[rgba(253,121,168,0.3)] focus:outline-none transition-all cursor-pointer"
-                        style={{ background: '#13131f' }}>
-                        {ETHNICITIES.map(e => <option key={e} value={e} style={{ background: '#13131f', color: 'white' }}>{e}</option>)}
+                        className="w-full px-4 py-2.5 rounded-lg border border-[var(--border)] text-ink text-[13px] focus:border-[rgb(var(--accent-rgb)/0.3)] focus:outline-none transition-all cursor-pointer"
+                        style={{ background: 'var(--bg-card)' }}>
+                        {ETHNICITIES.map(e => <option key={e} value={e} style={{ background: 'var(--bg-card)', color: 'white' }}>{e}</option>)}
                       </select>
                     </div>
 
@@ -975,45 +975,45 @@ export default function OnboardingPage() {
                 {step === 3 && (
                   <motion.div key="step-3" custom={direction} variants={slideVariants} initial="enter" animate="center" exit="exit" className="space-y-6">
                     <div>
-                      <h2 className="text-2xl font-black text-white mb-2">Industries & Skills</h2>
-                      <p className="text-[13px] text-[#8a8a9a]">What are your strengths?</p>
+                      <h2 className="font-display text-[1.6rem] mb-2">Industries & Skills</h2>
+                      <p className="text-[13px] text-[var(--text-muted)]">What are your strengths?</p>
                     </div>
 
                     {/* Industries */}
                     <div>
-                      <label className="block text-[12px] font-bold text-[#fd79a8] mb-2">INDUSTRY PREFERENCES (Select up to 5) *</label>
+                      <label className="block text-[12px] font-bold text-[var(--accent)] mb-2">INDUSTRY PREFERENCES (Select up to 5) *</label>
                       <div className="grid grid-cols-2 gap-2 max-h-[240px] overflow-y-auto pr-2">
                         {INDUSTRIES.map(ind => (
                           <button key={ind} onClick={() => toggleChip(selectedIndustries, setSelectedIndustries, ind, 5)}
-                            className={`px-3 py-2 rounded-lg text-[12px] font-medium transition-all text-left ${selectedIndustries.includes(ind) ? 'bg-[rgba(253,121,168,0.15)] text-[#fd79a8] border border-[rgba(253,121,168,0.3)]' : 'bg-[rgba(255,255,255,0.04)] text-[#8a8a9a] hover:bg-[rgba(255,255,255,0.08)]'}`}>
+                            className={`px-3 py-2 rounded-lg text-[12px] font-medium transition-all text-left ${selectedIndustries.includes(ind) ? 'bg-[rgb(var(--accent-rgb)/0.15)] text-[var(--accent)] border border-[rgb(var(--accent-rgb)/0.3)]' : 'bg-[var(--bg-overlay)] text-[var(--text-muted)] hover:bg-[var(--bg-overlay)]'}`}>
                             {ind}
                           </button>
                         ))}
                       </div>
-                      {selectedIndustries.length === 0 && <p className="text-[11px] text-[#ff6b6b] mt-2">❌ Select at least 1</p>}
+                      {selectedIndustries.length === 0 && <p className="text-[11px] text-[var(--red)] mt-2">❌ Select at least 1</p>}
                     </div>
 
                     {/* Skills */}
                     <div>
-                      <label className="block text-[12px] font-bold text-[#fd79a8] mb-2">KEY SKILLS (Select up to 8) *</label>
+                      <label className="block text-[12px] font-bold text-[var(--accent)] mb-2">KEY SKILLS (Select up to 8) *</label>
                       <div className="grid grid-cols-2 gap-2">
                         {SKILLS.map(skill => (
                           <button key={skill} onClick={() => toggleChip(selectedSkills, setSelectedSkills, skill, 8)}
-                            className={`px-3 py-2 rounded-lg text-[12px] font-medium transition-all ${selectedSkills.includes(skill) ? 'bg-[rgba(253,121,168,0.15)] text-[#fd79a8] border border-[rgba(253,121,168,0.3)]' : 'bg-[rgba(255,255,255,0.04)] text-[#8a8a9a] hover:bg-[rgba(255,255,255,0.08)]'}`}>
+                            className={`px-3 py-2 rounded-lg text-[12px] font-medium transition-all ${selectedSkills.includes(skill) ? 'bg-[rgb(var(--accent-rgb)/0.15)] text-[var(--accent)] border border-[rgb(var(--accent-rgb)/0.3)]' : 'bg-[var(--bg-overlay)] text-[var(--text-muted)] hover:bg-[var(--bg-overlay)]'}`}>
                             {skill}
                           </button>
                         ))}
                       </div>
-                      {selectedSkills.length === 0 && <p className="text-[11px] text-[#ff6b6b] mt-2">❌ Select at least 1</p>}
+                      {selectedSkills.length === 0 && <p className="text-[11px] text-[var(--red)] mt-2">❌ Select at least 1</p>}
                     </div>
 
                     {/* Company Size */}
                     <div>
-                      <label className="block text-[12px] font-bold text-[#fd79a8] mb-2">PREFERRED COMPANY SIZE *</label>
+                      <label className="block text-[12px] font-bold text-[var(--accent)] mb-2">PREFERRED COMPANY SIZE *</label>
                       <div className="grid grid-cols-2 gap-2">
                         {COMPANY_SIZES.map(size => (
                           <button key={size} onClick={() => setCompanySize(size)}
-                            className={`px-3 py-2 rounded-lg text-[12px] font-medium transition-all ${companySize === size ? 'bg-gradient-to-r from-[#fd79a8] to-[#e84393] text-white' : 'bg-[rgba(255,255,255,0.04)] text-[#8a8a9a] hover:bg-[rgba(255,255,255,0.08)]'}`}>
+                            className={`px-3 py-2 rounded-lg text-[12px] font-medium transition-all ${companySize === size ? 'bg-gradient-to-r from-[var(--accent)] to-[var(--accent-solid)] text-ink' : 'bg-[var(--bg-overlay)] text-[var(--text-muted)] hover:bg-[var(--bg-overlay)]'}`}>
                             {size}
                           </button>
                         ))}
@@ -1022,11 +1022,11 @@ export default function OnboardingPage() {
 
                     {/* Interview Style */}
                     <div>
-                      <label className="block text-[12px] font-bold text-[#fd79a8] mb-2">INTERVIEW STRENGTH *</label>
+                      <label className="block text-[12px] font-bold text-[var(--accent)] mb-2">INTERVIEW STRENGTH *</label>
                       <div className="grid grid-cols-2 gap-2">
                         {INTERVIEW_STYLES.map(style => (
                           <button key={style} onClick={() => setInterviewStyle(style)}
-                            className={`px-3 py-2 rounded-lg text-[12px] font-medium transition-all ${interviewStyle === style ? 'bg-gradient-to-r from-[#fd79a8] to-[#e84393] text-white' : 'bg-[rgba(255,255,255,0.04)] text-[#8a8a9a] hover:bg-[rgba(255,255,255,0.08)]'}`}>
+                            className={`px-3 py-2 rounded-lg text-[12px] font-medium transition-all ${interviewStyle === style ? 'bg-gradient-to-r from-[var(--accent)] to-[var(--accent-solid)] text-ink' : 'bg-[var(--bg-overlay)] text-[var(--text-muted)] hover:bg-[var(--bg-overlay)]'}`}>
                             {style}
                           </button>
                         ))}
@@ -1046,24 +1046,24 @@ export default function OnboardingPage() {
                 {step === 5 && (
                   <motion.div key="step-4" custom={direction} variants={slideVariants} initial="enter" animate="center" exit="exit" className="space-y-6">
                     <div>
-                      <h2 className="text-2xl font-black text-white mb-2">Choose Your Plan</h2>
-                      <p className="text-[13px] text-[#8a8a9a]">Start free, upgrade anytime</p>
+                      <h2 className="font-display text-[1.6rem] mb-2">Choose Your Plan</h2>
+                      <p className="text-[13px] text-[var(--text-muted)]">Start free, upgrade anytime</p>
                     </div>
 
                     <div className="grid gap-4">
                       {plans.map(plan => (
                         <motion.button key={plan.name} onClick={() => setSelectedPlan(plan.name)} whileHover={{ scale: 1.02 }}
-                          className={`p-4 rounded-xl border-2 transition-all text-left ${selectedPlan === plan.name ? 'border-[#fd79a8] bg-[rgba(253,121,168,0.1)]' : 'border-[rgba(255,255,255,0.1)] bg-[rgba(255,255,255,0.02)] hover:border-[rgba(253,121,168,0.3)]'}`}>
+                          className={`p-4 rounded-xl border-2 transition-all text-left ${selectedPlan === plan.name ? 'border-[var(--accent)] bg-[rgb(var(--accent-rgb)/0.1)]' : 'border-[var(--border)] bg-[var(--bg-overlay)] hover:border-[rgb(var(--accent-rgb)/0.3)]'}`}>
                           <div className="flex justify-between items-start mb-3">
                             <div>
-                              <h3 className="font-bold text-white">{plan.label}</h3>
-                              <p className="text-[13px] font-bold text-[#fd79a8]">{plan.price}<span className="text-[11px] text-[#5a5a6a]">{plan.period}</span></p>
+                              <h3 className="font-bold text-[var(--text-on-accent)]">{plan.label}</h3>
+                              <p className="text-[13px] font-bold text-[var(--accent)]">{plan.price}<span className="text-[11px] text-[var(--text-faint)]">{plan.period}</span></p>
                             </div>
-                            {selectedPlan === plan.name && <div className="w-5 h-5 rounded-full bg-[#fd79a8]" />}
+                            {selectedPlan === plan.name && <div className="w-5 h-5 rounded-full bg-[var(--accent)]" />}
                           </div>
                           <ul className="space-y-1">
                             {plan.features.map(feature => (
-                              <li key={feature} className="text-[12px] text-[#8a8a9a]">✓ {feature}</li>
+                              <li key={feature} className="text-[12px] text-[var(--text-muted)]">✓ {feature}</li>
                             ))}
                           </ul>
                         </motion.button>

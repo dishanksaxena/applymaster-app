@@ -48,18 +48,18 @@ export default function ResumeOptimizerPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <main className="min-h-screen bg-[#0a0a12] text-white">
+      <main className="">
         {/* Hero */}
-        <section className="relative overflow-hidden py-24 sm:py-32">
-          <div className="absolute inset-0 bg-gradient-to-b from-green-900/20 to-transparent" />
+        <section className="relative overflow-hidden py-16 sm:py-14">
+          <div className="absolute inset-0 bg-gradient-to-b from-[var(--green-dim)] to-transparent" />
           <div className="relative mx-auto max-w-7xl px-6 lg:px-8">
-            <Link href="/features" className="text-sm text-purple-400 hover:text-purple-300 mb-6 inline-block">
+            <Link href="/features" className="text-sm text-[var(--accent)] hover:text-[var(--accent)] mb-6 inline-block">
               &larr; All Features
             </Link>
-            <h1 className="text-4xl font-extrabold tracking-tight sm:text-6xl bg-gradient-to-r from-green-400 to-blue-400 bg-clip-text text-transparent">
+            <h1 className="font-display text-[clamp(2.4rem,5vw,3.6rem)]">
               AI Resume Optimizer
             </h1>
-            <p className="mt-6 max-w-2xl text-lg text-gray-300 leading-relaxed">
+            <p className="mt-6 max-w-2xl text-lg text-[var(--text-secondary)] leading-relaxed">
               Over 75% of resumes are rejected by Applicant Tracking Systems before a human
               ever reads them. ApplyMaster&apos;s resume optimizer analyzes each job description,
               identifies missing keywords, restructures your content, and delivers a
@@ -68,7 +68,7 @@ export default function ResumeOptimizerPage() {
             <div className="mt-10 flex items-center gap-4">
               <Link
                 href="/signup"
-                className="rounded-full bg-purple-600 px-8 py-3 text-sm font-semibold text-white shadow-lg hover:bg-purple-500 transition-colors"
+                className="rounded-full bg-[var(--accent-solid)] px-8 py-3 text-sm font-semibold text-[var(--text-on-accent)] shadow-lg hover:bg-[var(--accent-solid)] transition-colors"
               >
                 Optimize Your Resume Free
               </Link>
@@ -77,9 +77,9 @@ export default function ResumeOptimizerPage() {
         </section>
 
         {/* Core Capabilities */}
-        <section className="py-20">
+        <section className="py-14">
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
-            <h2 className="text-3xl font-bold text-center mb-16">
+            <h2 className="font-display text-[clamp(1.8rem,3.6vw,2.5rem)] text-center mb-14">
               How the Resume Optimizer Works
             </h2>
             <div className="grid gap-10 md:grid-cols-2">
@@ -101,9 +101,9 @@ export default function ResumeOptimizerPage() {
                   desc: 'ATS systems struggle with complex layouts. The optimizer ensures your resume uses clean, parseable formatting while still looking professional and polished to human reviewers.',
                 },
               ].map((item) => (
-                <div key={item.title} className="rounded-2xl border border-gray-800 bg-gray-900/50 p-8">
-                  <h3 className="text-xl font-semibold mb-3 text-green-400">{item.title}</h3>
-                  <p className="text-gray-400 leading-relaxed">{item.desc}</p>
+                <div key={item.title} className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-8">
+                  <h3 className="text-xl font-semibold mb-3 text-[var(--green)]">{item.title}</h3>
+                  <p className="text-[var(--text-muted)] leading-relaxed">{item.desc}</p>
                 </div>
               ))}
             </div>
@@ -111,9 +111,9 @@ export default function ResumeOptimizerPage() {
         </section>
 
         {/* Process */}
-        <section className="py-20 bg-gray-900/30">
+        <section className="py-14 bg-[var(--bg-card)]">
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
-            <h2 className="text-3xl font-bold text-center mb-16">
+            <h2 className="font-display text-[clamp(1.8rem,3.6vw,2.5rem)] text-center mb-14">
               From Upload to Optimized in Seconds
             </h2>
             <div className="grid gap-8 md:grid-cols-4">
@@ -124,11 +124,11 @@ export default function ResumeOptimizerPage() {
                 { step: '4', title: 'Download & Apply', desc: 'Export your optimized resume and apply with confidence.' },
               ].map((item) => (
                 <div key={item.step} className="text-center">
-                  <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-600 text-lg font-bold">
+                  <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[var(--green)] text-lg font-bold">
                     {item.step}
                   </div>
                   <h3 className="text-lg font-semibold mb-2">{item.title}</h3>
-                  <p className="text-sm text-gray-400">{item.desc}</p>
+                  <p className="text-sm text-[var(--text-muted)]">{item.desc}</p>
                 </div>
               ))}
             </div>
@@ -136,12 +136,12 @@ export default function ResumeOptimizerPage() {
         </section>
 
         {/* What Gets Optimized */}
-        <section className="py-20">
+        <section className="py-14">
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
-            <h2 className="text-3xl font-bold text-center mb-4">
+            <h2 className="font-display text-[clamp(1.8rem,3.6vw,2.5rem)] text-center mb-4">
               What the AI Optimizes
             </h2>
-            <p className="text-center text-gray-400 mb-12 max-w-2xl mx-auto">
+            <p className="text-center text-[var(--text-muted)] mb-12 max-w-2xl mx-auto">
               Every section of your resume is analyzed and improved for the target role.
             </p>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -153,9 +153,9 @@ export default function ResumeOptimizerPage() {
                 { title: 'Action Verbs & Metrics', desc: 'Replaces weak verbs with powerful action words and suggests quantifiable metrics for impact.' },
                 { title: 'File Format & Layout', desc: 'Ensures ATS-compatible formatting: clean headers, standard fonts, and proper section labels.' },
               ].map((item) => (
-                <div key={item.title} className="rounded-xl border border-gray-800 bg-gray-900/40 p-6">
-                  <h3 className="font-semibold mb-2 text-white">{item.title}</h3>
-                  <p className="text-sm text-gray-400 leading-relaxed">{item.desc}</p>
+                <div key={item.title} className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-6">
+                  <h3 className="font-semibold mb-2 text-ink">{item.title}</h3>
+                  <p className="text-sm text-[var(--text-muted)] leading-relaxed">{item.desc}</p>
                 </div>
               ))}
             </div>
@@ -163,27 +163,27 @@ export default function ResumeOptimizerPage() {
         </section>
 
         {/* Integration callout */}
-        <section className="py-20 bg-gray-900/30">
+        <section className="py-14 bg-[var(--bg-card)]">
           <div className="mx-auto max-w-4xl px-6 lg:px-8 text-center">
-            <h2 className="text-3xl font-bold mb-6">
+            <h2 className="font-display text-[clamp(1.8rem,3.6vw,2.5rem)] mb-5">
               Works Seamlessly with Auto-Apply
             </h2>
-            <p className="text-gray-400 mb-8 max-w-2xl mx-auto leading-relaxed">
-              When you use ApplyMaster&apos;s <Link href="/features/auto-apply" className="text-purple-400 underline hover:text-purple-300">auto-apply feature</Link>,
+            <p className="text-[var(--text-muted)] mb-8 max-w-2xl mx-auto leading-relaxed">
+              When you use ApplyMaster&apos;s <Link href="/features/auto-apply" className="text-[var(--accent)] underline hover:text-[var(--accent)]">auto-apply feature</Link>,
               the resume optimizer runs automatically for every application. Each employer receives a
               resume specifically tailored to their job description — no extra work required.
             </p>
-            <p className="text-gray-400 mb-8 max-w-2xl mx-auto leading-relaxed">
-              Pair it with the <Link href="/features/cover-letter-generator" className="text-purple-400 underline hover:text-purple-300">AI cover letter generator</Link> to
+            <p className="text-[var(--text-muted)] mb-8 max-w-2xl mx-auto leading-relaxed">
+              Pair it with the <Link href="/features/cover-letter-generator" className="text-[var(--accent)] underline hover:text-[var(--accent)]">AI cover letter generator</Link> to
               create a complete, cohesive application package for every role.
             </p>
           </div>
         </section>
 
         {/* FAQ */}
-        <section className="py-20">
+        <section className="py-14">
           <div className="mx-auto max-w-3xl px-6 lg:px-8">
-            <h2 className="text-3xl font-bold text-center mb-12">
+            <h2 className="font-display text-[clamp(1.8rem,3.6vw,2.5rem)] text-center mb-10">
               Frequently Asked Questions
             </h2>
             <div className="space-y-8">
@@ -206,8 +206,8 @@ export default function ResumeOptimizerPage() {
                 },
               ].map((item) => (
                 <div key={item.q}>
-                  <h3 className="font-semibold text-white mb-2">{item.q}</h3>
-                  <p className="text-sm text-gray-400 leading-relaxed">{item.a}</p>
+                  <h3 className="font-semibold text-ink mb-2">{item.q}</h3>
+                  <p className="text-sm text-[var(--text-muted)] leading-relaxed">{item.a}</p>
                 </div>
               ))}
             </div>
@@ -215,17 +215,17 @@ export default function ResumeOptimizerPage() {
         </section>
 
         {/* CTA */}
-        <section className="py-24 bg-gradient-to-b from-transparent to-purple-900/20">
+        <section className="py-16 bg-gradient-to-b from-transparent to-[var(--accent-dim)]">
           <div className="mx-auto max-w-3xl px-6 text-center">
-            <h2 className="text-3xl font-bold mb-6">
+            <h2 className="font-display text-[clamp(1.8rem,3.6vw,2.5rem)] mb-5">
               Get Past the ATS. Get to the Interview.
             </h2>
-            <p className="text-gray-400 mb-10 text-lg">
+            <p className="text-[var(--text-muted)] mb-10 text-lg">
               Upload your resume and see your ATS score in seconds. Free to start.
             </p>
             <Link
               href="/signup"
-              className="rounded-full bg-purple-600 px-10 py-4 text-base font-semibold text-white shadow-lg hover:bg-purple-500 transition-colors"
+              className="rounded-full bg-[var(--accent-solid)] px-10 py-4 text-base font-semibold text-[var(--text-on-accent)] shadow-lg hover:bg-[var(--accent-solid)] transition-colors"
             >
               Optimize Your Resume Now
             </Link>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { withAlpha } from '@/lib/tone'
 
 const interviewTypes = ['Behavioral', 'Technical', 'System Design', 'Case Study']
 
@@ -36,11 +37,6 @@ const mockQuestions: Record<string, string[]> = {
   ],
 }
 
-const feedbackTemplates = [
-  { score: 8, strengths: ['Clear structure using STAR method', 'Specific metrics and outcomes', 'Good leadership demonstration'], improvements: ['Could elaborate on technical details', 'Mention team dynamics'], example: 'A stronger answer would start with the specific context, include metrics like "reduced deployment time by 40%", and conclude with what you learned.' },
-  { score: 7, strengths: ['Good problem-solving approach', 'Showed self-awareness', 'Connected to role requirements'], improvements: ['Add quantifiable results', 'Be more concise in opening'], example: 'Try: "In my role at [Company], I faced [specific challenge]. I took [specific action] which resulted in [measurable outcome]."' },
-  { score: 9, strengths: ['Excellent specific examples', 'Strong communication', 'Well-structured with clear takeaways'], improvements: ['Could mention alternative approaches considered'], example: 'This was strong. To make it perfect, briefly mention other approaches you considered and why you chose yours.' },
-]
 
 const container = { hidden: {}, show: { transition: { staggerChildren: 0.08 } } }
 const fadeUp = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] as const } } }
@@ -66,6 +62,7 @@ export default function InterviewCoachPage() {
   const [scores, setScores] = useState<number[]>([])
   const [questions, setQuestions] = useState<string[]>([])
   const [analyzing, setAnalyzing] = useState(false)
+  const [scoreError, setScoreError] = useState('')
   const [generatingQuestions, setGeneratingQuestions] = useState(false)
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [mounted, setMounted] = useState(false)
@@ -122,6 +119,7 @@ export default function InterviewCoachPage() {
   const submitAnswer = async () => {
     setTimerActive(false)
     setAnalyzing(true)
+    setScoreError('')
     try {
       const res = await fetch('/api/interview/prep', {
         method: 'POST',
@@ -132,10 +130,13 @@ export default function InterviewCoachPage() {
       const score = Math.round((data.score || 70) / 10)
       setFeedback({ score, strengths: data.strengths || [], improvements: data.improvements || [], example: data.better_answer || '' })
       setScores(prev => [...prev, score])
-    } catch {
-      const fb = feedbackTemplates[Math.floor(Math.random() * feedbackTemplates.length)]
-      setFeedback(fb)
-      setScores(prev => [...prev, fb.score])
+    } catch (err) {
+      /* This used to fall back to one of three canned reviews picked at
+         random and record its score as though it were real. A fabricated
+         score on your own interview answer is worse than no score: you would
+         act on it. Say the scoring failed instead. */
+      setScoreError(err instanceof Error ? err.message : 'Could not score that answer')
+      setFeedback(null)
     }
     setAnalyzing(false)
   }
@@ -151,7 +152,7 @@ export default function InterviewCoachPage() {
 
   const avgScore = scores.length > 0 ? (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1) : '0'
   const timerPercent = (timer / 120) * 100
-  const timerColor = timer > 60 ? '#00b894' : timer > 30 ? '#fdcb6e' : '#ff6b6b'
+  const timerColor = timer > 60 ? 'var(--green)' : timer > 30 ? 'var(--yellow)' : 'var(--red)'
 
   if (!mounted) return <div className="p-8" />
 
@@ -160,19 +161,19 @@ export default function InterviewCoachPage() {
 
       {/* Header */}
       <motion.div variants={fadeUp} className="relative overflow-hidden rounded-2xl p-8" style={{
-        background: 'linear-gradient(135deg, rgba(162,155,254,0.08) 0%, rgba(253,121,168,0.06) 50%, rgba(0,184,148,0.04) 100%)',
-        border: '1px solid rgba(162,155,254,0.1)',
+        background: 'linear-gradient(135deg, rgb(var(--purple-rgb) / calc(0.08 * var(--tint-scale))) 0%, rgb(var(--accent-rgb) / calc(0.06 * var(--tint-scale))) 50%, rgb(var(--green-rgb) / calc(0.04 * var(--tint-scale))) 100%)',
+        border: '1px solid rgb(var(--purple-rgb) / calc(0.1 * var(--tint-scale)))',
       }}>
-        <div className="absolute top-[-50%] right-[-10%] w-[300px] h-[300px] rounded-full opacity-[0.07]" style={{ background: 'radial-gradient(circle, #a29bfe, transparent 70%)' }} />
+        <div className="absolute top-[-50%] right-[-10%] w-[300px] h-[300px] rounded-full opacity-[0.07]" style={{ background: 'radial-gradient(circle, var(--purple), transparent 70%)' }} />
         <div className="relative z-10 flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: 'rgba(162,155,254,0.15)' }}>
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: 'rgb(var(--purple-rgb) / calc(0.15 * var(--tint-scale)))' }}>
             <motion.div animate={{ scale: [1, 1.1, 1] }} transition={{ duration: 2, repeat: Infinity }}>
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#a29bfe" strokeWidth="1.8"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" strokeWidth="1.8"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
             </motion.div>
           </div>
           <div>
-            <h1 className="text-2xl lg:text-3xl font-black tracking-tight">AI Interview Coach</h1>
-            <p className="text-[14px] text-[#8a8a9a] mt-1">Practice with AI-powered mock interviews and get instant feedback</p>
+            <h1 className="font-display text-[clamp(1.7rem,3vw,2.2rem)]">AI Interview Coach</h1>
+            <p className="text-[14px] text-[var(--text-secondary)] mt-1">Practice with AI-powered mock interviews and get instant feedback</p>
           </div>
         </div>
       </motion.div>
@@ -182,12 +183,12 @@ export default function InterviewCoachPage() {
           <motion.div key="setup" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
 
             {/* Interview Type */}
-            <motion.div variants={fadeUp} className="p-6 rounded-2xl" style={{ background: 'linear-gradient(135deg, #1c1c2e 0%, #16162a 100%)', border: '1px solid rgba(255,255,255,0.1)' }}>
+            <motion.div variants={fadeUp} className="p-6 rounded-2xl" style={{ background: 'linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-elevated) 100%)', border: '1px solid var(--border)' }}>
               <h3 className="text-[16px] font-bold mb-4">Interview Type</h3>
               <div className="flex flex-wrap gap-2">
                 {interviewTypes.map(t => (
                   <button key={t} onClick={() => setType(t)} className="px-5 py-2.5 rounded-xl text-[13px] font-semibold transition-all duration-300"
-                    style={type === t ? { background: 'linear-gradient(135deg, rgba(162,155,254,0.15), rgba(253,121,168,0.1))', border: '1px solid rgba(162,155,254,0.3)', color: '#a29bfe', boxShadow: '0 0 20px rgba(162,155,254,0.1)' } : { background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.1)', color: '#6a6a7a' }}>
+                    style={type === t ? { background: 'linear-gradient(135deg, rgb(var(--purple-rgb) / calc(0.15 * var(--tint-scale))), rgb(var(--accent-rgb) / calc(0.1 * var(--tint-scale))))', border: '1px solid rgb(var(--purple-rgb) / 0.3)', color: 'var(--purple)', boxShadow: '0 0 20px rgb(var(--purple-rgb) / calc(0.1 * var(--tint-scale)))' } : { background: 'var(--bg-overlay)', border: '1px solid var(--border)', color: 'var(--text-faint)' }}>
                     {t}
                   </button>
                 ))}
@@ -195,58 +196,58 @@ export default function InterviewCoachPage() {
             </motion.div>
 
             {/* Company & Role */}
-            <motion.div variants={fadeUp} className="p-6 rounded-2xl" style={{ background: 'linear-gradient(135deg, #1c1c2e 0%, #16162a 100%)', border: '1px solid rgba(255,255,255,0.1)' }}>
+            <motion.div variants={fadeUp} className="p-6 rounded-2xl" style={{ background: 'linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-elevated) 100%)', border: '1px solid var(--border)' }}>
               <h3 className="text-[16px] font-bold mb-4">Customize Your Practice</h3>
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[12px] font-semibold text-[#6a6a7a] mb-2">Company (optional)</label>
+                  <label className="block text-[12px] font-semibold text-[var(--text-faint)] mb-2">Company (optional)</label>
                   <input value={company} onChange={e => setCompany(e.target.value)} placeholder="e.g., Google, Meta"
-                    className="w-full px-4 py-3 rounded-xl bg-[#16161f] border border-white/[0.06] text-white text-[14px] placeholder-[#3a3a4a] focus:outline-none focus:border-[rgba(162,155,254,0.3)] transition-all" />
+                    className="w-full px-4 py-3 rounded-xl bg-[var(--bg-input)] border border-[var(--border)] text-ink text-[14px] placeholder-[var(--text-faint)] focus:outline-none focus:border-[rgb(var(--purple-rgb)/0.3)] transition-all" />
                 </div>
                 <div>
-                  <label className="block text-[12px] font-semibold text-[#6a6a7a] mb-2">Role (optional)</label>
+                  <label className="block text-[12px] font-semibold text-[var(--text-faint)] mb-2">Role (optional)</label>
                   <input value={role} onChange={e => setRole(e.target.value)} placeholder="e.g., Senior Engineer"
-                    className="w-full px-4 py-3 rounded-xl bg-[#16161f] border border-white/[0.06] text-white text-[14px] placeholder-[#3a3a4a] focus:outline-none focus:border-[rgba(162,155,254,0.3)] transition-all" />
+                    className="w-full px-4 py-3 rounded-xl bg-[var(--bg-input)] border border-[var(--border)] text-ink text-[14px] placeholder-[var(--text-faint)] focus:outline-none focus:border-[rgb(var(--purple-rgb)/0.3)] transition-all" />
                 </div>
               </div>
               <div>
-                <label className="block text-[12px] font-semibold text-[#6a6a7a] mb-2">Job Description (optional — makes questions more specific)</label>
+                <label className="block text-[12px] font-semibold text-[var(--text-faint)] mb-2">Job Description (optional — makes questions more specific)</label>
                 <textarea value={jobDesc} onChange={e => setJobDesc(e.target.value)} rows={3} placeholder="Paste job description here for tailored interview questions..."
-                  className="w-full px-4 py-3 rounded-xl bg-[#16161f] border border-white/[0.06] text-white text-[13px] placeholder-[#3a3a4a] focus:outline-none focus:border-[rgba(162,155,254,0.3)] transition-all resize-none" />
+                  className="w-full px-4 py-3 rounded-xl bg-[var(--bg-input)] border border-[var(--border)] text-ink text-[13px] placeholder-[var(--text-faint)] focus:outline-none focus:border-[rgb(var(--purple-rgb)/0.3)] transition-all resize-none" />
               </div>
             </motion.div>
 
             {/* Mode Cards */}
             <motion.div variants={fadeUp} className="grid sm:grid-cols-3 gap-4">
               {[
-                { name: 'Quick Practice', time: '15 min', qs: '5 questions', color: '#00b894', icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><polygon points="5,3 19,12 5,21"/></svg> },
-                { name: 'Full Interview', time: '45 min', qs: '15 questions', color: '#a29bfe', icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg> },
-                { name: 'Company Specific', time: 'Custom', qs: 'Tailored', color: '#fd79a8', icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> },
+                { name: 'Quick Practice', time: '15 min', qs: '5 questions', color: 'var(--green)', icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><polygon points="5,3 19,12 5,21"/></svg> },
+                { name: 'Full Interview', time: '45 min', qs: '15 questions', color: 'var(--purple)', icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg> },
+                { name: 'Company Specific', time: 'Custom', qs: 'Tailored', color: 'var(--accent)', icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> },
               ].map(m => (
                 <motion.button key={m.name} whileHover={{ y: -4, scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={startInterview}
-                  className="p-6 rounded-2xl text-left group transition-all" style={{ background: `${m.color}06`, border: `1px solid ${m.color}15` }}>
-                  <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4" style={{ background: `${m.color}15`, color: m.color }}>{m.icon}</div>
-                  <h4 className="text-[15px] font-bold text-white group-hover:text-[#fd79a8] transition-colors">{m.name}</h4>
+                  className="p-6 rounded-2xl text-left group transition-all" style={{ background: `${withAlpha(m.color, 0.06, true)}`, border: `1px solid ${withAlpha(m.color, 0.11, true)}` }}>
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4" style={{ background: `${withAlpha(m.color, 0.11, true)}`, color: m.color }}>{m.icon}</div>
+                  <h4 className="text-[15px] font-bold text-ink group-hover:text-[var(--accent)] transition-colors">{m.name}</h4>
                   <div className="flex items-center gap-3 mt-2">
-                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ background: `${m.color}12`, color: m.color }}>{m.time}</span>
-                    <span className="text-[11px] text-[#5a5a6a]">{m.qs}</span>
+                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ background: `${withAlpha(m.color, 0.09, true)}`, color: m.color }}>{m.time}</span>
+                    <span className="text-[11px] text-[var(--text-faint)]">{m.qs}</span>
                   </div>
                 </motion.button>
               ))}
             </motion.div>
 
             {/* STAR Method */}
-            <motion.div variants={fadeUp} className="p-6 rounded-2xl" style={{ background: 'linear-gradient(135deg, rgba(253,121,168,0.04), rgba(162,155,254,0.04))', border: '1px solid rgba(255,255,255,0.1)' }}>
+            <motion.div variants={fadeUp} className="p-6 rounded-2xl" style={{ background: 'linear-gradient(135deg, rgb(var(--accent-rgb) / calc(0.04 * var(--tint-scale))), rgb(var(--purple-rgb) / calc(0.04 * var(--tint-scale))))', border: '1px solid var(--border)' }}>
               <h3 className="text-[14px] font-bold mb-3 flex items-center gap-2">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fdcb6e" strokeWidth="2"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" strokeWidth="2"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>
                 Pro Tip: Use the STAR Method
               </h3>
               <div className="grid grid-cols-4 gap-3">
                 {[{ l: 'S', w: 'Situation', d: 'Set the scene' }, { l: 'T', w: 'Task', d: 'The challenge' }, { l: 'A', w: 'Action', d: 'What you did' }, { l: 'R', w: 'Result', d: 'The outcome' }].map(s => (
-                  <div key={s.l} className="text-center p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.02)' }}>
-                    <div className="text-2xl font-black bg-gradient-to-r from-[#fd79a8] to-[#a29bfe] bg-clip-text text-transparent">{s.l}</div>
-                    <div className="text-[11px] font-bold text-white mt-1">{s.w}</div>
-                    <div className="text-[10px] text-[#5a5a6a] mt-0.5">{s.d}</div>
+                  <div key={s.l} className="text-center p-3 rounded-xl" style={{ background: 'var(--bg-overlay)' }}>
+                    <div className="font-display text-[1.6rem] bg-gradient-to-r from-[var(--accent)] to-[var(--purple)] bg-clip-text text-transparent">{s.l}</div>
+                    <div className="text-[11px] font-bold text-ink mt-1">{s.w}</div>
+                    <div className="text-[10px] text-[var(--text-faint)] mt-0.5">{s.d}</div>
                   </div>
                 ))}
               </div>
@@ -261,9 +262,9 @@ export default function InterviewCoachPage() {
             {generatingQuestions && (
               <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
                 className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-[12px] font-semibold"
-                style={{ background: 'rgba(162,155,254,0.06)', border: '1px solid rgba(162,155,254,0.12)', color: '#a29bfe' }}>
+                style={{ background: 'rgb(var(--purple-rgb) / calc(0.06 * var(--tint-scale)))', border: '1px solid rgb(var(--purple-rgb) / calc(0.12 * var(--tint-scale)))', color: 'var(--purple)' }}>
                 <motion.div animate={{ rotate: 360 }} transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
-                  className="w-3.5 h-3.5 rounded-full border-2 shrink-0" style={{ borderColor: 'rgba(162,155,254,0.3)', borderTopColor: '#a29bfe' }} />
+                  className="w-3.5 h-3.5 rounded-full border-2 shrink-0" style={{ borderColor: 'rgb(var(--purple-rgb) / 0.3)', borderTopColor: 'var(--purple)' }} />
                 Personalizing questions with AI for {role || 'your role'}...
               </motion.div>
             )}
@@ -271,39 +272,49 @@ export default function InterviewCoachPage() {
             {/* Progress dots */}
             <div className="flex items-center gap-3">
               {questions.map((_, i) => (
-                <div key={i} className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.04)' }}>
+                <div key={i} className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--bg-overlay)' }}>
                   <motion.div initial={{ width: 0 }} animate={{ width: i < currentQ ? '100%' : i === currentQ ? '50%' : '0%' }}
-                    className="h-full rounded-full" style={{ background: i < currentQ ? '#00b894' : '#a29bfe' }} />
+                    className="h-full rounded-full" style={{ background: i < currentQ ? 'var(--green)' : 'var(--purple)' }} />
                 </div>
               ))}
-              <span className="text-[12px] font-bold text-[#5a5a6a] shrink-0">{currentQ + 1}/{questions.length}</span>
+              <span className="text-[12px] font-bold text-[var(--text-faint)] shrink-0">{currentQ + 1}/{questions.length}</span>
             </div>
 
             {/* Question */}
-            <div className="p-8 rounded-2xl relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #1c1c2e 0%, #16162a 100%)', border: '1px solid rgba(162,155,254,0.15)' }}>
-              <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ background: 'linear-gradient(90deg, #a29bfe, #fd79a8)' }} />
+            <div className="p-8 rounded-2xl relative overflow-hidden" style={{ background: 'linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-elevated) 100%)', border: '1px solid rgb(var(--purple-rgb) / calc(0.15 * var(--tint-scale)))' }}>
+              <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ background: 'linear-gradient(90deg, var(--purple), var(--accent))' }} />
               <div className="flex items-center justify-between mb-6">
-                <span className="text-[11px] font-bold px-3 py-1 rounded-full" style={{ background: 'rgba(162,155,254,0.1)', color: '#a29bfe' }}>Question {currentQ + 1}</span>
+                <span className="text-[11px] font-bold px-3 py-1 rounded-full" style={{ background: 'rgb(var(--purple-rgb) / calc(0.1 * var(--tint-scale)))', color: 'var(--purple)' }}>Question {currentQ + 1}</span>
                 <div className="flex items-center gap-2">
                   <svg width="32" height="32" className="transform -rotate-90">
-                    <circle cx="16" cy="16" r="13" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="3" />
+                    <circle cx="16" cy="16" r="13" fill="none" stroke="var(--bg-overlay)" strokeWidth="3" />
                     <circle cx="16" cy="16" r="13" fill="none" stroke={timerColor} strokeWidth="3" strokeLinecap="round"
                       strokeDasharray={2 * Math.PI * 13} strokeDashoffset={2 * Math.PI * 13 * (1 - timerPercent / 100)}
-                      style={{ transition: 'stroke-dashoffset 1s linear', filter: `drop-shadow(0 0 4px ${timerColor}40)` }} />
+                      style={{ transition: 'stroke-dashoffset 1s linear', filter: `drop-shadow(0 0 4px ${withAlpha(timerColor, 0.26)})` }} />
                   </svg>
                   <span className="text-[14px] font-bold font-mono" style={{ color: timerColor }}>{Math.floor(timer / 60)}:{String(timer % 60).padStart(2, '0')}</span>
                 </div>
               </div>
-              <h2 className="text-xl font-bold leading-relaxed text-white/90">{questions[currentQ]}</h2>
+              <h2 className="text-xl font-bold leading-relaxed text-ink/90">{questions[currentQ]}</h2>
             </div>
 
             {/* Answer */}
             {!feedback && !analyzing && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+                {scoreError && (
+                  <div role="alert" className="p-4 rounded-xl" style={{ background: 'var(--red-dim)' }}>
+                    <p className="text-[13px] font-semibold mb-0.5" style={{ color: 'var(--red)' }}>
+                      Could not score that answer
+                    </p>
+                    <p className="text-[12.5px] leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                      {scoreError}. Your answer is still in the box — press Submit to try again.
+                    </p>
+                  </div>
+                )}
                 <textarea value={answer} onChange={e => setAnswer(e.target.value)} rows={6} placeholder="Type your answer here..."
-                  className="w-full px-5 py-4 rounded-2xl bg-[#12121a] border border-white/[0.06] text-white text-[14px] leading-relaxed placeholder-[#3a3a4a] focus:outline-none focus:border-[rgba(162,155,254,0.3)] resize-none transition-all" />
+                  className="w-full px-5 py-4 rounded-2xl bg-[var(--bg-card)] border border-[var(--border)] text-ink text-[14px] leading-relaxed placeholder-[var(--text-faint)] focus:outline-none focus:border-[rgb(var(--purple-rgb)/0.3)] resize-none transition-all" />
                 <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }} onClick={submitAnswer} disabled={!answer.trim()}
-                  className="w-full py-4 rounded-xl font-bold text-[14px] text-white disabled:opacity-30" style={{ background: 'linear-gradient(135deg, #a29bfe, #6c5ce7)' }}>
+                  className="w-full py-4 rounded-xl font-bold text-[14px] text-[var(--text-on-accent)] disabled:opacity-30" style={{ background: 'linear-gradient(135deg, var(--purple), var(--purple))' }}>
                   Submit Answer
                 </motion.button>
               </motion.div>
@@ -313,8 +324,8 @@ export default function InterviewCoachPage() {
             {analyzing && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-12 text-center">
                 <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-                  className="w-12 h-12 rounded-full mx-auto mb-4" style={{ border: '3px solid rgba(162,155,254,0.1)', borderTopColor: '#a29bfe' }} />
-                <p className="text-[14px] text-[#8a8a9a]">AI is analyzing your answer...</p>
+                  className="w-12 h-12 rounded-full mx-auto mb-4" style={{ border: '3px solid rgb(var(--purple-rgb) / calc(0.1 * var(--tint-scale)))', borderTopColor: 'var(--purple)' }} />
+                <p className="text-[14px] text-[var(--text-muted)]">AI is analyzing your answer...</p>
               </motion.div>
             )}
 
@@ -322,33 +333,33 @@ export default function InterviewCoachPage() {
             {feedback && (
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
                 <div className="grid sm:grid-cols-3 gap-4">
-                  <div className="p-5 rounded-2xl text-center" style={{ background: 'linear-gradient(135deg, #12121a, #0e0e16)', border: '1px solid rgba(255,255,255,0.1)' }}>
-                    <div className="text-4xl font-black" style={{ color: feedback.score >= 8 ? '#00b894' : feedback.score >= 6 ? '#fdcb6e' : '#ff6b6b' }}>{feedback.score}/10</div>
-                    <div className="text-[11px] text-[#5a5a6a] mt-1">Overall Score</div>
+                  <div className="p-5 rounded-2xl text-center" style={{ background: 'linear-gradient(135deg, var(--bg-card), var(--bg-secondary))', border: '1px solid var(--border)' }}>
+                    <div className="text-4xl font-black" style={{ color: feedback.score >= 8 ? 'var(--green)' : feedback.score >= 6 ? 'var(--yellow)' : 'var(--red)' }}>{feedback.score}/10</div>
+                    <div className="text-[11px] text-[var(--text-faint)] mt-1">Overall Score</div>
                   </div>
-                  <div className="p-5 rounded-2xl" style={{ background: 'rgba(0,184,148,0.04)', border: '1px solid rgba(0,184,148,0.1)' }}>
-                    <div className="text-[11px] font-bold text-[#00b894] mb-3">Strengths</div>
+                  <div className="p-5 rounded-2xl" style={{ background: 'rgb(var(--green-rgb) / calc(0.04 * var(--tint-scale)))', border: '1px solid rgb(var(--green-rgb) / calc(0.1 * var(--tint-scale)))' }}>
+                    <div className="text-[11px] font-bold text-[var(--green)] mb-3">Strengths</div>
                     {feedback.strengths.map((s, i) => (
-                      <div key={i} className="flex items-start gap-2 text-[12px] text-[#8a8a9a] mb-1.5">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#00b894" strokeWidth="3" className="shrink-0 mt-0.5"><path d="M20 6L9 17L4 12"/></svg>{s}
+                      <div key={i} className="flex items-start gap-2 text-[12px] text-[var(--text-muted)] mb-1.5">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="3" className="shrink-0 mt-0.5"><path d="M20 6L9 17L4 12"/></svg>{s}
                       </div>
                     ))}
                   </div>
-                  <div className="p-5 rounded-2xl" style={{ background: 'rgba(253,203,110,0.04)', border: '1px solid rgba(253,203,110,0.1)' }}>
-                    <div className="text-[11px] font-bold text-[#fdcb6e] mb-3">Improvements</div>
+                  <div className="p-5 rounded-2xl" style={{ background: 'rgb(var(--yellow-rgb) / calc(0.04 * var(--tint-scale)))', border: '1px solid rgb(var(--yellow-rgb) / calc(0.1 * var(--tint-scale)))' }}>
+                    <div className="text-[11px] font-bold text-[var(--yellow)] mb-3">Improvements</div>
                     {feedback.improvements.map((s, i) => (
-                      <div key={i} className="flex items-start gap-2 text-[12px] text-[#8a8a9a] mb-1.5">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fdcb6e" strokeWidth="2" className="shrink-0 mt-0.5"><path d="M12 19V5M5 12l7-7 7 7"/></svg>{s}
+                      <div key={i} className="flex items-start gap-2 text-[12px] text-[var(--text-muted)] mb-1.5">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" strokeWidth="2" className="shrink-0 mt-0.5"><path d="M12 19V5M5 12l7-7 7 7"/></svg>{s}
                       </div>
                     ))}
                   </div>
                 </div>
-                <div className="p-5 rounded-2xl" style={{ background: 'rgba(162,155,254,0.04)', border: '1px solid rgba(162,155,254,0.1)' }}>
-                  <div className="text-[11px] font-bold text-[#a29bfe] mb-2">Better Answer Suggestion</div>
-                  <p className="text-[13px] text-[#8a8a9a] leading-relaxed">{feedback.example}</p>
+                <div className="p-5 rounded-2xl" style={{ background: 'rgb(var(--purple-rgb) / calc(0.04 * var(--tint-scale)))', border: '1px solid rgb(var(--purple-rgb) / calc(0.1 * var(--tint-scale)))' }}>
+                  <div className="text-[11px] font-bold text-[var(--purple)] mb-2">Better Answer Suggestion</div>
+                  <p className="text-[13px] text-[var(--text-muted)] leading-relaxed">{feedback.example}</p>
                 </div>
                 <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }} onClick={nextQuestion}
-                  className="w-full py-4 rounded-xl font-bold text-[14px] text-white" style={{ background: 'linear-gradient(135deg, #fd79a8, #e84393)' }}>
+                  className="w-full py-4 rounded-xl font-bold text-[14px] text-[var(--text-on-accent)]" style={{ background: 'linear-gradient(135deg, var(--accent), var(--accent-solid))' }}>
                   {currentQ >= questions.length - 1 ? 'View Results' : 'Next Question'}
                 </motion.button>
               </motion.div>
@@ -358,18 +369,18 @@ export default function InterviewCoachPage() {
 
         {mode === 'review' && (
           <motion.div key="review" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-            <div className="p-8 rounded-2xl text-center" style={{ background: 'linear-gradient(135deg, rgba(162,155,254,0.08), rgba(0,184,148,0.06))', border: '1px solid rgba(162,155,254,0.15)' }}>
-              <div className="text-6xl font-black mb-2" style={{ color: Number(avgScore) >= 8 ? '#00b894' : Number(avgScore) >= 6 ? '#fdcb6e' : '#ff6b6b' }}>{avgScore}</div>
-              <div className="text-[14px] text-[#8a8a9a]">Average Score</div>
+            <div className="p-8 rounded-2xl text-center" style={{ background: 'linear-gradient(135deg, rgb(var(--purple-rgb) / calc(0.08 * var(--tint-scale))), rgb(var(--green-rgb) / calc(0.06 * var(--tint-scale))))', border: '1px solid rgb(var(--purple-rgb) / calc(0.15 * var(--tint-scale)))' }}>
+              <div className="text-6xl font-black mb-2" style={{ color: Number(avgScore) >= 8 ? 'var(--green)' : Number(avgScore) >= 6 ? 'var(--yellow)' : 'var(--red)' }}>{avgScore}</div>
+              <div className="text-[14px] text-[var(--text-muted)]">Average Score</div>
               <div className="flex justify-center gap-3 mt-6">
                 {scores.map((s, i) => (
                   <div key={i} className="w-12 h-12 rounded-xl flex items-center justify-center text-[14px] font-bold"
-                    style={{ background: s >= 8 ? 'rgba(0,184,148,0.1)' : 'rgba(253,203,110,0.1)', color: s >= 8 ? '#00b894' : '#fdcb6e' }}>{s}</div>
+                    style={{ background: s >= 8 ? 'rgb(var(--green-rgb) / calc(0.1 * var(--tint-scale)))' : 'rgb(var(--yellow-rgb) / calc(0.1 * var(--tint-scale)))', color: s >= 8 ? 'var(--green)' : 'var(--yellow)' }}>{s}</div>
                 ))}
               </div>
             </div>
             <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }} onClick={() => setMode('setup')}
-              className="w-full py-4 rounded-xl font-bold text-[14px] text-white" style={{ background: 'linear-gradient(135deg, #a29bfe, #6c5ce7)' }}>
+              className="w-full py-4 rounded-xl font-bold text-[14px] text-ink" style={{ background: 'linear-gradient(135deg, var(--purple), var(--purple))' }}>
               Practice Again
             </motion.button>
           </motion.div>

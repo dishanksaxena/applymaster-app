@@ -1,5 +1,16 @@
 import type { Config } from 'tailwindcss'
 
+/**
+ * Colours resolve through the CSS variables in src/app/globals.css so that
+ * every Tailwind utility follows the active theme. The previous config
+ * hardcoded dark hexes here, which meant `bg-bg-card` and friends could
+ * never respond to `html.dark-theme` — two competing colour systems.
+ *
+ * `<alpha-value>` requires raw channels, which is why globals.css declares
+ * each colour twice (`--x-rgb` for here, `--x` for inline styles).
+ */
+const channel = (name: string) => `rgb(var(${name}) / <alpha-value>)`
+
 const config: Config = {
   content: [
     './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
@@ -9,48 +20,78 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        bg: {
-          primary: '#0a0a0f',
-          secondary: '#0e0e16',
-          card: '#12121a',
-          'card-hover': '#1a1a26',
-          input: '#16161f',
+        /* Surfaces */
+        surface: {
+          DEFAULT: channel('--bg-rgb'),
+          secondary: channel('--bg-secondary-rgb'),
+          card: channel('--bg-card-rgb'),
+          'card-hover': channel('--bg-card-hover-rgb'),
+          input: channel('--bg-input-rgb'),
+          elevated: channel('--bg-elevated-rgb'),
+          sidebar: channel('--bg-sidebar-rgb'),
         },
+
+        /* Ink */
+        ink: {
+          DEFAULT: channel('--text-rgb'),
+          secondary: channel('--text-secondary-rgb'),
+          muted: channel('--text-muted-rgb'),
+          faint: channel('--text-faint-rgb'),
+        },
+
+        /* Accent. `accent` reads on the page ground; `accent-solid` is the
+           fill that carries white text. They differ in dark mode. */
         accent: {
-          pink: '#fd79a8',
-          'pink-dim': 'rgba(253,121,168,0.12)',
-          'pink-glow': 'rgba(253,121,168,0.3)',
-          purple: '#a29bfe',
-          'purple-dim': 'rgba(162,155,254,0.12)',
-          green: '#00b894',
-          'green-dim': 'rgba(0,184,148,0.12)',
-          blue: '#74b9ff',
-          'blue-dim': 'rgba(116,185,255,0.12)',
-          yellow: '#fdcb6e',
-          'yellow-dim': 'rgba(253,203,110,0.12)',
-          red: '#ff6b6b',
-          'red-dim': 'rgba(255,107,107,0.12)',
+          DEFAULT: channel('--accent-rgb'),
+          solid: channel('--accent-solid-rgb'),
+          /* Legacy sub-keys retained so existing `*-accent-pink` style
+             classes keep resolving; they now follow the theme. */
+          pink: channel('--accent-rgb'),
+          purple: channel('--purple-rgb'),
+          green: channel('--green-rgb'),
+          blue: channel('--blue-rgb'),
+          yellow: channel('--yellow-rgb'),
+          red: channel('--red-rgb'),
         },
-        text: {
-          primary: '#f0f0f5',
-          secondary: '#8a8a9a',
-          muted: '#5a5a6a',
-        },
-        border: {
-          DEFAULT: 'rgba(255,255,255,0.06)',
-          hover: 'rgba(255,255,255,0.12)',
-        },
+
+        /* Semantic */
+        success: channel('--green-rgb'),
+        info: channel('--blue-rgb'),
+        warning: channel('--yellow-rgb'),
+        danger: channel('--red-rgb'),
       },
+
+      /* Borders carry their own alpha in the token, so they are plain
+         var() rather than channel form. */
+      borderColor: {
+        DEFAULT: 'var(--border)',
+        hover: 'var(--border-hover)',
+        accent: 'var(--border-accent)',
+      },
+
+      boxShadow: {
+        sm: 'var(--shadow-sm)',
+        md: 'var(--shadow-md)',
+        lg: 'var(--shadow-lg)',
+        xl: 'var(--shadow-xl)',
+        accent: 'var(--shadow-accent)',
+      },
+
       fontFamily: {
         sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+        display: ['Instrument Serif', 'Iowan Old Style', 'Georgia', 'serif'],
         mono: ['JetBrains Mono', 'monospace'],
       },
+
+      /* Unchanged: 283 existing `rounded-{sm,md,lg,xl}` usages depend on
+         these exact values. */
       borderRadius: {
         sm: '8px',
         md: '12px',
         lg: '20px',
         xl: '28px',
       },
+
       animation: {
         'fade-in': 'fadeIn 0.6s ease forwards',
         'fade-up': 'fadeUp 0.6s ease forwards',

@@ -309,7 +309,7 @@ export async function POST(request: NextRequest) {
         is_primary: true,
       })
       .select()
-      .single();
+      .maybeSingle();
 
     if (resumeError) {
       console.error('[extract] Resume save error:', resumeError.message);

@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import Anthropic from '@anthropic-ai/sdk'
+import { tryParseModelJson } from '@/lib/model-json'
 
 export const maxDuration = 60
 
@@ -46,16 +47,16 @@ export async function POST(req: NextRequest) {
 
     // Get user profile, parsed resume, and preferences in parallel
     const [{ data: profile }, { data: prefs }] = await Promise.all([
-      supabase.from('profiles').select('*').eq('id', user.id).single(),
-      supabase.from('job_preferences').select('*').eq('user_id', user.id).single(),
+      supabase.from('profiles').select('*').eq('id', user.id).maybeSingle(),
+      supabase.from('job_preferences').select('*').eq('user_id', user.id).maybeSingle(),
     ])
 
     let parsedResume: any = null
     const { data: primaryResume } = await supabase
-      .from('resumes').select('id').eq('user_id', user.id).eq('is_primary', true).single()
+      .from('resumes').select('id').eq('user_id', user.id).eq('is_primary', true).maybeSingle()
     if (primaryResume) {
       const { data } = await supabase
-        .from('parsed_resumes').select('*').eq('resume_id', primaryResume.id).single()
+        .from('parsed_resumes').select('*').eq('resume_id', primaryResume.id).maybeSingle()
       parsedResume = data
     }
 
@@ -125,12 +126,7 @@ Return ONLY valid JSON (no markdown, no explanation):
     })
 
     const text = msg.content[0].type === 'text' ? msg.content[0].text : '{}'
-    let parsed: any
-    try { parsed = JSON.parse(text) }
-    catch {
-      const match = text.match(/\{[\s\S]*\}/)
-      parsed = match ? JSON.parse(match[0]) : { dimensions: {} }
-    }
+    const parsed = tryParseModelJson<any>(text, { dimensions: {} }, msg.stop_reason)
 
     // Calculate weighted score
     let totalScore = 0

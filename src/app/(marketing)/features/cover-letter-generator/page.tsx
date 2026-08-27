@@ -48,18 +48,18 @@ export default function CoverLetterGeneratorPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <main className="min-h-screen bg-[#0a0a12] text-white">
+      <main className="">
         {/* Hero */}
-        <section className="relative overflow-hidden py-24 sm:py-32">
-          <div className="absolute inset-0 bg-gradient-to-b from-pink-900/20 to-transparent" />
+        <section className="relative overflow-hidden py-16 sm:py-14">
+          <div className="absolute inset-0 bg-gradient-to-b from-[var(--accent-dim)] to-transparent" />
           <div className="relative mx-auto max-w-7xl px-6 lg:px-8">
-            <Link href="/features" className="text-sm text-purple-400 hover:text-purple-300 mb-6 inline-block">
+            <Link href="/features" className="text-sm text-[var(--accent)] hover:text-[var(--accent)] mb-6 inline-block">
               &larr; All Features
             </Link>
-            <h1 className="text-4xl font-extrabold tracking-tight sm:text-6xl bg-gradient-to-r from-pink-400 to-purple-400 bg-clip-text text-transparent">
+            <h1 className="font-display text-[clamp(2.4rem,5vw,3.6rem)]">
               AI Cover Letter Generator
             </h1>
-            <p className="mt-6 max-w-2xl text-lg text-gray-300 leading-relaxed">
+            <p className="mt-6 max-w-2xl text-lg text-[var(--text-secondary)] leading-relaxed">
               Writing a great cover letter for every application is exhausting. ApplyMaster&apos;s
               AI cover letter writer researches the company, analyzes the role, and produces a
               personalized letter that connects your experience to what the hiring team actually
@@ -68,7 +68,7 @@ export default function CoverLetterGeneratorPage() {
             <div className="mt-10 flex items-center gap-4">
               <Link
                 href="/signup"
-                className="rounded-full bg-purple-600 px-8 py-3 text-sm font-semibold text-white shadow-lg hover:bg-purple-500 transition-colors"
+                className="rounded-full bg-[var(--accent-solid)] px-8 py-3 text-sm font-semibold text-[var(--text-on-accent)] shadow-lg hover:bg-[var(--accent-solid)] transition-colors"
               >
                 Generate Your First Cover Letter
               </Link>
@@ -77,9 +77,9 @@ export default function CoverLetterGeneratorPage() {
         </section>
 
         {/* Key Features */}
-        <section className="py-20">
+        <section className="py-14">
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
-            <h2 className="text-3xl font-bold text-center mb-16">
+            <h2 className="font-display text-[clamp(1.8rem,3.6vw,2.5rem)] text-center mb-14">
               What Makes ApplyMaster&apos;s Cover Letters Different
             </h2>
             <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
@@ -109,9 +109,9 @@ export default function CoverLetterGeneratorPage() {
                   desc: 'Every generated letter is saved in your dashboard. Compare versions, reuse successful templates, and track which cover letters led to interviews.',
                 },
               ].map((item) => (
-                <div key={item.title} className="rounded-2xl border border-gray-800 bg-gray-900/50 p-8">
-                  <h3 className="text-lg font-semibold mb-3 text-pink-400">{item.title}</h3>
-                  <p className="text-sm text-gray-400 leading-relaxed">{item.desc}</p>
+                <div key={item.title} className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-8">
+                  <h3 className="text-lg font-semibold mb-3 text-[var(--accent)]">{item.title}</h3>
+                  <p className="text-sm text-[var(--text-muted)] leading-relaxed">{item.desc}</p>
                 </div>
               ))}
             </div>
@@ -119,9 +119,9 @@ export default function CoverLetterGeneratorPage() {
         </section>
 
         {/* How It Works */}
-        <section className="py-20 bg-gray-900/30">
+        <section className="py-14 bg-[var(--bg-card)]">
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
-            <h2 className="text-3xl font-bold text-center mb-16">
+            <h2 className="font-display text-[clamp(1.8rem,3.6vw,2.5rem)] text-center mb-14">
               Generate a Cover Letter in 3 Steps
             </h2>
             <div className="grid gap-10 md:grid-cols-3">
@@ -143,11 +143,11 @@ export default function CoverLetterGeneratorPage() {
                 },
               ].map((item) => (
                 <div key={item.step} className="text-center">
-                  <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-pink-600 text-xl font-bold">
+                  <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--accent-solid)] text-xl font-bold">
                     {item.step}
                   </div>
                   <h3 className="text-lg font-semibold mb-3">{item.title}</h3>
-                  <p className="text-sm text-gray-400 leading-relaxed">{item.desc}</p>
+                  <p className="text-sm text-[var(--text-muted)] leading-relaxed">{item.desc}</p>
                 </div>
               ))}
             </div>
@@ -155,25 +155,25 @@ export default function CoverLetterGeneratorPage() {
         </section>
 
         {/* Tone Examples */}
-        <section className="py-20">
+        <section className="py-14">
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
-            <h2 className="text-3xl font-bold text-center mb-4">
+            <h2 className="font-display text-[clamp(1.8rem,3.6vw,2.5rem)] text-center mb-4">
               Tone Control for Every Situation
             </h2>
-            <p className="text-center text-gray-400 mb-12 max-w-2xl mx-auto">
+            <p className="text-center text-[var(--text-muted)] mb-12 max-w-2xl mx-auto">
               Different companies expect different communication styles.
               ApplyMaster adapts to match.
             </p>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
               {[
-                { tone: 'Professional', desc: 'Polished and formal. Ideal for enterprise companies, financial services, and law firms.', color: 'border-blue-500/30 bg-blue-900/10' },
-                { tone: 'Conversational', desc: 'Friendly and approachable. Great for startups, creative agencies, and tech companies.', color: 'border-green-500/30 bg-green-900/10' },
-                { tone: 'Enthusiastic', desc: 'High-energy and passionate. Perfect for mission-driven organizations and early-stage startups.', color: 'border-yellow-500/30 bg-yellow-900/10' },
-                { tone: 'Executive', desc: 'Strategic and authoritative. Designed for C-suite, VP, and director-level positions.', color: 'border-purple-500/30 bg-purple-900/10' },
+                { tone: 'Professional', desc: 'Polished and formal. Ideal for enterprise companies, financial services, and law firms.', color: 'border-[var(--border)] bg-[var(--blue-dim)]' },
+                { tone: 'Conversational', desc: 'Friendly and approachable. Great for startups, creative agencies, and tech companies.', color: 'border-[var(--border)] bg-[var(--green-dim)]' },
+                { tone: 'Enthusiastic', desc: 'High-energy and passionate. Perfect for mission-driven organizations and early-stage startups.', color: 'border-[var(--border)] bg-[var(--yellow-dim)]' },
+                { tone: 'Executive', desc: 'Strategic and authoritative. Designed for C-suite, VP, and director-level positions.', color: 'border-[var(--border-accent)] bg-[var(--accent-dim)]' },
               ].map((item) => (
                 <div key={item.tone} className={`rounded-xl border p-6 ${item.color}`}>
-                  <h3 className="font-semibold mb-2 text-white">{item.tone}</h3>
-                  <p className="text-sm text-gray-400 leading-relaxed">{item.desc}</p>
+                  <h3 className="font-semibold mb-2 text-ink">{item.tone}</h3>
+                  <p className="text-sm text-[var(--text-muted)] leading-relaxed">{item.desc}</p>
                 </div>
               ))}
             </div>
@@ -181,29 +181,29 @@ export default function CoverLetterGeneratorPage() {
         </section>
 
         {/* Integration */}
-        <section className="py-20 bg-gray-900/30">
+        <section className="py-14 bg-[var(--bg-card)]">
           <div className="mx-auto max-w-4xl px-6 lg:px-8 text-center">
-            <h2 className="text-3xl font-bold mb-6">
+            <h2 className="font-display text-[clamp(1.8rem,3.6vw,2.5rem)] mb-5">
               Part of the Complete Application Package
             </h2>
-            <p className="text-gray-400 mb-4 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-[var(--text-muted)] mb-4 max-w-2xl mx-auto leading-relaxed">
               The cover letter generator works hand-in-hand with the{' '}
-              <Link href="/features/resume-optimizer" className="text-purple-400 underline hover:text-purple-300">resume optimizer</Link>.
+              <Link href="/features/resume-optimizer" className="text-[var(--accent)] underline hover:text-[var(--accent)]">resume optimizer</Link>.
               Together, they produce a cohesive application where your resume and cover letter
               reinforce each other without repeating the same points.
             </p>
-            <p className="text-gray-400 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-[var(--text-muted)] max-w-2xl mx-auto leading-relaxed">
               When paired with{' '}
-              <Link href="/features/auto-apply" className="text-purple-400 underline hover:text-purple-300">auto-apply</Link>,
+              <Link href="/features/auto-apply" className="text-[var(--accent)] underline hover:text-[var(--accent)]">auto-apply</Link>,
               cover letters are generated and attached automatically for every application you send.
             </p>
           </div>
         </section>
 
         {/* FAQ */}
-        <section className="py-20">
+        <section className="py-14">
           <div className="mx-auto max-w-3xl px-6 lg:px-8">
-            <h2 className="text-3xl font-bold text-center mb-12">
+            <h2 className="font-display text-[clamp(1.8rem,3.6vw,2.5rem)] text-center mb-10">
               Frequently Asked Questions
             </h2>
             <div className="space-y-8">
@@ -226,8 +226,8 @@ export default function CoverLetterGeneratorPage() {
                 },
               ].map((item) => (
                 <div key={item.q}>
-                  <h3 className="font-semibold text-white mb-2">{item.q}</h3>
-                  <p className="text-sm text-gray-400 leading-relaxed">{item.a}</p>
+                  <h3 className="font-semibold text-ink mb-2">{item.q}</h3>
+                  <p className="text-sm text-[var(--text-muted)] leading-relaxed">{item.a}</p>
                 </div>
               ))}
             </div>
@@ -235,17 +235,17 @@ export default function CoverLetterGeneratorPage() {
         </section>
 
         {/* CTA */}
-        <section className="py-24 bg-gradient-to-b from-transparent to-purple-900/20">
+        <section className="py-16 bg-gradient-to-b from-transparent to-[var(--accent-dim)]">
           <div className="mx-auto max-w-3xl px-6 text-center">
-            <h2 className="text-3xl font-bold mb-6">
+            <h2 className="font-display text-[clamp(1.8rem,3.6vw,2.5rem)] mb-5">
               Write Cover Letters That Get Callbacks
             </h2>
-            <p className="text-gray-400 mb-10 text-lg">
+            <p className="text-[var(--text-muted)] mb-10 text-lg">
               Generate your first personalized cover letter in under 30 seconds. Free to try.
             </p>
             <Link
               href="/signup"
-              className="rounded-full bg-purple-600 px-10 py-4 text-base font-semibold text-white shadow-lg hover:bg-purple-500 transition-colors"
+              className="rounded-full bg-[var(--accent-solid)] px-10 py-4 text-base font-semibold text-[var(--text-on-accent)] shadow-lg hover:bg-[var(--accent-solid)] transition-colors"
             >
               Generate a Cover Letter Free
             </Link>

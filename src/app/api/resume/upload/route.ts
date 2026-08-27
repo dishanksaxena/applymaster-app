@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
+import { tryParseModelJson } from '@/lib/model-json'
 
 export const maxDuration = 60
 
@@ -13,28 +14,48 @@ const adminSupabase = createAdminClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
+/**
+ * Pull the text out of a PDF.
+ *
+ * Local extraction is tried first and the model is the fallback, which is
+ * the right order — but the local path had never once succeeded. Two bugs
+ * sat on top of each other:
+ *
+ *   1. `require('pdf-parse')(buffer)` is the v1 API. This project is on v2,
+ *      which exports a PDFParse class instead, so every call threw
+ *      "pdfParse is not a function" and fell through to the model. Every
+ *      upload was paying for a Claude call to do something the library
+ *      does locally in milliseconds.
+ *
+ *   2. Promise.race does not cancel the loser. The 5s timeout kept its
+ *      timer whatever happened, so once the race settled the rejection had
+ *      nobody left to catch it — an unhandled rejection that takes the
+ *      route down rather than the request.
+ *
+ * The timer is cleared in a finally block now, and the timeout is 15s:
+ * 5s was tight enough to fail on an ordinary multi-page CV.
+ */
 async function extractTextFromPDF(buffer: Buffer): Promise<string> {
-  // Try pdf-parse first with timeout
+  let parser: { getText: () => Promise<{ text: string }>; destroy: () => Promise<void> } | null = null
+  let timer: NodeJS.Timeout | undefined
+
   try {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const pdfParse = require('pdf-parse')
+    const { PDFParse } = require('pdf-parse')
+    parser = new PDFParse({ data: new Uint8Array(buffer) })
 
-    // Wrap with timeout (5 seconds max)
-    const timeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('PDF parsing timeout')), 5000)
-    )
+    const timeout = new Promise<never>((_, reject) => {
+      timer = setTimeout(() => reject(new Error('PDF parsing timeout')), 15000)
+    })
 
-    const data = await Promise.race([
-      pdfParse(buffer),
-      timeoutPromise
-    ])
-
-    if (data && data.text) {
-      return data.text
-    }
+    const data = await Promise.race([parser!.getText(), timeout])
+    if (data?.text?.trim()) return data.text
   } catch (err) {
     console.error('pdf-parse failed:', err instanceof Error ? err.message : String(err))
-    // Fall through to Claude API
+    // Fall through to the model.
+  } finally {
+    if (timer) clearTimeout(timer)
+    await parser?.destroy().catch(() => {})
   }
 
   // Fallback to Claude API if pdf-parse fails
@@ -42,7 +63,7 @@ async function extractTextFromPDF(buffer: Buffer): Promise<string> {
     const base64 = buffer.toString('base64')
     const msg = await anthropic.messages.create({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 4000,
+      max_tokens: 8000,
       messages: [{
         role: 'user',
         content: [
@@ -69,7 +90,7 @@ async function extractTextFromDOCX(buffer: Buffer): Promise<string> {
 async function parseResumeWithClaude(rawText: string) {
   const msg = await anthropic.messages.create({
     model: 'claude-haiku-4-5-20251001',
-    max_tokens: 4000,
+    max_tokens: 8000,
     messages: [
       {
         role: 'user',
@@ -118,14 +139,7 @@ ${rawText}`,
   })
 
   const text = msg.content[0].type === 'text' ? msg.content[0].text : '{}'
-  try {
-    return JSON.parse(text)
-  } catch {
-    // Try to extract JSON from the response
-    const match = text.match(/\{[\s\S]*\}/)
-    if (match) return JSON.parse(match[0])
-    throw new Error('Failed to parse Claude response as JSON')
-  }
+  return tryParseModelJson<any>(text, {}, msg.stop_reason)
 }
 
 export async function POST(req: NextRequest) {
@@ -208,7 +222,7 @@ export async function POST(req: NextRequest) {
         parsed_data: parsed,
       })
       .select()
-      .single()
+      .maybeSingle()
 
     if (resumeError) {
       console.error('Resume DB error:', resumeError)

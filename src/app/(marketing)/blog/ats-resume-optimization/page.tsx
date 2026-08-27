@@ -73,12 +73,12 @@ export default function ATSResumeOptimizationPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <main className="min-h-screen bg-[#0a0a12] text-white">
-        <article className="max-w-3xl mx-auto px-6 py-24">
+      <main className="">
+        <article className="max-w-3xl mx-auto px-6 py-16">
           {/* Navigation */}
           <Link
             href="/blog"
-            className="text-sm text-[#a29bfe] hover:text-[#6c5ce7] font-medium mb-8 inline-block"
+            className="text-sm text-[var(--purple)] hover:text-[var(--purple)] font-medium mb-8 inline-block"
           >
             &larr; Back to Blog
           </Link>
@@ -86,18 +86,18 @@ export default function ATSResumeOptimizationPage() {
           {/* Header */}
           <header className="mb-12">
             <div className="flex items-center gap-3 mb-4">
-              <span className="px-3 py-1 rounded-full text-xs font-semibold bg-[#a29bfe]/10 text-[#a29bfe]">
+              <span className="px-3 py-1 rounded-full text-xs font-semibold bg-[var(--purple-dim)] text-[var(--purple)]">
                 Resume
               </span>
-              <time className="text-xs text-[#4a4a6a]" dateTime="2025-03-28">
+              <time className="text-xs text-[var(--text-faint)]" dateTime="2025-03-28">
                 March 28, 2025
               </time>
-              <span className="text-xs text-[#4a4a6a]">15 min read</span>
+              <span className="text-xs text-[var(--text-faint)]">15 min read</span>
             </div>
-            <h1 className="text-4xl md:text-5xl font-extrabold mb-6 bg-gradient-to-r from-white to-white/70 bg-clip-text text-transparent leading-tight">
+            <h1 className="font-display text-[clamp(2.3rem,5vw,3.4rem)] mb-6">
               {title}
             </h1>
-            <p className="text-lg text-[#8a8aaa] leading-relaxed">
+            <p className="text-lg text-[var(--text-muted)] leading-relaxed">
               Over 98% of Fortune 500 companies use an Applicant Tracking System to filter
               resumes before a human ever sees them. If your resume is not ATS-optimized, it is
               getting rejected automatically, no matter how qualified you are. Here is how to fix
@@ -106,11 +106,11 @@ export default function ATSResumeOptimizationPage() {
           </header>
 
           {/* Table of Contents */}
-          <nav className="mb-12 p-6 rounded-xl border border-white/5 bg-white/[0.02]">
-            <h2 className="text-sm font-semibold text-[#a29bfe] uppercase tracking-wider mb-4">
+          <nav className="mb-12 p-6 rounded-xl border border-[var(--border)] bg-[var(--bg-overlay)]">
+            <h2 className="text-sm font-semibold text-[var(--purple)] uppercase tracking-wider mb-4">
               Table of Contents
             </h2>
-            <ol className="space-y-2 text-sm text-[#8a8aaa]">
+            <ol className="space-y-2 text-sm text-[var(--text-muted)]">
               <li>1. What Is an Applicant Tracking System?</li>
               <li>2. How ATS Scoring Actually Works</li>
               <li>3. The Formatting Rules That Matter</li>
@@ -130,21 +130,21 @@ export default function ATSResumeOptimizationPage() {
           <div className="space-y-10">
             {/* Section 1 */}
             <section>
-              <h2 className="text-2xl font-bold text-white mb-4">
+              <h2 className="font-display text-[1.6rem] mb-4">
                 1. What Is an Applicant Tracking System?
               </h2>
-              <p className="text-[#b0b0c8] leading-relaxed mb-4">
+              <p className="text-[var(--text-secondary)] leading-relaxed mb-4">
                 An Applicant Tracking System (ATS) is software that employers use to manage
                 recruitment. It collects, sorts, scans, and ranks job applications. Think of it as
                 a gatekeeper between your resume and the hiring manager.
               </p>
-              <p className="text-[#b0b0c8] leading-relaxed mb-4">
+              <p className="text-[var(--text-secondary)] leading-relaxed mb-4">
                 Popular ATS platforms include Workday, Greenhouse, Lever, iCIMS, Taleo, and
                 BambooHR. Each parses resumes differently, but they share core functionality:
                 extracting your information into structured fields and scoring your fit against the
                 job requirements.
               </p>
-              <p className="text-[#b0b0c8] leading-relaxed">
+              <p className="text-[var(--text-secondary)] leading-relaxed">
                 The critical point is that ATS is not just a database. Modern systems actively
                 score and rank candidates. A resume that a human would find impressive can score
                 poorly in ATS if it uses the wrong format, keywords, or structure.
@@ -153,38 +153,38 @@ export default function ATSResumeOptimizationPage() {
 
             {/* Section 2 */}
             <section>
-              <h2 className="text-2xl font-bold text-white mb-4">
+              <h2 className="font-display text-[1.6rem] mb-4">
                 2. How ATS Scoring Actually Works
               </h2>
-              <p className="text-[#b0b0c8] leading-relaxed mb-4">
+              <p className="text-[var(--text-secondary)] leading-relaxed mb-4">
                 Most ATS platforms use a multi-factor scoring model. Understanding these factors is
                 the key to optimization:
               </p>
-              <ul className="space-y-3 text-[#b0b0c8]">
+              <ul className="space-y-3 text-[var(--text-secondary)]">
                 <li>
-                  <strong className="text-white">Keyword matching (40-50% of score).</strong> The
+                  <strong className="text-ink">Keyword matching (40-50% of score).</strong> The
                   system compares words and phrases in your resume against the job description. It
                   looks for both exact matches and semantic equivalents. Missing key terms can
                   eliminate you regardless of other factors.
                 </li>
                 <li>
-                  <strong className="text-white">Skills alignment (20-30%).</strong> ATS extracts
+                  <strong className="text-ink">Skills alignment (20-30%).</strong> ATS extracts
                   your skills into a structured list and compares them to required and preferred
                   skills. Hard skills (programming languages, tools, certifications) are weighted
                   more heavily than soft skills.
                 </li>
                 <li>
-                  <strong className="text-white">Experience relevance (15-20%).</strong> The system
+                  <strong className="text-ink">Experience relevance (15-20%).</strong> The system
                   evaluates your job titles, industries, and years of experience against the
                   requirements. Some ATS platforms can identify career progression patterns.
                 </li>
                 <li>
-                  <strong className="text-white">Education match (5-10%).</strong> Degree level,
+                  <strong className="text-ink">Education match (5-10%).</strong> Degree level,
                   field of study, and institution are compared against requirements. This is
                   typically a pass/fail filter rather than a scoring factor.
                 </li>
                 <li>
-                  <strong className="text-white">Recency and relevance.</strong> Recent experience
+                  <strong className="text-ink">Recency and relevance.</strong> Recent experience
                   in your last two positions is weighted more heavily than experience from ten years
                   ago.
                 </li>
@@ -193,42 +193,42 @@ export default function ATSResumeOptimizationPage() {
 
             {/* Section 3 */}
             <section>
-              <h2 className="text-2xl font-bold text-white mb-4">
+              <h2 className="font-display text-[1.6rem] mb-4">
                 3. The Formatting Rules That Matter
               </h2>
-              <p className="text-[#b0b0c8] leading-relaxed mb-4">
+              <p className="text-[var(--text-secondary)] leading-relaxed mb-4">
                 Formatting mistakes are the number one reason qualified candidates get rejected by
                 ATS. Follow these rules:
               </p>
-              <ul className="space-y-3 text-[#b0b0c8]">
+              <ul className="space-y-3 text-[var(--text-secondary)]">
                 <li>
-                  <strong className="text-white">Use standard fonts.</strong> Arial, Calibri,
+                  <strong className="text-ink">Use standard fonts.</strong> Arial, Calibri,
                   Cambria, Georgia, Helvetica, and Times New Roman parse reliably. Avoid decorative
                   fonts, custom fonts, or icon fonts.
                 </li>
                 <li>
-                  <strong className="text-white">Avoid tables and columns.</strong> Multi-column
+                  <strong className="text-ink">Avoid tables and columns.</strong> Multi-column
                   layouts and tables confuse many ATS parsers. The system may read across columns
                   instead of down them, scrambling your information. Stick to a single-column
                   layout.
                 </li>
                 <li>
-                  <strong className="text-white">No headers or footers for critical info.</strong>{' '}
+                  <strong className="text-ink">No headers or footers for critical info.</strong>{' '}
                   Many ATS systems skip header and footer content. Never put your name, phone
                   number, or email only in a header.
                 </li>
                 <li>
-                  <strong className="text-white">Skip graphics and images.</strong> Logos, headshots,
+                  <strong className="text-ink">Skip graphics and images.</strong> Logos, headshots,
                   charts, and icons are invisible to ATS. Information embedded in images is lost
                   entirely.
                 </li>
                 <li>
-                  <strong className="text-white">Use standard bullet characters.</strong> Stick with
+                  <strong className="text-ink">Use standard bullet characters.</strong> Stick with
                   basic round bullets or hyphens. Fancy symbols, checkmarks, and custom bullets may
                   not parse correctly.
                 </li>
                 <li>
-                  <strong className="text-white">Standard section headings.</strong> Use obvious
+                  <strong className="text-ink">Standard section headings.</strong> Use obvious
                   labels: &quot;Work Experience,&quot; &quot;Education,&quot; &quot;Skills,&quot;
                   &quot;Certifications.&quot; Creative alternatives like &quot;Where I Have Made an
                   Impact&quot; confuse parsers.
@@ -238,27 +238,27 @@ export default function ATSResumeOptimizationPage() {
 
             {/* Section 4 */}
             <section>
-              <h2 className="text-2xl font-bold text-white mb-4">
+              <h2 className="font-display text-[1.6rem] mb-4">
                 4. File Format: PDF vs. DOCX
               </h2>
-              <p className="text-[#b0b0c8] leading-relaxed mb-4">
+              <p className="text-[var(--text-secondary)] leading-relaxed mb-4">
                 This is one of the most debated topics in resume optimization. The answer depends
                 on the specific ATS:
               </p>
-              <p className="text-[#b0b0c8] leading-relaxed mb-4">
-                <strong className="text-white">DOCX</strong> is the safest choice for ATS
+              <p className="text-[var(--text-secondary)] leading-relaxed mb-4">
+                <strong className="text-ink">DOCX</strong> is the safest choice for ATS
                 compatibility. Nearly every system parses DOCX reliably because it is a structured
                 XML format that ATS can read directly.
               </p>
-              <p className="text-[#b0b0c8] leading-relaxed mb-4">
-                <strong className="text-white">PDF</strong> is widely supported by modern ATS but
+              <p className="text-[var(--text-secondary)] leading-relaxed mb-4">
+                <strong className="text-ink">PDF</strong> is widely supported by modern ATS but
                 can cause issues with older systems. The problem is that PDFs can be created in
                 different ways. A PDF exported from Word is usually parseable. A PDF created in a
                 design tool like InDesign or Canva may contain text as images, which ATS cannot
                 read.
               </p>
-              <p className="text-[#b0b0c8] leading-relaxed">
-                <strong className="text-white">The best approach:</strong> Submit DOCX when the
+              <p className="text-[var(--text-secondary)] leading-relaxed">
+                <strong className="text-ink">The best approach:</strong> Submit DOCX when the
                 application does not specify a format. If you must use PDF, ensure it is a
                 text-based PDF (you can verify by trying to select and copy text from it). Always
                 check the job posting for format requirements.
@@ -267,35 +267,35 @@ export default function ATSResumeOptimizationPage() {
 
             {/* Section 5 */}
             <section>
-              <h2 className="text-2xl font-bold text-white mb-4">
+              <h2 className="font-display text-[1.6rem] mb-4">
                 5. Keyword Strategy: Beyond Simple Matching
               </h2>
-              <p className="text-[#b0b0c8] leading-relaxed mb-4">
+              <p className="text-[var(--text-secondary)] leading-relaxed mb-4">
                 Effective keyword optimization is more nuanced than stuffing your resume with words
                 from the job description.
               </p>
-              <h3 className="text-lg font-semibold text-white mb-3">Identifying the Right Keywords</h3>
-              <p className="text-[#b0b0c8] leading-relaxed mb-4">
+              <h3 className="text-lg font-semibold text-ink mb-3">Identifying the Right Keywords</h3>
+              <p className="text-[var(--text-secondary)] leading-relaxed mb-4">
                 Read the job description carefully and categorize the keywords: hard skills
                 (Python, SQL, Salesforce), soft skills (leadership, communication), industry terms
                 (SaaS, B2B), certifications (PMP, AWS Certified), and tools (Jira, Figma,
                 HubSpot). Prioritize hard skills and tools because they carry the most weight.
               </p>
-              <h3 className="text-lg font-semibold text-white mb-3">Placement Matters</h3>
-              <p className="text-[#b0b0c8] leading-relaxed mb-4">
+              <h3 className="text-lg font-semibold text-ink mb-3">Placement Matters</h3>
+              <p className="text-[var(--text-secondary)] leading-relaxed mb-4">
                 Keywords in your skills section and job titles are weighted more heavily than
                 keywords buried in bullet points. Place your most important keywords in multiple
                 locations: the skills section, your professional summary, and within your
                 experience descriptions.
               </p>
-              <h3 className="text-lg font-semibold text-white mb-3">Use Both Acronyms and Full Terms</h3>
-              <p className="text-[#b0b0c8] leading-relaxed mb-4">
+              <h3 className="text-lg font-semibold text-ink mb-3">Use Both Acronyms and Full Terms</h3>
+              <p className="text-[var(--text-secondary)] leading-relaxed mb-4">
                 Write &quot;Search Engine Optimization (SEO)&quot; the first time, then use
                 &quot;SEO&quot; subsequently. This covers both the full term and the acronym in ATS
                 matching.
               </p>
-              <h3 className="text-lg font-semibold text-white mb-3">Avoid Keyword Stuffing</h3>
-              <p className="text-[#b0b0c8] leading-relaxed">
+              <h3 className="text-lg font-semibold text-ink mb-3">Avoid Keyword Stuffing</h3>
+              <p className="text-[var(--text-secondary)] leading-relaxed">
                 Modern ATS systems can detect keyword stuffing. White text, hidden keywords, and
                 unnatural repetition will flag your resume or result in a poor score. Every keyword
                 should appear in a natural, contextual sentence or list.
@@ -304,39 +304,39 @@ export default function ATSResumeOptimizationPage() {
 
             {/* Section 6 */}
             <section>
-              <h2 className="text-2xl font-bold text-white mb-4">
+              <h2 className="font-display text-[1.6rem] mb-4">
                 6. Section Structure That ATS Systems Expect
               </h2>
-              <p className="text-[#b0b0c8] leading-relaxed mb-4">
+              <p className="text-[var(--text-secondary)] leading-relaxed mb-4">
                 ATS parsers look for specific resume sections in a predictable order. Here is the
                 optimal structure:
               </p>
-              <ol className="space-y-3 text-[#b0b0c8]">
+              <ol className="space-y-3 text-[var(--text-secondary)]">
                 <li>
-                  <strong className="text-white">1. Contact Information</strong> &mdash; Full name,
+                  <strong className="text-ink">1. Contact Information</strong> &mdash; Full name,
                   phone number, email, LinkedIn URL, city/state. Place at the top of the document
                   body (not in a header).
                 </li>
                 <li>
-                  <strong className="text-white">2. Professional Summary</strong> &mdash; 2-3
+                  <strong className="text-ink">2. Professional Summary</strong> &mdash; 2-3
                   sentences with your title, years of experience, and top skills. This is prime real
                   estate for keywords.
                 </li>
                 <li>
-                  <strong className="text-white">3. Skills</strong> &mdash; A categorized list of
+                  <strong className="text-ink">3. Skills</strong> &mdash; A categorized list of
                   technical and professional skills. This section is critical for ATS matching.
                 </li>
                 <li>
-                  <strong className="text-white">4. Work Experience</strong> &mdash; Reverse
+                  <strong className="text-ink">4. Work Experience</strong> &mdash; Reverse
                   chronological order. Each entry needs: job title, company name, location, dates
                   (month/year format), and bullet points with achievements.
                 </li>
                 <li>
-                  <strong className="text-white">5. Education</strong> &mdash; Degree, institution,
+                  <strong className="text-ink">5. Education</strong> &mdash; Degree, institution,
                   graduation date, GPA (if strong and recent).
                 </li>
                 <li>
-                  <strong className="text-white">6. Certifications</strong> &mdash; Professional
+                  <strong className="text-ink">6. Certifications</strong> &mdash; Professional
                   certifications with issuing organization and date.
                 </li>
               </ol>
@@ -344,51 +344,51 @@ export default function ATSResumeOptimizationPage() {
 
             {/* Section 7 */}
             <section>
-              <h2 className="text-2xl font-bold text-white mb-4">
+              <h2 className="font-display text-[1.6rem] mb-4">
                 7. The 10 Most Common ATS Mistakes
               </h2>
-              <ol className="space-y-3 text-[#b0b0c8]">
+              <ol className="space-y-3 text-[var(--text-secondary)]">
                 <li>
-                  <strong className="text-white">1. Using a creative template.</strong> Those
+                  <strong className="text-ink">1. Using a creative template.</strong> Those
                   beautiful Canva templates with sidebars, icons, and unique layouts? ATS cannot
                   parse most of them.
                 </li>
                 <li>
-                  <strong className="text-white">2. Embedding contact info in headers.</strong> Many
+                  <strong className="text-ink">2. Embedding contact info in headers.</strong> Many
                   ATS skip document headers entirely.
                 </li>
                 <li>
-                  <strong className="text-white">3. Submitting image-based PDFs.</strong> If your
+                  <strong className="text-ink">3. Submitting image-based PDFs.</strong> If your
                   resume was designed in Photoshop or a similar tool, ATS sees a blank page.
                 </li>
                 <li>
-                  <strong className="text-white">4. Using non-standard section titles.</strong>{' '}
+                  <strong className="text-ink">4. Using non-standard section titles.</strong>{' '}
                   &quot;Professional Journey&quot; instead of &quot;Work Experience&quot; can prevent
                   proper parsing.
                 </li>
                 <li>
-                  <strong className="text-white">5. Missing keywords from the job description.</strong>{' '}
+                  <strong className="text-ink">5. Missing keywords from the job description.</strong>{' '}
                   Every job description is a cheat sheet. Use the terms it uses.
                 </li>
                 <li>
-                  <strong className="text-white">6. Inconsistent date formats.</strong> Mixing
+                  <strong className="text-ink">6. Inconsistent date formats.</strong> Mixing
                   &quot;Jan 2023&quot; with &quot;2023-01&quot; and &quot;January 2023&quot;
                   confuses parsers.
                 </li>
                 <li>
-                  <strong className="text-white">7. Using text boxes.</strong> Text inside text
+                  <strong className="text-ink">7. Using text boxes.</strong> Text inside text
                   boxes in Word or Google Docs may not be read by ATS.
                 </li>
                 <li>
-                  <strong className="text-white">8. Submitting one resume for every job.</strong> A
+                  <strong className="text-ink">8. Submitting one resume for every job.</strong> A
                   single resume cannot be optimized for different roles with different requirements.
                 </li>
                 <li>
-                  <strong className="text-white">9. Leaving out a skills section.</strong> This is
+                  <strong className="text-ink">9. Leaving out a skills section.</strong> This is
                   where ATS looks first for keyword matches.
                 </li>
                 <li>
-                  <strong className="text-white">10. Overcomplicating the file name.</strong> Use a
+                  <strong className="text-ink">10. Overcomplicating the file name.</strong> Use a
                   simple format: &quot;FirstName-LastName-Resume.docx&quot;.
                 </li>
               </ol>
@@ -396,25 +396,25 @@ export default function ATSResumeOptimizationPage() {
 
             {/* Section 8 */}
             <section>
-              <h2 className="text-2xl font-bold text-white mb-4">
+              <h2 className="font-display text-[1.6rem] mb-4">
                 8. Testing Your Resume Against ATS
               </h2>
-              <p className="text-[#b0b0c8] leading-relaxed mb-4">
+              <p className="text-[var(--text-secondary)] leading-relaxed mb-4">
                 Before submitting, test your resume to catch issues:
               </p>
-              <ul className="space-y-3 text-[#b0b0c8]">
+              <ul className="space-y-3 text-[var(--text-secondary)]">
                 <li>
-                  <strong className="text-white">The copy-paste test.</strong> Open your resume, do
+                  <strong className="text-ink">The copy-paste test.</strong> Open your resume, do
                   Ctrl+A then Ctrl+C, and paste into a plain text editor. If the text appears
                   garbled, out of order, or missing sections, ATS will have the same problem.
                 </li>
                 <li>
-                  <strong className="text-white">ATS checker tools.</strong> Services like Jobscan,
+                  <strong className="text-ink">ATS checker tools.</strong> Services like Jobscan,
                   Resume Worded, and ApplyMaster offer ATS scoring that simulates how a real ATS
                   would parse and rate your resume against a specific job description.
                 </li>
                 <li>
-                  <strong className="text-white">Keyword comparison.</strong> Manually compare the
+                  <strong className="text-ink">Keyword comparison.</strong> Manually compare the
                   keywords in the job description against your resume. Highlight every matching
                   term. If you are missing more than 30% of the key terms, revise before submitting.
                 </li>
@@ -423,37 +423,37 @@ export default function ATSResumeOptimizationPage() {
 
             {/* Section 9 */}
             <section>
-              <h2 className="text-2xl font-bold text-white mb-4">
+              <h2 className="font-display text-[1.6rem] mb-4">
                 9. How ApplyMaster Auto-Optimizes for ATS
               </h2>
-              <p className="text-[#b0b0c8] leading-relaxed mb-4">
+              <p className="text-[var(--text-secondary)] leading-relaxed mb-4">
                 Manually optimizing your resume for every application is time-consuming.
                 ApplyMaster automates the entire process:
               </p>
-              <ul className="space-y-3 text-[#b0b0c8]">
+              <ul className="space-y-3 text-[var(--text-secondary)]">
                 <li>
-                  <strong className="text-white">Automatic keyword injection.</strong> When you
+                  <strong className="text-ink">Automatic keyword injection.</strong> When you
                   apply to a job through ApplyMaster, the system analyzes the job description,
                   identifies critical keywords, and weaves them naturally into your resume while
                   preserving your voice.
                 </li>
                 <li>
-                  <strong className="text-white">ATS-safe formatting.</strong> Your resume is
+                  <strong className="text-ink">ATS-safe formatting.</strong> Your resume is
                   automatically reformatted to ensure compatibility. Tables become lists, graphics
                   are removed, section headers are standardized, and fonts are normalized.
                 </li>
                 <li>
-                  <strong className="text-white">Per-application scoring.</strong> Before each
+                  <strong className="text-ink">Per-application scoring.</strong> Before each
                   submission, you see a predicted ATS score. If it falls below your threshold, the
                   system suggests specific changes to improve it.
                 </li>
                 <li>
-                  <strong className="text-white">Multi-ATS awareness.</strong> ApplyMaster knows
+                  <strong className="text-ink">Multi-ATS awareness.</strong> ApplyMaster knows
                   which ATS each company uses and adjusts optimization strategies accordingly.
                   Workday parses differently than Greenhouse, and the system accounts for this.
                 </li>
                 <li>
-                  <strong className="text-white">Skill gap analysis.</strong> The system identifies
+                  <strong className="text-ink">Skill gap analysis.</strong> The system identifies
                   required skills you lack and suggests where you might have equivalent experience
                   that can be reframed to match.
                 </li>
@@ -462,30 +462,30 @@ export default function ATSResumeOptimizationPage() {
 
             {/* Section 10 */}
             <section>
-              <h2 className="text-2xl font-bold text-white mb-4">
+              <h2 className="font-display text-[1.6rem] mb-4">
                 10. Industry-Specific ATS Tips
               </h2>
-              <h3 className="text-lg font-semibold text-white mb-3">Technology</h3>
-              <p className="text-[#b0b0c8] leading-relaxed mb-4">
+              <h3 className="text-lg font-semibold text-ink mb-3">Technology</h3>
+              <p className="text-[var(--text-secondary)] leading-relaxed mb-4">
                 List programming languages, frameworks, and tools explicitly. Spell out
                 abbreviations at least once. Include version numbers for major technologies (e.g.,
                 &quot;Python 3.x,&quot; &quot;React 18&quot;). ATS often matches on specific
                 versions.
               </p>
-              <h3 className="text-lg font-semibold text-white mb-3">Healthcare</h3>
-              <p className="text-[#b0b0c8] leading-relaxed mb-4">
+              <h3 className="text-lg font-semibold text-ink mb-3">Healthcare</h3>
+              <p className="text-[var(--text-secondary)] leading-relaxed mb-4">
                 Certifications are paramount. List every license, certification, and credential
                 with full names and acronyms. Include EMR/EHR systems you have used by name (Epic,
                 Cerner, Meditech).
               </p>
-              <h3 className="text-lg font-semibold text-white mb-3">Finance</h3>
-              <p className="text-[#b0b0c8] leading-relaxed mb-4">
+              <h3 className="text-lg font-semibold text-ink mb-3">Finance</h3>
+              <p className="text-[var(--text-secondary)] leading-relaxed mb-4">
                 Regulatory knowledge is heavily weighted. Include specific compliance frameworks
                 (SOX, Basel III, GDPR) and financial tools (Bloomberg Terminal, FactSet, Capital
                 IQ).
               </p>
-              <h3 className="text-lg font-semibold text-white mb-3">Marketing</h3>
-              <p className="text-[#b0b0c8] leading-relaxed">
+              <h3 className="text-lg font-semibold text-ink mb-3">Marketing</h3>
+              <p className="text-[var(--text-secondary)] leading-relaxed">
                 Platform-specific skills matter. List each advertising platform (Google Ads, Meta
                 Ads, LinkedIn Campaign Manager) and analytics tool (Google Analytics 4, Mixpanel,
                 Amplitude) separately rather than as generic categories.
@@ -494,13 +494,13 @@ export default function ATSResumeOptimizationPage() {
 
             {/* Section 11 */}
             <section>
-              <h2 className="text-2xl font-bold text-white mb-4">
+              <h2 className="font-display text-[1.6rem] mb-4">
                 11. ATS Optimization Checklist
               </h2>
-              <p className="text-[#b0b0c8] leading-relaxed mb-4">
+              <p className="text-[var(--text-secondary)] leading-relaxed mb-4">
                 Use this checklist before every submission:
               </p>
-              <ul className="space-y-2 text-[#b0b0c8]">
+              <ul className="space-y-2 text-[var(--text-secondary)]">
                 <li>&#9744; Resume is in DOCX or text-based PDF format</li>
                 <li>&#9744; Single-column layout with no tables or text boxes</li>
                 <li>&#9744; Standard section headings used</li>
@@ -518,46 +518,46 @@ export default function ATSResumeOptimizationPage() {
 
             {/* Section 12 */}
             <section>
-              <h2 className="text-2xl font-bold text-white mb-4">12. FAQ</h2>
+              <h2 className="font-display text-[1.6rem] mb-4">12. FAQ</h2>
               <div className="space-y-6">
                 <div>
-                  <h3 className="text-lg font-semibold text-white mb-2">
+                  <h3 className="text-lg font-semibold text-ink mb-2">
                     Can I use color on an ATS resume?
                   </h3>
-                  <p className="text-[#b0b0c8] leading-relaxed">
+                  <p className="text-[var(--text-secondary)] leading-relaxed">
                     Yes, but sparingly. ATS does not parse color, so it will not help or hurt your
                     score. Use it only for visual appeal for the human reviewer. Dark text colors are
                     fine; do not use light colors that become invisible when printed.
                   </p>
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-white mb-2">
+                  <h3 className="text-lg font-semibold text-ink mb-2">
                     How long should an ATS resume be?
                   </h3>
-                  <p className="text-[#b0b0c8] leading-relaxed">
+                  <p className="text-[var(--text-secondary)] leading-relaxed">
                     ATS does not penalize length. The concern is human readability after you pass
                     the ATS. For most candidates, 1-2 pages is ideal. Senior professionals with
                     extensive relevant experience can go to 3 pages.
                   </p>
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-white mb-2">
+                  <h3 className="text-lg font-semibold text-ink mb-2">
                     Do all companies use ATS?
                   </h3>
-                  <p className="text-[#b0b0c8] leading-relaxed">
+                  <p className="text-[var(--text-secondary)] leading-relaxed">
                     Nearly all mid-to-large companies do. Small startups sometimes review
                     applications manually, but even many small companies use lightweight ATS tools.
                     It is always safer to assume your resume will be parsed by ATS.
                   </p>
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-white mb-2">
+                  <h3 className="text-lg font-semibold text-ink mb-2">
                     Should I create a different resume for every job?
                   </h3>
-                  <p className="text-[#b0b0c8] leading-relaxed">
+                  <p className="text-[var(--text-secondary)] leading-relaxed">
                     Ideally, yes. At minimum, you should tailor your resume for each distinct job
                     type you are targeting. This is exactly where{' '}
-                    <Link href="/blog/ai-job-application-guide" className="text-[#a29bfe] hover:underline">
+                    <Link href="/blog/ai-job-application-guide" className="text-[var(--purple)] hover:underline">
                       AI application tools
                     </Link>{' '}
                     excel: they can customize your resume for every single application
@@ -569,40 +569,40 @@ export default function ATSResumeOptimizationPage() {
           </div>
 
           {/* CTA Section */}
-          <section className="mt-16 p-8 md:p-12 rounded-2xl border border-[#a29bfe]/20 bg-gradient-to-br from-[#a29bfe]/5 to-transparent text-center">
-            <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
+          <section className="mt-16 p-8 md:p-12 rounded-2xl border border-[var(--border)] bg-gradient-to-br from-[var(--purple-dim)] to-transparent text-center">
+            <h2 className="font-display text-[clamp(1.6rem,3vw,2.1rem)] mb-4">
               Stop Guessing. Get Your ATS Score Instantly.
             </h2>
-            <p className="text-[#8a8aaa] mb-8 max-w-lg mx-auto">
+            <p className="text-[var(--text-muted)] mb-8 max-w-lg mx-auto">
               ApplyMaster automatically optimizes your resume for every application. Upload once,
               and let AI tailor your resume to pass any ATS.
             </p>
             <Link
               href="/signup"
-              className="inline-block px-8 py-4 bg-[#a29bfe] hover:bg-[#6c5ce7] text-white font-semibold rounded-xl transition-colors"
+              className="inline-block px-8 py-4 bg-[var(--purple)] hover:bg-[var(--purple)] text-[var(--text-on-accent)] font-semibold rounded-xl transition-colors"
             >
               Optimize Your Resume Now &mdash; Free
             </Link>
           </section>
 
           {/* Related Posts */}
-          <nav className="mt-12 pt-8 border-t border-white/5">
-            <h3 className="text-sm font-semibold text-[#6a6a8a] uppercase tracking-wider mb-4">
+          <nav className="mt-12 pt-8 border-t border-[var(--border)]">
+            <h3 className="text-sm font-semibold text-[var(--text-faint)] uppercase tracking-wider mb-4">
               Related Articles
             </h3>
             <ul className="space-y-2">
               <li>
-                <Link href="/blog/ai-job-application-guide" className="text-[#a29bfe] hover:underline text-sm">
+                <Link href="/blog/ai-job-application-guide" className="text-[var(--purple)] hover:underline text-sm">
                   The Complete Guide to AI Job Applications in 2025
                 </Link>
               </li>
               <li>
-                <Link href="/blog/cover-letter-tips-2025" className="text-[#a29bfe] hover:underline text-sm">
+                <Link href="/blog/cover-letter-tips-2025" className="text-[var(--purple)] hover:underline text-sm">
                   How to Write a Cover Letter That Actually Gets Read (2025)
                 </Link>
               </li>
               <li>
-                <Link href="/blog/interview-preparation-guide" className="text-[#a29bfe] hover:underline text-sm">
+                <Link href="/blog/interview-preparation-guide" className="text-[var(--purple)] hover:underline text-sm">
                   AI Interview Coaching: Prepare for Any Interview in 30 Minutes
                 </Link>
               </li>

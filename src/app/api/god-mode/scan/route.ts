@@ -144,7 +144,7 @@ export async function POST(req: NextRequest) {
 
     // Load user preferences for scanning context
     const { data: prefs } = await supabase
-      .from('job_preferences').select('*').eq('user_id', user.id).single()
+      .from('job_preferences').select('*').eq('user_id', user.id).maybeSingle()
 
     const searchKeywords: string[] = keywords || prefs?.job_titles || ['software engineer', 'product manager', 'data scientist']
 
@@ -174,7 +174,7 @@ export async function POST(req: NextRequest) {
     for (const job of uniqueJobs.slice(0, 50)) {
       const externalId = `${job.source}-${job.posting_id || encodeURIComponent(job.url)}`
       const { data: existing } = await supabase
-        .from('jobs').select('id').eq('external_id', externalId).single()
+        .from('jobs').select('id').eq('external_id', externalId).maybeSingle()
 
       if (!existing) {
         await supabase.from('jobs').insert({

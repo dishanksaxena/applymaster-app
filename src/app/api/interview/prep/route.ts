@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import Anthropic from '@anthropic-ai/sdk'
+import { tryParseModelJson } from '@/lib/model-json'
 
 export const maxDuration = 60
 
@@ -21,14 +22,14 @@ export async function POST(req: NextRequest) {
       .select('id')
       .eq('user_id', user.id)
       .eq('is_primary', true)
-      .single()
+      .maybeSingle()
 
     if (primary) {
       const { data: parsed } = await supabase
         .from('parsed_resumes')
         .select('full_name, skills, experience, summary')
         .eq('resume_id', primary.id)
-        .single()
+        .maybeSingle()
 
       if (parsed) {
         resumeContext = `
@@ -81,13 +82,7 @@ Make questions highly specific to this exact role and company. Avoid generic que
       })
 
       const text = msg.content[0].type === 'text' ? msg.content[0].text : '[]'
-      let questions
-      try {
-        questions = JSON.parse(text)
-      } catch {
-        const match = text.match(/\[[\s\S]*\]/)
-        questions = match ? JSON.parse(match[0]) : []
-      }
+      const questions = tryParseModelJson<any>(text, [], msg.stop_reason)
 
       // Save session (non-fatal if table missing)
       let sessionId = null
@@ -102,7 +97,7 @@ Make questions highly specific to this exact role and company. Avoid generic que
             feedback: [],
           })
           .select('id')
-          .single()
+          .maybeSingle()
         sessionId = session?.id
       } catch { /* table may not exist yet */ }
 
@@ -143,13 +138,7 @@ Return ONLY valid JSON:
       })
 
       const text = msg.content[0].type === 'text' ? msg.content[0].text : '{}'
-      let feedback
-      try {
-        feedback = JSON.parse(text)
-      } catch {
-        const match = text.match(/\{[\s\S]*\}/)
-        feedback = match ? JSON.parse(match[0]) : { score: 70, verdict: 'good' }
-      }
+      const feedback = tryParseModelJson<any>(text, { score: 70, verdict: 'good' }, msg.stop_reason)
 
       // Save answer and feedback to session (non-fatal)
       if (session_id) {
@@ -159,7 +148,7 @@ Return ONLY valid JSON:
             .select('answers, feedback')
             .eq('id', session_id)
             .eq('user_id', user.id)
-            .single()
+            .maybeSingle()
           if (session) {
             const answers = [...(session.answers || []), { question, answer, timestamp: new Date().toISOString() }]
             const feedbackArr = [...(session.feedback || []), feedback]

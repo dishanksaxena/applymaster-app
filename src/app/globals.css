@@ -2,188 +2,454 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
-/* ─── Light Theme (Default) ─── */
+/* ==============================================================
+   APPLYMASTER DESIGN TOKENS -- "Premium Career"
+
+   Three theme states:
+     :root                        light (complete, always defined)
+     html.dark-theme              explicit dark, beats system
+     prefers-color-scheme: dark   system dark, only when neither
+                                  class is present
+   An explicit choice always wins, in both directions.
+
+   Every colour is declared twice:
+     --x-rgb   raw channels, for Tailwind alpha modifiers
+     --x       rgb(...), for inline style attributes
+   About 54 inline style usages depend on the second form, so
+   neither can be dropped. Keep the pair in sync.
+
+   Contrast is enforced by scripts/contrast-audit.mjs, which parses
+   the --*-rgb triplets out of this file. Run it after any change.
+   ============================================================== */
+
 :root {
-  --bg: #f7f8fc;
-  --bg-secondary: #ffffff;
-  --bg-card: #ffffff;
-  --bg-card-hover: #f8f9fc;
+  /* ---- Surfaces ------------------------------------------- */
+  --bg-rgb:                 250 248 245;   /* warm bone */
+  --bg-secondary-rgb:       255 255 255;
+  --bg-card-rgb:            255 255 255;
+  --bg-card-hover-rgb:      247 243 238;
+  --bg-input-rgb:           242 238 232;
+  --bg-elevated-rgb:        255 255 255;
+  --bg-sidebar-rgb:         255 255 255;
+
+  --bg:                     rgb(var(--bg-rgb));
+  --bg-secondary:           rgb(var(--bg-secondary-rgb));
+  --bg-card:                rgb(var(--bg-card-rgb));
+  --bg-card-hover:          rgb(var(--bg-card-hover-rgb));
+  --bg-input:               rgb(var(--bg-input-rgb));
+  --bg-elevated:            rgb(var(--bg-elevated-rgb));
+  --bg-sidebar:             rgb(var(--bg-sidebar-rgb));
+
   --bg-card-gradient-start: #ffffff;
-  --bg-card-gradient-end: #f8f9fc;
-  --bg-input: #f3f4f8;
-  --bg-sidebar: #ffffff;
-  --bg-topbar: rgba(255,255,255,0.85);
-  --bg-overlay: rgba(0,0,0,0.04);
-  --bg-elevated: #ffffff;
+  --bg-card-gradient-end:   #f9f6f2;
+  --bg-topbar:              rgba(250, 248, 245, 0.82);
+  --bg-overlay:             rgba(20, 17, 15, 0.04);
+  --bg-scrim:               rgba(20, 17, 15, 0.44);
 
-  --accent: #e84393;
-  --accent-light: #fd79a8;
-  --accent-dim: rgba(232,67,147,0.08);
-  --accent-glow: rgba(232,67,147,0.15);
-  --green: #00b894;
-  --green-dim: rgba(0,184,148,0.08);
-  --blue: #0984e3;
-  --blue-dim: rgba(9,132,227,0.08);
-  --purple: #6c5ce7;
-  --purple-dim: rgba(108,92,231,0.08);
-  --yellow: #f39c12;
-  --red: #ff6b6b;
+  /* ---- Ink ------------------------------------------------ */
+  --text-rgb:               20 17 15;
+  --text-secondary-rgb:     87 80 73;
+  --text-muted-rgb:         110 102 94;
+  /* Placeholders are text and must clear AA on --bg-input, which
+     caps how light this can go. Verified by the audit script. */
+  --text-faint-rgb:         115 106 97;
 
-  --text: #1a1a2e;
-  --text-secondary: #4a5568;
-  --text-muted: #8896a6;
-  --text-faint: #b0bec5;
-  --text-on-accent: #ffffff;
+  --text:                   rgb(var(--text-rgb));
+  --text-secondary:         rgb(var(--text-secondary-rgb));
+  --text-muted:             rgb(var(--text-muted-rgb));
+  --text-faint:             rgb(var(--text-faint-rgb));
+  --text-on-accent:         #ffffff;
 
-  --border: rgba(0,0,0,0.08);
-  --border-hover: rgba(0,0,0,0.14);
-  --border-accent: rgba(232,67,147,0.2);
+  /* ---- Accent ---------------------------------------------
+     --accent        expressive rose: text, icons, thin strokes
+     --accent-solid  fill rose: button and chip backgrounds,
+                     always paired with --text-on-accent (white)
+     In light these coincide. In dark they must not: a rose light
+     enough to read on near-black is too light to carry white text.
+     --------------------------------------------------------- */
+  --accent-rgb:             168 50 92;
+  --accent-solid-rgb:       168 50 92;
+  --accent:                 rgb(var(--accent-rgb));
+  --accent-solid:           rgb(var(--accent-solid-rgb));
+  --accent-light:           #c9527b;
+  --accent-dim:             rgba(168, 50, 92, 0.09);
+  --accent-glow:            rgba(168, 50, 92, 0.16);
 
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.03);
-  --shadow-md: 0 4px 16px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.04);
-  --shadow-lg: 0 12px 40px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.04);
-  --shadow-xl: 0 20px 60px rgba(0,0,0,0.1), 0 8px 20px rgba(0,0,0,0.06);
-  --shadow-accent: 0 4px 20px rgba(232,67,147,0.12);
+  /* ---- Semantic ------------------------------------------- */
+  --green-rgb:              31 107 69;
+  --blue-rgb:               31 91 138;
+  --purple-rgb:             75 69 168;
+  --yellow-rgb:             138 90 16;
+  --red-rgb:                155 44 44;
 
-  --sidebar-active-bg: rgba(232,67,147,0.06);
-  --sidebar-active-text: #e84393;
-  --sidebar-hover-bg: rgba(0,0,0,0.03);
-  --sidebar-text: #64748b;
-  --sidebar-divider: rgba(0,0,0,0.06);
-  --sidebar-border: rgba(0,0,0,0.06);
+  --green:                  rgb(var(--green-rgb));
+  --blue:                   rgb(var(--blue-rgb));
+  --purple:                 rgb(var(--purple-rgb));
+  --yellow:                 rgb(var(--yellow-rgb));
+  --red:                    rgb(var(--red-rgb));
 
-  --badge-free-bg: rgba(0,0,0,0.04);
-  --badge-free-text: #8896a6;
-  --badge-pro-bg: rgba(232,67,147,0.08);
-  --badge-pro-text: #e84393;
+  --green-dim:              rgba(31, 107, 69, 0.10);
+  --blue-dim:               rgba(31, 91, 138, 0.10);
+  --purple-dim:             rgba(75, 69, 168, 0.10);
+  --yellow-dim:             rgba(138, 90, 16, 0.11);
+  --red-dim:                rgba(155, 44, 44, 0.10);
 
-  --input-focus: rgba(232,67,147,0.2);
-  --scrollbar-track: transparent;
-  --scrollbar-thumb: rgba(0,0,0,0.1);
-  --scrollbar-thumb-hover: rgba(0,0,0,0.18);
+  /* ---- Lines ---------------------------------------------- */
+  --border:                 rgba(20, 17, 15, 0.10);
+  --border-hover:           rgba(20, 17, 15, 0.20);
+  --border-accent:          rgba(168, 50, 92, 0.28);
+
+  /* ---- Elevation (warm-tinted, never neutral black) -------- */
+  --shadow-sm:  0 1px 2px rgba(20,17,15,0.05), 0 1px 3px rgba(20,17,15,0.05);
+  --shadow-md:  0 2px 4px rgba(20,17,15,0.04), 0 6px 16px rgba(20,17,15,0.07);
+  --shadow-lg:  0 4px 8px rgba(20,17,15,0.05), 0 16px 40px rgba(20,17,15,0.11);
+  --shadow-xl:  0 8px 16px rgba(20,17,15,0.06), 0 28px 64px rgba(20,17,15,0.14);
+  --shadow-accent: 0 4px 20px rgba(168, 50, 92, 0.14);
+
+  /* ---- Sidebar -------------------------------------------- */
+  --sidebar-active-bg:      rgba(168, 50, 92, 0.08);
+  --sidebar-active-text:    #a8325c;
+  --sidebar-hover-bg:       rgba(20, 17, 15, 0.04);
+  --sidebar-text:           #575049;
+  --sidebar-divider:        rgba(20, 17, 15, 0.07);
+  --sidebar-border:         rgba(20, 17, 15, 0.08);
+
+  /* ---- Badges --------------------------------------------- */
+  --badge-free-bg:          rgba(20, 17, 15, 0.05);
+  --badge-free-text:        #6e665e;
+  --badge-pro-bg:           rgba(168, 50, 92, 0.09);
+  --badge-pro-text:         #a8325c;
+
+  /* ---- Misc ----------------------------------------------- */
+  --input-focus:            rgba(168, 50, 92, 0.18);
+  --scrollbar-track:        transparent;
+  --scrollbar-thumb:        rgba(20, 17, 15, 0.14);
+  --scrollbar-thumb-hover:  rgba(20, 17, 15, 0.24);
+
+  /* ---- Type ----------------------------------------------- */
+  --font-display: 'Instrument Serif', 'Iowan Old Style', Georgia, serif;
+  --font-sans:    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono:    'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* ---- Elevation & tint --------------------------------------
+     --tint-scale multiplies every semantic tint. A 8% wash over
+     white reads clearly; the same 8% over near-black is invisible,
+     so dark mode scales it up rather than every call site
+     branching on theme. ---------------------------------------- */
+  --tint-scale: 1;
+
+  /* Card interior. A flat fill reads cheap on a light ground, so
+     cards carry a whisper of vertical gradient and a bright top
+     edge — the way a physical card catches light. */
+  --card-face:      linear-gradient(180deg, #ffffff 0%, #fdfbf9 100%);
+  --card-edge-top:  rgba(255, 255, 255, 0.9);
+  --card-ring:      rgba(20, 17, 15, 0.07);
+  --card-ring-hover:rgba(20, 17, 15, 0.13);
+  --card-lift:      0 1px 1px rgba(20,17,15,0.04), 0 2px 6px -2px rgba(20,17,15,0.06), 0 12px 28px -12px rgba(20,17,15,0.10);
+  --card-lift-hover:0 1px 1px rgba(20,17,15,0.04), 0 4px 10px -2px rgba(20,17,15,0.07), 0 22px 44px -16px rgba(20,17,15,0.16);
+
+  color-scheme: light;
 }
 
-/* ─── Dark Theme ─── */
+/* ==============================================================
+   DARK
+   The declaration list below is duplicated for the explicit class
+   and the system media query. Keep the two byte-identical.
+   ============================================================== */
+
 html.dark-theme {
-  --bg: #0a0a0f;
-  --bg-secondary: #0e0e16;
-  --bg-card: #12121a;
-  --bg-card-hover: #1a1a26;
-  --bg-card-gradient-start: #1c1c2e;
-  --bg-card-gradient-end: #16162a;
-  --bg-input: #16161f;
-  --bg-sidebar: rgba(14,14,22,0.95);
-  --bg-topbar: rgba(9,9,14,0.7);
-  --bg-overlay: rgba(255,255,255,0.03);
-  --bg-elevated: #1a1a2e;
+  --bg-rgb:                 18 16 14;
+  --bg-secondary-rgb:       23 19 15;
+  --bg-card-rgb:            26 23 20;
+  --bg-card-hover-rgb:      34 30 26;
+  --bg-input-rgb:           12 10 9;
+  --bg-elevated-rgb:        34 30 26;
+  --bg-sidebar-rgb:         23 19 15;
 
-  --accent: #fd79a8;
-  --accent-light: #fd79a8;
-  --accent-dim: rgba(253,121,168,0.12);
-  --accent-glow: rgba(253,121,168,0.3);
-  --green: #00b894;
-  --green-dim: rgba(0,184,148,0.12);
-  --blue: #74b9ff;
-  --blue-dim: rgba(116,185,255,0.12);
-  --purple: #a29bfe;
-  --purple-dim: rgba(162,155,254,0.12);
-  --yellow: #fdcb6e;
-  --red: #ff6b6b;
+  --bg:                     rgb(var(--bg-rgb));
+  --bg-secondary:           rgb(var(--bg-secondary-rgb));
+  --bg-card:                rgb(var(--bg-card-rgb));
+  --bg-card-hover:          rgb(var(--bg-card-hover-rgb));
+  --bg-input:               rgb(var(--bg-input-rgb));
+  --bg-elevated:            rgb(var(--bg-elevated-rgb));
+  --bg-sidebar:             rgb(var(--bg-sidebar-rgb));
 
-  --text: #f0f0f5;
-  --text-secondary: #8a8a9a;
-  --text-muted: #5a5a6a;
-  --text-faint: #3a3a4a;
-  --text-on-accent: #ffffff;
+  --bg-card-gradient-start: #201c18;
+  --bg-card-gradient-end:   #191512;
+  --bg-topbar:              rgba(18, 16, 14, 0.82);
+  --bg-overlay:             rgba(245, 241, 236, 0.04);
+  --bg-scrim:               rgba(0, 0, 0, 0.66);
 
-  --border: rgba(255,255,255,0.06);
-  --border-hover: rgba(255,255,255,0.12);
-  --border-accent: rgba(253,121,168,0.2);
+  --text-rgb:               245 241 236;
+  --text-secondary-rgb:     181 172 162;
+  --text-muted-rgb:         148 139 129;
+  --text-faint-rgb:         128 120 112;
 
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.2);
-  --shadow-md: 0 4px 16px rgba(0,0,0,0.3);
-  --shadow-lg: 0 12px 40px rgba(0,0,0,0.4);
-  --shadow-xl: 0 20px 60px rgba(0,0,0,0.5);
-  --shadow-accent: 0 4px 20px rgba(253,121,168,0.2);
+  --text:                   rgb(var(--text-rgb));
+  --text-secondary:         rgb(var(--text-secondary-rgb));
+  --text-muted:             rgb(var(--text-muted-rgb));
+  --text-faint:             rgb(var(--text-faint-rgb));
+  --text-on-accent:         #ffffff;
 
-  --sidebar-active-bg: rgba(253,121,168,0.1);
-  --sidebar-active-text: #fd79a8;
-  --sidebar-hover-bg: rgba(255,255,255,0.02);
-  --sidebar-text: #6a6a7a;
-  --sidebar-divider: rgba(255,255,255,0.04);
-  --sidebar-border: rgba(253,121,168,0.06);
+  --accent-rgb:             240 146 180;
+  --accent-solid-rgb:       195 58 102;
+  --accent:                 rgb(var(--accent-rgb));
+  --accent-solid:           rgb(var(--accent-solid-rgb));
+  --accent-light:           #f5afc7;
+  --accent-dim:             rgba(240, 146, 180, 0.14);
+  --accent-glow:            rgba(240, 146, 180, 0.28);
 
-  --badge-free-bg: rgba(255,255,255,0.04);
-  --badge-free-text: #5a5a6a;
-  --badge-pro-bg: rgba(253,121,168,0.15);
-  --badge-pro-text: #fd79a8;
+  --green-rgb:              111 207 151;
+  --blue-rgb:               127 182 224;
+  --purple-rgb:             166 161 240;
+  --yellow-rgb:             232 184 96;
+  --red-rgb:                240 138 138;
 
-  --input-focus: rgba(253,121,168,0.3);
-  --scrollbar-track: transparent;
-  --scrollbar-thumb: rgba(255,255,255,0.06);
-  --scrollbar-thumb-hover: rgba(255,255,255,0.12);
+  --green:                  rgb(var(--green-rgb));
+  --blue:                   rgb(var(--blue-rgb));
+  --purple:                 rgb(var(--purple-rgb));
+  --yellow:                 rgb(var(--yellow-rgb));
+  --red:                    rgb(var(--red-rgb));
+
+  --green-dim:              rgba(111, 207, 151, 0.14);
+  --blue-dim:               rgba(127, 182, 224, 0.14);
+  --purple-dim:             rgba(166, 161, 240, 0.14);
+  --yellow-dim:             rgba(232, 184, 96, 0.14);
+  --red-dim:                rgba(240, 138, 138, 0.14);
+
+  --border:                 rgba(245, 241, 236, 0.11);
+  --border-hover:           rgba(245, 241, 236, 0.22);
+  --border-accent:          rgba(240, 146, 180, 0.34);
+
+  --shadow-sm:  0 1px 2px rgba(0,0,0,0.40);
+  --shadow-md:  0 2px 6px rgba(0,0,0,0.44), 0 8px 20px rgba(0,0,0,0.36);
+  --shadow-lg:  0 4px 10px rgba(0,0,0,0.46), 0 20px 48px rgba(0,0,0,0.46);
+  --shadow-xl:  0 8px 18px rgba(0,0,0,0.50), 0 32px 72px rgba(0,0,0,0.52);
+  --shadow-accent: 0 4px 20px rgba(240, 146, 180, 0.20);
+
+  --sidebar-active-bg:      rgba(240, 146, 180, 0.12);
+  --sidebar-active-text:    #f092b4;
+  --sidebar-hover-bg:       rgba(245, 241, 236, 0.05);
+  --sidebar-text:           #b5aca2;
+  --sidebar-divider:        rgba(245, 241, 236, 0.07);
+  --sidebar-border:         rgba(245, 241, 236, 0.09);
+
+  --badge-free-bg:          rgba(245, 241, 236, 0.06);
+  --badge-free-text:        #948b81;
+  --badge-pro-bg:           rgba(240, 146, 180, 0.15);
+  --badge-pro-text:         #f092b4;
+
+  --input-focus:            rgba(240, 146, 180, 0.28);
+  --scrollbar-track:        transparent;
+  --scrollbar-thumb:        rgba(245, 241, 236, 0.12);
+  --scrollbar-thumb-hover:  rgba(245, 241, 236, 0.22);
+
+  --tint-scale: 1.9;
+
+  --card-face:      linear-gradient(180deg, rgb(30 26 23) 0%, rgb(24 21 18) 100%);
+  --card-edge-top:  rgba(245, 241, 236, 0.07);
+  --card-ring:      rgba(245, 241, 236, 0.09);
+  --card-ring-hover:rgba(245, 241, 236, 0.17);
+  --card-lift:      0 1px 1px rgba(0,0,0,0.30), 0 2px 8px -2px rgba(0,0,0,0.36), 0 14px 32px -14px rgba(0,0,0,0.50);
+  --card-lift-hover:0 1px 1px rgba(0,0,0,0.32), 0 6px 14px -2px rgba(0,0,0,0.42), 0 26px 52px -18px rgba(0,0,0,0.62);
+
+  color-scheme: dark;
 }
+
+@media (prefers-color-scheme: dark) {
+  html:not(.light-theme):not(.dark-theme) {
+    --bg-rgb:                 18 16 14;
+    --bg-secondary-rgb:       23 19 15;
+    --bg-card-rgb:            26 23 20;
+    --bg-card-hover-rgb:      34 30 26;
+    --bg-input-rgb:           12 10 9;
+    --bg-elevated-rgb:        34 30 26;
+    --bg-sidebar-rgb:         23 19 15;
+
+    --bg:                     rgb(var(--bg-rgb));
+    --bg-secondary:           rgb(var(--bg-secondary-rgb));
+    --bg-card:                rgb(var(--bg-card-rgb));
+    --bg-card-hover:          rgb(var(--bg-card-hover-rgb));
+    --bg-input:               rgb(var(--bg-input-rgb));
+    --bg-elevated:            rgb(var(--bg-elevated-rgb));
+    --bg-sidebar:             rgb(var(--bg-sidebar-rgb));
+
+    --bg-card-gradient-start: #201c18;
+    --bg-card-gradient-end:   #191512;
+    --bg-topbar:              rgba(18, 16, 14, 0.82);
+    --bg-overlay:             rgba(245, 241, 236, 0.04);
+    --bg-scrim:               rgba(0, 0, 0, 0.66);
+
+    --text-rgb:               245 241 236;
+    --text-secondary-rgb:     181 172 162;
+    --text-muted-rgb:         148 139 129;
+    --text-faint-rgb:         128 120 112;
+
+    --text:                   rgb(var(--text-rgb));
+    --text-secondary:         rgb(var(--text-secondary-rgb));
+    --text-muted:             rgb(var(--text-muted-rgb));
+    --text-faint:             rgb(var(--text-faint-rgb));
+    --text-on-accent:         #ffffff;
+
+    --accent-rgb:             240 146 180;
+    --accent-solid-rgb:       195 58 102;
+    --accent:                 rgb(var(--accent-rgb));
+    --accent-solid:           rgb(var(--accent-solid-rgb));
+    --accent-light:           #f5afc7;
+    --accent-dim:             rgba(240, 146, 180, 0.14);
+    --accent-glow:            rgba(240, 146, 180, 0.28);
+
+    --green-rgb:              111 207 151;
+    --blue-rgb:               127 182 224;
+    --purple-rgb:             166 161 240;
+    --yellow-rgb:             232 184 96;
+    --red-rgb:                240 138 138;
+
+    --green:                  rgb(var(--green-rgb));
+    --blue:                   rgb(var(--blue-rgb));
+    --purple:                 rgb(var(--purple-rgb));
+    --yellow:                 rgb(var(--yellow-rgb));
+    --red:                    rgb(var(--red-rgb));
+
+    --green-dim:              rgba(111, 207, 151, 0.14);
+    --blue-dim:               rgba(127, 182, 224, 0.14);
+    --purple-dim:             rgba(166, 161, 240, 0.14);
+    --yellow-dim:             rgba(232, 184, 96, 0.14);
+    --red-dim:                rgba(240, 138, 138, 0.14);
+
+    --border:                 rgba(245, 241, 236, 0.11);
+    --border-hover:           rgba(245, 241, 236, 0.22);
+    --border-accent:          rgba(240, 146, 180, 0.34);
+
+    --shadow-sm:  0 1px 2px rgba(0,0,0,0.40);
+    --shadow-md:  0 2px 6px rgba(0,0,0,0.44), 0 8px 20px rgba(0,0,0,0.36);
+    --shadow-lg:  0 4px 10px rgba(0,0,0,0.46), 0 20px 48px rgba(0,0,0,0.46);
+    --shadow-xl:  0 8px 18px rgba(0,0,0,0.50), 0 32px 72px rgba(0,0,0,0.52);
+    --shadow-accent: 0 4px 20px rgba(240, 146, 180, 0.20);
+
+    --sidebar-active-bg:      rgba(240, 146, 180, 0.12);
+    --sidebar-active-text:    #f092b4;
+    --sidebar-hover-bg:       rgba(245, 241, 236, 0.05);
+    --sidebar-text:           #b5aca2;
+    --sidebar-divider:        rgba(245, 241, 236, 0.07);
+    --sidebar-border:         rgba(245, 241, 236, 0.09);
+
+    --badge-free-bg:          rgba(245, 241, 236, 0.06);
+    --badge-free-text:        #948b81;
+    --badge-pro-bg:           rgba(240, 146, 180, 0.15);
+    --badge-pro-text:         #f092b4;
+
+    --input-focus:            rgba(240, 146, 180, 0.28);
+    --scrollbar-thumb:        rgba(245, 241, 236, 0.12);
+    --scrollbar-thumb-hover:  rgba(245, 241, 236, 0.22);
+
+    --tint-scale: 1.9;
+
+    --card-face:      linear-gradient(180deg, rgb(30 26 23) 0%, rgb(24 21 18) 100%);
+    --card-edge-top:  rgba(245, 241, 236, 0.07);
+    --card-ring:      rgba(245, 241, 236, 0.09);
+    --card-ring-hover:rgba(245, 241, 236, 0.17);
+    --card-lift:      0 1px 1px rgba(0,0,0,0.30), 0 2px 8px -2px rgba(0,0,0,0.36), 0 14px 32px -14px rgba(0,0,0,0.50);
+    --card-lift-hover:0 1px 1px rgba(0,0,0,0.32), 0 6px 14px -2px rgba(0,0,0,0.42), 0 26px 52px -18px rgba(0,0,0,0.62);
+
+    color-scheme: dark;
+  }
+}
+
+/* ==============================================================
+   BASE
+   ============================================================== */
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 html { scroll-behavior: smooth; }
 
 body {
-  font-family: 'Inter', -apple-system, sans-serif;
+  font-family: var(--font-sans);
   background: var(--bg);
   color: var(--text);
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
-::selection { background: rgba(232,67,147,0.2); color: var(--text); }
-html.dark-theme ::selection { background: rgba(253,121,168,0.3); color: #fff; }
+::selection { background: var(--accent-dim); color: var(--text); }
 
-::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: var(--scrollbar-track); }
 ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
 
+/* ==============================================================
+   FOCUS
+   The previous build had no visible focus state anywhere. This is
+   the single rule that makes the app keyboard-navigable.
+   ============================================================== */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+:focus:not(:focus-visible) { outline: none; }
+
+.skip-link {
+  position: absolute; left: 1rem; top: -100px; z-index: 200;
+  padding: 0.75rem 1.25rem; border-radius: 10px;
+  background: var(--accent-solid); color: var(--text-on-accent);
+  font-weight: 600; transition: top 0.2s ease;
+}
+.skip-link:focus { top: 1rem; }
+
+/* ==============================================================
+   DISPLAY TYPE
+   Instrument Serif ships weight 400 only. Never apply a bold
+   weight to it: the browser would synthesise a smeared fake bold.
+   ============================================================== */
+.font-display {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.08;
+}
+.font-display-italic { font-style: italic; }
+
 @layer utilities {
   .gradient-text {
     @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, #fd79a8, #e84393, #d63031);
+    background-image: linear-gradient(135deg, var(--accent-light), var(--accent));
   }
-
   .gradient-text-blue {
     @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, #74b9ff, #0984e3);
+    background-image: linear-gradient(135deg, var(--blue), var(--purple));
   }
-
   .gradient-text-green {
     @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, #00b894, #55efc4);
+    background-image: linear-gradient(135deg, var(--green), var(--blue));
   }
-
   .gradient-text-purple {
     @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, #a29bfe, #6c5ce7);
+    background-image: linear-gradient(135deg, var(--purple), var(--accent));
   }
 
   .glass {
     background: var(--bg-overlay);
-    backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px) saturate(1.6);
+    -webkit-backdrop-filter: blur(20px) saturate(1.6);
     border: 1px solid var(--border);
   }
 
   .glow-pink { box-shadow: var(--shadow-accent); }
-  .glow-pink-strong { box-shadow: 0 4px 30px rgba(232,67,147,0.2); }
+  .glow-pink-strong { box-shadow: 0 4px 30px var(--accent-glow); }
 
-  /* Theme-aware card */
   .theme-card {
     background: var(--bg-card);
     border: 1px solid var(--border);
     box-shadow: var(--shadow-sm);
     border-radius: 1rem;
-    transition: all 0.2s ease;
+    transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
   }
   .theme-card:hover {
     box-shadow: var(--shadow-md);
@@ -201,14 +467,83 @@ html.dark-theme ::selection { background: rgba(253,121,168,0.3); color: #fff; }
     background: var(--bg-input);
     border: 1px solid var(--border);
     color: var(--text);
-    transition: all 0.2s ease;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
   }
   .theme-input:focus {
     border-color: var(--accent);
     box-shadow: 0 0 0 3px var(--input-focus);
     outline: none;
   }
-  .theme-input::placeholder {
-    color: var(--text-faint);
+  .theme-input::placeholder { color: var(--text-faint); }
+
+  /* Solid accent fill. Always safe to place --text-on-accent on. */
+  .accent-fill {
+    background: var(--accent-solid);
+    color: var(--text-on-accent);
   }
+}
+
+/* ==============================================================
+   REDUCED MOTION
+   The previous build animated on every page with no guard at all.
+   Framer Motion honours this via useReducedMotion; this rule
+   covers CSS animation, transitions and smooth scrolling.
+   ============================================================== */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ==============================================================
+   HERO PROOF CARDS
+   A 6px drift, slow enough to read as "alive" rather than busy.
+   The class is only applied when the user has not asked for
+   reduced motion, and the global reduce block neutralises it too.
+   ============================================================== */
+@keyframes am-drift {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+.am-drift { animation: am-drift 7s ease-in-out infinite; }
+
+/* ==============================================================
+   DISABLED CONTROLS
+
+   Every disabled button in the app was styled by halving the
+   opacity of its enabled state. On a solid accent fill carrying
+   white text that fades both together: the text-to-fill ratio is
+   preserved, so it passes a contrast check, while the control as a
+   whole washes out against the page and reads as broken rather
+   than unavailable. /jobs shipped a white-on-pale-pink "Search
+   Jobs" that looked like a rendering fault.
+
+   A disabled control needs a different treatment, not a faded one:
+   a neutral fill with muted text. !important is deliberate here —
+   most of these set their fill through an inline style, which no
+   class can otherwise beat.
+
+   Opt out with .keep-disabled-face where a control genuinely needs
+   to hold its own colours while disabled.
+   ============================================================== */
+
+button:disabled:not(.keep-disabled-face),
+[role='button'][aria-disabled='true']:not(.keep-disabled-face) {
+  background: var(--bg-overlay) !important;
+  background-image: none !important;
+  color: var(--text-faint) !important;
+  box-shadow: none !important;
+  opacity: 1 !important;
+  cursor: not-allowed;
+}
+
+/* A control mid-request is running, not unavailable — it keeps its face. */
+button[aria-busy='true']:disabled:not(.keep-disabled-face) {
+  background: var(--accent-solid) !important;
+  color: var(--text-on-accent) !important;
+  cursor: progress;
 }

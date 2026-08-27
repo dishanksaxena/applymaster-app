@@ -30,10 +30,10 @@ export default function SuccessDonutChart({ applications, height = 280 }: Succes
   if (!chartData) {
     return (
       <div
-        className="flex items-center justify-center rounded-2xl border border-[rgba(255,255,255,0.06)] bg-[#0d0d15]"
+        className="flex items-center justify-center rounded-2xl border border-[var(--border)] bg-[var(--bg)]"
         style={{ height }}
       >
-        <p className="text-[13px] text-[#4a4a5a]">No data</p>
+        <p className="text-[13px] text-[var(--text-faint)]">No data</p>
       </div>
     )
   }
@@ -48,10 +48,10 @@ export default function SuccessDonutChart({ applications, height = 280 }: Succes
   let currentAngle = -Math.PI / 2
 
   const slices = [
-    { label: 'Interview/Offer', value: chartData.interviewed, color: '#f472b6', percentage: Math.round((chartData.interviewed / total) * 100) },
-    { label: 'Applied', value: chartData.applied, color: '#74b9ff', percentage: Math.round((chartData.applied / total) * 100) },
-    { label: 'Saved', value: chartData.saved, color: '#a78bfa', percentage: Math.round((chartData.saved / total) * 100) },
-    { label: 'Rejected', value: chartData.rejected, color: '#f87171', percentage: Math.round((chartData.rejected / total) * 100) },
+    { label: 'Interview/Offer', value: chartData.interviewed, color: 'var(--accent)', percentage: Math.round((chartData.interviewed / total) * 100) },
+    { label: 'Applied', value: chartData.applied, color: 'var(--blue)', percentage: Math.round((chartData.applied / total) * 100) },
+    { label: 'Saved', value: chartData.saved, color: 'var(--purple)', percentage: Math.round((chartData.saved / total) * 100) },
+    { label: 'Rejected', value: chartData.rejected, color: 'var(--red)', percentage: Math.round((chartData.rejected / total) * 100) },
   ].filter(s => s.value > 0)
 
   const paths = slices.map((slice, idx) => {
@@ -97,8 +97,8 @@ export default function SuccessDonutChart({ applications, height = 280 }: Succes
   })
 
   return (
-    <div className="rounded-2xl border border-[rgba(255,255,255,0.06)] bg-[#0d0d15] p-6">
-      <h3 className="text-[14px] font-bold text-white mb-4">Success Breakdown</h3>
+    <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg)] p-6">
+      <h3 className="text-[14px] font-bold text-ink mb-4">Success Breakdown</h3>
 
       <div className="flex items-center gap-6">
         <svg width={320} height={height} viewBox={`0 0 320 ${height}`} className="flex-shrink-0">
@@ -118,7 +118,7 @@ export default function SuccessDonutChart({ applications, height = 280 }: Succes
           ))}
 
           {/* Center circle (for donut hole) */}
-          <circle cx={centerX} cy={centerY} r={radius - donutWidth} fill="#0d0d15" />
+          <circle cx={centerX} cy={centerY} r={radius - donutWidth} fill="var(--bg)" />
 
           {/* Center text - interview rate */}
           <text
@@ -126,7 +126,7 @@ export default function SuccessDonutChart({ applications, height = 280 }: Succes
             y={centerY - 8}
             fontSize="24"
             fontWeight="bold"
-            fill="#74b9ff"
+            fill="var(--blue)"
             textAnchor="middle"
             dominantBaseline="middle"
           >
@@ -136,7 +136,7 @@ export default function SuccessDonutChart({ applications, height = 280 }: Succes
             x={centerX}
             y={centerY + 12}
             fontSize="11"
-            fill="#6a6a7a"
+            fill="var(--text-faint)"
             textAnchor="middle"
           >
             Interview Rate
@@ -168,8 +168,8 @@ export default function SuccessDonutChart({ applications, height = 280 }: Succes
                 style={{ backgroundColor: slice.color }}
               />
               <div className="flex-1 min-w-0">
-                <p className="text-[12px] font-semibold text-white truncate">{slice.label}</p>
-                <p className="text-[11px] text-[#5a5a6a]">
+                <p className="text-[12px] font-semibold text-ink truncate">{slice.label}</p>
+                <p className="text-[11px] text-[var(--text-faint)]">
                   {slice.value} ({slice.percentage}%)
                 </p>
               </div>

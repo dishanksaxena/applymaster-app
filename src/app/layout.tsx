@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
+import { THEME_INIT_SCRIPT } from '@/lib/theme'
 
 const SITE_URL = 'https://applymaster.ai'
 const SITE_NAME = 'ApplyMaster'
@@ -10,9 +11,11 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,
+  /* Browser chrome colour. Must track the --bg token in globals.css,
+     otherwise the address bar disagrees with the page. */
   themeColor: [
-    { media: '(prefers-color-scheme: dark)', color: '#0a0a12' },
-    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#12100e' },
+    { media: '(prefers-color-scheme: light)', color: '#faf8f5' },
   ],
 }
 
@@ -108,7 +111,7 @@ export const metadata: Metadata = {
   },
 
   other: {
-    'msapplication-TileColor': '#fd79a8',
+    'msapplication-TileColor': '#a8325c',
     'apple-mobile-web-app-capable': 'yes',
     'apple-mobile-web-app-status-bar-style': 'black-translucent',
     'apple-mobile-web-app-title': SITE_NAME,
@@ -263,8 +266,22 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" dir="ltr">
+    /* suppressHydrationWarning: the inline script below mutates the class
+       list on <html> before React hydrates, so server and client markup
+       legitimately differ on this one element. */
+    <html lang="en" dir="ltr" suppressHydrationWarning>
       <head>
+        {/* Theme must resolve before first paint, otherwise every load
+            flashes the wrong theme. Keep this first in <head>. */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+
+        {/* Scroll-reveal wrappers render at opacity 0 and are un-hidden by
+            JS. Without this, a script failure or a no-JS client sees a blank
+            page. */}
+        <noscript>
+          <style>{'[data-reveal]{opacity:1 !important;transform:none !important}'}</style>
+        </noscript>
+
         {/* Preconnect to critical origins */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

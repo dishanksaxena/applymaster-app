@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import Anthropic from '@anthropic-ai/sdk'
+import { tryParseModelJson } from '@/lib/model-json'
 
 export const maxDuration = 60
 
@@ -28,7 +29,7 @@ export async function POST(req: NextRequest) {
         .from('parsed_resumes')
         .select('*')
         .eq('resume_id', resume_id)
-        .single()
+        .maybeSingle()
       parsedResume = data
       rawText = data?.raw_text || ''
     } else {
@@ -37,7 +38,7 @@ export async function POST(req: NextRequest) {
         .select('id')
         .eq('user_id', user.id)
         .eq('is_primary', true)
-        .single()
+        .maybeSingle()
 
       if (primary) {
         resumeRecordId = primary.id
@@ -45,7 +46,7 @@ export async function POST(req: NextRequest) {
           .from('parsed_resumes')
           .select('*')
           .eq('resume_id', primary.id)
-          .single()
+          .maybeSingle()
         parsedResume = data
         rawText = data?.raw_text || ''
       }
@@ -60,7 +61,7 @@ export async function POST(req: NextRequest) {
 
     const msg = await anthropic.messages.create({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 4000,
+      max_tokens: 8000,
       messages: [
         {
           role: 'user',
@@ -92,13 +93,7 @@ Return ONLY valid JSON (no markdown):
     })
 
     const text = msg.content[0].type === 'text' ? msg.content[0].text : '{}'
-    let result
-    try {
-      result = JSON.parse(text)
-    } catch {
-      const match = text.match(/\{[\s\S]*\}/)
-      result = match ? JSON.parse(match[0]) : { ats_score: 75, optimized_resume_text: text }
-    }
+    const result = tryParseModelJson<any>(text, { ats_score: 75, optimized_resume_text: text }, msg.stop_reason)
 
     // Save optimized version
     if (resumeRecordId && job_id) {

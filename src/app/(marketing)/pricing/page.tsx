@@ -126,6 +126,24 @@ const tiers = [
     limitations: [],
   },
   {
+    name: 'Elite',
+    price: '$59',
+    period: '/month',
+    description: 'Maximum firepower for an urgent search.',
+    cta: 'Go Elite',
+    highlight: false,
+    features: [
+      'Everything in Pro',
+      'Live interview coach',
+      'A/B resume testing',
+      'Recruiter outreach',
+      'Referral request emails',
+      'Autopilot mode',
+      'Dedicated support',
+    ],
+    limitations: [],
+  },
+  {
     name: 'Lifetime',
     price: '$199',
     period: 'one-time',
@@ -194,15 +212,15 @@ export default function PricingPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <main className="min-h-screen bg-[#0a0a12] text-white">
+      <main className="">
         {/* Hero */}
-        <section className="relative overflow-hidden py-24 sm:py-32">
-          <div className="absolute inset-0 bg-gradient-to-b from-purple-900/20 to-transparent" />
+        <section className="relative overflow-hidden py-16 sm:py-14">
+          <div className="absolute inset-0 bg-gradient-to-b from-[var(--accent-dim)] to-transparent" />
           <div className="relative mx-auto max-w-7xl px-6 lg:px-8 text-center">
-            <h1 className="text-4xl font-extrabold tracking-tight sm:text-6xl bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent">
+            <h1 className="font-display text-[clamp(2.4rem,5vw,3.6rem)]">
               Simple, Transparent Pricing
             </h1>
-            <p className="mt-6 max-w-2xl mx-auto text-lg text-gray-300 leading-relaxed">
+            <p className="mt-6 max-w-2xl mx-auto text-lg text-[var(--text-secondary)] leading-relaxed">
               Start free, upgrade when your job search heats up. No hidden fees,
               no surprise charges, and a 14-day money-back guarantee on every paid plan.
             </p>
@@ -212,34 +230,34 @@ export default function PricingPage() {
         {/* Pricing Cards */}
         <section className="py-4 pb-20">
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
-            <div className="grid gap-8 md:grid-cols-3">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
               {tiers.map((tier) => (
                 <div
                   key={tier.name}
                   className={`rounded-2xl border p-8 flex flex-col ${
                     tier.highlight
-                      ? 'border-purple-500 bg-purple-900/20 ring-2 ring-purple-500/50 relative'
-                      : 'border-gray-800 bg-gray-900/50'
+                      ? 'border-[var(--accent)] bg-[var(--accent-dim)] ring-2 ring-purple-500/50 relative'
+                      : 'border-[var(--border)] bg-[var(--bg-card)]'
                   }`}
                 >
                   {tier.highlight && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-purple-600 px-4 py-1 text-xs font-semibold">
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-[var(--accent-solid)] px-4 py-1 text-xs font-semibold">
                       Most Popular
                     </div>
                   )}
                   <h3 className="text-xl font-bold mb-2">{tier.name}</h3>
                   <div className="flex items-baseline gap-1 mb-2">
                     <span className="text-4xl font-extrabold">{tier.price}</span>
-                    <span className="text-gray-400 text-sm">{tier.period}</span>
+                    <span className="text-[var(--text-muted)] text-sm">{tier.period}</span>
                   </div>
-                  <p className="text-sm text-gray-400 mb-6">{tier.description}</p>
+                  <p className="text-sm text-[var(--text-muted)] mb-6">{tier.description}</p>
 
                   <Link
                     href="/signup"
                     className={`block rounded-full py-3 text-center text-sm font-semibold transition-colors mb-8 ${
                       tier.highlight
-                        ? 'bg-purple-600 text-white hover:bg-purple-500'
-                        : 'border border-gray-600 text-gray-300 hover:border-purple-400 hover:text-white'
+                        ? 'bg-[var(--accent-solid)] text-[var(--text-on-accent)] hover:bg-[var(--accent-solid)]'
+                        : 'border border-[var(--border-hover)] text-[var(--text-secondary)] hover:border-[var(--accent)] hover:text-ink'
                     }`}
                   >
                     {tier.cta}
@@ -247,14 +265,14 @@ export default function PricingPage() {
 
                   <ul className="space-y-3 flex-1">
                     {tier.features.map((f) => (
-                      <li key={f} className="flex items-start gap-3 text-sm text-gray-300">
-                        <span className="mt-0.5 h-5 w-5 shrink-0 rounded-full bg-green-600/20 flex items-center justify-center text-xs text-green-400">&#10003;</span>
+                      <li key={f} className="flex items-start gap-3 text-sm text-[var(--text-secondary)]">
+                        <span className="mt-0.5 h-5 w-5 shrink-0 rounded-full bg-[var(--green-dim)] flex items-center justify-center text-xs text-[var(--green)]">&#10003;</span>
                         {f}
                       </li>
                     ))}
                     {tier.limitations.map((l) => (
-                      <li key={l} className="flex items-start gap-3 text-sm text-gray-500">
-                        <span className="mt-0.5 h-5 w-5 shrink-0 rounded-full bg-gray-700/30 flex items-center justify-center text-xs text-gray-500">&times;</span>
+                      <li key={l} className="flex items-start gap-3 text-sm text-[var(--text-faint)]">
+                        <span className="mt-0.5 h-5 w-5 shrink-0 rounded-full bg-[var(--bg-card-hover)] flex items-center justify-center text-xs text-[var(--text-faint)]">&times;</span>
                         {l}
                       </li>
                     ))}
@@ -266,28 +284,28 @@ export default function PricingPage() {
         </section>
 
         {/* Comparison Table */}
-        <section className="py-20 bg-gray-900/30">
+        <section className="py-14 bg-[var(--bg-card)]">
           <div className="mx-auto max-w-5xl px-6 lg:px-8">
-            <h2 className="text-3xl font-bold text-center mb-12">
+            <h2 className="font-display text-[clamp(1.8rem,3.6vw,2.5rem)] text-center mb-10">
               Feature Comparison
             </h2>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-gray-700">
-                    <th className="text-left py-4 pr-4 font-semibold text-gray-300">Feature</th>
-                    <th className="py-4 px-4 font-semibold text-gray-300 text-center">Free</th>
-                    <th className="py-4 px-4 font-semibold text-purple-400 text-center">Pro</th>
-                    <th className="py-4 px-4 font-semibold text-gray-300 text-center">Lifetime</th>
+                  <tr className="border-b border-[var(--border)]">
+                    <th className="text-left py-4 pr-4 font-semibold text-[var(--text-secondary)]">Feature</th>
+                    <th className="py-4 px-4 font-semibold text-[var(--text-secondary)] text-center">Free</th>
+                    <th className="py-4 px-4 font-semibold text-[var(--accent)] text-center">Pro</th>
+                    <th className="py-4 px-4 font-semibold text-[var(--text-secondary)] text-center">Lifetime</th>
                   </tr>
                 </thead>
                 <tbody>
                   {comparisonFeatures.map((row) => (
-                    <tr key={row.feature} className="border-b border-gray-800">
-                      <td className="py-3 pr-4 text-gray-300">{row.feature}</td>
-                      <td className="py-3 px-4 text-center text-gray-400">{row.free}</td>
-                      <td className="py-3 px-4 text-center text-white font-medium">{row.pro}</td>
-                      <td className="py-3 px-4 text-center text-gray-300">{row.lifetime}</td>
+                    <tr key={row.feature} className="border-b border-[var(--border)]">
+                      <td className="py-3 pr-4 text-[var(--text-secondary)]">{row.feature}</td>
+                      <td className="py-3 px-4 text-center text-[var(--text-muted)]">{row.free}</td>
+                      <td className="py-3 px-4 text-center text-ink font-medium">{row.pro}</td>
+                      <td className="py-3 px-4 text-center text-[var(--text-secondary)]">{row.lifetime}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -297,11 +315,11 @@ export default function PricingPage() {
         </section>
 
         {/* Money-back guarantee */}
-        <section className="py-20">
+        <section className="py-14">
           <div className="mx-auto max-w-4xl px-6 lg:px-8 text-center">
-            <div className="rounded-2xl border border-green-500/30 bg-green-900/10 p-12">
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--green-dim)] p-12">
               <h2 className="text-2xl font-bold mb-4">14-Day Money-Back Guarantee</h2>
-              <p className="text-gray-400 max-w-xl mx-auto leading-relaxed">
+              <p className="text-[var(--text-muted)] max-w-xl mx-auto leading-relaxed">
                 Try ApplyMaster Pro or Lifetime risk-free. If it does not transform your job
                 search within 14 days, we will refund your payment in full — no questions asked.
               </p>
@@ -310,16 +328,16 @@ export default function PricingPage() {
         </section>
 
         {/* FAQ */}
-        <section className="py-20 bg-gray-900/30">
+        <section className="py-14 bg-[var(--bg-card)]">
           <div className="mx-auto max-w-3xl px-6 lg:px-8">
-            <h2 className="text-3xl font-bold text-center mb-12">
+            <h2 className="font-display text-[clamp(1.8rem,3.6vw,2.5rem)] text-center mb-10">
               Pricing FAQ
             </h2>
             <div className="space-y-8">
               {faqs.map((item) => (
                 <div key={item.q}>
-                  <h3 className="font-semibold text-white mb-2">{item.q}</h3>
-                  <p className="text-sm text-gray-400 leading-relaxed">{item.a}</p>
+                  <h3 className="font-semibold text-ink mb-2">{item.q}</h3>
+                  <p className="text-sm text-[var(--text-muted)] leading-relaxed">{item.a}</p>
                 </div>
               ))}
             </div>
@@ -327,7 +345,7 @@ export default function PricingPage() {
         </section>
 
         {/* Feature links */}
-        <section className="py-20">
+        <section className="py-14">
           <div className="mx-auto max-w-4xl px-6 lg:px-8 text-center">
             <h2 className="text-2xl font-bold mb-8">Explore What You Get</h2>
             <div className="flex flex-wrap justify-center gap-4">
@@ -341,7 +359,7 @@ export default function PricingPage() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="rounded-full border border-gray-700 px-5 py-2 text-sm text-gray-300 hover:border-purple-500 hover:text-white transition-colors"
+                  className="rounded-full border border-[var(--border)] px-5 py-2 text-sm text-[var(--text-secondary)] hover:border-[var(--accent)] hover:text-ink transition-colors"
                 >
                   {link.label}
                 </Link>
@@ -351,17 +369,17 @@ export default function PricingPage() {
         </section>
 
         {/* CTA */}
-        <section className="py-24 bg-gradient-to-b from-transparent to-purple-900/20">
+        <section className="py-16 bg-gradient-to-b from-transparent to-[var(--accent-dim)]">
           <div className="mx-auto max-w-3xl px-6 text-center">
-            <h2 className="text-3xl font-bold mb-6">
+            <h2 className="font-display text-[clamp(1.8rem,3.6vw,2.5rem)] mb-5">
               Start Your Smarter Job Search Today
             </h2>
-            <p className="text-gray-400 mb-10 text-lg">
+            <p className="text-[var(--text-muted)] mb-10 text-lg">
               No credit card required. Get 10 free applications every month.
             </p>
             <Link
               href="/signup"
-              className="rounded-full bg-purple-600 px-10 py-4 text-base font-semibold text-white shadow-lg hover:bg-purple-500 transition-colors"
+              className="rounded-full bg-[var(--accent-solid)] px-10 py-4 text-base font-semibold text-[var(--text-on-accent)] shadow-lg hover:bg-[var(--accent-solid)] transition-colors"
             >
               Sign Up Free
             </Link>

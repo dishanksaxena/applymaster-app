@@ -258,3 +258,61 @@ export interface InterviewSession {
   duration_seconds: number | null
   created_at: string
 }
+
+export interface ScreeningAnswer {
+  question: string
+  answer: string
+  /** Where the answer came from, e.g. 'profile.work_authorization' or 'ai'. */
+  source?: string
+}
+
+/**
+ * A verifiable record of exactly what was submitted for an application:
+ * which resume, the cover letter as sent, every screening answer, and where
+ * it went. Written at submission time from the same values used for the
+ * submission itself, so it cannot drift from what actually happened.
+ */
+export interface ApplicationReceipt {
+  id: string
+  user_id: string
+  application_id: string
+  resume_id: string | null
+  resume_version_label: string | null
+  resume_file_url: string | null
+  cover_letter_id: string | null
+  cover_letter_text: string | null
+  screening_answers: ScreeningAnswer[]
+  destination: string | null
+  destination_url: string | null
+  submission_method: 'auto' | 'assisted' | 'manual'
+  status: 'submitted' | 'failed' | 'needs_review'
+  failure_reason: string | null
+  submitted_at: string
+  created_at: string
+}
+
+/**
+ * A referral ask: one contact, one job. Referrals convert at roughly 30%
+ * against 0.1-2% for a cold application, which is why this path is scored
+ * and surfaced before the auto-apply engine falls back to applying cold.
+ */
+export interface ReferralRequest {
+  id: string
+  user_id: string
+  connection_id: string
+  job_id: string | null
+  application_id: string | null
+  job_title: string | null
+  company: string | null
+  match_reason: string | null
+  /** Deterministic 0-100. Computed server-side, never by the model. */
+  match_strength: number | null
+  message_draft: string | null
+  message_sent: string | null
+  channel: 'email' | 'linkedin' | 'other' | null
+  status: 'suggested' | 'drafted' | 'sent' | 'accepted' | 'declined' | 'no_response'
+  sent_at: string | null
+  responded_at: string | null
+  created_at: string
+  updated_at: string
+}

@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import Anthropic from '@anthropic-ai/sdk'
+import { tryParseModelJson } from '@/lib/model-json'
 
 export const maxDuration = 60
 
@@ -27,7 +28,7 @@ export async function POST(req: NextRequest) {
         .from('parsed_resumes')
         .select('*')
         .eq('resume_id', resume_id)
-        .single()
+        .maybeSingle()
       parsedResume = data
     } else {
       // Get primary resume
@@ -36,7 +37,7 @@ export async function POST(req: NextRequest) {
         .select('id, parsed_data')
         .eq('user_id', user.id)
         .eq('is_primary', true)
-        .single()
+        .maybeSingle()
 
       if (primaryResume) {
         resumeRecordId = primaryResume.id
@@ -44,7 +45,7 @@ export async function POST(req: NextRequest) {
           .from('parsed_resumes')
           .select('*')
           .eq('resume_id', primaryResume.id)
-          .single()
+          .maybeSingle()
         parsedResume = data
       }
     }
@@ -97,13 +98,7 @@ Provide a detailed match analysis. Return ONLY valid JSON (no markdown):
     })
 
     const text = msg.content[0].type === 'text' ? msg.content[0].text : '{}'
-    let matchData
-    try {
-      matchData = JSON.parse(text)
-    } catch {
-      const match = text.match(/\{[\s\S]*\}/)
-      matchData = match ? JSON.parse(match[0]) : { overall_score: 50 }
-    }
+    const matchData = tryParseModelJson<any>(text, { overall_score: 50 }, msg.stop_reason)
 
     // Save to job_matches table if we have a job_id
     if (job_id && resumeRecordId) {

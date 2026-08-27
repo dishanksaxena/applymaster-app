@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase-browser'
 import { PremiumButton, PremiumCard } from '@/components/premium'
 import CoverLetterEditor from './CoverLetterEditor'
 import { staggerContainer, fadeInUp } from '@/lib/animations'
+import { toast } from '@/components/Toast'
 
 interface CoverLetter {
   id: string
@@ -130,7 +131,7 @@ export default function CoverLettersPage() {
       })
     } catch (err) {
       console.error('Generate error:', err)
-      alert(`Failed to generate cover letter: ${err instanceof Error ? err.message : 'Unknown error'}. Try typing one manually.`)
+      toast.error(`Failed to generate cover letter: ${err instanceof Error ? err.message : 'Unknown error'}. Try typing one manually.`)
     } finally {
       setGeneratingJobId(null)
     }
@@ -161,14 +162,14 @@ export default function CoverLettersPage() {
     >
       {/* Header */}
       <motion.div variants={fadeInUp} className="relative overflow-hidden rounded-2xl p-8" style={{
-        background: 'linear-gradient(135deg, rgba(253,121,168,0.08) 0%, rgba(162,155,254,0.06) 100%)',
-        border: '1px solid rgba(253,121,168,0.1)',
+        background: 'linear-gradient(135deg, rgb(var(--accent-rgb) / calc(0.08 * var(--tint-scale))) 0%, rgb(var(--purple-rgb) / calc(0.06 * var(--tint-scale))) 100%)',
+        border: '1px solid rgb(var(--accent-rgb) / calc(0.1 * var(--tint-scale)))',
       }}>
-        <div className="absolute top-[-50%] right-[-10%] w-[300px] h-[300px] rounded-full opacity-[0.07]" style={{ background: 'radial-gradient(circle, #fd79a8, transparent 70%)' }} />
+        <div className="absolute top-[-50%] right-[-10%] w-[300px] h-[300px] rounded-full opacity-[0.07]" style={{ background: 'radial-gradient(circle, var(--accent), transparent 70%)' }} />
         <div className="relative z-10 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl lg:text-3xl font-black tracking-tight mb-2 text-white">Cover Letters</h1>
-            <p className="text-[14px] text-[#8a8a9a]">Create, edit, and manage AI-powered cover letters</p>
+            <h1 className="font-display text-[clamp(1.7rem,3vw,2.2rem)] mb-2 text-[var(--text)]">Cover Letters</h1>
+            <p className="text-[14px] text-[var(--text-secondary)]">Create, edit, and manage AI-powered cover letters</p>
           </div>
           <PremiumButton
             variant="primary"
@@ -182,17 +183,17 @@ export default function CoverLettersPage() {
       {/* Saved Jobs - Quick Generate */}
       {!loading && savedJobs.length > 0 && (
         <motion.div variants={fadeInUp} className="space-y-4">
-          <h2 className="text-lg font-bold text-white">📌 Quick Generate from Saved Jobs</h2>
+          <h2 className="text-lg font-bold text-[var(--text)]">📌 Quick Generate from Saved Jobs</h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {savedJobs.map((job, idx) => (
               <motion.div
                 key={job.id}
                 variants={fadeInUp}
-                className="p-4 rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#0d0d15] hover:border-[rgba(253,121,168,0.2)] transition-all"
+                className="p-4 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] hover:border-[rgb(var(--accent-rgb)/0.2)] transition-all"
               >
                 <div className="mb-3">
-                  <h3 className="text-[13px] font-bold text-white line-clamp-2">{job.job.title}</h3>
-                  <p className="text-[12px] text-[#6a6a7a] mt-1">{job.job.company}</p>
+                  <h3 className="text-[13px] font-bold text-[var(--text)] line-clamp-2">{job.job.title}</h3>
+                  <p className="text-[12px] text-[var(--text-secondary)] mt-1">{job.job.company}</p>
                 </div>
                 <PremiumButton
                   variant="secondary"
@@ -213,12 +214,12 @@ export default function CoverLettersPage() {
       {/* Letters Grid */}
       {loading ? (
         <motion.div variants={fadeInUp} className="flex items-center justify-center py-20">
-          <div className="w-8 h-8 rounded-full border-2 border-[rgba(253,121,168,0.1)] border-t-[#fd79a8] animate-spin" />
+          <div className="w-8 h-8 rounded-full border-2 border-[rgb(var(--accent-rgb)/0.1)] border-t-[var(--accent)] animate-spin" />
         </motion.div>
       ) : coverLetters.length === 0 ? (
         <motion.div variants={fadeInUp} className="text-center py-20">
-          <p className="text-[15px] font-semibold text-[#5a5a6a]">No cover letters yet</p>
-          <p className="text-[12px] text-[#3a3a4a] mt-1">Create your first cover letter</p>
+          <p className="text-[15px] font-semibold text-[var(--text-muted)]">No cover letters yet</p>
+          <p className="text-[12px] text-[var(--text-faint)] mt-1">Create your first cover letter</p>
           <PremiumButton
             variant="primary"
             onClick={() => setIsCreating(true)}
@@ -238,14 +239,14 @@ export default function CoverLettersPage() {
                 <div className="p-5 space-y-4">
                   {/* Title */}
                   <div>
-                    <h3 className="text-[15px] font-bold text-white truncate">{letter.title}</h3>
-                    <p className="text-[12px] text-[#6a6a7a] mt-1">
+                    <h3 className="text-[15px] font-bold text-[var(--text)] truncate">{letter.title}</h3>
+                    <p className="text-[12px] text-[var(--text-secondary)] mt-1">
                       {new Date(letter.created_at).toLocaleDateString()}
                     </p>
                   </div>
 
                   {/* Content Preview */}
-                  <p className="text-[13px] text-[#8a8a9a] line-clamp-3 leading-relaxed">
+                  <p className="text-[13px] text-[var(--text-secondary)] line-clamp-3 leading-relaxed">
                     {letter.content}
                   </p>
 
@@ -254,19 +255,19 @@ export default function CoverLettersPage() {
                     <span
                       className="inline-block px-2.5 py-1 rounded-lg text-[11px] font-bold"
                       style={{
-                        background: 'rgba(116,185,255,0.1)',
-                        color: '#74b9ff',
+                        background: 'rgb(var(--blue-rgb) / calc(0.1 * var(--tint-scale)))',
+                        color: 'var(--blue)',
                       }}
                     >
                       {letter.tone.charAt(0).toUpperCase() + letter.tone.slice(1)}
                     </span>
-                    <span className="text-[11px] text-[#5a5a6a]">
+                    <span className="text-[11px] text-[var(--text-muted)]">
                       {letter.content.split(/\s+/).length} words
                     </span>
                   </div>
 
                   {/* Actions */}
-                  <div className="flex gap-2 pt-3 border-t border-white/5">
+                  <div className="flex gap-2 pt-3 border-t border-[var(--border)]">
                     <PremiumButton
                       variant="secondary"
                       size="sm"

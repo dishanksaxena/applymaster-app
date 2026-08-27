@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase-browser'
 import { PremiumButton, PremiumInput, PremiumCard } from '@/components/premium'
 import CoverLetterPreview from './CoverLetterPreview'
 import { staggerContainer, fadeInUp } from '@/lib/animations'
+import { toast } from '@/components/Toast'
 
 interface CoverLetterEditorProps {
   initialLetter?: {
@@ -79,10 +80,10 @@ export default function CoverLetterEditor({ initialLetter, onClose, onSave }: Co
 
       setIsDirty(false)
       onSave?.(letterData)
-      alert('✓ Cover letter saved!')
+      toast.success('Cover letter saved!')
     } catch (err: any) {
       console.error('Save error:', err)
-      alert(`Failed to save: ${err.message}`)
+      toast.error(`Failed to save: ${err.message}`)
     } finally {
       setIsSaving(false)
     }
@@ -118,7 +119,7 @@ export default function CoverLetterEditor({ initialLetter, onClose, onSave }: Co
       setIsDirty(true)
     } catch (err: any) {
       console.error('Regenerate error:', err)
-      alert(`Failed to regenerate: ${err.message}`)
+      toast.error(`Failed to regenerate: ${err.message}`)
     } finally {
       setIsRegenerating(false)
     }
@@ -152,7 +153,7 @@ export default function CoverLetterEditor({ initialLetter, onClose, onSave }: Co
       document.body.removeChild(a)
     } catch (err: any) {
       console.error('Export error:', err)
-      alert(`Failed to export PDF: ${err.message}`)
+      toast.error(`Failed to export PDF: ${err.message}`)
     } finally {
       setIsExporting(false)
     }
@@ -168,8 +169,8 @@ export default function CoverLetterEditor({ initialLetter, onClose, onSave }: Co
       {/* Toolbar */}
       <motion.div variants={fadeInUp} className="flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-3xl font-black text-white mb-1">Cover Letter Editor</h1>
-          <p className="text-sm text-[#6a6a7a]">
+          <h1 className="font-display text-[1.9rem] mb-1">Cover Letter Editor</h1>
+          <p className="text-sm text-[var(--text-faint)]">
             {isDirty ? '✏️ Unsaved changes' : '✓ All saved'}
           </p>
         </div>
@@ -215,7 +216,7 @@ export default function CoverLetterEditor({ initialLetter, onClose, onSave }: Co
             <div className="p-6 space-y-4">
               {/* Title */}
               <div>
-                <label className="text-xs font-bold text-[#6a6a7a] uppercase tracking-wide mb-2 block">
+                <label className="text-xs font-bold text-[var(--text-faint)] uppercase tracking-wide mb-2 block">
                   Title / Job Position
                 </label>
                 <input
@@ -223,13 +224,13 @@ export default function CoverLetterEditor({ initialLetter, onClose, onSave }: Co
                   value={title}
                   onChange={(e) => handleTitleChange(e.target.value)}
                   placeholder="e.g., Senior Software Engineer"
-                  className="w-full px-4 py-3 rounded-xl bg-[#16161f] border border-white/[0.06] text-white text-sm placeholder-[#3a3a4a] focus:outline-none focus:border-[rgba(116,185,255,0.3)] transition-all"
+                  className="w-full px-4 py-3 rounded-xl bg-[var(--bg-input)] border border-[var(--border)] text-ink text-sm placeholder-[var(--text-faint)] focus:outline-none focus:border-[rgb(var(--blue-rgb)/0.3)] transition-all"
                 />
               </div>
 
               {/* Tone Selector */}
               <div>
-                <label className="text-xs font-bold text-[#6a6a7a] uppercase tracking-wide mb-2 block">
+                <label className="text-xs font-bold text-[var(--text-faint)] uppercase tracking-wide mb-2 block">
                   Tone
                 </label>
                 <div className="grid grid-cols-2 gap-2">
@@ -239,8 +240,8 @@ export default function CoverLetterEditor({ initialLetter, onClose, onSave }: Co
                       onClick={() => setTone(t.value)}
                       className={`px-3 py-2 rounded-lg text-xs font-bold transition-all ${
                         tone === t.value
-                          ? 'bg-[#74b9ff] text-black'
-                          : 'bg-[rgba(116,185,255,0.1)] text-[#74b9ff] hover:bg-[rgba(116,185,255,0.2)]'
+                          ? 'bg-[var(--blue)] text-black'
+                          : 'bg-[rgb(var(--blue-rgb)/0.1)] text-[var(--blue)] hover:bg-[rgb(var(--blue-rgb)/0.2)]'
                       }`}
                     >
                       {t.label}
@@ -251,16 +252,16 @@ export default function CoverLetterEditor({ initialLetter, onClose, onSave }: Co
 
               {/* Content */}
               <div>
-                <label className="text-xs font-bold text-[#6a6a7a] uppercase tracking-wide mb-2 block">
+                <label className="text-xs font-bold text-[var(--text-faint)] uppercase tracking-wide mb-2 block">
                   Content
                 </label>
                 <textarea
                   value={content}
                   onChange={(e) => handleContentChange(e.target.value)}
                   placeholder="Write or edit your cover letter here..."
-                  className="w-full h-[450px] px-4 py-3 rounded-xl bg-[#16161f] border border-white/[0.06] text-white text-sm placeholder-[#3a3a4a] focus:outline-none focus:border-[rgba(116,185,255,0.3)] transition-all resize-none font-mono"
+                  className="w-full h-[450px] px-4 py-3 rounded-xl bg-[var(--bg-input)] border border-[var(--border)] text-ink text-sm placeholder-[var(--text-faint)] focus:outline-none focus:border-[rgb(var(--blue-rgb)/0.3)] transition-all resize-none font-mono"
                 />
-                <p className="text-xs text-[#4a4a5a] mt-2">
+                <p className="text-xs text-[var(--text-faint)] mt-2">
                   {content.length} characters
                 </p>
               </div>

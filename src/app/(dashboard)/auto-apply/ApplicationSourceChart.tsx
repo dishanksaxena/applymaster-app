@@ -19,8 +19,8 @@ const SOURCE_COLORS: Record<string, string> = {
   'Glassdoor': '#0caa41',
   'ZipRecruiter': '#5ba71b',
   'Greenhouse': '#3ab549',
-  'Lever': '#1f2532',
-  'default': '#74b9ff',
+  'Lever': 'var(--bg-elevated)',
+  'default': 'var(--blue)',
 }
 
 export default function ApplicationSourceChart({ applications, height = 280 }: ApplicationSourceChartProps) {
@@ -47,10 +47,10 @@ export default function ApplicationSourceChart({ applications, height = 280 }: A
   if (chartData.length === 0) {
     return (
       <div
-        className="flex items-center justify-center rounded-2xl border border-[rgba(255,255,255,0.06)] bg-[#0d0d15]"
+        className="flex items-center justify-center rounded-2xl border border-[var(--border)] bg-[var(--bg)]"
         style={{ height }}
       >
-        <p className="text-[13px] text-[#4a4a5a]">No application data available</p>
+        <p className="text-[13px] text-[var(--text-faint)]">No application data available</p>
       </div>
     )
   }
@@ -63,8 +63,8 @@ export default function ApplicationSourceChart({ applications, height = 280 }: A
   const barGap = barWidth * 0.2
 
   return (
-    <div className="rounded-2xl border border-[rgba(255,255,255,0.06)] bg-[#0d0d15] p-6">
-      <h3 className="text-[14px] font-bold text-white mb-4">Applications by Source</h3>
+    <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg)] p-6">
+      <h3 className="text-[14px] font-bold text-ink mb-4">Applications by Source</h3>
 
       <svg width="100%" height={height} viewBox={`0 0 300 ${height}`} className="overflow-visible">
         {/* Y-axis */}
@@ -73,7 +73,7 @@ export default function ApplicationSourceChart({ applications, height = 280 }: A
           y1={padding.top}
           x2={padding.left - 5}
           y2={height - padding.bottom}
-          stroke="rgba(255,255,255,0.1)"
+          stroke="var(--bg-overlay)"
           strokeWidth="1"
         />
 
@@ -83,7 +83,7 @@ export default function ApplicationSourceChart({ applications, height = 280 }: A
           y1={height - padding.bottom}
           x2={300 - padding.right}
           y2={height - padding.bottom}
-          stroke="rgba(255,255,255,0.1)"
+          stroke="var(--bg-overlay)"
           strokeWidth="1"
         />
 
@@ -98,7 +98,7 @@ export default function ApplicationSourceChart({ applications, height = 280 }: A
                 y1={y}
                 x2={300 - padding.right}
                 y2={y}
-                stroke="rgba(255,255,255,0.05)"
+                stroke="var(--bg-overlay)"
                 strokeWidth="1"
                 strokeDasharray="4,4"
               />
@@ -106,7 +106,7 @@ export default function ApplicationSourceChart({ applications, height = 280 }: A
                 x={padding.left - 10}
                 y={y + 4}
                 fontSize="11"
-                fill="#5a5a6a"
+                fill="var(--text-faint)"
                 textAnchor="end"
                 dominantBaseline="middle"
               >
@@ -163,7 +163,7 @@ export default function ApplicationSourceChart({ applications, height = 280 }: A
                 x={x + (barWidth - barGap) / 2}
                 y={height - padding.bottom + 20}
                 fontSize="11"
-                fill="#6a6a7a"
+                fill="var(--text-faint)"
                 textAnchor="middle"
               >
                 {item.source.length > 10 ? item.source.substring(0, 7) + '...' : item.source}

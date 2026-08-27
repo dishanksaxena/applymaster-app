@@ -9,6 +9,19 @@ const nextConfig = {
   // Strict mode for better React practices
   reactStrictMode: true,
 
+  /* pdf-parse (and the pdf.js it wraps) resolves its worker at runtime with
+     a relative require of './pdf.worker.mjs'. Webpack cannot trace that, so
+     bundling it produces "Setting up fake worker failed: Cannot find module
+     './pdf.worker.mjs'" on every resume upload — local text extraction
+     silently fails and every CV falls through to a Claude call that is
+     slower and costs money to do what the library does offline.
+
+     Left external, it is required from node_modules at runtime with its
+     worker sitting where it expects to find it. */
+  experimental: {
+    serverComponentsExternalPackages: ['pdf-parse', 'mammoth'],
+  },
+
   // Image optimization
   images: {
     formats: ['image/avif', 'image/webp'],

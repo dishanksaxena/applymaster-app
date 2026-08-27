@@ -1,313 +1,664 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useId, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { createClient } from '@/lib/supabase-browser'
 import Link from 'next/link'
-import { PremiumCard, PremiumButton } from '@/components/premium'
+import { PremiumCard } from '@/components/premium'
 import { staggerContainer, fadeInUp } from '@/lib/animations'
+import { tone, toneA, toneSurface, type Tone } from '@/lib/tone'
 
-/* ─── Animated Counter ─── */
+/* ============================================================
+   Trend maths
+
+   Every series on this page is derived from the user's own rows.
+   There is no sample data: an account with three applications
+   shows a three-point line, not a decorative curve.
+   ============================================================ */
+
+const WEEKS = 8
+const WEEK_MS = 7 * 86400000
+
+type AppRow = {
+  status: string
+  match_score: number | null
+  created_at: string
+  applied_at: string | null
+}
+
+/** Index 0 is the oldest week in the window, index WEEKS-1 is this week. */
+function weekIndex(iso: string, now: number): number | null {
+  const age = now - new Date(iso).getTime()
+  if (age < 0) return WEEKS - 1
+  const i = WEEKS - 1 - Math.floor(age / WEEK_MS)
+  return i < 0 ? null : i
+}
+
+function bucket(rows: AppRow[], dateOf: (r: AppRow) => string | null, now: number) {
+  const out: number[] = new Array(WEEKS).fill(0)
+  for (const r of rows) {
+    const d = dateOf(r)
+    if (!d) continue
+    const i = weekIndex(d, now)
+    if (i !== null) out[i] += 1
+  }
+  return out
+}
+
+/** Running total, so a cumulative metric reads as growth rather than noise. */
+function cumulative(weekly: number[], base = 0) {
+  let run = base
+  return weekly.map(v => (run += v))
+}
+
+/* ============================================================
+   Pieces
+   ============================================================ */
+
 function AnimatedNumber({ value, suffix = '' }: { value: number; suffix?: string }) {
   const [display, setDisplay] = useState(0)
   useEffect(() => {
-    const end = value
-    const duration = 1200
-    const startTime = Date.now()
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setDisplay(value)
+      return
+    }
+    const start = Date.now()
+    let raf = 0
     const tick = () => {
-      const elapsed = Date.now() - startTime
-      const progress = Math.min(elapsed / duration, 1)
-      const eased = 1 - Math.pow(1 - progress, 3)
-      setDisplay(Math.round(end * eased))
-      if (progress < 1) requestAnimationFrame(tick)
+      const p = Math.min((Date.now() - start) / 900, 1)
+      setDisplay(Math.round(value * (1 - Math.pow(1 - p, 3))))
+      if (p < 1) raf = requestAnimationFrame(tick)
     }
     tick()
+    return () => cancelAnimationFrame(raf)
   }, [value])
-  return <span>{display}{suffix}</span>
+  return (
+    <span style={{ fontVariantNumeric: 'tabular-nums' }}>
+      {display}
+      {suffix}
+    </span>
+  )
 }
 
-/* ─── Sparkline Chart ─── */
-function Sparkline({ data, color, height = 40 }: { data: number[]; color: string; height?: number }) {
+/**
+ * Full-bleed area chart that sits under the metric as its ground.
+ *
+ * preserveAspectRatio="none" lets one viewBox stretch to any card width;
+ * non-scaling-stroke stops that stretch from distorting the line.
+ */
+function TrendArea({ data, t, height = 56 }: { data: number[]; t: Tone; height?: number }) {
+  const uid = useId().replace(/:/g, '')
+  const gradId = `trend-${uid}`
+
   const max = Math.max(...data)
   const min = Math.min(...data)
+  const w = 100
+  const h = 40
+
+  /* A series with no variation — a brand-new account, or a metric that has
+     not moved — has nowhere to plot. Left to the normal maths it flattens
+     onto the baseline, where a 1.75px stroke across the full width reads as
+     a border stripe rather than a chart. Sitting it above the floor keeps
+     the area fill visible and the shape honest: flat is flat. */
+  const flat = max === min
   const range = max - min || 1
-  const w = 120
-  const points = data.map((v, i) => `${(i / (data.length - 1)) * w},${height - ((v - min) / range) * (height - 4) - 2}`).join(' ')
-  const gradId = `sg-${color.replace('#', '')}`
+
+  const pts = data.map((v, i) => ({
+    x: data.length === 1 ? w : (i / (data.length - 1)) * w,
+    y: flat ? h * 0.52 : h - ((v - min) / range) * (h - 10) - 5,
+  }))
+  const line = pts.map(p => `${p.x},${p.y}`).join(' ')
+  const last = pts[pts.length - 1]
+
   return (
-    <svg width={w} height={height} className="overflow-visible">
+    <svg
+      viewBox={`0 0 ${w} ${h}`}
+      preserveAspectRatio="none"
+      width="100%"
+      height={height}
+      className="block"
+      aria-hidden="true"
+    >
       <defs>
         <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity="0.3" />
-          <stop offset="100%" stopColor={color} stopOpacity="0" />
+          <stop offset="0%" style={{ stopColor: tone(t), stopOpacity: 0.28 }} />
+          <stop offset="100%" style={{ stopColor: tone(t), stopOpacity: 0 }} />
         </linearGradient>
       </defs>
+      <polygon points={`0,${h} ${line} ${w},${h}`} fill={`url(#${gradId})`} />
       <motion.polyline
-        fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-        initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: 1, opacity: 1 }}
-        transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
-        points={points}
+        fill="none"
+        style={{ stroke: tone(t) }}
+        strokeWidth="1.75"
+        vectorEffect="non-scaling-stroke"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        initial={{ pathLength: 0 }}
+        animate={{ pathLength: 1 }}
+        transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+        points={line}
       />
-      <polygon points={`0,${height} ${points} ${w},${height}`} fill={`url(#${gradId})`} opacity="0.5" />
+      <circle cx={last.x} cy={last.y} r="2.4" style={{ fill: tone(t) }} vectorEffect="non-scaling-stroke" />
     </svg>
   )
 }
 
-/* ─── Live Activity Terminal ─── */
-function LiveTerminal({ activities }: { activities: { action: string; details: string | null; created_at: string }[] }) {
-  const [dots, setDots] = useState('')
-  useEffect(() => {
-    const t = setInterval(() => setDots(d => d.length >= 3 ? '' : d + '.'), 500)
-    return () => clearInterval(t)
-  }, [])
-
+/** Change against the previous week. Direction is stated, not only coloured. */
+function Delta({ value, t }: { value: number; t: Tone }) {
+  if (value === 0) {
+    return (
+      <span className="text-[11px] font-medium" style={{ color: 'var(--text-faint)' }}>
+        No change this week
+      </span>
+    )
+  }
+  const up = value > 0
   return (
-    <div className="rounded-2xl overflow-hidden border border-white/[0.06] h-full" style={{ background: 'linear-gradient(180deg, #0d0d14 0%, #0a0a10 100%)' }}>
-      <div className="flex items-center gap-2 px-4 py-2.5 border-b border-white/[0.04]">
-        <div className="flex gap-1.5">
-          <div className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]" />
-          <div className="w-2.5 h-2.5 rounded-full bg-[#febc2e]" />
-          <div className="w-2.5 h-2.5 rounded-full bg-[#28c840]" />
-        </div>
-        <span className="text-[10px] font-mono text-[#4a4a5a] ml-2">applymaster — activity-feed</span>
-        <div className="ml-auto flex items-center gap-1.5">
-          <span className="relative flex h-1.5 w-1.5">
-            <span className="absolute inline-flex h-full w-full rounded-full bg-[#00b894] opacity-60 animate-ping" />
-            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#00b894]" />
+    <span
+      className="inline-flex items-center gap-1 px-2 py-[3px] rounded-full text-[11px] font-semibold"
+      style={{
+        background: up ? toneSurface(t, 0.12) : 'var(--bg-overlay)',
+        color: up ? tone(t) : 'var(--text-muted)',
+      }}
+    >
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" aria-hidden="true">
+        {up ? <path d="M12 19V5M5 12l7-7 7 7" /> : <path d="M12 5v14M19 12l-7 7-7-7" />}
+      </svg>
+      {up ? '+' : ''}
+      {value} this week
+    </span>
+  )
+}
+
+function StatCard({
+  label,
+  value,
+  suffix,
+  t,
+  series,
+  delta,
+  icon,
+  index,
+}: {
+  label: string
+  value: number
+  suffix?: string
+  t: Tone
+  series: number[]
+  delta: number
+  icon: React.ReactNode
+  index: number
+}) {
+  return (
+    <PremiumCard
+      accent={t === 'accent' ? 'pink' : t}
+      glowEffect
+      hover={false}
+      animationDelay={index * 0.06}
+    >
+      <div className="pt-4 px-4">
+        <div className="flex items-center gap-2 mb-3">
+          <span
+            className="grid place-items-center w-7 h-7 rounded-lg shrink-0"
+            style={{ background: toneSurface(t, 0.13), color: tone(t) }}
+          >
+            {icon}
           </span>
-          <span className="text-[9px] font-mono text-[#00b894]">LIVE</span>
+          <span
+            className="text-[10.5px] font-semibold uppercase tracking-[0.07em] truncate"
+            style={{ color: 'var(--text-muted)' }}
+          >
+            {label}
+          </span>
+        </div>
+        <div className="font-display leading-none text-[2.4rem]" style={{ color: 'var(--text)' }}>
+          <AnimatedNumber value={value} suffix={suffix} />
+        </div>
+        <div className="mt-2 mb-1">
+          <Delta value={delta} t={t} />
         </div>
       </div>
-      <div className="p-4 max-h-[360px] overflow-y-auto font-mono text-[11px] space-y-2">
+      {/* The chart runs to the card edge: it is the ground the number stands on. */}
+      <TrendArea data={series} t={t} />
+    </PremiumCard>
+  )
+}
+
+function ActivityFeed({
+  activities,
+}: {
+  activities: { action: string; details: string | null; created_at: string }[]
+}) {
+  return (
+    <PremiumCard accent="none" hover={false}>
+      <div className="flex items-center justify-between px-5 pt-5 pb-3">
+        <div>
+          <h2 className="font-display text-[1.25rem] leading-tight" style={{ color: 'var(--text)' }}>
+            Activity
+          </h2>
+          <p className="text-[11.5px] mt-0.5" style={{ color: 'var(--text-muted)' }}>
+            Everything ApplyMaster did for you
+          </p>
+        </div>
+        <span
+          className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider"
+          style={{ background: toneSurface('green', 0.12), color: tone('green') }}
+        >
+          <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'currentColor' }} />
+          Live
+        </span>
+      </div>
+
+      <div className="max-h-[340px] overflow-y-auto px-2 pb-3">
         {activities.length === 0 ? (
-          <div className="text-center py-8">
-            <motion.div animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 2, repeat: Infinity }} className="text-[#4a4a5a]">
-              Waiting for activity{dots}
-            </motion.div>
-            <p className="text-[#3a3a4a] text-[10px] mt-2">Upload your resume to get started</p>
+          <div className="px-3 py-10 text-center">
+            <p className="text-[13px] mb-1" style={{ color: 'var(--text)' }}>
+              Nothing yet
+            </p>
+            <p className="text-[12px] leading-relaxed" style={{ color: 'var(--text-muted)' }}>
+              Upload a resume and this fills up as we search, tailor and apply.
+            </p>
           </div>
         ) : (
-          <AnimatePresence>
+          <AnimatePresence initial={false}>
             {activities.map((log, i) => (
-              <motion.div key={i} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }} className="flex items-start gap-3">
-                <span className="text-[#3a3a4a] shrink-0 mt-px">{new Date(log.created_at).toLocaleTimeString('en-US', { hour12: false })}</span>
-                <span className="text-[#00b894]">$</span>
-                <div>
-                  <span className="text-[#e0e0e8]">{log.action}</span>
-                  {log.details && <span className="text-[#5a5a6a]"> — {log.details}</span>}
+              <motion.div
+                key={`${log.created_at}-${i}`}
+                initial={{ opacity: 0, x: -6 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: Math.min(i * 0.03, 0.3) }}
+                className="flex gap-3 px-3 py-2.5 rounded-xl"
+              >
+                <span
+                  className="mt-[5px] w-1.5 h-1.5 rounded-full shrink-0"
+                  style={{ background: toneA('accent', 0.55) }}
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="text-[12.5px] leading-snug" style={{ color: 'var(--text)' }}>
+                    {log.action}
+                  </p>
+                  {log.details && (
+                    <p className="text-[11.5px] leading-snug mt-0.5 truncate" style={{ color: 'var(--text-muted)' }}>
+                      {log.details}
+                    </p>
+                  )}
                 </div>
+                <time
+                  className="text-[10.5px] shrink-0 mt-[2px] tabular-nums"
+                  style={{ color: 'var(--text-faint)' }}
+                  dateTime={log.created_at}
+                >
+                  {new Date(log.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                </time>
               </motion.div>
             ))}
           </AnimatePresence>
         )}
       </div>
-    </div>
+    </PremiumCard>
   )
 }
 
+/* ============================================================
+   Page
+   ============================================================ */
+
+const ICONS = {
+  send: (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
+    </svg>
+  ),
+  mic: (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3zM19 10v2a7 7 0 01-14 0v-2" />
+    </svg>
+  ),
+  trophy: (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M22 11.08V12a10 10 0 11-5.93-9.14M22 4L12 14.01l-3-3" />
+    </svg>
+  ),
+  chart: (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M12 20V10M18 20V4M6 20v-4" />
+    </svg>
+  ),
+}
 
 export default function DashboardPage() {
-  const [stats, setStats] = useState({ applied: 0, interviews: 0, offers: 0, matchRate: 0 })
+  const [rows, setRows] = useState<AppRow[]>([])
   const [hasResume, setHasResume] = useState(false)
-  const [recentActivity, setRecentActivity] = useState<{ action: string; details: string | null; created_at: string }[]>([])
+  const [activity, setActivity] = useState<{ action: string; details: string | null; created_at: string }[]>([])
   const [userName, setUserName] = useState('')
   const [greeting, setGreeting] = useState('Good morning')
   const [mounted, setMounted] = useState(false)
-  const supabase = createClient()
-
-  useEffect(() => { setMounted(true) }, [])
+  const [supabase] = useState(() => createClient())
 
   useEffect(() => {
+    setMounted(true)
     const hour = new Date().getHours()
     setGreeting(hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening')
+  }, [])
 
-    const load = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
+  useEffect(() => {
+    ;(async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
       if (!user) return
 
-      const { data: profile } = await supabase.from('profiles').select('full_name').eq('id', user.id).single()
+      const [{ data: profile }, { data: apps }, { data: resumes }, { data: logs }] = await Promise.all([
+        supabase.from('profiles').select('full_name').eq('id', user.id).maybeSingle(),
+        supabase.from('applications').select('status, match_score, created_at, applied_at').eq('user_id', user.id),
+        supabase.from('resumes').select('id').eq('user_id', user.id).limit(1),
+        supabase
+          .from('apply_log')
+          .select('action, details, created_at')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(20),
+      ])
+
       if (profile?.full_name) setUserName(profile.full_name.split(' ')[0])
-
-      const { data: apps } = await supabase.from('applications').select('status, match_score').eq('user_id', user.id)
-      if (apps) {
-        const applied = apps.filter(a => !['saved', 'queued'].includes(a.status)).length
-        const interviews = apps.filter(a => a.status === 'interview').length
-        const offers = apps.filter(a => a.status === 'offer').length
-        const scores = apps.filter(a => a.match_score).map(a => a.match_score!)
-        const matchRate = scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0
-        setStats({ applied, interviews, offers, matchRate })
-      }
-
-      const { data: resumes } = await supabase.from('resumes').select('id').eq('user_id', user.id).limit(1)
-      if (resumes && resumes.length > 0) setHasResume(true)
-
-      const { data: logs } = await supabase.from('apply_log').select('action, details, created_at').eq('user_id', user.id).order('created_at', { ascending: false }).limit(15)
-      if (logs) setRecentActivity(logs)
-    }
-    load()
+      if (apps) setRows(apps as AppRow[])
+      if (resumes?.length) setHasResume(true)
+      if (logs) setActivity(logs)
+    })()
   }, [supabase])
 
-  const statCards = [
-    { label: 'Applications Sent', value: stats.applied, suffix: '', color: '#fd79a8', sparkData: [2, 5, 3, 8, 6, 9, 7, 12, 10, 15], icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M22 2L11 13"/><path d="M22 2L15 22L11 13L2 9L22 2Z"/></svg>
-    )},
-    { label: 'Interviews Lined Up', value: stats.interviews, suffix: '', color: '#00b894', sparkData: [1, 2, 1, 3, 2, 4, 3, 5, 4, 6], icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/></svg>
-    )},
-    { label: 'Offers Received', value: stats.offers, suffix: '', color: '#a29bfe', sparkData: [0, 0, 1, 0, 1, 1, 2, 1, 2, 3], icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>
-    )},
-    { label: 'Avg Match Score', value: stats.matchRate, suffix: '%', color: '#fdcb6e', sparkData: [60, 65, 72, 68, 75, 78, 82, 80, 85, 88], icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20V16"/></svg>
-    )},
-  ]
+  const metrics = useMemo(() => {
+    const now = Date.now()
+    const dateOf = (r: AppRow) => r.applied_at ?? r.created_at
 
-  const quickActions = [
-    { label: 'Search Jobs', desc: 'Browse 50+ job portals with AI matching', href: '/jobs', color: '#fd79a8', icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
-    )},
-    { label: 'Optimize Resume', desc: 'AI-powered ATS scoring and improvements', href: '/resume', color: '#00b894', icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z"/><polyline points="14,2 14,8 20,8"/></svg>
-    )},
-    { label: 'Cover Letter', desc: 'AI writes personalized letters in seconds', href: '/cover-letters', color: '#a29bfe', icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-    )},
-    { label: 'Auto-Apply', desc: 'Let AI apply to jobs on autopilot', href: '/auto-apply', color: '#fdcb6e', icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><polygon points="13,2 3,14 12,14 11,22 21,10 12,10"/></svg>
-    )},
-  ]
+    const applied = rows.filter(r => !['saved', 'queued'].includes(r.status))
+    const interviews = rows.filter(r => r.status === 'interview')
+    const offers = rows.filter(r => r.status === 'offer')
+    const scored = rows.filter(r => typeof r.match_score === 'number')
+
+    // Rows older than the window still count toward the total, so the line
+    // starts where the user actually is rather than at zero.
+    const before = (list: AppRow[]) => list.filter(r => weekIndex(dateOf(r), now) === null).length
+
+    const appliedWeekly = bucket(applied, dateOf, now)
+    const interviewWeekly = bucket(interviews, dateOf, now)
+    const offerWeekly = bucket(offers, dateOf, now)
+
+    // Match score is an average, not a count, so it is carried forward across
+    // empty weeks rather than accumulated.
+    const sums: number[] = new Array(WEEKS).fill(0)
+    const counts: number[] = new Array(WEEKS).fill(0)
+    for (const r of scored) {
+      const i = weekIndex(dateOf(r), now)
+      if (i === null) continue
+      sums[i] += r.match_score as number
+      counts[i] += 1
+    }
+    let carried = 0
+    const scoreSeries = sums.map((sum, i) => {
+      if (counts[i] > 0) carried = Math.round(sum / counts[i])
+      return carried
+    })
+
+    const avgScore = scored.length
+      ? Math.round(scored.reduce((a, r) => a + (r.match_score as number), 0) / scored.length)
+      : 0
+
+    return {
+      applied: {
+        value: applied.length,
+        series: cumulative(appliedWeekly, before(applied)),
+        delta: appliedWeekly[WEEKS - 1],
+      },
+      interviews: {
+        value: interviews.length,
+        series: cumulative(interviewWeekly, before(interviews)),
+        delta: interviewWeekly[WEEKS - 1],
+      },
+      offers: {
+        value: offers.length,
+        series: cumulative(offerWeekly, before(offers)),
+        delta: offerWeekly[WEEKS - 1],
+      },
+      score: {
+        value: avgScore,
+        series: scoreSeries,
+        delta: scoreSeries[WEEKS - 1] - scoreSeries[WEEKS - 2],
+      },
+    }
+  }, [rows])
+
+  /* Applications that have gone quiet. Following up after a week is one of the
+     highest-leverage things a job seeker can do, and nothing surfaced it. */
+  const stale = useMemo(() => {
+    const now = Date.now()
+    return rows.filter(
+      r => r.status === 'applied' && r.applied_at && now - new Date(r.applied_at).getTime() > 7 * 86400000
+    )
+  }, [rows])
 
   const journeySteps = [
-    { step: 1, label: 'Upload Resume', desc: 'Get your ATS score', href: '/resume', done: hasResume, color: '#fd79a8' },
-    { step: 2, label: 'Search Jobs', desc: 'Find matching roles', href: '/jobs', done: hasResume, color: '#00b894' },
-    { step: 3, label: 'Enable Auto-Apply', desc: 'Apply on autopilot', href: '/auto-apply', done: stats.applied > 0, color: '#a29bfe' },
-    { step: 4, label: 'Ace Interviews', desc: 'Practice with AI coach', href: '/interview-coach', done: stats.interviews > 0, color: '#fdcb6e' },
+    { step: 1, label: 'Upload resume', desc: 'Get your ATS score', href: '/resume', done: hasResume, t: 'accent' as Tone },
+    { step: 2, label: 'Search jobs', desc: 'Find matching roles', href: '/jobs', done: rows.length > 0, t: 'blue' as Tone },
+    { step: 3, label: 'Turn on auto-apply', desc: 'Apply on autopilot', href: '/auto-apply', done: metrics.applied.value > 0, t: 'purple' as Tone },
+    { step: 4, label: 'Practise interviews', desc: 'Rehearse with the coach', href: '/interview-coach', done: metrics.interviews.value > 0, t: 'green' as Tone },
+  ]
+  const doneCount = journeySteps.filter(s => s.done).length
+  const journeyComplete = doneCount === journeySteps.length
+
+  const quickActions = [
+    { label: 'Search jobs', desc: 'Across every connected board', href: '/jobs', t: 'blue' as Tone, icon: <path d="M11 18a7 7 0 100-14 7 7 0 000 14zM21 21l-4.35-4.35" /> },
+    { label: 'Optimize resume', desc: 'ATS score and fixes', href: '/resume', t: 'green' as Tone, icon: <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zM14 2v6h6" /> },
+    { label: 'Find a referral', desc: 'Warm paths in your network', href: '/network', t: 'accent' as Tone, icon: <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" /> },
+    { label: 'Auto-apply', desc: 'Queue and submit for you', href: '/auto-apply', t: 'yellow' as Tone, icon: <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" /> },
   ]
 
   if (!mounted) return <div className="p-8" />
 
   return (
-    <motion.div variants={staggerContainer} initial="hidden" animate="show" className="space-y-8 max-w-[1400px] mx-auto">
-
-      {/* ─── Welcome Banner ─── */}
-      <motion.div variants={fadeInUp} className="relative overflow-hidden rounded-2xl p-8" style={{
-        background: 'linear-gradient(135deg, rgba(253,121,168,0.08) 0%, rgba(162,155,254,0.06) 50%, rgba(0,184,148,0.04) 100%)',
-        border: '1px solid rgba(253,121,168,0.1)',
-      }}>
-        <div className="absolute top-[-50%] right-[-10%] w-[300px] h-[300px] rounded-full opacity-[0.07]" style={{ background: 'radial-gradient(circle, #fd79a8, transparent 70%)' }} />
-        <div className="absolute bottom-[-50%] left-[-10%] w-[250px] h-[250px] rounded-full opacity-[0.05]" style={{ background: 'radial-gradient(circle, #a29bfe, transparent 70%)' }} />
-        <div className="relative z-10">
-          <motion.h1 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-            className="text-3xl lg:text-4xl font-black tracking-tight mb-2">
-            {greeting}{userName ? `, ${userName}` : ''}
-          </motion.h1>
-          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}
-            className="text-[15px] text-[var(--text-secondary)] max-w-lg">
-            Your job search command center. Track everything, optimize your approach, and land your dream role.
-          </motion.p>
+    <motion.div variants={staggerContainer} initial="hidden" animate="show" className="space-y-5 max-w-[1360px] mx-auto">
+      {/* Greeting: one line, no wasted band */}
+      <motion.div variants={fadeInUp} className="flex flex-wrap items-end justify-between gap-4 pt-1">
+        <div>
+          <h1 className="font-display text-[clamp(1.75rem,2.6vw,2.15rem)] leading-tight" style={{ color: 'var(--text)' }}>
+            {greeting}
+            {userName ? `, ${userName}` : ''}
+          </h1>
+          <p className="text-[13px] mt-1" style={{ color: 'var(--text-muted)' }}>
+            {metrics.applied.value === 0
+              ? 'Let us get your first application out today.'
+              : `${metrics.applied.value} application${metrics.applied.value === 1 ? '' : 's'} out · ${metrics.interviews.value} interview${metrics.interviews.value === 1 ? '' : 's'} · ${metrics.offers.value} offer${metrics.offers.value === 1 ? '' : 's'}`}
+          </p>
         </div>
+        <Link
+          href="/jobs"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-semibold transition-transform hover:-translate-y-0.5"
+          style={{
+            background: 'var(--accent-solid)',
+            color: 'var(--text-on-accent)',
+            boxShadow: '0 6px 18px -8px rgb(var(--accent-rgb) / 0.6)',
+          }}
+        >
+          Find jobs
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+            <path d="M5 12h14M12 5l7 7-7 7" />
+          </svg>
+        </Link>
       </motion.div>
 
-      {/* ─── Stats Grid with Premium Cards ─── */}
+      {/* Metrics */}
       <motion.div variants={staggerContainer} className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {statCards.map((s, index) => (
-          <motion.div key={s.label} variants={fadeInUp}>
-            <PremiumCard
-              accent={
-                s.label.includes('Applications') ? 'pink' :
-                s.label.includes('Interviews') ? 'green' :
-                s.label.includes('Offers') ? 'purple' :
-                'yellow'
-              }
-              glowEffect={true}
-              animationDelay={index * 0.1}
-            >
-              <div className="p-5">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${s.color}12`, color: s.color }}>{s.icon}</div>
-                  <Sparkline data={s.sparkData} color={s.color} height={32} />
-                </div>
-                <div className="text-3xl font-black tracking-tight" style={{ color: s.color }}>
-                  <AnimatedNumber value={typeof s.value === 'number' ? s.value : 0} suffix={s.suffix} />
-                </div>
-                <div className="text-[12px] text-[var(--text-muted)] mt-1 font-medium">{s.label}</div>
-              </div>
-            </PremiumCard>
-          </motion.div>
-        ))}
+        <StatCard index={0} label="Applications sent" value={metrics.applied.value} t="accent" series={metrics.applied.series} delta={metrics.applied.delta} icon={ICONS.send} />
+        <StatCard index={1} label="Interviews" value={metrics.interviews.value} t="green" series={metrics.interviews.series} delta={metrics.interviews.delta} icon={ICONS.mic} />
+        <StatCard index={2} label="Offers" value={metrics.offers.value} t="purple" series={metrics.offers.series} delta={metrics.offers.delta} icon={ICONS.trophy} />
+        <StatCard index={3} label="Avg match score" value={metrics.score.value} suffix="%" t="yellow" series={metrics.score.series} delta={metrics.score.delta} icon={ICONS.chart} />
       </motion.div>
 
-      {/* ─── Getting Started Journey ─── */}
-      <motion.div variants={fadeInUp}>
-        <PremiumCard accent="pink" hover={false}>
-          <div className="p-6">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h3 className="text-[16px] font-bold text-[var(--text)]">Your Journey</h3>
-                <p className="text-[12px] text-[var(--text-muted)] mt-1">Follow these steps to land your next role</p>
+      {/* Needs attention: real, actionable, from the user's own rows */}
+      {stale.length > 0 && (
+        <motion.div variants={fadeInUp}>
+          <PremiumCard accent="yellow" hover={false}>
+            <div className="flex flex-wrap items-center gap-4 p-5">
+              <span
+                className="grid place-items-center w-10 h-10 rounded-xl shrink-0"
+                style={{ background: toneSurface('yellow', 0.14), color: tone('yellow') }}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M12 7v5l3 2" />
+                </svg>
+              </span>
+              <div className="min-w-0 flex-1">
+                <h2 className="text-[14px] font-semibold" style={{ color: 'var(--text)' }}>
+                  {stale.length} application{stale.length === 1 ? '' : 's'}{stale.length === 1 ? ' has' : ' have'} gone quiet
+                </h2>
+                <p className="text-[12.5px] mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                  No reply after a week. A short follow-up is the cheapest way to restart a conversation.
+                </p>
               </div>
-              <div className="text-[12px] font-bold px-3 py-1 rounded-full" style={{ background: 'rgba(253,121,168,0.08)', color: '#fd79a8' }}>
-                {journeySteps.filter(s => s.done).length}/{journeySteps.length} completed
-              </div>
+              <Link
+                href="/applications?filter=applied"
+                className="px-3.5 py-2 rounded-lg text-[12.5px] font-semibold shrink-0"
+                style={{ background: toneSurface('yellow', 0.16), color: tone('yellow') }}
+              >
+                Review them
+              </Link>
             </div>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              {journeySteps.map((step, i) => (
-                <Link key={step.step} href={step.href}>
-                  <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}
-                    whileHover={{ y: -3, scale: 1.02 }} className="relative p-5 rounded-xl cursor-pointer group transition-all duration-300"
-                    style={{ background: step.done ? `${step.color}08` : 'var(--bg-overlay)', border: `1px solid ${step.done ? `${step.color}20` : 'var(--border)'}` }}>
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-bold mb-3" style={{
-                      background: step.done ? `${step.color}20` : 'var(--bg-overlay)', color: step.done ? step.color : 'var(--text-muted)',
-                      boxShadow: step.done ? `0 0 12px ${step.color}20` : 'none',
-                    }}>
-                      {step.done ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M20 6L9 17L4 12"/></svg> : step.step}
-                    </div>
-                    <div className="text-[13px] font-bold text-[var(--text)] group-hover:text-[#fd79a8] transition-colors">{step.label}</div>
-                    <div className="text-[11px] text-[var(--text-muted)] mt-1">{step.desc}</div>
-                    <div className="absolute top-1/2 right-4 -translate-y-1/2 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 text-[var(--text-muted)]">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                    </div>
-                  </motion.div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </PremiumCard>
-      </motion.div>
+          </PremiumCard>
+        </motion.div>
+      )}
 
-      {/* ─── Main Grid ─── */}
-      <motion.div variants={staggerContainer} className="grid lg:grid-cols-[1fr_420px] gap-6">
+      {/* Onboarding journey: disappears once it is finished */}
+      {!journeyComplete && (
         <motion.div variants={fadeInUp}>
           <PremiumCard accent="pink" hover={false}>
-            <div className="p-6">
-              <h3 className="text-[16px] font-bold text-[var(--text)] mb-1">Quick Actions</h3>
-              <p className="text-[12px] text-[var(--text-muted)] mb-6">Jump right into any workflow</p>
-              <div className="grid sm:grid-cols-2 gap-3">
-                {quickActions.map((a, i) => (
-                  <Link key={a.label} href={a.href}>
-                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-                      whileHover={{ y: -3, scale: 1.01 }} whileTap={{ scale: 0.98 }}
-                      className="relative p-5 rounded-xl cursor-pointer group overflow-hidden"
-                      style={{ background: `${a.color}06`, border: '1px solid var(--border)' }}>
-                      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                        style={{ background: `radial-gradient(circle at 30% 30%, ${a.color}10, transparent 70%)` }} />
-                      <div className="relative z-10">
-                        <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-4" style={{ background: `${a.color}15`, color: a.color }}>{a.icon}</div>
-                        <div className="text-[14px] font-bold text-[var(--text)] group-hover:text-[#fd79a8] transition-colors">{a.label}</div>
-                        <div className="text-[12px] text-[var(--text-muted)] mt-1 leading-relaxed">{a.desc}</div>
-                      </div>
-                      <div className="absolute top-5 right-5 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 -translate-x-2 transition-all duration-300" style={{ color: a.color }}>
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                      </div>
-                    </motion.div>
+            <div className="p-5">
+              <div className="flex items-center justify-between gap-4 mb-4">
+                <div>
+                  <h2 className="font-display text-[1.25rem] leading-tight" style={{ color: 'var(--text)' }}>
+                    Get set up
+                  </h2>
+                  <p className="text-[12px] mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                    Four steps between you and an automated search
+                  </p>
+                </div>
+                <div className="flex items-center gap-2.5 shrink-0">
+                  <div className="w-24 h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--bg-overlay)' }}>
+                    <motion.div
+                      className="h-full rounded-full"
+                      style={{ background: 'var(--accent-solid)' }}
+                      initial={{ width: 0 }}
+                      animate={{ width: `${(doneCount / journeySteps.length) * 100}%` }}
+                      transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+                    />
+                  </div>
+                  <span className="text-[11.5px] font-semibold tabular-nums" style={{ color: 'var(--text-muted)' }}>
+                    {doneCount}/{journeySteps.length}
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                {journeySteps.map(step => (
+                  <Link
+                    key={step.step}
+                    href={step.href}
+                    className="group relative p-4 rounded-xl transition-all duration-200 hover:-translate-y-0.5"
+                    style={{
+                      background: step.done ? toneSurface(step.t, 0.09) : 'var(--bg-overlay)',
+                      boxShadow: `inset 0 0 0 1px ${step.done ? toneA(step.t, 0.22) : 'var(--card-ring)'}`,
+                    }}
+                  >
+                    <span
+                      className="grid place-items-center w-7 h-7 rounded-full text-[11.5px] font-bold mb-2.5"
+                      style={{
+                        background: step.done ? tone(step.t) : 'var(--bg-card)',
+                        color: step.done ? '#fff' : 'var(--text-muted)',
+                        boxShadow: step.done ? 'none' : 'inset 0 0 0 1px var(--card-ring)',
+                      }}
+                    >
+                      {step.done ? (
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" aria-hidden="true">
+                          <path d="M20 6L9 17l-5-5" />
+                        </svg>
+                      ) : (
+                        step.step
+                      )}
+                    </span>
+                    <div className="text-[12.5px] font-semibold" style={{ color: 'var(--text)' }}>
+                      {step.label}
+                    </div>
+                    <div className="text-[11px] mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                      {step.done ? 'Done' : step.desc}
+                    </div>
                   </Link>
                 ))}
               </div>
             </div>
           </PremiumCard>
         </motion.div>
+      )}
+
+      {/* Actions + activity */}
+      <motion.div variants={staggerContainer} className="grid lg:grid-cols-[1fr_400px] gap-4 items-start">
         <motion.div variants={fadeInUp}>
-          <LiveTerminal activities={recentActivity} />
+          <PremiumCard accent="none" hover={false}>
+            <div className="p-5">
+              <h2 className="font-display text-[1.25rem] leading-tight mb-0.5" style={{ color: 'var(--text)' }}>
+                Jump in
+              </h2>
+              <p className="text-[11.5px] mb-4" style={{ color: 'var(--text-muted)' }}>
+                The four things that move a search forward
+              </p>
+              <div className="grid sm:grid-cols-2 gap-3">
+                {quickActions.map(a => (
+                  <Link
+                    key={a.label}
+                    href={a.href}
+                    className="group flex items-start gap-3 p-4 rounded-xl transition-all duration-200 hover:-translate-y-0.5"
+                    style={{
+                      background: toneSurface(a.t, 0.06),
+                      boxShadow: `inset 0 0 0 1px ${toneA(a.t, 0.14)}`,
+                    }}
+                  >
+                    <span
+                      className="grid place-items-center w-9 h-9 rounded-lg shrink-0"
+                      style={{ background: toneSurface(a.t, 0.15), color: tone(a.t) }}
+                    >
+                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" aria-hidden="true">
+                        {a.icon}
+                      </svg>
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block text-[13px] font-semibold" style={{ color: 'var(--text)' }}>
+                        {a.label}
+                      </span>
+                      <span className="block text-[11.5px] mt-0.5 leading-snug" style={{ color: 'var(--text-muted)' }}>
+                        {a.desc}
+                      </span>
+                    </span>
+                    <svg
+                      width="15"
+                      height="15"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      aria-hidden="true"
+                      className="ml-auto shrink-0 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all"
+                      style={{ color: tone(a.t) }}
+                    >
+                      <path d="M5 12h14M12 5l7 7-7 7" />
+                    </svg>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </PremiumCard>
+        </motion.div>
+
+        <motion.div variants={fadeInUp}>
+          <ActivityFeed activities={activity} />
         </motion.div>
       </motion.div>
     </motion.div>

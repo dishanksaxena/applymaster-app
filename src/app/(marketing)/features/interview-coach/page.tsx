@@ -48,18 +48,18 @@ export default function InterviewCoachPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <main className="min-h-screen bg-[#0a0a12] text-white">
+      <main className="">
         {/* Hero */}
-        <section className="relative overflow-hidden py-24 sm:py-32">
-          <div className="absolute inset-0 bg-gradient-to-b from-orange-900/20 to-transparent" />
+        <section className="relative overflow-hidden py-16 sm:py-14">
+          <div className="absolute inset-0 bg-gradient-to-b from-[var(--yellow-dim)] to-transparent" />
           <div className="relative mx-auto max-w-7xl px-6 lg:px-8">
-            <Link href="/features" className="text-sm text-purple-400 hover:text-purple-300 mb-6 inline-block">
+            <Link href="/features" className="text-sm text-[var(--accent)] hover:text-[var(--accent)] mb-6 inline-block">
               &larr; All Features
             </Link>
-            <h1 className="text-4xl font-extrabold tracking-tight sm:text-6xl bg-gradient-to-r from-orange-400 to-red-400 bg-clip-text text-transparent">
+            <h1 className="font-display text-[clamp(2.4rem,5vw,3.6rem)]">
               AI Interview Coach
             </h1>
-            <p className="mt-6 max-w-2xl text-lg text-gray-300 leading-relaxed">
+            <p className="mt-6 max-w-2xl text-lg text-[var(--text-secondary)] leading-relaxed">
               Interviews are where offers are won or lost. ApplyMaster&apos;s interview coach
               prepares you with role-specific mock sessions, predicts the questions you will
               face, and provides real-time guidance during live interviews through our Chrome
@@ -68,7 +68,7 @@ export default function InterviewCoachPage() {
             <div className="mt-10 flex items-center gap-4">
               <Link
                 href="/signup"
-                className="rounded-full bg-purple-600 px-8 py-3 text-sm font-semibold text-white shadow-lg hover:bg-purple-500 transition-colors"
+                className="rounded-full bg-[var(--accent-solid)] px-8 py-3 text-sm font-semibold text-[var(--text-on-accent)] shadow-lg hover:bg-[var(--accent-solid)] transition-colors"
               >
                 Start Practicing Free
               </Link>
@@ -77,16 +77,16 @@ export default function InterviewCoachPage() {
         </section>
 
         {/* Three Pillars */}
-        <section className="py-20">
+        <section className="py-14">
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
-            <h2 className="text-3xl font-bold text-center mb-16">
+            <h2 className="font-display text-[clamp(1.8rem,3.6vw,2.5rem)] text-center mb-14">
               Three Ways to Prepare
             </h2>
             <div className="grid gap-8 md:grid-cols-3">
               {/* Mock Interviews */}
-              <div className="rounded-2xl border border-orange-500/30 bg-orange-900/10 p-8">
-                <h3 className="text-xl font-bold text-orange-400 mb-4">Mock Interviews</h3>
-                <p className="text-gray-300 mb-6 leading-relaxed">
+              <div className="rounded-2xl border border-[var(--border)] bg-[var(--yellow-dim)] p-8">
+                <h3 className="text-xl font-bold text-[var(--yellow)] mb-4">Mock Interviews</h3>
+                <p className="text-[var(--text-secondary)] mb-6 leading-relaxed">
                   Practice with an AI interviewer that simulates the real thing. Behavioral,
                   technical, and case-study formats available for every industry.
                 </p>
@@ -98,8 +98,8 @@ export default function InterviewCoachPage() {
                     'STAR method coaching',
                     'Technical whiteboard mode',
                   ].map((item) => (
-                    <li key={item} className="flex items-start gap-3 text-sm text-gray-300">
-                      <span className="mt-0.5 h-5 w-5 shrink-0 rounded-full bg-orange-600/30 flex items-center justify-center text-xs text-orange-400">&#10003;</span>
+                    <li key={item} className="flex items-start gap-3 text-sm text-[var(--text-secondary)]">
+                      <span className="mt-0.5 h-5 w-5 shrink-0 rounded-full bg-[var(--yellow-dim)] flex items-center justify-center text-xs text-[var(--yellow)]">&#10003;</span>
                       {item}
                     </li>
                   ))}
@@ -107,9 +107,9 @@ export default function InterviewCoachPage() {
               </div>
 
               {/* Question Prediction */}
-              <div className="rounded-2xl border border-red-500/30 bg-red-900/10 p-8">
-                <h3 className="text-xl font-bold text-red-400 mb-4">Question Prediction</h3>
-                <p className="text-gray-300 mb-6 leading-relaxed">
+              <div className="rounded-2xl border border-[var(--border)] bg-[var(--red-dim)] p-8">
+                <h3 className="text-xl font-bold text-[var(--red)] mb-4">Question Prediction</h3>
+                <p className="text-[var(--text-secondary)] mb-6 leading-relaxed">
                   The AI analyzes the job description, company culture, and interview patterns
                   to predict the most likely questions you will face.
                 </p>
@@ -121,8 +121,8 @@ export default function InterviewCoachPage() {
                     'Suggested answer frameworks',
                     'Difficulty-level indicators',
                   ].map((item) => (
-                    <li key={item} className="flex items-start gap-3 text-sm text-gray-300">
-                      <span className="mt-0.5 h-5 w-5 shrink-0 rounded-full bg-red-600/30 flex items-center justify-center text-xs text-red-400">&#10003;</span>
+                    <li key={item} className="flex items-start gap-3 text-sm text-[var(--text-secondary)]">
+                      <span className="mt-0.5 h-5 w-5 shrink-0 rounded-full bg-[var(--red-dim)] flex items-center justify-center text-xs text-[var(--red)]">&#10003;</span>
                       {item}
                     </li>
                   ))}
@@ -130,9 +130,9 @@ export default function InterviewCoachPage() {
               </div>
 
               {/* Real-Time Coaching */}
-              <div className="rounded-2xl border border-yellow-500/30 bg-yellow-900/10 p-8">
-                <h3 className="text-xl font-bold text-yellow-400 mb-4">Real-Time Coaching</h3>
-                <p className="text-gray-300 mb-6 leading-relaxed">
+              <div className="rounded-2xl border border-[var(--border)] bg-[var(--yellow-dim)] p-8">
+                <h3 className="text-xl font-bold text-[var(--yellow)] mb-4">Real-Time Coaching</h3>
+                <p className="text-[var(--text-secondary)] mb-6 leading-relaxed">
                   During live video interviews, our Chrome extension listens to questions and
                   provides subtle, real-time suggestions to help you respond with confidence.
                 </p>
@@ -144,8 +144,8 @@ export default function InterviewCoachPage() {
                     'Filler-word detection alerts',
                     'Post-interview performance summary',
                   ].map((item) => (
-                    <li key={item} className="flex items-start gap-3 text-sm text-gray-300">
-                      <span className="mt-0.5 h-5 w-5 shrink-0 rounded-full bg-yellow-600/30 flex items-center justify-center text-xs text-yellow-400">&#10003;</span>
+                    <li key={item} className="flex items-start gap-3 text-sm text-[var(--text-secondary)]">
+                      <span className="mt-0.5 h-5 w-5 shrink-0 rounded-full bg-[var(--yellow-dim)] flex items-center justify-center text-xs text-[var(--yellow)]">&#10003;</span>
                       {item}
                     </li>
                   ))}
@@ -156,14 +156,14 @@ export default function InterviewCoachPage() {
         </section>
 
         {/* Chrome Extension */}
-        <section className="py-20 bg-gray-900/30">
+        <section className="py-14 bg-[var(--bg-card)]">
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
             <div className="grid gap-12 md:grid-cols-2 items-center">
               <div>
-                <h2 className="text-3xl font-bold mb-6">
+                <h2 className="font-display text-[clamp(1.8rem,3.6vw,2.5rem)] mb-5">
                   The Chrome Extension That Sits Beside You
                 </h2>
-                <p className="text-gray-400 mb-6 leading-relaxed">
+                <p className="text-[var(--text-muted)] mb-6 leading-relaxed">
                   Install the ApplyMaster Chrome extension and activate it before your next
                   interview. It works quietly alongside your video call, processing the
                   conversation in real time.
@@ -176,20 +176,20 @@ export default function InterviewCoachPage() {
                     { title: 'Post-Call Analysis', desc: 'After the interview, get a full breakdown with areas of strength and suggestions for improvement.' },
                   ].map((item) => (
                     <li key={item.title} className="flex items-start gap-3">
-                      <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-purple-500" />
+                      <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[var(--accent-solid)]" />
                       <div>
-                        <span className="font-semibold text-white">{item.title}:</span>{' '}
-                        <span className="text-sm text-gray-400">{item.desc}</span>
+                        <span className="font-semibold text-[var(--text-on-accent)]">{item.title}:</span>{' '}
+                        <span className="text-sm text-[var(--text-muted)]">{item.desc}</span>
                       </div>
                     </li>
                   ))}
                 </ul>
               </div>
-              <div className="rounded-2xl border border-gray-800 bg-gray-900/40 p-12 flex items-center justify-center">
+              <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-12 flex items-center justify-center">
                 <div className="text-center">
                   <div className="text-6xl mb-4">🧩</div>
-                  <p className="text-lg font-semibold text-gray-300">Chrome Extension</p>
-                  <p className="text-sm text-gray-500 mt-1">Available for Chrome & Edge</p>
+                  <p className="text-lg font-semibold text-[var(--text-secondary)]">Chrome Extension</p>
+                  <p className="text-sm text-[var(--text-faint)] mt-1">Available for Chrome & Edge</p>
                 </div>
               </div>
             </div>
@@ -197,9 +197,9 @@ export default function InterviewCoachPage() {
         </section>
 
         {/* Feedback */}
-        <section className="py-20">
+        <section className="py-14">
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
-            <h2 className="text-3xl font-bold text-center mb-16">
+            <h2 className="font-display text-[clamp(1.8rem,3.6vw,2.5rem)] text-center mb-14">
               Detailed Feedback After Every Session
             </h2>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -209,9 +209,9 @@ export default function InterviewCoachPage() {
                 { metric: 'Technical Accuracy', desc: 'For technical roles, evaluation of your problem-solving approach and correctness.' },
                 { metric: 'Confidence Score', desc: 'Overall confidence rating based on speech patterns and response completeness.' },
               ].map((item) => (
-                <div key={item.metric} className="rounded-xl border border-gray-800 bg-gray-900/40 p-6 text-center">
-                  <h3 className="font-semibold mb-2 text-white">{item.metric}</h3>
-                  <p className="text-sm text-gray-400 leading-relaxed">{item.desc}</p>
+                <div key={item.metric} className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-6 text-center">
+                  <h3 className="font-semibold mb-2 text-ink">{item.metric}</h3>
+                  <p className="text-sm text-[var(--text-muted)] leading-relaxed">{item.desc}</p>
                 </div>
               ))}
             </div>
@@ -219,25 +219,25 @@ export default function InterviewCoachPage() {
         </section>
 
         {/* Integration */}
-        <section className="py-20 bg-gray-900/30">
+        <section className="py-14 bg-[var(--bg-card)]">
           <div className="mx-auto max-w-4xl px-6 lg:px-8 text-center">
-            <h2 className="text-3xl font-bold mb-6">
+            <h2 className="font-display text-[clamp(1.8rem,3.6vw,2.5rem)] mb-5">
               From Application to Offer, Seamlessly
             </h2>
-            <p className="text-gray-400 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-[var(--text-muted)] max-w-2xl mx-auto leading-relaxed">
               The interview coach pulls context from your{' '}
-              <Link href="/features/job-matching" className="text-purple-400 underline hover:text-purple-300">matched jobs</Link>,
-              your <Link href="/features/resume-optimizer" className="text-purple-400 underline hover:text-purple-300">optimized resume</Link>,
-              and your <Link href="/features/cover-letter-generator" className="text-purple-400 underline hover:text-purple-300">cover letter</Link> to
+              <Link href="/features/job-matching" className="text-[var(--accent)] underline hover:text-[var(--accent)]">matched jobs</Link>,
+              your <Link href="/features/resume-optimizer" className="text-[var(--accent)] underline hover:text-[var(--accent)]">optimized resume</Link>,
+              and your <Link href="/features/cover-letter-generator" className="text-[var(--accent)] underline hover:text-[var(--accent)]">cover letter</Link> to
               ensure your interview answers are consistent with what the employer has already seen from you.
             </p>
           </div>
         </section>
 
         {/* FAQ */}
-        <section className="py-20">
+        <section className="py-14">
           <div className="mx-auto max-w-3xl px-6 lg:px-8">
-            <h2 className="text-3xl font-bold text-center mb-12">
+            <h2 className="font-display text-[clamp(1.8rem,3.6vw,2.5rem)] text-center mb-10">
               Frequently Asked Questions
             </h2>
             <div className="space-y-8">
@@ -260,8 +260,8 @@ export default function InterviewCoachPage() {
                 },
               ].map((item) => (
                 <div key={item.q}>
-                  <h3 className="font-semibold text-white mb-2">{item.q}</h3>
-                  <p className="text-sm text-gray-400 leading-relaxed">{item.a}</p>
+                  <h3 className="font-semibold text-ink mb-2">{item.q}</h3>
+                  <p className="text-sm text-[var(--text-muted)] leading-relaxed">{item.a}</p>
                 </div>
               ))}
             </div>
@@ -269,17 +269,17 @@ export default function InterviewCoachPage() {
         </section>
 
         {/* CTA */}
-        <section className="py-24 bg-gradient-to-b from-transparent to-purple-900/20">
+        <section className="py-16 bg-gradient-to-b from-transparent to-[var(--accent-dim)]">
           <div className="mx-auto max-w-3xl px-6 text-center">
-            <h2 className="text-3xl font-bold mb-6">
+            <h2 className="font-display text-[clamp(1.8rem,3.6vw,2.5rem)] mb-5">
               Ace Your Next Interview
             </h2>
-            <p className="text-gray-400 mb-10 text-lg">
+            <p className="text-[var(--text-muted)] mb-10 text-lg">
               Start with a free mock interview and see how prepared you really are.
             </p>
             <Link
               href="/signup"
-              className="rounded-full bg-purple-600 px-10 py-4 text-base font-semibold text-white shadow-lg hover:bg-purple-500 transition-colors"
+              className="rounded-full bg-[var(--accent-solid)] px-10 py-4 text-base font-semibold text-[var(--text-on-accent)] shadow-lg hover:bg-[var(--accent-solid)] transition-colors"
             >
               Start Practicing Free
             </Link>

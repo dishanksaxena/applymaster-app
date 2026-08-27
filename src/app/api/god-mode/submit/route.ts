@@ -206,16 +206,16 @@ export async function POST(req: NextRequest) {
 
     // Get user data
     const [{ data: profile }, { data: prefs }] = await Promise.all([
-      supabase.from('profiles').select('*').eq('id', user.id).single(),
-      supabase.from('job_preferences').select('*').eq('user_id', user.id).single(),
+      supabase.from('profiles').select('*').eq('id', user.id).maybeSingle(),
+      supabase.from('job_preferences').select('*').eq('user_id', user.id).maybeSingle(),
     ])
 
     let parsedResume: any = null
     const { data: primaryResume } = await supabase
-      .from('resumes').select('id').eq('user_id', user.id).eq('is_primary', true).single()
+      .from('resumes').select('id').eq('user_id', user.id).eq('is_primary', true).maybeSingle()
     if (primaryResume) {
       const { data } = await supabase
-        .from('parsed_resumes').select('*').eq('resume_id', primaryResume.id).single()
+        .from('parsed_resumes').select('*').eq('resume_id', primaryResume.id).maybeSingle()
       parsedResume = data
     }
 
@@ -236,7 +236,7 @@ export async function POST(req: NextRequest) {
       // If tailored resume exists, use it
       if (tailored_resume_id) {
         const { data: tailored } = await supabase
-          .from('tailored_resumes').select('*').eq('id', tailored_resume_id).single()
+          .from('tailored_resumes').select('*').eq('id', tailored_resume_id).maybeSingle()
         if (tailored) {
           // Reconstruct tailored resume text by applying tailored bullets
           resumeText = buildTailoredResumeText(parsedResume, tailored)
@@ -318,7 +318,7 @@ Write a professional cover letter. Return only the letter text, no subject line.
       .select('id')
       .eq('user_id', user.id)
       .eq('job_id', job_id)
-      .single()
+      .maybeSingle()
 
     const appData = {
       user_id: user.id,
@@ -332,10 +332,36 @@ Write a professional cover letter. Return only the letter text, no subject line.
       portal_submitted: submitted,
     }
 
+    let applicationId = existingApp?.id ?? null
     if (existingApp) {
       await supabase.from('applications').update(appData).eq('id', existingApp.id)
     } else {
-      await supabase.from('applications').insert(appData)
+      const { data: inserted } = await supabase
+        .from('applications').insert(appData).select('id').maybeSingle()
+      applicationId = inserted?.id ?? null
+    }
+
+    /* Receipt: a verifiable record of exactly what was sent. Written from the
+       same values used for the submission itself, so it cannot drift from
+       reality. Best-effort — a receipt failure must never fail the apply. */
+    if (applicationId) {
+      try {
+        await supabase.from('application_receipts').insert({
+          user_id: user.id,
+          application_id: applicationId,
+          resume_id: tailored_resume_id || primaryResume?.id || null,
+          resume_version_label: god_mode ? 'Tailored for this role' : 'Base resume',
+          cover_letter_text: coverLetterText || null,
+          screening_answers: [],
+          destination: portal || null,
+          destination_url: apply_url || null,
+          submission_method: submitted ? 'auto' : 'manual',
+          status: submitted ? 'submitted' : (submissionError ? 'failed' : 'needs_review'),
+          failure_reason: submissionError || null,
+        })
+      } catch (receiptErr) {
+        console.error('Receipt write failed (non-fatal):', receiptErr)
+      }
     }
 
     // Log the activity
