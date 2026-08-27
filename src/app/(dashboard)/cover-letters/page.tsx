@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase-browser'
 import { PremiumButton, PremiumCard } from '@/components/premium'
 import CoverLetterEditor from './CoverLetterEditor'
 import { staggerContainer, fadeInUp } from '@/lib/animations'
+import { toast } from '@/components/Toast'
 
 interface CoverLetter {
   id: string
@@ -130,7 +131,7 @@ export default function CoverLettersPage() {
       })
     } catch (err) {
       console.error('Generate error:', err)
-      alert(`Failed to generate cover letter: ${err instanceof Error ? err.message : 'Unknown error'}. Try typing one manually.`)
+      toast.error(`Failed to generate cover letter: ${err instanceof Error ? err.message : 'Unknown error'}. Try typing one manually.`)
     } finally {
       setGeneratingJobId(null)
     }

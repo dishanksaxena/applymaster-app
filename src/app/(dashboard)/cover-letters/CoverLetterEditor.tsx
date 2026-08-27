@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase-browser'
 import { PremiumButton, PremiumInput, PremiumCard } from '@/components/premium'
 import CoverLetterPreview from './CoverLetterPreview'
 import { staggerContainer, fadeInUp } from '@/lib/animations'
+import { toast } from '@/components/Toast'
 
 interface CoverLetterEditorProps {
   initialLetter?: {
@@ -79,10 +80,10 @@ export default function CoverLetterEditor({ initialLetter, onClose, onSave }: Co
 
       setIsDirty(false)
       onSave?.(letterData)
-      alert('✓ Cover letter saved!')
+      toast.success('Cover letter saved!')
     } catch (err: any) {
       console.error('Save error:', err)
-      alert(`Failed to save: ${err.message}`)
+      toast.error(`Failed to save: ${err.message}`)
     } finally {
       setIsSaving(false)
     }
@@ -118,7 +119,7 @@ export default function CoverLetterEditor({ initialLetter, onClose, onSave }: Co
       setIsDirty(true)
     } catch (err: any) {
       console.error('Regenerate error:', err)
-      alert(`Failed to regenerate: ${err.message}`)
+      toast.error(`Failed to regenerate: ${err.message}`)
     } finally {
       setIsRegenerating(false)
     }
@@ -152,7 +153,7 @@ export default function CoverLetterEditor({ initialLetter, onClose, onSave }: Co
       document.body.removeChild(a)
     } catch (err: any) {
       console.error('Export error:', err)
-      alert(`Failed to export PDF: ${err.message}`)
+      toast.error(`Failed to export PDF: ${err.message}`)
     } finally {
       setIsExporting(false)
     }

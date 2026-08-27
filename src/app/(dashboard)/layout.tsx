@@ -7,6 +7,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import type { Profile } from '@/lib/database.types'
 import ThemeToggle from '@/components/ThemeToggle'
 import CommandPalette from '@/components/CommandPalette'
+import Toaster from '@/components/Toast'
 
 /* ─── SVG Icon Components ─── */
 const icons = {
@@ -221,6 +222,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <>
       <style dangerouslySetInnerHTML={{ __html: animationStyles }} />
       <CommandPalette />
+      <Toaster />
       <div className="min-h-screen flex" style={{ background: 'var(--bg)' }}>
 
         {/* ─── Sidebar ─── */}

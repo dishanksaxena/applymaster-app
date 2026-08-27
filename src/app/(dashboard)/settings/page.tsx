@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase-browser'
 import { useRouter } from 'next/navigation'
 import { applyTheme, getStoredTheme, type Theme } from '@/lib/theme'
 import { withAlpha } from '@/lib/tone'
+import { toast } from '@/components/Toast'
 
 const container = { hidden: {}, show: { transition: { staggerChildren: 0.08 } } }
 const fadeUp = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] as const } } }
@@ -109,7 +110,7 @@ export default function SettingsPage() {
       const response = await fetch('/api/checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user_id: user.id, email: user.email, plan }) })
       const { url } = await response.json()
       if (url) window.location.href = url
-    } catch { alert('Failed to start checkout') }
+    } catch { toast.error('Failed to start checkout') }
   }
 
   const handleSignOut = async () => { await supabase.auth.signOut(); router.push('/'); router.refresh() }

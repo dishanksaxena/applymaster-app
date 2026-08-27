@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
+import { tryParseModelJson } from '@/lib/model-json'
 
 export const maxDuration = 60
 
@@ -58,7 +59,7 @@ export async function POST(req: NextRequest) {
     // Single Claude call — extract structured data AND raw text together
     const msg = await anthropic.messages.create({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 4000,
+      max_tokens: 8000,
       messages: [{
         role: 'user',
         content: [
@@ -90,7 +91,7 @@ export async function POST(req: NextRequest) {
     const cleaned = raw.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim()
     let parsed: any = {}
     try {
-      parsed = JSON.parse(cleaned.match(/\{[\s\S]*\}/)?.[0] || '{}')
+      parsed = tryParseModelJson<any>(cleaned, {}, msg.stop_reason)
     } catch {
       parsed = {}
     }

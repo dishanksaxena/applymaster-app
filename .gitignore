@@ -13,3 +13,4 @@ shoot.review.mjs
 .review-shots/
 verify.*.mjs
 probe.mjs
+verify-resume.pdf

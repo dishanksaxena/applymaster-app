@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import Anthropic from '@anthropic-ai/sdk'
+import { tryParseModelJson } from '@/lib/model-json'
 
 export const maxDuration = 60
 
@@ -135,13 +136,7 @@ Generate form answers as JSON (no markdown):
     })
 
     const text = msg.content[0].type === 'text' ? msg.content[0].text : '{}'
-    let formData
-    try {
-      formData = JSON.parse(text)
-    } catch {
-      const match = text.match(/\{[\s\S]*\}/)
-      formData = match ? JSON.parse(match[0]) : {}
-    }
+    const formData = tryParseModelJson<any>(text, {}, msg.stop_reason)
 
     // Fill in actual known values over AI guesses
     if (parsedResume?.full_name) {

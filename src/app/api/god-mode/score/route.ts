@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import Anthropic from '@anthropic-ai/sdk'
+import { tryParseModelJson } from '@/lib/model-json'
 
 export const maxDuration = 60
 
@@ -125,12 +126,7 @@ Return ONLY valid JSON (no markdown, no explanation):
     })
 
     const text = msg.content[0].type === 'text' ? msg.content[0].text : '{}'
-    let parsed: any
-    try { parsed = JSON.parse(text) }
-    catch {
-      const match = text.match(/\{[\s\S]*\}/)
-      parsed = match ? JSON.parse(match[0]) : { dimensions: {} }
-    }
+    const parsed = tryParseModelJson<any>(text, { dimensions: {} }, msg.stop_reason)
 
     // Calculate weighted score
     let totalScore = 0

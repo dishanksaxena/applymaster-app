@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase-browser'
 import { PremiumCard, PremiumButton } from '@/components/premium'
 import { staggerContainer, fadeInUp } from '@/lib/animations'
 import dynamic from 'next/dynamic'
+import { toast } from '@/components/Toast'
 
 const JobsGlobe = dynamic(() => import('@/components/JobsGlobe'), {
   ssr: false,
@@ -201,13 +202,13 @@ export default function JobsPage() {
       }
 
       setJobs(results)
-    } catch { alert('Failed to search') }
+    } catch { toast.error('Failed to search') }
     setLoading(false)
   }
 
   const saveJob = async (job: Job) => {
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return alert('Please log in first')
+    if (!user) return toast.error('Please log in first')
     try {
       // Save job with proper upsert conflict handling
       const externalId = `${job.source}-${job.id}`
@@ -266,16 +267,16 @@ export default function JobsPage() {
       }
 
       setSavedJobs(new Set(Array.from(savedJobs).concat(job.id)))
-      alert('✓ Job saved!')
+      toast.success('Job saved!')
     } catch (err: any) {
       console.error('Save job error:', err)
-      alert(`Failed to save job: ${err?.message || 'Please try again.'}`)
+      toast.error(`Failed to save job: ${err?.message || 'Please try again.'}`)
     }
   }
 
   const applyJob = async (job: Job) => {
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return alert('Please log in first')
+    if (!user) return toast.error('Please log in first')
 
     setApplyingJobId(job.id)
     try {
@@ -341,15 +342,15 @@ export default function JobsPage() {
       setAppliedJobs(new Set(Array.from(appliedJobs).concat(job.id)))
 
       if (submitData.submitted) {
-        alert(`✅ Applied to ${job.title} at ${job.company}!\n\n${godModeEnabled ? '⚡ God Mode: tailored resume + cover letter submitted.' : ''}`)
+        toast.success(`Applied to ${job.title} at ${job.company}!\n\n${godModeEnabled ? '⚡ God Mode: tailored resume + cover letter submitted.' : ''}`)
       } else {
         // Not an ATS portal we support directly — open in new tab
-        alert(`📋 Marked as applied. Opening job page so you can complete it there.`)
+        toast.success(`Marked as applied. Opening job page so you can complete it there.`)
         window.open(job.url, '_blank')
       }
     } catch (err: any) {
       console.error('Apply error:', err)
-      alert(`Failed to apply: ${err?.message || 'Please try again.'}`)
+      toast.error(`Failed to apply: ${err?.message || 'Please try again.'}`)
     } finally {
       setApplyingJobId(null)
     }

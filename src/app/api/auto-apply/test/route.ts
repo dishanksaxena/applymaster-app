@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import Anthropic from '@anthropic-ai/sdk'
+import { tryParseModelJson } from '@/lib/model-json'
 
 export const maxDuration = 60
 
@@ -95,7 +96,7 @@ Return: {"score": 0-100, "grade": "A+/A/B+/B/C/D/F", "top_keywords": ["k1","k2",
       }]
     })
     const text = msg.content[0].type === 'text' ? msg.content[0].text : '{}'
-    const parsed = JSON.parse(text.match(/\{[\s\S]*\}/)?.[0] || '{}')
+    const parsed = tryParseModelJson<any>(text, {}, msg.stop_reason)
     return {
       score: parsed.score || 60,
       grade: parsed.grade || 'C',
@@ -332,7 +333,7 @@ Return JSON array only: ["keyword1", "keyword2", ...]`
             }]
           })
           const text = msg.content[0].type === 'text' ? msg.content[0].text : '[]'
-          tailoredKeywords = JSON.parse(text.match(/\[[\s\S]*\]/)?.[0] || '[]')
+          tailoredKeywords = tryParseModelJson<any>(text, [], msg.stop_reason)
           if (tailoredKeywords.length) {
             await log(supabase, user.id, 'analyzing', `✏️ Resume tailored — Added keywords: ${tailoredKeywords.slice(0, 5).join(', ')}`)
           }

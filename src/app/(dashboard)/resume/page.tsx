@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase-browser'
 import { useRouter } from 'next/navigation'
 import { withAlpha } from '@/lib/tone'
+import { toast } from '@/components/Toast'
 
 /* ─── Types ─── */
 interface OptimizationResult {
@@ -183,6 +184,8 @@ function FileTypeBadge({ type, active }: { type: string; active?: boolean }) {
 /* ─── Main Page ─── */
 export default function ResumePage() {
   const [resumes, setResumes] = useState<any[]>([])
+  /** Parsed content keyed by resume id, so each card can show what we read. */
+  const [parsedByResume, setParsedByResume] = useState<Record<string, any>>({})
   const [selectedResume, setSelectedResume] = useState<any>(null)
   const [loading, setLoading] = useState(false)
   const [mounted, setMounted] = useState(false)
@@ -214,8 +217,25 @@ export default function ResumePage() {
     if (data) {
       setResumes(data)
       // Auto-select primary resume (or first) so optimizer is immediately visible
-      const primary = data.find((r: any) => r.is_primary) || data[0]
-      if (primary) setSelectedResume(primary)
+      // Keep whatever the user had selected. This used to snap back to the
+      // primary on every refresh, so re-loading after an analysis moved them
+      // off the resume they had just analysed.
+      setSelectedResume((prev: any) => {
+        const stillThere = prev && data.find((r: any) => r.id === prev.id)
+        return stillThere || data.find((r: any) => r.is_primary) || data[0] || null
+      })
+
+      /* Upload parses the CV into parsed_resumes — name, contact, skills,
+         roles — and then nothing showed any of it. The card read "N/A" with
+         a filename, so a parse that had worked perfectly was indistinguishable
+         from one that had silently failed. Load it and put it on the card. */
+      const { data: parsedRows } = await supabase
+        .from('parsed_resumes')
+        .select('resume_id, full_name, email, phone, location, skills, experience')
+        .eq('user_id', user.id)
+      if (parsedRows) {
+        setParsedByResume(Object.fromEntries(parsedRows.map((p: any) => [p.resume_id, p])))
+      }
     }
   }
 
@@ -246,7 +266,7 @@ export default function ResumePage() {
       if (!response.ok) {
         const err = await response.json()
         console.error('Upload error:', err)
-        alert(err.error || 'Upload failed. Please try again.')
+        toast.error(err.error || 'Upload failed. Please try again.')
         setLoading(false)
         setUploadProgress(0)
         return
@@ -258,7 +278,7 @@ export default function ResumePage() {
     } catch (e) {
       clearInterval(progressInterval)
       console.error('Upload error:', e)
-      alert('Upload failed. Please try again.')
+      toast.error('Upload failed. Please try again.')
       setLoading(false)
       setUploadProgress(0)
     }
@@ -337,9 +357,23 @@ export default function ResumePage() {
         }),
       })
       const data = await response.json()
+      if (!response.ok) throw new Error(data?.error || 'Optimization failed')
       setOptimization(data)
+
+      /* Write the score back to the resume row. It was only ever held in
+         local state, so after a successful analysis the card still showed
+         "N/A" and the sidebar still read "Not yet analyzed" — and a reload
+         lost the result entirely. */
+      if (typeof data?.ats_score === 'number') {
+        await supabase
+          .from('resumes')
+          .update({ ats_score: data.ats_score })
+          .eq('id', selectedResume.id)
+        await loadResumes()
+      }
     } catch (err) {
       console.error(err)
+      toast.error(err instanceof Error ? err.message : 'Could not optimize this resume')
     }
     setOptimizing(false)
   }
@@ -587,6 +621,51 @@ export default function ResumePage() {
                                 </>
                               )}
                             </div>
+
+                            {/* What we actually read out of the file. Without
+                                this a successful parse and a failed one look
+                                identical from the outside. */}
+                            {(() => {
+                              const p = parsedByResume[r.id]
+                              if (!p) return null
+                              const skills: string[] = Array.isArray(p.skills) ? p.skills : []
+                              const roles: any[] = Array.isArray(p.experience) ? p.experience : []
+                              return (
+                                <div className="mt-2">
+                                  <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px]" style={{ color: 'var(--text-secondary)' }}>
+                                    {p.full_name && <span className="font-semibold" style={{ color: 'var(--text)' }}>{p.full_name}</span>}
+                                    {p.email && <span className="truncate max-w-[190px]">{p.email}</span>}
+                                    {p.location && <span>{p.location}</span>}
+                                  </div>
+                                  {(skills.length > 0 || roles.length > 0) && (
+                                    <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                                      {roles[0]?.title && (
+                                        <span
+                                          className="px-1.5 py-0.5 rounded text-[10px] font-medium"
+                                          style={{ background: 'rgb(var(--blue-rgb) / calc(0.12 * var(--tint-scale)))', color: 'var(--blue)' }}
+                                        >
+                                          {roles[0].title}{roles[0].company ? ` · ${roles[0].company}` : ''}
+                                        </span>
+                                      )}
+                                      {skills.slice(0, 4).map((s: string) => (
+                                        <span
+                                          key={s}
+                                          className="px-1.5 py-0.5 rounded text-[10px]"
+                                          style={{ background: 'var(--bg-overlay)', color: 'var(--text-muted)' }}
+                                        >
+                                          {s}
+                                        </span>
+                                      ))}
+                                      {skills.length > 4 && (
+                                        <span className="text-[10px]" style={{ color: 'var(--text-faint)' }}>
+                                          +{skills.length - 4} skills
+                                        </span>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              )
+                            })()}
                           </div>
 
                           {/* Actions */}

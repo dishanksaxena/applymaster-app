@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { createClient } from '@/lib/supabase-browser'
 import Link from 'next/link'
+import { toast } from '@/components/Toast'
 
 interface SavedJob {
   id: string
@@ -95,11 +96,11 @@ export default function SavedJobsPage() {
         .eq('user_id', user.id)
         .eq('job_id', job.id)
 
-      alert(`Applied to ${job.title} at ${job.company}!`)
+      toast.success(`Applied to ${job.title} at ${job.company}!`)
       setJobs(prev => prev.filter(j => j.id !== job.id))
     } catch (err) {
       console.error('Apply error:', err)
-      alert('Failed to apply')
+      toast.error('Failed to apply')
     }
   }
 

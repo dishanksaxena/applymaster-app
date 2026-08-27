@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import Anthropic from '@anthropic-ai/sdk'
+import { tryParseModelJson } from '@/lib/model-json'
 
 export const maxDuration = 60
 
@@ -81,13 +82,7 @@ Make questions highly specific to this exact role and company. Avoid generic que
       })
 
       const text = msg.content[0].type === 'text' ? msg.content[0].text : '[]'
-      let questions
-      try {
-        questions = JSON.parse(text)
-      } catch {
-        const match = text.match(/\[[\s\S]*\]/)
-        questions = match ? JSON.parse(match[0]) : []
-      }
+      const questions = tryParseModelJson<any>(text, [], msg.stop_reason)
 
       // Save session (non-fatal if table missing)
       let sessionId = null
@@ -143,13 +138,7 @@ Return ONLY valid JSON:
       })
 
       const text = msg.content[0].type === 'text' ? msg.content[0].text : '{}'
-      let feedback
-      try {
-        feedback = JSON.parse(text)
-      } catch {
-        const match = text.match(/\{[\s\S]*\}/)
-        feedback = match ? JSON.parse(match[0]) : { score: 70, verdict: 'good' }
-      }
+      const feedback = tryParseModelJson<any>(text, { score: 70, verdict: 'good' }, msg.stop_reason)
 
       // Save answer and feedback to session (non-fatal)
       if (session_id) {

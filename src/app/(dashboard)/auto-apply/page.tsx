@@ -8,6 +8,7 @@ import TrendLineChart from './TrendLineChart'
 import SuccessDonutChart from './SuccessDonutChart'
 import ActivityFeed from './ActivityFeed'
 import { withAlpha } from '@/lib/tone'
+import { toast } from '@/components/Toast'
 
 const container = { hidden: {}, show: { transition: { staggerChildren: 0.08 } } }
 const fadeUp = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] as const } } }
@@ -148,7 +149,7 @@ export default function AutoApplyPage() {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
-        alert('Not authenticated. Please log in first.')
+        toast.error('Not authenticated. Please log in first.')
         setSaving(false)
         return
       }
@@ -188,7 +189,7 @@ export default function AutoApplyPage() {
 
       if (error) {
         console.error('[AUTO-APPLY] Save failed:', error)
-        alert('Failed to save: ' + error.message)
+        toast.error('Failed to save: ' + error.message)
       } else {
         setSaved(true)
         console.log('[AUTO-APPLY] Settings saved successfully - mode is now:', mode)
@@ -197,7 +198,7 @@ export default function AutoApplyPage() {
     } catch (err) {
       console.error('[AUTO-APPLY] Save exception:', err)
       setSaving(false)
-      alert('Error saving settings: ' + (err instanceof Error ? err.message : 'Unknown error'))
+      toast.error('Error saving settings: ' + (err instanceof Error ? err.message : 'Unknown error'))
     }
   }
 
