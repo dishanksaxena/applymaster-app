@@ -320,11 +320,19 @@ Write a professional cover letter. Return only the letter text, no subject line.
       .eq('job_id', job_id)
       .maybeSingle()
 
+    /* Only call it applied if something was actually submitted.
+       This wrote status 'applied' with an applied_at timestamp regardless of
+       whether the portal accepted anything. When submission failed — which,
+       for every ATS without an authorised integration, is always — the
+       tracker showed "Applied" for a job the user had not applied to, and
+       the interview-rate and response-time metrics were computed off it.
+       A prepared-but-unsent application is 'queued': it is waiting on the
+       user, and the pipeline board already has that column. */
     const appData = {
       user_id: user.id,
       job_id: job_id || null,
-      status: 'applied',
-      applied_at: new Date().toISOString(),
+      status: submitted ? 'applied' : 'queued',
+      applied_at: submitted ? new Date().toISOString() : null,
       cover_letter: coverLetterText || null,
       god_mode_used: god_mode,
       portal_type: portal,

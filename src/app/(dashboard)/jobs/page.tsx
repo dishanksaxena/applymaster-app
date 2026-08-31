@@ -7,6 +7,7 @@ import { PremiumCard, PremiumButton } from '@/components/premium'
 import { staggerContainer, fadeInUp } from '@/lib/animations'
 import dynamic from 'next/dynamic'
 import { toast } from '@/components/Toast'
+import ReferralPathBadge from '@/components/ReferralPathBadge'
 
 const JobsGlobe = dynamic(() => import('@/components/JobsGlobe'), {
   ssr: false,
@@ -342,10 +343,12 @@ export default function JobsPage() {
       setAppliedJobs(new Set(Array.from(appliedJobs).concat(job.id)))
 
       if (submitData.submitted) {
-        toast.success(`Applied to ${job.title} at ${job.company}!\n\n${godModeEnabled ? '⚡ God Mode: tailored resume + cover letter submitted.' : ''}`)
+        toast.success(`Applied to ${job.title} at ${job.company}.${godModeEnabled ? '\n\nTailored resume and cover letter were submitted.' : ''}`)
       } else {
-        // Not an ATS portal we support directly — open in new tab
-        toast.success(`Marked as applied. Opening job page so you can complete it there.`)
+        /* Nothing was transmitted. Say so plainly and put it in the queue
+           rather than claiming it was applied — the user still has to press
+           submit on the employer's own form. */
+        toast(`Everything is prepared for ${job.company}. Opening their form — it lands in Queued until you confirm you sent it.`)
         window.open(job.url, '_blank')
       }
     } catch (err: any) {
@@ -532,6 +535,11 @@ export default function JobsPage() {
                         <div className="flex-1 min-w-0">
                           <a href={job.url} target="_blank" rel="noopener noreferrer" className="text-[15px] font-bold text-[var(--text)] hover:text-[var(--accent)] transition-colors">{job.title}</a>
                           <div className="text-[13px] text-[var(--text-secondary)] mt-0.5">{job.company} · {job.location}</div>
+                          {/* A referral converts far better than a cold
+                              application, so say so before they apply cold. */}
+                          <div className="mt-1.5">
+                            <ReferralPathBadge company={job.company} jobTitle={job.title} compact />
+                          </div>
                           {formatSalary(job) && (
                             <div className="text-[13px] font-semibold text-[var(--green)] mt-1">{formatSalary(job)}</div>
                           )}

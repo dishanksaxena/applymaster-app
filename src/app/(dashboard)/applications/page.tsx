@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import ReceiptDrawer from '@/components/ReceiptDrawer'
+import ReferralPathBadge from '@/components/ReferralPathBadge'
 import { createClient } from '@/lib/supabase-browser'
 import type { Application } from '@/lib/database.types'
 import Link from 'next/link'
@@ -758,6 +759,12 @@ export default function ApplicationsPage() {
                                 </div>
                                 <div className="text-[11px] text-[var(--text-secondary)] line-clamp-1">
                                   {app.job?.company || 'Company'} {app.job?.location ? `\u00B7 ${app.job.location}` : ''}
+                                </div>
+                                {/* A warm path matters most before the
+                                    application goes cold, so surface it here
+                                    rather than only on /network. */}
+                                <div className="mt-1.5">
+                                  <ReferralPathBadge company={app.job?.company} jobTitle={app.job?.title} compact />
                                 </div>
                               </div>
                               {/* Match Ring */}

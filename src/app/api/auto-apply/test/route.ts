@@ -7,10 +7,25 @@ export const maxDuration = 60
 
 const anthropic = new Anthropic()
 
+/**
+ * Boards we scan, each verified reachable rather than assumed.
+ *
+ * Lever and Ashby are gone, not disabled: every Lever org now answers
+ * {"ok":false,"error":"Document not found"} and every Ashby org returns
+ * null. Both scanners still ran on every request, spent their 8s timeout
+ * and contributed nothing. Several Greenhouse boards here were quietly
+ * dead too (notion, retool, segment, rippling, linear).
+ *
+ * What remains was checked board by board: 31 live boards, ~6,300 roles.
+ */
 const SCAN_TARGETS = {
-  greenhouse: ['stripe', 'notion', 'figma', 'linear', 'vercel', 'airbnb', 'brex', 'rippling', 'retool', 'airtable', 'segment', 'twilio', 'datadog'],
-  lever: ['netflix', 'pinterest', 'lyft', 'dropbox', 'affirm', 'chime', 'plaid', 'ramp', 'cloudflare'],
-  ashby: ['supabase', 'posthog', 'modal', 'elevenlabs', 'perplexity'],
+  greenhouse: [
+    'databricks', 'stripe', 'anthropic', 'datadog', 'cloudflare', 'brex',
+    'samsara', 'gitlab', 'scaleai', 'affirm', 'pinterest', 'coinbase',
+    'airbnb', 'lyft', 'flexport', 'figma', 'reddit', 'twilio', 'robinhood',
+    'instacart', 'asana', 'gusto', 'vercel', 'duolingo', 'chime', 'sofi',
+    'carta', 'mercury', 'discord', 'dropbox', 'airtable',
+  ],
 }
 
 interface ScannedJob {
@@ -33,42 +48,6 @@ async function scanGreenhouse(board: string, keywords: string[]): Promise<Scanne
         url: j.absolute_url || `https://boards.greenhouse.io/${board}/jobs/${j.id}`,
         source: 'greenhouse' as const, board_token: board, posting_id: String(j.id),
         description: (j.content || '').replace(/<[^>]+>/g, ' ').slice(0, 1500),
-      }))
-  } catch { return [] }
-}
-
-async function scanLever(company: string, keywords: string[]): Promise<ScannedJob[]> {
-  try {
-    const res = await fetch(`https://api.lever.co/v0/postings/${company}?mode=json`, { signal: AbortSignal.timeout(8000) })
-    if (!res.ok) return []
-    const postings = await res.json()
-    return (Array.isArray(postings) ? postings : [])
-      .filter((p: any) => keywords.some(kw => (p.text || '').toLowerCase().includes(kw.toLowerCase())))
-      .slice(0, 2)
-      .map((p: any) => ({
-        title: p.text, company: company.charAt(0).toUpperCase() + company.slice(1),
-        location: p.categories?.location || 'Remote',
-        url: p.hostedUrl || `https://jobs.lever.co/${company}/${p.id}`,
-        source: 'lever' as const, posting_id: p.id,
-        description: (p.descriptionPlain || '').slice(0, 1500),
-      }))
-  } catch { return [] }
-}
-
-async function scanAshby(org: string, keywords: string[]): Promise<ScannedJob[]> {
-  try {
-    const res = await fetch(`https://api.ashbyhq.com/posting-api/job-board?organizationHostedJobsPageName=${org}`, { signal: AbortSignal.timeout(8000) })
-    if (!res.ok) return []
-    const data = await res.json()
-    return (data.jobs || [])
-      .filter((j: any) => keywords.some(kw => (j.title || '').toLowerCase().includes(kw.toLowerCase())))
-      .slice(0, 2)
-      .map((j: any) => ({
-        title: j.title, company: org.charAt(0).toUpperCase() + org.slice(1),
-        location: j.location || 'Remote',
-        url: j.jobUrl || `https://jobs.ashbyhq.com/${org}/${j.id}`,
-        source: 'ashby' as const, posting_id: j.id,
-        description: (j.descriptionPlain || '').slice(0, 1500),
       }))
   } catch { return [] }
 }
@@ -269,13 +248,13 @@ export async function POST(req: NextRequest) {
     await log(supabase, user.id, 'scanning', `🔍 Scanning Greenhouse, Lever & Ashby for "${keywords[0]}" roles...`)
 
     // Scan in parallel
-    const [ghRes, lvRes, ashRes] = await Promise.all([
-      Promise.all(SCAN_TARGETS.greenhouse.slice(0, 4).map(b => scanGreenhouse(b, keywords))),
-      Promise.all(SCAN_TARGETS.lever.slice(0, 4).map(c => scanLever(c, keywords))),
-      Promise.all(SCAN_TARGETS.ashby.slice(0, 4).map(o => scanAshby(o, keywords))),
-    ])
+    // One source now, so cover much more of it: 4 boards was a fraction of
+    // what is reachable, and these fetch in parallel.
+    const ghRes = await Promise.all(
+      SCAN_TARGETS.greenhouse.map(b => scanGreenhouse(b, keywords))
+    )
 
-    const allJobs: ScannedJob[] = [...ghRes.flat(), ...lvRes.flat(), ...ashRes.flat()]
+    const allJobs: ScannedJob[] = ghRes.flat()
     const seen = new Set<string>()
     const uniqueJobs = allJobs.filter(j => { if (seen.has(j.url)) return false; seen.add(j.url); return true })
 

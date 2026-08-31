@@ -18,8 +18,19 @@ const nextConfig = {
 
      Left external, it is required from node_modules at runtime with its
      worker sitting where it expects to find it. */
+  /* Playwright is the same story: coreBundle.js requires chromium-bidi
+     through a path webpack cannot resolve, so bundling it fails the whole
+     route with "Module not found: chromium-bidi/lib/cjs/bidiMapper". These
+     are Node-only packages that must be loaded from node_modules at
+     runtime, not bundled. */
   experimental: {
-    serverComponentsExternalPackages: ['pdf-parse', 'mammoth'],
+    serverComponentsExternalPackages: [
+      'pdf-parse',
+      'mammoth',
+      'playwright',
+      'playwright-core',
+      '@sparticuz/chromium',
+    ],
   },
 
   // Image optimization

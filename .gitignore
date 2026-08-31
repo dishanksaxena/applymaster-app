@@ -14,3 +14,4 @@ shoot.review.mjs
 verify.*.mjs
 probe.mjs
 verify-resume.pdf
+.atstest/

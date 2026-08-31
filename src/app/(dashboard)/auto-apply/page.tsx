@@ -45,20 +45,16 @@ function AnimatedNumber({ value, delay = 0 }: { value: number; delay?: number })
   return <>{displayed}</>
 }
 
-const sources = [
-  { name: 'LinkedIn', color: '#0077b5', icon: 'in' },
-  { name: 'Indeed', color: '#2164f3', icon: 'I' },
-  { name: 'Glassdoor', color: '#0caa41', icon: 'G' },
-  { name: 'ZipRecruiter', color: '#5ba71b', icon: 'Z' },
-  { name: 'Greenhouse', color: '#3ab549', icon: 'GH' },
-  { name: 'Lever', color: 'var(--bg-elevated)', icon: 'L' },
-]
+
 
 export default function AutoApplyPage() {
   const [mode, setMode] = useState<'copilot' | 'autopilot' | 'off'>('off')
   const [dailyLimit, setDailyLimit] = useState(10)
   const [matchThreshold, setMatchThreshold] = useState(80)
-  const [activeSources, setActiveSources] = useState(['LinkedIn', 'Indeed', 'Glassdoor'])
+  /* Live status of the sources we can actually reach, asked at runtime
+     rather than asserted. The four that used to sit here — LinkedIn,
+     Indeed, Glassdoor, ZipRecruiter — had no code behind them at all. */
+  const [sourceStatus, setSourceStatus] = useState<any[] | null>(null)
   const [logs, setLogs] = useState<any[]>([])
   const [applications, setApplications] = useState<any[]>([])
   const [saving, setSaving] = useState(false)
@@ -77,6 +73,12 @@ export default function AutoApplyPage() {
   useEffect(() => {
     setMounted(true)
     supabaseRef.current = createClient()
+
+    // Ask each source whether it is actually up, rather than asserting it.
+    fetch('/api/sources/status')
+      .then(r => r.json())
+      .then(d => setSourceStatus(d.sources ?? []))
+      .catch(() => setSourceStatus([]))
   }, [])
 
   const supabase = supabaseRef.current
@@ -448,24 +450,81 @@ export default function AutoApplyPage() {
             </div>
           </motion.div>
 
-          {/* Sources */}
+          {/* Sources — reported, not claimed. Each row is a live check. */}
           <motion.div variants={fadeUp} className="p-6 rounded-2xl" style={{ background: 'linear-gradient(135deg, var(--bg-card-gradient-start), var(--bg-card-gradient-end))', border: '1px solid var(--border)' }}>
-            <h3 className="text-[16px] font-bold mb-4">Job Sources</h3>
-            <div className="grid grid-cols-3 gap-3">
-              {sources.map(source => {
-                const active = activeSources.includes(source.name)
-                return (
-                  <motion.button key={source.name} whileTap={{ scale: 0.95 }}
-                    onClick={() => setActiveSources(active ? activeSources.filter(s => s !== source.name) : [...activeSources, source.name])}
-                    className="p-4 rounded-xl text-center transition-all duration-300"
-                    style={active ? { background: `${withAlpha(source.color, 0.09, true)}`, border: `1px solid ${withAlpha(source.color, 0.18, true)}` } : { background: 'var(--bg-overlay)', border: '1px solid var(--border)' }}>
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center mx-auto mb-2 text-[11px] font-black"
-                      style={{ background: active ? `${withAlpha(source.color, 0.14, true)}` : 'var(--bg-overlay)', color: active ? source.color : 'var(--text-muted)' }}>{source.icon}</div>
-                    <div className="text-[12px] font-bold" style={{ color: active ? 'var(--text)' : 'var(--text-muted)' }}>{source.name}</div>
-                  </motion.button>
-                )
-              })}
+            <div className="flex items-baseline justify-between mb-1">
+              <h3 className="text-[16px] font-bold">Where jobs come from</h3>
+              {sourceStatus && (
+                <span className="text-[11px]" style={{ color: 'var(--text-faint)' }}>
+                  checked just now
+                </span>
+              )}
             </div>
+            <p className="text-[12px] mb-4" style={{ color: 'var(--text-muted)' }}>
+              These are the sources we actually query. Status is checked live, not assumed.
+            </p>
+
+            {!sourceStatus && (
+              <p className="text-[12.5px] py-3" style={{ color: 'var(--text-muted)' }}>
+                Checking sources…
+              </p>
+            )}
+
+            <div className="space-y-2">
+              {(sourceStatus ?? []).map((s: any) => (
+                <div
+                  key={s.id}
+                  className="flex items-start gap-3 p-3 rounded-xl"
+                  style={{ background: 'var(--bg-overlay)', boxShadow: 'inset 0 0 0 1px var(--card-ring)' }}
+                >
+                  <span
+                    className="mt-1.5 w-2 h-2 rounded-full shrink-0"
+                    style={{ background: s.reachable ? 'var(--green)' : 'var(--red)' }}
+                    aria-label={s.reachable ? 'reachable' : 'unreachable'}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-[13px] font-semibold" style={{ color: 'var(--text)' }}>
+                        {s.name}
+                      </span>
+                      {s.canApply ? (
+                        <span
+                          className="px-1.5 py-0.5 rounded text-[9.5px] font-bold tracking-wide"
+                          style={{ background: 'var(--green-dim)', color: 'var(--green)' }}
+                        >
+                          CAN AUTO-APPLY
+                        </span>
+                      ) : (
+                        <span
+                          className="px-1.5 py-0.5 rounded text-[9.5px] font-semibold tracking-wide"
+                          style={{ background: 'var(--bg-card)', color: 'var(--text-faint)' }}
+                        >
+                          SEARCH ONLY
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[11.5px] mt-0.5 leading-snug" style={{ color: 'var(--text-muted)' }}>
+                      {s.covers}
+                    </p>
+                    {s.note && (
+                      <p className="text-[11px] mt-0.5" style={{ color: 'var(--red)' }}>
+                        {s.note}
+                      </p>
+                    )}
+                  </div>
+                  {typeof s.sample === 'number' && s.reachable && (
+                    <span className="text-[11px] tabular-nums shrink-0 mt-0.5" style={{ color: 'var(--text-faint)' }}>
+                      {s.sample.toLocaleString()}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <p className="text-[11px] mt-3 leading-relaxed" style={{ color: 'var(--text-faint)' }}>
+              LinkedIn, Indeed and Glassdoor block automated access and are not searched. Anything
+              claiming otherwise is guessing.
+            </p>
           </motion.div>
 
           <motion.div variants={fadeUp} className="space-y-3">

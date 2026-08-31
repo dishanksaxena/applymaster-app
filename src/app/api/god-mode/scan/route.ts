@@ -3,23 +3,28 @@ import { createClient } from '@/lib/supabase-server'
 
 export const maxDuration = 60
 
-// Pre-configured portals to scan — all have open job board APIs
+/**
+ * Boards we scan, each verified reachable rather than assumed.
+ *
+ * Lever and Ashby are removed, not disabled. Every Lever org now answers
+ * {"ok":false,"error":"Document not found"} — the v0 posting API is gone —
+ * and every Ashby org returns null. Both scanners still ran on every
+ * request, spent their 8s timeout and returned nothing.
+ *
+ * Several boards in the Greenhouse list had the same problem quietly:
+ * notion, retool, segment, hashicorp, mongodb, elastic, confluent, hubspot,
+ * zendesk, intercom, openai and linear have all moved off Greenhouse and
+ * were contributing zero.
+ *
+ * What is left was checked board by board: 31 live boards carrying roughly
+ * 6,300 open roles between them.
+ */
 const GREENHOUSE_BOARDS = [
-  'anthropic', 'openai', 'stripe', 'notion', 'figma', 'linear', 'vercel',
-  'airbnb', 'coinbase', 'brex', 'rippling', 'retool', 'airtable', 'segment',
-  'twilio', 'datadog', 'hashicorp', 'mongodb', 'elastic', 'confluent',
-  'gitlab', 'hubspot', 'zendesk', 'intercom', 'asana', 'carta',
-]
-
-const LEVER_COMPANIES = [
-  'netflix', 'pinterest', 'lyft', 'dropbox', 'eventbrite', 'lever',
-  'instacart', 'affirm', 'chime', 'plaid', 'robinhood', 'ramp',
-  'gitlab', 'cloudflare', 'fastly', 'sendbird',
-]
-
-const ASHBY_ORGS = [
-  'anthropic', 'openai', 'mistral', 'cohere', 'elevenlabs', 'perplexity',
-  'supabase', 'posthog', 'dbt-labs', 'modal', 'arc', 'linear',
+  'databricks', 'stripe', 'anthropic', 'datadog', 'cloudflare', 'brex',
+  'samsara', 'gitlab', 'scaleai', 'affirm', 'pinterest', 'coinbase',
+  'airbnb', 'lyft', 'flexport', 'figma', 'reddit', 'twilio', 'robinhood',
+  'instacart', 'asana', 'gusto', 'vercel', 'duolingo', 'chime', 'sofi',
+  'carta', 'mercury', 'discord', 'dropbox', 'airtable',
 ]
 
 interface ScannedJob {
@@ -68,79 +73,15 @@ async function scanGreenhouse(board: string, keywords: string[]): Promise<Scanne
   }
 }
 
-async function scanLever(company: string, keywords: string[]): Promise<ScannedJob[]> {
-  try {
-    const res = await fetch(
-      `https://api.lever.co/v0/postings/${company}?mode=json`,
-      { signal: AbortSignal.timeout(8000) }
-    )
-    if (!res.ok) return []
-    const postings = await res.json()
-    const jobs: ScannedJob[] = []
-
-    for (const p of Array.isArray(postings) ? postings : []) {
-      const titleLower = (p.text || '').toLowerCase()
-      const matches = keywords.some(kw => titleLower.includes(kw.toLowerCase()))
-      if (!matches) continue
-
-      jobs.push({
-        title: p.text,
-        company: company.charAt(0).toUpperCase() + company.slice(1),
-        location: p.categories?.location || 'Remote',
-        url: p.hostedUrl || `https://jobs.lever.co/${company}/${p.id}`,
-        source: 'lever',
-        posting_id: p.id,
-        remote: (p.categories?.location || '').toLowerCase().includes('remote') || p.categories?.commitment?.toLowerCase().includes('remote'),
-        posted_at: p.createdAt ? new Date(p.createdAt).toISOString() : undefined,
-      })
-    }
-
-    return jobs
-  } catch {
-    return []
-  }
-}
-
-async function scanAshby(org: string, keywords: string[]): Promise<ScannedJob[]> {
-  try {
-    const res = await fetch(
-      `https://api.ashbyhq.com/posting-api/job-board?organizationHostedJobsPageName=${org}`,
-      { signal: AbortSignal.timeout(8000) }
-    )
-    if (!res.ok) return []
-    const data = await res.json()
-    const jobs: ScannedJob[] = []
-
-    for (const job of data.jobs || []) {
-      const titleLower = (job.title || '').toLowerCase()
-      const matches = keywords.some(kw => titleLower.includes(kw.toLowerCase()))
-      if (!matches) continue
-
-      jobs.push({
-        title: job.title,
-        company: org.charAt(0).toUpperCase() + org.slice(1),
-        location: job.location || 'Remote',
-        url: job.jobUrl || `https://jobs.ashbyhq.com/${org}/${job.id}`,
-        source: 'ashby',
-        posting_id: job.id,
-        remote: job.isRemote || (job.location || '').toLowerCase().includes('remote'),
-        posted_at: job.publishedDate,
-      })
-    }
-
-    return jobs
-  } catch {
-    return []
-  }
-}
-
 export async function POST(req: NextRequest) {
   try {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const { keywords, limit_per_portal = 3 } = await req.json()
+    // One source now, so cover far more of it: 3 boards was a tenth of what
+    // is reachable. All 31 fetch in parallel well inside the 60s budget.
+    const { keywords, limit_per_portal = 31 } = await req.json()
 
     // Load user preferences for scanning context
     const { data: prefs } = await supabase
@@ -149,16 +90,12 @@ export async function POST(req: NextRequest) {
     const searchKeywords: string[] = keywords || prefs?.job_titles || ['software engineer', 'product manager', 'data scientist']
 
     // Scan all portals in parallel — limit to first N boards each for speed
-    const [ghResults, leverResults, ashbyResults] = await Promise.all([
-      Promise.all(GREENHOUSE_BOARDS.slice(0, limit_per_portal).map(b => scanGreenhouse(b, searchKeywords))),
-      Promise.all(LEVER_COMPANIES.slice(0, limit_per_portal).map(c => scanLever(c, searchKeywords))),
-      Promise.all(ASHBY_ORGS.slice(0, limit_per_portal).map(o => scanAshby(o, searchKeywords))),
-    ])
+    const ghResults = await Promise.all(
+      GREENHOUSE_BOARDS.slice(0, limit_per_portal).map(b => scanGreenhouse(b, searchKeywords))
+    )
 
     const allJobs: ScannedJob[] = [
       ...ghResults.flat(),
-      ...leverResults.flat(),
-      ...ashbyResults.flat(),
     ]
 
     // Deduplicate by URL
@@ -196,8 +133,6 @@ export async function POST(req: NextRequest) {
       jobs: uniqueJobs.slice(0, 20), // Return preview of first 20
       portals_scanned: {
         greenhouse: GREENHOUSE_BOARDS.slice(0, limit_per_portal).length,
-        lever: LEVER_COMPANIES.slice(0, limit_per_portal).length,
-        ashby: ASHBY_ORGS.slice(0, limit_per_portal).length,
       },
     })
 
