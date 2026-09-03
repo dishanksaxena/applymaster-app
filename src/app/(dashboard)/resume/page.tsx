@@ -190,6 +190,8 @@ export default function ResumePage() {
   const [loading, setLoading] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
+  const [uploadStage, setUploadStage] = useState('Uploading your file')
+  const [uploadSeconds, setUploadSeconds] = useState(0)
   const [optimizing, setOptimizing] = useState(false)
   const [optimization, setOptimization] = useState<OptimizationResult | null>(null)
   const [jobTitle, setJobTitle] = useState('')
@@ -244,13 +246,30 @@ export default function ResumePage() {
     setLoading(true)
     setUploadProgress(0)
 
-    // Simulate progress while API processes
+    /* Parsing a resume takes about 30 seconds: text extraction, then a model
+       call to turn it into structured fields. The old bar raced to 90% in
+       six seconds and then sat there for the remaining twenty-four with no
+       movement and no explanation, which reads as a hang rather than work.
+
+       So: pace the bar against how long each stage actually takes, and name
+       the stage. A number that keeps moving and says what it is doing is
+       the difference between "it's thinking" and "it's broken". */
+    const STAGES: { until: number; pct: number; label: string }[] = [
+      { until: 2000, pct: 12, label: 'Uploading your file' },
+      { until: 6000, pct: 30, label: 'Reading the document' },
+      { until: 14000, pct: 55, label: 'Extracting your experience' },
+      { until: 24000, pct: 78, label: 'Structuring skills and roles' },
+      { until: 45000, pct: 94, label: 'Almost there — finishing up' },
+    ]
+    const startedAt = Date.now()
     const progressInterval = setInterval(() => {
-      setUploadProgress(prev => {
-        if (prev >= 90) { clearInterval(progressInterval); return 90 }
-        return prev + Math.random() * 8
-      })
-    }, 500)
+      const elapsed = Date.now() - startedAt
+      const stage = STAGES.find(s => elapsed < s.until) ?? STAGES[STAGES.length - 1]
+      setUploadStage(stage.label)
+      setUploadSeconds(Math.floor(elapsed / 1000))
+      // Ease toward the stage ceiling so the bar is always creeping forward.
+      setUploadProgress(prev => (prev >= stage.pct ? prev + 0.15 : prev + (stage.pct - prev) * 0.14))
+    }, 250)
 
     try {
       const formData = new FormData()
@@ -517,9 +536,22 @@ export default function ResumePage() {
                 {loading && (
                   <div className="mt-4" style={{ animation: 'card-fade-in 0.3s ease' }}>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-[12px] font-semibold text-[var(--text-secondary)]">Uploading...</span>
+                      <span className="text-[12px] font-semibold text-[var(--text-secondary)]">
+                        {uploadStage}
+                        {uploadSeconds > 3 && (
+                          <span className="ml-1.5 font-normal" style={{ color: 'var(--text-faint)' }}>
+                            {uploadSeconds}s
+                          </span>
+                        )}
+                      </span>
                       <span className="text-[11px] font-bold text-[var(--accent)]">{Math.round(uploadProgress)}%</span>
                     </div>
+                    {uploadSeconds > 8 && (
+                      <p className="text-[11px] mb-2" style={{ color: 'var(--text-faint)' }}>
+                        Parsing a resume properly takes about 30 seconds — we read the whole
+                        document rather than guessing from the filename.
+                      </p>
+                    )}
                     <div className="h-1.5 rounded-full bg-[var(--bg-overlay)] overflow-hidden">
                       <div
                         className="h-full rounded-full transition-all duration-300"
