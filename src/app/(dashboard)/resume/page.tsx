@@ -198,6 +198,7 @@ export default function ResumePage() {
   const [jobTitleFocused, setJobTitleFocused] = useState(false)
   const [isDragOver, setIsDragOver] = useState(false)
   const [copiedTailored, setCopiedTailored] = useState(false)
+  const [downloadingPdf, setDownloadingPdf] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
   const [reparsing, setReparsing] = useState(false)
   const [reparseMsg, setReparseMsg] = useState<string | null>(null)
@@ -402,6 +403,44 @@ export default function ResumePage() {
     navigator.clipboard.writeText(optimization.tailored_resume)
     setCopiedTailored(true)
     setTimeout(() => setCopiedTailored(false), 2000)
+  }
+
+  /* The Download PDF button had no click handler at all — it rendered and
+     hovered and did nothing. Renders the tailored text server-side and
+     hands back a real application/pdf. */
+  const downloadTailoredPdf = async () => {
+    if (!optimization?.tailored_resume || downloadingPdf) return
+    setDownloadingPdf(true)
+    try {
+      const res = await fetch('/api/resume/export-pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content: optimization.tailored_resume,
+          name: parsedByResume[selectedResume?.id]?.full_name || 'Resume',
+          filename: jobTitle ? `Resume — ${jobTitle}` : 'Tailored-Resume',
+        }),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => null)
+        throw new Error(err?.error || 'Could not build the PDF')
+      }
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${(jobTitle || 'Tailored-Resume').replace(/[^a-z0-9\-_ ]/gi, '').trim().replace(/\s+/g, '-')}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      // Revoke on the next tick so the download has taken the handle.
+      setTimeout(() => URL.revokeObjectURL(url), 1000)
+      toast.success('Resume downloaded')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Could not build the PDF')
+    } finally {
+      setDownloadingPdf(false)
+    }
   }
 
   const formatFileSize = (bytes?: number) => {
@@ -1110,6 +1149,9 @@ export default function ResumePage() {
                       </button>
                       {/* Download Button */}
                       <button
+                        onClick={downloadTailoredPdf}
+                        disabled={downloadingPdf}
+                        aria-busy={downloadingPdf || undefined}
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all duration-300"
                         style={{
                           background: 'rgb(var(--accent-rgb) / calc(0.08 * var(--tint-scale)))',
@@ -1122,7 +1164,7 @@ export default function ResumePage() {
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="7,10 12,15 17,10" /><line x1="12" y1="15" x2="12" y2="3" />
                         </svg>
-                        Download PDF
+                        {downloadingPdf ? 'Building PDF…' : 'Download PDF'}
                       </button>
                     </div>
                   </div>
