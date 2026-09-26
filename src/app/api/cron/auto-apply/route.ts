@@ -44,6 +44,7 @@ export const dynamic = 'force-dynamic'
 
 const MAX_PER_DAY = 25
 const MAX_PER_COMPANY = 3
+const COPILOT_MAX_PER_DAY = 10
 
 type JobRow = { source: string; external_id: string } & Record<string, unknown>
 
@@ -142,7 +143,11 @@ async function run(req: NextRequest) {
 
   for (const p of people) {
     try {
-      const limit = Math.min(MAX_PER_DAY, Math.max(1, p.daily_apply_limit || 10))
+      // Copilot is for reviewing each match closely, so it queues fewer;
+      // Autopilot uses the person's full daily limit. (The two modes used to
+      // behave identically.)
+      const cap = p.auto_apply_mode === 'copilot' ? COPILOT_MAX_PER_DAY : MAX_PER_DAY
+      const limit = Math.min(cap, Math.max(1, p.daily_apply_limit || 10))
       const threshold = Math.min(90, Math.max(50, p.match_threshold || 70))
 
       // What they already have — never queue a posting twice.

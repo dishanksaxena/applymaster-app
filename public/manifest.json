@@ -1,7 +1,7 @@
 {
   "name": "ApplyMaster — AI Auto Job Application System",
   "short_name": "ApplyMaster",
-  "description": "AI-powered auto job application system. Apply to 50+ job portals automatically, optimize your resume for ATS, generate cover letters, and ace interviews with real-time AI coaching.",
+  "description": "Daily job matches, a tailored resume and cover letter for each, application forms filled for you, and referral paths through people you know.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0a0a12",

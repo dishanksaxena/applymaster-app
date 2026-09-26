@@ -131,6 +131,27 @@ export default function SettingsPage() {
 
   const handleSignOut = async () => { await supabase.auth.signOut(); router.push('/'); router.refresh() }
 
+  const [deleteConfirm, setDeleteConfirm] = useState('')
+  const [deleting, setDeleting] = useState(false)
+  const handleDeleteAccount = async () => {
+    setDeleting(true)
+    try {
+      const res = await fetch('/api/account', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ confirm: deleteConfirm }),
+      })
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(json.error || 'Could not delete your account')
+      await supabase.auth.signOut().catch(() => {})
+      router.push('/?deleted=1')
+      router.refresh()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Could not delete your account')
+      setDeleting(false)
+    }
+  }
+
   const setThemePref = (next: Theme) => {
     setTheme(next)
     applyTheme(next)
@@ -289,12 +310,57 @@ export default function SettingsPage() {
         </div>
       </motion.div>
 
+      {/* Your data — promised on the site as export and one-click deletion,
+          and neither existed until now. */}
+      <motion.div variants={fadeUp} className="p-6 rounded-2xl" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)' }}>
+        <h3 className="text-[15px] font-bold text-[var(--text)] mb-1">Your data</h3>
+        <p className="text-[12.5px] text-[var(--text-muted)] mb-4">
+          Everything ApplyMaster holds about you — profile, resumes, applications, receipts, cover letters, network and more — as one file.
+        </p>
+        <a
+          href="/api/account/export"
+          className="inline-block px-5 py-2.5 rounded-xl text-[13px] font-semibold"
+          style={{ background: 'var(--bg-overlay)', color: 'var(--text)' }}
+        >
+          Download my data
+        </a>
+      </motion.div>
+
       {/* Danger Zone */}
-      <motion.div variants={fadeUp} className="p-6 rounded-2xl" style={{ background: 'var(--bg-card)', border: '1px solid rgba(255,95,87,0.15)', boxShadow: 'var(--shadow-sm)' }}>
+      <motion.div variants={fadeUp} className="p-6 rounded-2xl" style={{ background: 'var(--bg-card)', border: '1px solid rgb(var(--red-rgb) / 0.18)', boxShadow: 'var(--shadow-sm)' }}>
         <h3 className="text-[15px] font-bold text-[var(--red)] mb-4">Danger Zone</h3>
         <motion.button whileTap={{ scale: 0.95 }} onClick={handleSignOut} className="px-6 py-2.5 rounded-xl text-[13px] font-bold text-[var(--red)] hover:bg-[rgb(var(--red-rgb)/0.06)]" style={{ border: '1px solid rgb(var(--red-rgb) / calc(0.2 * var(--tint-scale)))' }}>
           Sign Out
         </motion.button>
+
+        <div className="mt-6 pt-5" style={{ borderTop: '1px solid var(--border)' }}>
+          <p className="text-[13px] font-semibold text-[var(--text)]">Delete my account</p>
+          <p className="text-[12.5px] text-[var(--text-muted)] mt-1 mb-3">
+            Permanently deletes your account, resumes, applications, receipts, network and every other record. This cannot be undone.
+            Download your data first if you want a copy.
+          </p>
+          <label htmlFor="delete-confirm" className="block text-[12px] text-[var(--text-secondary)] mb-1.5">
+            Type <strong className="text-[var(--text)]">{profile?.email}</strong> to confirm
+          </label>
+          <div className="flex flex-wrap gap-2">
+            <input
+              id="delete-confirm"
+              value={deleteConfirm}
+              onChange={e => setDeleteConfirm(e.target.value)}
+              autoComplete="off"
+              className="flex-1 min-w-[220px] px-3.5 py-2.5 rounded-xl text-[13px] outline-none"
+              style={{ background: 'var(--bg-input)', color: 'var(--text)', boxShadow: 'inset 0 0 0 1px var(--card-ring)' }}
+            />
+            <button
+              onClick={handleDeleteAccount}
+              disabled={deleting || !profile?.email || deleteConfirm.trim().toLowerCase() !== profile.email.toLowerCase()}
+              className="px-5 py-2.5 rounded-xl text-[13px] font-bold disabled:opacity-40"
+              style={{ background: 'var(--red)', color: '#fff' }}
+            >
+              {deleting ? 'Deleting…' : 'Delete everything'}
+            </button>
+          </div>
+        </div>
       </motion.div>
     </motion.div>
   )

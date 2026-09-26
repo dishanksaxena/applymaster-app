@@ -109,7 +109,7 @@ export default async function Image() {
             maxWidth: 800,
           }}
         >
-          {['Auto Apply 50+ Portals', 'ATS Resume Optimizer', 'AI Cover Letters', 'Live Interview Coach'].map((feat) => (
+          {['Daily Job Matches', 'ATS Resume Optimizer', 'AI Cover Letters', 'Referral Finder'].map((feat) => (
             <div
               key={feat}
               style={{

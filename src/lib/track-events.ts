@@ -43,6 +43,7 @@ export const TRACK_EVENTS = [
   'upgrade_interest',
   'plan_changed',
   'payment_webhook_failed',
+  'account_deleted',
 
   'support_opened',
   'support_submitted',
@@ -70,6 +71,7 @@ export const SERVER_ONLY_EVENTS = new Set<TrackEvent>([
   'upgrade_interest',
   'plan_changed',
   'payment_webhook_failed',
+  'account_deleted',
   'support_submitted',
   'support_failed',
 ])
