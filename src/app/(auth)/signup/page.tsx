@@ -1,9 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase-browser'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { track } from '@/lib/track'
+import AuthError from '@/components/auth/AuthError'
 
 export default function SignupPage() {
   const [name, setName] = useState('')
@@ -12,15 +14,22 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
+  const [resendState, setResendState] = useState<'idle' | 'sending' | 'sent' | 'failed'>('idle')
   const router = useRouter()
-  const supabase = createClient()
+  const [supabase] = useState(() => createClient())
+
+  useEffect(() => {
+    track('auth_page_view', { meta: { page: 'signup' } })
+  }, [])
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError('')
 
-    const { error } = await supabase.auth.signUp({
+    track('signup_attempt', { method: 'password', email })
+
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -30,22 +39,73 @@ export default function SignupPage() {
     })
 
     if (error) {
+      track('signup_failed', {
+        method: 'password',
+        email,
+        error_code: (error as { code?: string }).code ?? String(error.status ?? ''),
+        error_message: error.message,
+      })
       setError(error.message)
       setLoading(false)
-    } else {
-      setSuccess(true)
-      setLoading(false)
+      return
     }
+
+    /* When the address already has an account, Supabase deliberately answers
+       with a normal-looking success and an empty identities list, and sends
+       no email — so sign-up cannot be used to discover who is registered.
+       Taken at face value, the person sees "Check your email" and waits for a
+       message that will never arrive. Most ApplyMaster accounts were made with
+       Google, so this is the likely case for anyone signing up a second time. */
+    if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+      track('signup_existing_account', { method: 'password', email })
+      setError('existing_account')
+      setLoading(false)
+      return
+    }
+
+    track('signup_success', { method: 'password', email, meta: { needs_confirmation: !data.session } })
+
+    // Confirmation switched off: there is already a session, so go straight in.
+    if (data.session) {
+      router.push('/onboarding')
+      router.refresh()
+      return
+    }
+    setSuccess(true)
+    setLoading(false)
   }
 
   const handleGoogleSignup = async () => {
+    track('oauth_start', { method: 'google', meta: { from: 'signup' } })
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${window.location.origin}/auth/callback?next=/onboarding`,
       },
     })
-    if (error) setError(error.message)
+    if (error) {
+      track('oauth_failed', { method: 'google', error_message: error.message })
+      setError(error.message)
+    }
+  }
+
+  /* The confirmation email is the single point of failure in email sign-up:
+     slow, filtered to spam, or never sent. The success screen used to be a
+     dead end with no way to ask for it again. */
+  const resend = async () => {
+    setResendState('sending')
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email,
+      options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+    })
+    if (error) {
+      track('confirm_resend_failed', { email, error_message: error.message })
+      setResendState('failed')
+    } else {
+      track('confirm_resend', { email, meta: { from: 'signup' } })
+      setResendState('sent')
+    }
   }
 
   if (success) {
@@ -58,7 +118,36 @@ export default function SignupPage() {
           <p className="text-[14px] text-[var(--text-muted)] leading-relaxed mb-8">
             We sent a confirmation link to <span className="text-ink font-semibold">{email}</span>. Click it to activate your account and start applying.
           </p>
-          <Link href="/login" className="text-[var(--accent)] font-semibold text-[14px] hover:underline">Back to login</Link>
+          <div className="flex flex-col items-center gap-3">
+            <button
+              type="button"
+              onClick={resend}
+              disabled={resendState === 'sending' || resendState === 'sent'}
+              className="px-4 py-2.5 rounded-xl text-[13px] font-semibold disabled:opacity-70"
+              style={{ background: 'var(--bg-overlay)', color: 'var(--text)' }}
+            >
+              {resendState === 'sending'
+                ? 'Sending…'
+                : resendState === 'sent'
+                  ? 'Sent again — check spam and promotions too'
+                  : resendState === 'failed'
+                    ? 'Could not send — wait a minute and try again'
+                    : 'Didn\u2019t get it? Send it again'}
+            </button>
+            <p className="text-[12px]" style={{ color: 'var(--text-faint)' }}>
+              Wrong address or still nothing?{' '}
+              <Link
+                href={`/support?topic=sign_up&error=${encodeURIComponent('Confirmation email not received')}`}
+                className="underline underline-offset-2"
+                style={{ color: 'var(--text-secondary)' }}
+              >
+                Message us
+              </Link>
+            </p>
+            <Link href="/login" className="text-[var(--accent)] font-semibold text-[14px] hover:underline mt-2">
+              Back to login
+            </Link>
+          </div>
         </div>
       </div>
     )
@@ -79,15 +168,11 @@ export default function SignupPage() {
         </Link>
 
         {/* Card */}
-        <div className="p-8 rounded-2xl bg-[var(--bg-card)] border border-[var(--bg-overlay)] shadow-[0_40px_100px_rgba(0,0,0,0.5)]">
+        <div className="p-8 rounded-2xl bg-[var(--bg-card)] border border-[var(--bg-overlay)] shadow-[var(--card-lift)]">
           <h1 className="text-2xl font-black tracking-tight mb-2">Create your account</h1>
           <p className="text-[14px] text-[var(--text-muted)] mb-8">Start applying to jobs on autopilot — free forever</p>
 
-          {error && (
-            <div role="alert" className="p-3 rounded-xl bg-[var(--red-dim)] border border-[var(--border)] text-[13px] text-[var(--red)] mb-6">
-              {error}
-            </div>
-          )}
+          {error && <AuthError error={error} topic="sign_up" />}
 
           {/* Google OAuth */}
           <button type="button" onClick={handleGoogleSignup} className="w-full flex items-center justify-center gap-3 py-3.5 rounded-xl bg-[var(--bg-card)] text-[var(--text)] border border-[var(--border)] font-bold text-[14px] hover:bg-[var(--bg-card-hover)] transition-colors mb-6">
@@ -103,9 +188,11 @@ export default function SignupPage() {
 
           <form onSubmit={handleSignup} className="space-y-4">
             <div>
-              <label className="block text-[12px] font-semibold text-[var(--text-muted)] mb-2">Full Name</label>
+              <label htmlFor="signup-name" className="block text-[12px] font-semibold text-[var(--text-muted)] mb-2">Full Name</label>
               <input
+                id="signup-name"
                 type="text"
+                autoComplete="name"
                 value={name}
                 onChange={e => setName(e.target.value)}
                 required
@@ -114,9 +201,11 @@ export default function SignupPage() {
               />
             </div>
             <div>
-              <label className="block text-[12px] font-semibold text-[var(--text-muted)] mb-2">Email</label>
+              <label htmlFor="signup-email" className="block text-[12px] font-semibold text-[var(--text-muted)] mb-2">Email</label>
               <input
+                id="signup-email"
                 type="email"
+                autoComplete="email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 required
@@ -125,9 +214,11 @@ export default function SignupPage() {
               />
             </div>
             <div>
-              <label className="block text-[12px] font-semibold text-[var(--text-muted)] mb-2">Password</label>
+              <label htmlFor="signup-password" className="block text-[12px] font-semibold text-[var(--text-muted)] mb-2">Password</label>
               <input
+                id="signup-password"
                 type="password"
+                autoComplete="new-password"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 required

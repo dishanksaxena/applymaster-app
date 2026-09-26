@@ -8,6 +8,7 @@ import type { Profile } from '@/lib/database.types'
 import ThemeToggle from '@/components/ThemeToggle'
 import CommandPalette from '@/components/CommandPalette'
 import Toaster from '@/components/Toast'
+import { track } from '@/lib/track'
 
 /* ─── SVG Icon Components ─── */
 const icons = {
@@ -66,6 +67,11 @@ const icons = {
       <line x1="8" y1="23" x2="16" y2="23" />
     </svg>
   ),
+  support: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="9" /><path d="M9.1 9a3 3 0 015.8 1c0 2-3 3-3 3" /><path d="M12 17h.01" />
+    </svg>
+  ),
   settings: (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="12" r="3" />
@@ -122,6 +128,7 @@ const navItems = [
   { label: 'Auto-Apply', href: '/auto-apply', icon: icons.autoApply },
   { label: 'Referral Network', href: '/network', icon: icons.network },
   { label: 'Interview Coach', href: '/interview-coach', icon: icons.interviewCoach },
+  { label: 'Help & support', href: '/support', icon: icons.support },
   { label: 'Settings', href: '/settings', icon: icons.settings },
 ]
 
@@ -160,6 +167,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
+
+  /* Once per browser per day: the signal that tells returning users from
+     one-time visitors. The server attaches the account from the session. */
+  useEffect(() => {
+    try {
+      const key = `am_open_${new Date().toISOString().slice(0, 10)}`
+      if (localStorage.getItem(key)) return
+      localStorage.setItem(key, '1')
+      track('app_open', { meta: { path: window.location.pathname } })
+    } catch {
+      /* storage blocked: skip rather than fire on every navigation */
+    }
+  }, [])
 
   // Theme is applied by the inline script in the root layout, before first
   // paint. Restoring it here (as this file used to) ran after mount and

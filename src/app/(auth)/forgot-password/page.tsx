@@ -1,15 +1,21 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase-browser'
 import Link from 'next/link'
+import { track } from '@/lib/track'
+import AuthError from '@/components/auth/AuthError'
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [sent, setSent] = useState(false)
   const [error, setError] = useState('')
-  const supabase = createClient()
+  const [supabase] = useState(() => createClient())
+
+  useEffect(() => {
+    track('auth_page_view', { meta: { page: 'forgot_password' } })
+  }, [])
 
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -21,8 +27,10 @@ export default function ForgotPasswordPage() {
     })
     setLoading(false)
     if (error) {
+      track('password_reset_failed', { email, error_message: error.message })
       setError(error.message)
     } else {
+      track('password_reset_requested', { email })
       setSent(true)
     }
   }
@@ -50,16 +58,16 @@ export default function ForgotPasswordPage() {
               <p className="text-[14px] text-[var(--text-muted)] mb-8 text-center">Enter your email and we&apos;ll send you a reset link</p>
 
               {error && (
-                <div role="alert" className="p-3 rounded-xl bg-[var(--red-dim)] border border-[var(--border)] text-[13px] text-[var(--red)] mb-6">
-                  {error}
-                </div>
+                <AuthError error={error} />
               )}
 
               <form onSubmit={handleReset} className="space-y-4">
                 <div>
-                  <label className="block text-[12px] font-semibold text-[var(--text-muted)] mb-2">Email Address</label>
+                  <label htmlFor="forgot-email" className="block text-[12px] font-semibold text-[var(--text-muted)] mb-2">Email Address</label>
                   <input
+                    id="forgot-email"
                     type="email"
+                    autoComplete="email"
                     value={email}
                     onChange={e => setEmail(e.target.value)}
                     required

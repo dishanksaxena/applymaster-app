@@ -1,9 +1,15 @@
 'use client'
 
-import { Suspense, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase-browser'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { track } from '@/lib/track'
+import AuthError from '@/components/auth/AuthError'
+
+/** Only same-site paths; "//evil.com" would navigate off the site. */
+const safeNext = (raw: string | null) =>
+  raw && raw.startsWith('/') && !raw.startsWith('//') && !raw.startsWith('/\\') ? raw : '/dashboard'
 
 export default function LoginPage() {
   return (
@@ -18,50 +24,96 @@ function LoginForm() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [resendState, setResendState] = useState<'idle' | 'sending' | 'sent' | 'failed'>('idle')
   const router = useRouter()
   const searchParams = useSearchParams()
-  const next = searchParams.get('next') || '/dashboard'
-  const supabase = createClient()
+  const next = safeNext(searchParams.get('next'))
+  const [supabase] = useState(() => createClient())
+
+  /* The OAuth callback reports failures through ?error=, and this page used
+     to ignore it — a failed Google sign-in landed here on a blank form with
+     no explanation. Show it, and record that the page was reached. */
+  useEffect(() => {
+    const urlError = searchParams.get('error')
+    if (urlError) setError(urlError)
+    track('auth_page_view', { meta: { page: 'login', arrived_with_error: urlError || undefined } })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError('')
+    setResendState('idle')
+    track('login_attempt', { method: 'password', email })
 
     try {
-      // Force logout any existing session first (single-user only)
-      await supabase.auth.signOut({ scope: 'global' }).catch(() => {})
+      /* Clear whatever session this browser already holds, so a shared
+         machine never carries the previous person into the next account.
+         This used scope 'global', which also revoked the signing-in
+         person's sessions on every other device — logging in on a phone
+         logged you out of your laptop. 'local' keeps the intent without that. */
+      await supabase.auth.signOut({ scope: 'local' }).catch(() => {})
 
-      // Now log in with new credentials
       const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) {
+        track('login_failed', {
+          method: 'password',
+          email,
+          error_code: (error as { code?: string }).code ?? String(error.status ?? ''),
+          error_message: error.message,
+        })
         setError(error.message)
         setLoading(false)
       } else {
+        track('login_success', { method: 'password', email })
         router.push(next)
         router.refresh()
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed')
+      const msg = err instanceof Error ? err.message : 'Login failed'
+      track('login_failed', { method: 'password', email, error_code: 'exception', error_message: msg })
+      setError(msg)
       setLoading(false)
     }
   }
 
-  const handleGoogleLogin = async () => {
-    try {
-      // Force logout any existing session first (single-user only)
-      await supabase.auth.signOut({ scope: 'global' }).catch(() => {})
+  const resendConfirmation = async () => {
+    if (!email) return
+    setResendState('sending')
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email,
+      options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+    })
+    if (error) {
+      track('confirm_resend_failed', { email, error_message: error.message })
+      setResendState('failed')
+    } else {
+      track('confirm_resend', { email, meta: { from: 'login' } })
+      setResendState('sent')
+    }
+  }
 
-      // Now proceed with OAuth
+  const handleGoogleLogin = async () => {
+    track('oauth_start', { method: 'google', meta: { from: 'login' } })
+    try {
+      await supabase.auth.signOut({ scope: 'local' }).catch(() => {})
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `${window.location.origin}/auth/callback${next !== '/dashboard' ? `?next=${encodeURIComponent(next)}` : ''}`,
         },
       })
-      if (error) setError(error.message)
+      if (error) {
+        track('oauth_failed', { method: 'google', error_message: error.message })
+        setError(error.message)
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Google login failed')
+      const msg = err instanceof Error ? err.message : 'Google login failed'
+      track('oauth_failed', { method: 'google', error_code: 'exception', error_message: msg })
+      setError(msg)
     }
   }
 
@@ -80,15 +132,11 @@ function LoginForm() {
         </Link>
 
         {/* Card */}
-        <div className="p-8 rounded-2xl bg-[var(--bg-card)] border border-[var(--bg-overlay)] shadow-[0_40px_100px_rgba(0,0,0,0.5)]">
+        <div className="p-8 rounded-2xl bg-[var(--bg-card)] border border-[var(--bg-overlay)] shadow-[var(--card-lift)]">
           <h1 className="text-2xl font-black tracking-tight mb-2">Welcome back</h1>
           <p className="text-[14px] text-[var(--text-muted)] mb-8">Sign in to your account to continue</p>
 
-          {error && (
-            <div role="alert" className="p-3 rounded-xl bg-[var(--red-dim)] border border-[var(--border)] text-[13px] text-[var(--red)] mb-6">
-              {error}
-            </div>
-          )}
+          {error && <AuthError error={error} onResend={resendConfirmation} resendState={resendState} />}
 
           {/* Google OAuth */}
           <button type="button" onClick={handleGoogleLogin} className="w-full flex items-center justify-center gap-3 py-3.5 rounded-xl bg-[var(--bg-card)] text-[var(--text)] border border-[var(--border)] font-bold text-[14px] hover:bg-[var(--bg-card-hover)] transition-colors mb-6">
@@ -106,9 +154,11 @@ function LoginForm() {
           {/* Form */}
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="block text-[12px] font-semibold text-[var(--text-muted)] mb-2">Email</label>
+              <label htmlFor="login-email" className="block text-[12px] font-semibold text-[var(--text-muted)] mb-2">Email</label>
               <input
+                id="login-email"
                 type="email"
+                autoComplete="email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 required
@@ -118,11 +168,13 @@ function LoginForm() {
             </div>
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label className="block text-[12px] font-semibold text-[var(--text-muted)]">Password</label>
+                <label htmlFor="login-password" className="block text-[12px] font-semibold text-[var(--text-muted)]">Password</label>
                 <Link href="/forgot-password" className="text-[11px] text-[var(--accent)] hover:underline font-semibold">Forgot password?</Link>
               </div>
               <input
+                id="login-password"
                 type="password"
+                autoComplete="current-password"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 required

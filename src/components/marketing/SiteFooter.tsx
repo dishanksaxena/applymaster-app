@@ -15,6 +15,7 @@ const COLUMNS: { heading: string; links: [string, string][] }[] = [
   {
     heading: 'Resources',
     links: [
+      ['Help & support', '/support'],
       ['Blog', '/blog'],
       ['AI Job Application Guide', '/blog/ai-job-application-guide'],
       ['ATS Resume Guide', '/blog/ats-resume-optimization'],

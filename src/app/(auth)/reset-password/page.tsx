@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase-browser'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { track } from '@/lib/track'
+import AuthError from '@/components/auth/AuthError'
 
 export default function ResetPasswordPage() {
   const [password, setPassword] = useState('')
@@ -12,8 +14,12 @@ export default function ResetPasswordPage() {
   const [done, setDone] = useState(false)
   const [error, setError] = useState('')
   const [show, setShow] = useState(false)
-  const supabase = createClient()
+  const [supabase] = useState(() => createClient())
   const router = useRouter()
+
+  useEffect(() => {
+    track('auth_page_view', { meta: { page: 'reset_password' } })
+  }, [])
 
   // Supabase puts the recovery token in the URL hash — this handles the session
   useEffect(() => {
@@ -34,8 +40,10 @@ export default function ResetPasswordPage() {
     const { error } = await supabase.auth.updateUser({ password })
     setLoading(false)
     if (error) {
+      track('password_update_failed', { error_message: error.message })
       setError(error.message)
     } else {
+      track('password_updated', {})
       setDone(true)
       setTimeout(() => router.push('/dashboard'), 3000)
     }
@@ -64,16 +72,16 @@ export default function ResetPasswordPage() {
               <p className="text-[14px] text-[var(--text-muted)] mb-8 text-center">Choose a strong password for your account</p>
 
               {error && (
-                <div role="alert" className="p-3 rounded-xl bg-[var(--red-dim)] border border-[var(--border)] text-[13px] text-[var(--red)] mb-6">
-                  {error}
-                </div>
+                <AuthError error={error} />
               )}
 
               <form onSubmit={handleReset} className="space-y-4">
                 <div>
-                  <label className="block text-[12px] font-semibold text-[var(--text-muted)] mb-2">New Password</label>
+                  <label htmlFor="reset-password" className="block text-[12px] font-semibold text-[var(--text-muted)] mb-2">New Password</label>
                   <div className="relative">
                     <input
+                      id="reset-password"
+                      autoComplete="new-password"
                       type={show ? 'text' : 'password'}
                       value={password}
                       onChange={e => setPassword(e.target.value)}
@@ -92,9 +100,9 @@ export default function ResetPasswordPage() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-[12px] font-semibold text-[var(--text-muted)] mb-2">Confirm Password</label>
+                  <label htmlFor="reset-confirm" className="block text-[12px] font-semibold text-[var(--text-muted)] mb-2">Confirm Password</label>
                   <input
-                    type={show ? 'text' : 'password'}
+                    id="reset-confirm" autoComplete="new-password" type={show ? 'text' : 'password'}
                     value={confirm}
                     onChange={e => setConfirm(e.target.value)}
                     required
