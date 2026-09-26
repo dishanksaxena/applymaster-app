@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server'
-import { isTrackEvent } from '@/lib/track-events'
+import { isTrackEvent, SERVER_ONLY_EVENTS } from '@/lib/track-events'
 import { recordEvent } from '@/lib/track-server'
 import { createClient } from '@/lib/supabase-server'
 
@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
     if (limited(ip)) return noContent()
 
     const body = JSON.parse(raw)
-    if (!isTrackEvent(body.event)) return noContent()
+    if (!isTrackEvent(body.event) || SERVER_ONLY_EVENTS.has(body.event)) return noContent()
 
     // Attach the user when there is a session, so a failure after sign-in
     // (a password change, say) is tied to the account.

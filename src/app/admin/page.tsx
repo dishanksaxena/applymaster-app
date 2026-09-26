@@ -407,6 +407,65 @@ export default async function AdminPage() {
           )}
         </Card>
 
+        {/* People who tried to pay */}
+        <Card>
+          <SectionHead
+            title="Wanted to upgrade"
+            note="Clicked a paid plan. While payments are off this is recorded instead of a checkout — the list to email the day paid plans open."
+          />
+          {!d.trackingReady ? (
+            <Empty>Starts filling in once tracking tables exist.</Empty>
+          ) : d.upgradeInterest.length === 0 ? (
+            <Empty>Nobody yet.</Empty>
+          ) : (
+            <ul>
+              {d.upgradeInterest.map(u => (
+                <li key={u.email} className="flex flex-wrap items-center justify-between gap-3 px-5 py-2.5" style={{ borderTop: '1px solid var(--border)' }}>
+                  <div>
+                    <div className="text-[13px] font-medium" style={{ color: 'var(--text)' }}>
+                      {u.email}
+                    </div>
+                    <div className="flex gap-1.5 mt-1">
+                      {u.plans.map(p => (
+                        <Pill key={p} tone={p === 'lifetime' ? 'purple' : p === 'elite' ? 'accent' : 'blue'}>
+                          {p}
+                        </Pill>
+                      ))}
+                      <span className="text-[11.5px]" style={{ color: 'var(--text-muted)' }}>
+                        {u.clicks} click{u.clicks === 1 ? '' : 's'} · last {ago(u.last)}
+                      </span>
+                    </div>
+                  </div>
+                  {u.email !== 'unknown' && (
+                    <a
+                      href={`mailto:${u.email}?subject=${encodeURIComponent('ApplyMaster paid plans are open')}`}
+                      className="px-2.5 py-1 rounded-md text-[11.5px] font-semibold"
+                      style={{ background: 'var(--accent-dim)', color: 'var(--accent)' }}
+                    >
+                      Email
+                    </a>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+          {d.planChanges.length > 0 && (
+            <div className="px-5 py-3 text-[12px]" style={{ borderTop: '1px solid var(--border)', color: 'var(--text-muted)' }}>
+              <div className="font-semibold mb-1" style={{ color: 'var(--text)' }}>
+                Payment events
+              </div>
+              {d.planChanges.map((e, i) => (
+                <div key={i}>
+                  {ago(e.created_at)} ·{' '}
+                  {e.event === 'plan_changed'
+                    ? `${e.email ?? 'account'} ${String(e.meta?.from ?? '?')} → ${String(e.meta?.to ?? '?')}`
+                    : <span style={{ color: 'var(--red)' }}>webhook problem: {e.error_message}</span>}
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+
         <div className="grid lg:grid-cols-2 gap-5">
           {/* Funnel */}
           <Card>

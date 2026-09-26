@@ -103,14 +103,30 @@ export default function SettingsPage() {
     if (error) { setResetMsg(error.message) } else { setResetMsg('Password reset email sent! Check your inbox.') }
   }
 
+  /* Paid plans are not open yet (the payment store is not activated). The
+     server records the interest and says so; this used to redirect to a
+     checkout link that answered 404. */
   const handleCheckout = async (plan: string) => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
     try {
-      const response = await fetch('/api/checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user_id: user.id, email: user.email, plan }) })
-      const { url } = await response.json()
-      if (url) window.location.href = url
-    } catch { toast.error('Failed to start checkout') }
+      const response = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan }),
+      })
+      const json = await response.json().catch(() => ({}))
+      if (json.url) {
+        window.location.href = json.url
+        return
+      }
+      if (json.waitlist) {
+        const name = plan.charAt(0).toUpperCase() + plan.slice(1)
+        toast.success(`You’re on the list for ${name}. Paid plans open shortly — we’ll email you the moment they do. Everything you use today stays free meanwhile.`)
+        return
+      }
+      toast.error(json.error || 'Checkout is unavailable right now')
+    } catch {
+      toast.error('Checkout is unavailable right now')
+    }
   }
 
   const handleSignOut = async () => { await supabase.auth.signOut(); router.push('/'); router.refresh() }

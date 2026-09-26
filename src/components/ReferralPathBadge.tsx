@@ -85,7 +85,14 @@ export default function ReferralPathBadge({
         c.rows
           .filter(r => {
             const n = norm(r.company)
-            return n && (n === target || n.includes(target) || target.includes(n))
+            if (!n || !target) return false
+            if (n === target) return true
+            /* Substring matching catches "Stripe" vs "Stripe Payments", but
+               on short names it invents paths: a contact at Meta is not a
+               way into Metabase. Only allow it when the shorter name is
+               long enough to be distinctive and starts the longer one. */
+            const [short, long] = n.length <= target.length ? [n, target] : [target, n]
+            return short.length >= 5 && long.startsWith(short)
           })
           .map(r => ({ id: r.id, name: r.name, title: r.title, can_refer: r.can_refer }))
       )

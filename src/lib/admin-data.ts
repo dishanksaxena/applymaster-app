@@ -137,6 +137,15 @@ export async function loadAdminData() {
     admin.from('support_messages').select('*').order('created_at', { ascending: false }).limit(200),
   ])
 
+  // All-time, not the 30-day window: people who tried to pay are the list
+  // to email the day payments open, however long ago they clicked.
+  const { data: payRows } = await admin
+    .from('app_events')
+    .select('created_at, event, email, user_id, error_message, meta')
+    .in('event', ['upgrade_interest', 'plan_changed', 'payment_webhook_failed'])
+    .order('created_at', { ascending: false })
+    .limit(1000)
+
   const trackingReady = !isMissingTable(eventsResult.error)
   const supportReady = !isMissingTable(supportResult.error)
   const events = (eventsResult.data ?? []) as EventRow[]
@@ -266,7 +275,26 @@ export async function loadAdminData() {
   }
   stuck.sort((a, b) => t(b.lastAt) - t(a.lastAt))
 
+  // ── Payments ────────────────────────────────────────────────────────
+  type PayRow = Pick<EventRow, 'created_at' | 'event' | 'email' | 'user_id' | 'error_message' | 'meta'>
+  const pay = (payRows ?? []) as PayRow[]
+  const interest = new Map<string, { email: string; plans: Set<string>; clicks: number; last: string }>()
+  for (const e of pay.filter(e => e.event === 'upgrade_interest')) {
+    const key = e.email || e.user_id || 'unknown'
+    const cur = interest.get(key) ?? { email: e.email || 'unknown', plans: new Set<string>(), clicks: 0, last: e.created_at }
+    if (typeof e.meta?.plan === 'string') cur.plans.add(e.meta.plan)
+    cur.clicks += 1
+    if (e.created_at > cur.last) cur.last = e.created_at
+    interest.set(key, cur)
+  }
+  const upgradeInterest = [...interest.values()]
+    .map(i => ({ ...i, plans: [...i.plans] }))
+    .sort((a, b) => t(b.last) - t(a.last))
+  const planChanges = pay.filter(e => e.event === 'plan_changed' || e.event === 'payment_webhook_failed').slice(0, 30)
+
   return {
+    upgradeInterest,
+    planChanges,
     trackingReady,
     supportReady,
     usersError: usersResult.error,

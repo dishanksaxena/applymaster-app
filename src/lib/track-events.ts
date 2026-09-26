@@ -38,6 +38,12 @@ export const TRACK_EVENTS = [
   'password_updated',
   'password_update_failed',
 
+  // Someone chose a paid plan. While the payment store is not live, this is
+  // recorded instead of sending them to a checkout that cannot take money.
+  'upgrade_interest',
+  'plan_changed',
+  'payment_webhook_failed',
+
   'support_opened',
   'support_submitted',
   'support_failed',
@@ -54,13 +60,28 @@ export type TrackProps = {
   meta?: Record<string, unknown>
 }
 
+/**
+ * Events only the server may record. /api/track refuses them, so a browser
+ * cannot forge a successful Google sign-in or a plan change into the log.
+ */
+export const SERVER_ONLY_EVENTS = new Set<TrackEvent>([
+  'oauth_callback_success',
+  'oauth_callback_failed',
+  'upgrade_interest',
+  'plan_changed',
+  'payment_webhook_failed',
+  'support_submitted',
+  'support_failed',
+])
+
 export const isTrackEvent = (e: unknown): e is TrackEvent =>
   typeof e === 'string' && (TRACK_EVENTS as readonly string[]).includes(e)
 
 /** Outcome implied by the event name when the caller does not say. */
 export function outcomeOf(event: TrackEvent): TrackProps['outcome'] {
   if (event === 'auth_page_view' || event === 'support_opened' || event === 'app_open') return 'view'
+  if (event === 'upgrade_interest') return 'attempt'
   if (/_(failed|existing_account)$/.test(event)) return 'failure'
-  if (/_(success|submitted|updated|requested)$/.test(event) || event === 'confirm_resend') return 'success'
+  if (/_(success|submitted|updated|requested|changed)$/.test(event) || event === 'confirm_resend') return 'success'
   return 'attempt'
 }

@@ -256,9 +256,9 @@ export default function AutoApplyPage() {
   }
 
   const modes = [
-    { id: 'off' as const, label: 'Off', desc: 'Auto-apply disabled', color: 'var(--text-faint)', icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> },
-    { id: 'copilot' as const, label: 'Copilot', desc: 'Review before each application is sent', color: 'var(--blue)', icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> },
-    { id: 'autopilot' as const, label: 'Autopilot', desc: 'AI applies automatically to matching jobs', color: 'var(--green)', icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><polygon points="13,2 3,14 12,14 11,22 21,10 12,10"/></svg> },
+    { id: 'off' as const, label: 'Off', desc: 'Nothing runs. Search and apply yourself.', color: 'var(--text-faint)', icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> },
+    { id: 'copilot' as const, label: 'Copilot', desc: 'New matches queued every morning for you to review', color: 'var(--blue)', icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> },
+    { id: 'autopilot' as const, label: 'Autopilot', desc: 'Your full daily limit of matches, queued every morning', color: 'var(--green)', icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><polygon points="13,2 3,14 12,14 11,22 21,10 12,10"/></svg> },
   ]
 
   if (!mounted) return <div className="p-8" />
@@ -592,8 +592,9 @@ export default function AutoApplyPage() {
               <div>
                 <div className="text-[13px] font-bold text-[var(--blue)] mb-1">How Auto-Apply Works</div>
                 <div className="text-[12px] text-[var(--text-muted)] leading-relaxed space-y-1">
-                  <p>• <strong className="text-[var(--text-secondary)]">Copilot:</strong> AI finds matching jobs and queues them for your review — you approve before each send.</p>
-                  <p>• <strong className="text-[var(--text-secondary)]">Autopilot:</strong> AI applies automatically to jobs above your match threshold (Elite plan feature).</p>
+                  <p>• <strong className="text-[var(--text-secondary)]">Every morning</strong> we search every live source for your target roles, score each posting against your preferences, and queue the best new ones in Applications — up to your daily limit.</p>
+                  <p>• <strong className="text-[var(--text-secondary)]">You send each one.</strong> We fill the employer’s real form for you, but most application forms are protected by a CAPTCHA that requires a person — so nothing is marked applied until it was actually sent.</p>
+                  <p>• <strong className="text-[var(--text-secondary)]">Know someone there?</strong> Matches at companies in your network are flagged, so you can ask for a referral before applying cold.</p>
                   <p>• Activity logs will appear here once applications start processing.</p>
                 </div>
               </div>
@@ -655,7 +656,7 @@ export default function AutoApplyPage() {
               {[
                 { icon: '📄', title: 'Resume Tailoring', desc: 'ATS keywords injected per job', active: godModeTailorResume, toggle: () => setGodModeTailorResume(v => !v) },
                 { icon: '✉️', title: 'Cover Letter', desc: 'Personalized letter per job', active: godModeCoverLetter, toggle: () => setGodModeCoverLetter(v => !v) },
-                { icon: '🎯', title: 'ATS Submission', desc: 'Direct API: Greenhouse, Lever, Ashby', active: true, toggle: () => {} },
+                { icon: '🎯', title: 'Form filling', desc: 'Fills the employer’s real form. Stops at CAPTCHAs; never answers voluntary EEO questions', active: true, toggle: () => {} },
               ].map((item, i) => (
                 <div key={i}
                   onClick={item.toggle}

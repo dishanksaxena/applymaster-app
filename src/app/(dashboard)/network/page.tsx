@@ -299,12 +299,14 @@ function DraftDialog({
   connection,
   onClose,
   onSaved,
+  initialRole = '',
 }: {
   connection: Connection
   onClose: () => void
   onSaved: () => void
+  initialRole?: string
 }) {
-  const [jobTitle, setJobTitle] = useState('')
+  const [jobTitle, setJobTitle] = useState(initialRole)
   const [draft, setDraft] = useState('')
   const [requestId, setRequestId] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -540,6 +542,8 @@ export default function NetworkPage() {
   const [searchError, setSearchError] = useState('')
 
   const [drafting, setDrafting] = useState<Connection | null>(null)
+  const [linkedRole, setLinkedRole] = useState('')
+  const linkHandled = useRef(false)
 
   const loadAll = useCallback(async () => {
     const [c, r] = await Promise.all([
@@ -554,6 +558,24 @@ export default function NetworkPage() {
   useEffect(() => {
     loadAll()
   }, [loadAll])
+
+  /* Arriving from a job card's "warm paths" badge: ?company=Stripe&role=...
+     The badge has always linked here with that context, and this page used
+     to ignore it — the click landed on an empty search. Now it runs the
+     search for that company and carries the role into the draft. */
+  useEffect(() => {
+    if (loading || linkHandled.current) return
+    linkHandled.current = true
+    const params = new URLSearchParams(window.location.search)
+    const company = params.get('company')
+    if (!company) return
+    setLinkedRole(params.get('role') || '')
+    const q = `Who can refer me at ${company}?`
+    setQuery(q)
+    setTab('find')
+    search(undefined, q)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading])
 
   /* Takes an explicit term so a click-to-search shortcut does not race the
      state update and search the previous query. */
@@ -1050,6 +1072,7 @@ export default function NetworkPage() {
           connection={drafting}
           onClose={() => setDrafting(null)}
           onSaved={loadAll}
+          initialRole={linkedRole}
         />
       )}
     </div>
