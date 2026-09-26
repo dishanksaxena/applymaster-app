@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { isCronRequest } from '@/lib/cron-auth'
 
 // Lightweight ping to keep Supabase from pausing on the free tier (7-day inactivity limit)
-export async function GET() {
+export async function GET(req: Request) {
+  if (!isCronRequest(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   try {
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,

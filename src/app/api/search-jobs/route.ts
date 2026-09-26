@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server'
+import { createClient } from '@/lib/supabase-server'
 
 const ADZUNA_APP_ID = process.env.ADZUNA_APP_ID
 const ADZUNA_APP_KEY = process.env.ADZUNA_APP_KEY
@@ -112,6 +113,12 @@ async function searchRemoteOK(query: string) {
 }
 
 export async function POST(req: NextRequest) {
+  // Every search spends Adzuna quota; only signed-in people may spend it.
+  const {
+    data: { user },
+  } = await createClient().auth.getUser()
+  if (!user) return Response.json({ error: 'Sign in to search' }, { status: 401 })
+
   try {
     const { query, location, country = 'US', remote, page = 1, maxDaysOld = 30 } = await req.json()
 

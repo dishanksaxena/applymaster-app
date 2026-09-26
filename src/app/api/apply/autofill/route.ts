@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server'
+import { signResumeUrl } from '@/lib/resume-files'
 import { createClient } from '@/lib/supabase-server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
@@ -44,19 +45,6 @@ const anthropic = new Anthropic()
  * read the file back got nothing. A short-lived signed URL is the correct
  * handle for a private object.
  */
-async function signedResumeUrl(publicUrl: string): Promise<string | null> {
-  const marker = '/object/public/resumes/'
-  const i = publicUrl.indexOf(marker)
-  if (i === -1) return publicUrl // already signed, or stored elsewhere
-
-  const path = decodeURIComponent(publicUrl.slice(i + marker.length))
-  const admin = createAdminClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
-  const { data } = await admin.storage.from('resumes').createSignedUrl(path, 600)
-  return data?.signedUrl ?? null
-}
 
 function sponsorshipFrom(status?: string | null): boolean | null {
   if (!status) return null
@@ -208,7 +196,7 @@ export async function POST(req: NextRequest) {
         country: prefs?.country_preference || null,
         linkedin: profile.linkedin_url || parsed?.linkedin_url || null,
         website: profile.portfolio_url || null,
-        resumeUrl: await signedResumeUrl(resume.file_url),
+        resumeUrl: await signResumeUrl(resume.file_url),
         resumeFileName: resume.name || 'resume.pdf',
         coverLetter: cover_letter || null,
       },

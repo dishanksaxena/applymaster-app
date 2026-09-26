@@ -87,7 +87,11 @@ export async function POST(req: NextRequest) {
     const { data: prefs } = await supabase
       .from('job_preferences').select('*').eq('user_id', user.id).maybeSingle()
 
-    const searchKeywords: string[] = keywords || prefs?.job_titles || ['software engineer', 'product manager', 'data scientist']
+    // This read prefs.job_titles, a column that has never existed, so every
+    // scan fell back to the same three generic titles regardless of what the
+    // person was looking for.
+    const ownRoles = [...(prefs?.target_roles || []), prefs?.desired_job_title].filter(Boolean) as string[]
+    const searchKeywords: string[] = keywords?.length ? keywords : ownRoles.length ? ownRoles : ['software engineer', 'product manager', 'data scientist']
 
     // Scan all portals in parallel — limit to first N boards each for speed
     const ghResults = await Promise.all(

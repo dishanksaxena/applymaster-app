@@ -1,4 +1,6 @@
 import { NextRequest } from 'next/server'
+import { createClient } from '@/lib/supabase-server'
+import { htmlToPdf, safeFilename, pdfResponse } from '@/lib/pdf'
 
 export const maxDuration = 60
 
@@ -14,22 +16,6 @@ export const maxDuration = 60
  * This renders the resume in a browser and prints it, which is the same
  * path a person would take and produces a file an ATS can read.
  */
-
-/** Launch a browser that works locally and on a serverless host. */
-async function launch() {
-  const serverless = Boolean(process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.VERCEL)
-  if (serverless) {
-    const chromium = (await import('@sparticuz/chromium')).default
-    const { chromium: pw } = await import('playwright-core')
-    return pw.launch({
-      args: chromium.args,
-      executablePath: await chromium.executablePath(),
-      headless: true,
-    })
-  }
-  const { chromium: pw } = await import('playwright')
-  return pw.launch({ headless: true })
-}
 
 const esc = (s: string) =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -144,38 +130,23 @@ function toHtml(text: string, fallbackName: string): string {
 }
 
 export async function POST(req: NextRequest) {
-  let browser: Awaited<ReturnType<typeof launch>> | null = null
+  // Launching a browser is expensive; an open endpoint is a cost lever for
+  // anyone who finds it.
+  const {
+    data: { user },
+  } = await createClient().auth.getUser()
+  if (!user) return Response.json({ error: 'Sign in to export' }, { status: 401 })
+
   try {
     const { content, name, filename } = await req.json()
     if (!content || typeof content !== 'string' || !content.trim()) {
       return Response.json({ error: 'No resume content to export' }, { status: 400 })
     }
 
-    browser = await launch()
-    const page = await browser.newPage()
-    await page.setContent(toHtml(content, name || 'Resume'), { waitUntil: 'networkidle' })
-    const pdf = await page.pdf({ format: 'A4', printBackground: true })
-
-    const safe = String(filename || name || 'resume')
-      .replace(/[^a-z0-9\-_ ]/gi, '')
-      .trim()
-      .replace(/\s+/g, '-') || 'resume'
-
-    return new Response(new Uint8Array(pdf), {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="${safe}.pdf"`,
-        'Content-Length': String(pdf.length),
-      },
-    })
+    const pdf = await htmlToPdf(toHtml(content, name || 'Resume'))
+    return pdfResponse(pdf, safeFilename(filename || name, 'resume'))
   } catch (err) {
     console.error('resume export-pdf error:', err)
-    return Response.json(
-      { error: err instanceof Error ? err.message.slice(0, 200) : 'Could not build the PDF' },
-      { status: 500 }
-    )
-  } finally {
-    await browser?.close().catch(() => {})
+    return Response.json({ error: 'Could not build the PDF' }, { status: 500 })
   }
 }

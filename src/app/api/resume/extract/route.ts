@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { createClient as createSessionClient } from '@/lib/supabase-server';
 import Anthropic from '@anthropic-ai/sdk';
 
 export const maxDuration = 60;
@@ -206,18 +207,27 @@ export async function POST(request: NextRequest) {
   console.log('[extract] ===== Resume extract endpoint called =====');
 
   try {
+    /* SECURITY: the account this writes to comes from the session, never
+       from the request. This route used to read `userId` from the form body
+       and then write with the service-role key — which bypasses row-level
+       security — so anyone, signed in or not, could overwrite another
+       person's profile and primary resume by sending their id. The client
+       still sends `userId`; it is ignored. */
+    const {
+      data: { user },
+    } = await createSessionClient().auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Sign in to upload a resume' }, { status: 401 });
+    }
+    const userId = user.id;
+
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
-    const userId = formData.get('userId') as string | null;
 
-    console.log('[extract] userId:', userId);
     console.log('[extract] file:', file?.name, file?.type, file?.size, 'bytes');
 
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
-    }
-    if (!userId) {
-      return NextResponse.json({ error: 'No userId provided' }, { status: 400 });
     }
 
     const arrayBuffer = await file.arrayBuffer();

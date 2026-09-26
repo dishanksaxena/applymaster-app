@@ -224,11 +224,14 @@ export default function ReceiptDrawer({
                 {receipt.resume_version_label ?? (
                   <span style={{ color: 'var(--text-muted)' }}>Not recorded</span>
                 )}
-                {receipt.resume_file_url && (
+                {(receipt.resume_file_url || receipt.resume_id) && (
                   <>
                     {' · '}
+                    {/* The stored URL points at a private bucket and never
+                        worked as a link; this route checks ownership and
+                        signs it. */}
                     <a
-                      href={receipt.resume_file_url}
+                      href={`/api/resume/file?receipt=${receipt.id}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="underline underline-offset-2"

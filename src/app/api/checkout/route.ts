@@ -1,3 +1,14 @@
+import { createClient } from '@/lib/supabase-server'
+
+/**
+ * Start a LemonSqueezy checkout for the signed-in person.
+ *
+ * The buyer's identity comes from the session. It used to come from the
+ * request body — user_id and email were whatever the browser sent — and
+ * that user_id is what the payment webhook uses to decide whose plan to
+ * upgrade, so it has to be one the server vouches for.
+ */
+
 const products: Record<string, string> = {
   pro: process.env.LEMONSQUEEZY_PRODUCT_ID_PRO || '921495',
   elite: process.env.LEMONSQUEEZY_PRODUCT_ID_ELITE || '921497',
@@ -5,24 +16,24 @@ const products: Record<string, string> = {
 }
 
 export async function POST(request: Request) {
+  const {
+    data: { user },
+  } = await createClient().auth.getUser()
+  if (!user?.email) return Response.json({ error: 'Sign in to upgrade' }, { status: 401 })
+
   try {
-    const { user_id, email, plan } = await request.json()
+    const { plan } = await request.json()
+    if (!plan || !products[plan]) return Response.json({ error: 'Unknown plan' }, { status: 400 })
 
-    if (!email || !plan || !products[plan]) {
-      return Response.json({ error: 'Missing email or invalid plan' }, { status: 400 })
-    }
-
-    const productId = products[plan]
     const storeId = process.env.LEMONSQUEEZY_STORE_ID || '326546'
-    const successUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://applymaster.ai'}/dashboard?plan=${plan}`
-    const cancelUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://applymaster.ai'}/settings`
-
-    // Lemonsqueezy checkout URL format
-    const checkoutUrl = `https://checkout.lemonsqueezy.com/buy/${storeId}/${productId}?checkout[email]=${encodeURIComponent(email)}&checkout[custom][user_id]=${encodeURIComponent(user_id)}`
-
-    return Response.json({ url: checkoutUrl })
+    const params = new URLSearchParams({
+      'checkout[email]': user.email,
+      'checkout[custom][user_id]': user.id,
+      'checkout[custom][plan]': plan,
+    })
+    return Response.json({ url: `https://checkout.lemonsqueezy.com/buy/${storeId}/${products[plan]}?${params}` })
   } catch (error) {
-    console.error('Lemonsqueezy error:', error)
+    console.error('checkout error:', error)
     return Response.json({ error: 'Failed to create checkout session' }, { status: 500 })
   }
 }
