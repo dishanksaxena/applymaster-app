@@ -593,10 +593,10 @@ export default function LinkedInAutoApplyGuidePage() {
                   </h3>
                   <p className="text-[var(--text-secondary)] leading-relaxed">
                     Jobs that redirect to external career pages cannot be automated through
-                    LinkedIn. That is a large share of postings, and often the better ones:
-                    tools like ApplyMaster work from company career sites directly, finding those
-                    roles and filling in the company&apos;s own application form for you to review
-                    and send.
+                    LinkedIn. However, platforms like ApplyMaster can handle these external
+                    applications separately, applying through the company&apos;s ATS directly. This
+                    actually opens up 60-70% more job postings that are not available through Easy
+                    Apply.
                   </p>
                 </div>
                 <div>

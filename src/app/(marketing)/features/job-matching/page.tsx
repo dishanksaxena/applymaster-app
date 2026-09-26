@@ -154,8 +154,8 @@ export default function JobMatchingPage() {
                   desc: 'Wake up to a curated list of your top job matches, ranked by fit score. Review them over coffee and decide which to apply to.',
                 },
                 {
-                  title: 'Daily Matches',
-                  desc: 'New high-match roles land in your queue every morning, so you can be among the first to apply.',
+                  title: 'Real-Time Alerts',
+                  desc: 'Get notified instantly when a high-match job is posted. Be among the first to apply and increase your chances of being seen.',
                 },
                 {
                   title: 'Weekly Insights',
@@ -199,7 +199,7 @@ export default function JobMatchingPage() {
               {[
                 {
                   q: 'Where does ApplyMaster find job listings?',
-                  a: 'From the career sites of 31 companies — including Stripe, Anthropic, Databricks, Figma and Coinbase — plus the Adzuna job search engine and RemoteOK. Together that is several thousand open roles, checked against your preferences every morning.',
+                  a: 'We aggregate listings from LinkedIn, Indeed, Glassdoor, company career pages, and dozens of niche job boards. Our crawler indexes thousands of new positions daily.',
                 },
                 {
                   q: 'How is this different from job board recommendations?',

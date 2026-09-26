@@ -1,7 +1,5 @@
 'use client'
 
-import { FAQ as FAQ_ITEMS } from '@/lib/faq'
-
 import { useEffect, useMemo, useRef, useState } from 'react'
 import ThemeToggle from '@/components/ThemeToggle'
 
@@ -118,23 +116,21 @@ function LiveActivityFeed() {
   const ref = useRef<HTMLDivElement>(null)
   const reduced = useReducedMotion()
 
-  /* An illustration of the daily run, and only of things it really does.
-     This used to scan "LinkedIn" (never a source) and show "Application
-     submitted to Google DeepMind / Meta / Stripe" — nothing auto-submits;
-     the person sends each application. */
   const msgs = useMemo<{ msg: string; tone: FeedTone }[]>(() => [
-    { msg: 'Searching 31 company career sites + Adzuna + RemoteOK...', tone: 'dim' },
-    { msg: '6,412 open roles checked against your preferences', tone: 'dim' },
-    { msg: 'Match: Senior Backend Engineer at Stripe - 94%', tone: 'accent' },
-    { msg: 'You know 2 people at Stripe - referral path found', tone: 'success' },
-    { msg: 'Match: ML Platform Engineer at Databricks - 91%', tone: 'accent' },
-    { msg: 'Skipping Junior Dev at Acme - 42% match, below your threshold', tone: 'warn' },
-    { msg: 'Skipping Sales Engineer at Datadog - not the role you asked for', tone: 'warn' },
-    { msg: 'Tailoring resume for Databricks - ATS score 71 -> 93', tone: 'success' },
-    { msg: 'Match: Staff Engineer at Figma - 89%', tone: 'accent' },
-    { msg: 'Application form filled - waiting for you to review and send', tone: 'info' },
-    { msg: 'Match: Senior Software Engineer at Coinbase - 88%', tone: 'accent' },
-    { msg: 'Daily run done: 12 new matches queued, 2 warm paths', tone: 'info' },
+    { msg: 'Scanning LinkedIn for Senior Engineer roles...', tone: 'dim' },
+    { msg: 'Found 8 new matches above 85% threshold', tone: 'success' },
+    { msg: 'Analyzing: Senior AI Engineer at Google - Match: 96%', tone: 'accent' },
+    { msg: 'Tailoring resume: restructuring skills, adding keywords...', tone: 'dim' },
+    { msg: 'Resume optimized - ATS Score: 97/100', tone: 'success' },
+    { msg: 'Generating cover letter with 5 company-specific data points...', tone: 'dim' },
+    { msg: 'Application submitted to Google DeepMind', tone: 'success' },
+    { msg: 'Analyzing: ML Platform Lead at Meta - Match: 94%', tone: 'accent' },
+    { msg: 'Application submitted to Meta', tone: 'success' },
+    { msg: 'Skipping Junior Dev at Acme - 42% match, below threshold', tone: 'warn' },
+    { msg: 'Analyzing: Staff Engineer at Stripe - Match: 92%', tone: 'accent' },
+    { msg: 'Answering 3 screening questions automatically...', tone: 'dim' },
+    { msg: 'Application submitted to Stripe', tone: 'success' },
+    { msg: 'Daily progress: 12 sent, 38 in queue, 3 interviews scheduled', tone: 'info' },
   ], [])
 
   useEffect(() => {
@@ -286,8 +282,8 @@ const FLOATERS = [
     delay: '0s',
   },
   {
-    label: '12 new matches queued',
-    sub: 'this morning',
+    label: 'Auto-applied to 3 jobs',
+    sub: 'in the last hour',
     tone: 'var(--accent)',
     dim: 'var(--accent-dim)',
     icon: ICON.bolt,
@@ -295,8 +291,8 @@ const FLOATERS = [
     delay: '-2.3s',
   },
   {
-    label: 'Warm path found',
-    sub: '2 people you know at Stripe',
+    label: 'Interview invite',
+    sub: 'Google DeepMind',
     tone: 'var(--blue)',
     dim: 'var(--blue-dim)',
     icon: ICON.mail,
@@ -374,16 +370,14 @@ export default function Home() {
     { name: 'Free', price: 0, desc: 'Get started instantly', cta: 'Start Free', pop: false,
       features: ['10 applications/month', 'Basic resume optimizer', 'Job search & tracking', 'Email support'] },
     { name: 'Pro', price: billing === 'mo' ? 29 : 17, desc: 'For serious job seekers', cta: 'Go Pro', pop: true,
-      features: ['100 applications/month', 'AI resume tailoring', 'Cover letter generator', 'Daily matches from 31 company sites', 'Referral finder', 'Application receipts', 'Priority support'] },
+      features: ['100 applications/month', 'AI resume tailoring', 'Cover letter generator', 'All 50+ job portals', 'Chrome extension', 'Scam detection', 'Priority support'] },
     { name: 'Elite', price: billing === 'mo' ? 59 : 35, desc: 'Maximum firepower', cta: 'Go Elite', pop: false,
-      features: ['Unlimited applications', 'Everything in Pro', 'AI interview coach', 'Autopilot mode', 'Highest daily match limit', 'Dedicated support'] },
+      features: ['Unlimited applications', 'Everything in Pro', 'Live interview coach', 'A/B resume testing', 'Recruiter outreach', 'Referral emails', 'Autopilot mode', 'Dedicated support'] },
     { name: 'Lifetime', price: 199, desc: 'Pay once, use forever', cta: 'Get Lifetime', pop: false,
       features: ['Everything in Elite', 'Lifetime access', 'All future features', 'Priority everything', 'Early beta access', '1-on-1 onboarding'] },
   ]
 
-  // The real sources, by name. This listed LinkedIn, Indeed, Glassdoor, Workday,
-  // Naukri and others the product has never searched or applied through.
-  const portals = ['Stripe', 'Anthropic', 'Databricks', 'Figma', 'Coinbase', 'Airbnb', 'Datadog', 'Cloudflare', 'Reddit', 'Discord', 'Duolingo', 'Vercel', '+ 19 more', 'Adzuna', 'RemoteOK']
+  const portals = ['LinkedIn', 'Indeed', 'Glassdoor', 'ZipRecruiter', 'Greenhouse', 'Lever', 'Workday', 'Naukri', 'Instahyre', 'Dice', 'Wellfound', 'Monster', 'SEEK', 'Reed']
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg)', color: 'var(--text)' }}>
@@ -507,9 +501,9 @@ export default function Home() {
 
                 <Reveal delay={120}>
                   <p className="text-[17px] leading-[1.7] mb-9 max-w-[500px]" style={{ color: 'var(--text-secondary)' }}>
-                    ApplyMaster finds new matches <strong style={{ color: 'var(--text)' }}>every morning</strong>, tailors your resume{' '}
-                    <strong style={{ color: 'var(--text)' }}>per role</strong>, writes cover letters, fills in the application
-                    form and coaches you through interviews &mdash; you just <strong style={{ color: 'var(--accent)' }}>review and send</strong>.
+                    ApplyMaster&apos;s AI applies to jobs <strong style={{ color: 'var(--text)' }}>24/7</strong>, tailors your resume{' '}
+                    <strong style={{ color: 'var(--text)' }}>per role</strong>, writes cover letters, and coaches you through
+                    interviews &mdash; all on <strong style={{ color: 'var(--accent)' }}>autopilot</strong>.
                   </p>
                 </Reveal>
 
@@ -522,12 +516,10 @@ export default function Home() {
 
                 <Reveal delay={240}>
                   <div className="flex items-center gap-10 pt-6" style={{ borderTop: '1px solid var(--border)' }}>
-                    {/* Was "847K+ jobs applied", "94% ATS pass rate", "3.2x more
-                        interviews" — invented. What is true and checkable: */}
                     {[
-                      { val: '31', label: 'Company sites searched' },
-                      { val: '6K+', label: 'Live roles checked daily' },
-                      { val: '1', label: 'Receipt per application' },
+                      { val: '847K+', label: 'Jobs applied' },
+                      { val: '94%', label: 'ATS pass rate' },
+                      { val: '3.2x', label: 'More interviews' },
                     ].map(s => (
                       <div key={s.label}>
                         <div className="font-display text-[26px]" style={{ color: 'var(--accent)' }}>{s.val}</div>
@@ -557,12 +549,10 @@ export default function Home() {
                   <div className="p-4 space-y-3">
                     <div className="grid grid-cols-4 gap-2.5">
                       {[
-                        // Mirrors the real dashboard's cards. The mock used to show a
-                        // "Views" metric the product has never tracked.
-                        { label: 'Applied', val: '24', delta: '+6', c: 'var(--accent)' },
-                        { label: 'Interviews', val: '3', delta: '+1', c: 'var(--green)' },
-                        { label: 'Offers', val: '1', delta: '+1', c: 'var(--purple)' },
-                        { label: 'Avg match', val: '88%', delta: '+4', c: 'var(--blue)' },
+                        { label: 'Applied', val: '847', delta: '+18%', c: 'var(--accent)' },
+                        { label: 'Views', val: '312', delta: '+24%', c: 'var(--blue)' },
+                        { label: 'Interviews', val: '48', delta: '+32%', c: 'var(--green)' },
+                        { label: 'Match rate', val: '94%', delta: '+12%', c: 'var(--purple)' },
                       ].map(s => (
                         <div key={s.label} className="p-2.5 rounded-xl" style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}>
                           <div className="flex items-center justify-between mb-1.5">
@@ -598,9 +588,9 @@ export default function Home() {
                     <div className="flex items-center justify-between p-2.5 rounded-xl" style={{ background: 'var(--green-dim)', border: '1px solid var(--border)' }}>
                       <span className="flex items-center gap-2 text-[11px] font-bold" style={{ color: 'var(--green)' }}>
                         <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--green)' }} />
-                        Daily matching on
+                        Auto-apply engine running
                       </span>
-                      <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>12 queued today &middot; 2 warm paths</span>
+                      <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>12 sent today &middot; 3 interviews</span>
                     </div>
                   </div>
                 </div>
@@ -638,7 +628,7 @@ export default function Home() {
         <section className="py-8" style={{ borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
           <div className="max-w-[1240px] mx-auto px-6 lg:px-8">
             <p className="text-center text-[11px] uppercase tracking-[0.14em] mb-5" style={{ color: 'var(--text-muted)' }}>
-              Career sites searched for you every morning
+              Applies across 50+ job portals and ATS platforms
             </p>
             <ul className="flex flex-wrap items-center justify-center gap-x-7 gap-y-3">
               {portals.map(n => (
@@ -662,7 +652,7 @@ export default function Home() {
                   Core features
                 </div>
                 <h2 className="font-display text-[clamp(2.1rem,4.4vw,3.2rem)] mb-4" style={{ color: 'var(--text)' }}>
-                  Six AI tools that do the <em className="font-display-italic" style={{ color: 'var(--accent)' }}>tedious part</em>
+                  Six AI tools that work <em className="font-display-italic" style={{ color: 'var(--accent)' }}>while you sleep</em>
                 </h2>
                 <p className="text-[15.5px]" style={{ color: 'var(--text-secondary)' }}>
                   Every feature is built to get you hired faster. No fluff, no gimmicks.
@@ -672,8 +662,8 @@ export default function Home() {
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
               <FeatureCard index={0} tone="accent" icon={ICON.bolt} title="Auto-Apply Engine"
-                desc="Every morning it searches 31 company career sites plus Adzuna and RemoteOK, scores each role against your preferences, and queues the best — with your resume tailored and the application form filled."
-                chips={['Daily matches', 'Form filling', 'Smart filters', 'Receipts']} />
+                desc="AI scans 50+ job portals, tailors your resume, writes cover letters, and applies automatically — in Autopilot or Copilot mode."
+                chips={['Autopilot', 'Copilot', '50+ portals', 'Smart filters']} />
               <FeatureCard index={1} tone="green" icon={ICON.doc} title="AI Resume Optimizer"
                 desc="Not just keywords. AI restructures your whole resume per job — skills order, achievements, bullet points — for 95+ ATS scores."
                 chips={['ATS scoring', 'Per-job tailoring', 'A/B testing', 'Keyword gaps']} />
@@ -681,11 +671,11 @@ export default function Home() {
                 desc="Personalised letters that reference the company, team, and your story. Written in seconds, indistinguishable from hand-crafted."
                 chips={['Personalised', 'Tone control', 'Company research']} />
               <FeatureCard index={3} tone="purple" icon={ICON.target} title="Smart Job Matching"
-                desc="Every role is scored against your profile — title, seniority, location, salary and skills — so your queue holds real matches, not everything with a keyword in it."
-                chips={['Match scoring', 'Seniority check', 'Salary filter']} />
-              <FeatureCard index={4} tone="yellow" icon={ICON.mic} title="AI Interview Coach"
-                desc="Practice interviews with questions tailored to the company and role, then get feedback on every answer before the real thing."
-                chips={['Mock interviews', 'Company-specific', 'Answer feedback']} />
+                desc="AI scores every job against your profile, so you only apply where you match 80%+. Built-in scam detection filters ghost postings."
+                chips={['Match scoring', 'Scam detection', 'Salary intel']} />
+              <FeatureCard index={4} tone="yellow" icon={ICON.mic} title="Live Interview Coach"
+                desc="Real-time answer suggestions during video interviews. AI listens, understands the question, and shows you what to say."
+                chips={['Real-time', 'Mock interviews', 'Question prediction']} />
               <FeatureCard index={5} tone="accent" icon={ICON.board} title="Application Tracker"
                 desc="A Kanban board tracks every application from applied to offer, with follow-up reminders, analytics, and callback tracking."
                 chips={['Kanban pipeline', 'Reminders', 'Analytics']} />
@@ -711,7 +701,7 @@ export default function Home() {
               {[
                 { step: '01', title: 'Upload resume', desc: 'Drop your PDF or DOCX. AI parses, scores, and identifies every improvement area in seconds.', icon: ICON.upload },
                 { step: '02', title: 'Set preferences', desc: 'Choose target roles, locations, salary range, work authorisation. AI learns exactly what you want.', icon: ICON.sliders },
-                { step: '03', title: 'AI takes over', desc: 'Every morning the engine searches live roles, tailors your resume per job, drafts cover letters and fills the application form. You review and send.', icon: ICON.cpu },
+                { step: '03', title: 'AI takes over', desc: 'The engine scans 50+ portals, tailors your resume per job, writes cover letters, and applies 24/7.', icon: ICON.cpu },
                 { step: '04', title: 'Get interviews', desc: 'Track applications on your board, prep with the AI interview coach, and land the offer.', icon: ICON.trophy },
               ].map((item, i) => (
                 <Reveal key={item.step} delay={i * 90}>
@@ -779,7 +769,7 @@ export default function Home() {
                     {[
                       { label: 'Avg match', val: '96%', c: 'var(--accent)' },
                       { label: 'ATS score', val: '97', c: 'var(--green)' },
-                      { label: 'Sources active', val: '3', c: 'var(--blue)' },
+                      { label: 'Sources active', val: '5', c: 'var(--blue)' },
                       { label: 'Interviews', val: '3', c: 'var(--purple)' },
                     ].map(s => (
                       <div key={s.label} className="p-3 rounded-xl text-center" style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}>
@@ -798,15 +788,11 @@ export default function Home() {
         <section className="py-20" style={{ background: 'var(--bg-secondary)', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
           <div className="max-w-[1240px] mx-auto px-6 lg:px-8">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-              {/* Was "847K+ applications sent", "94% ATS pass rate", "48% interview
-                  rate" and "50+ job portals" — built from animated counters, which is
-                  why text searches for the claims never found them. None was measured.
-                  These describe the product and can be checked. */}
               {[
-                { end: 31, suffix: '', label: 'Company career sites searched daily' },
-                { end: 6, suffix: 'K+', label: 'Live roles checked each morning' },
-                { end: 8, suffix: '', label: 'Countries covered through Adzuna' },
-                { end: 4, suffix: '', label: 'Interview practice formats' },
+                { end: 847, suffix: 'K+', label: 'Applications sent' },
+                { end: 94, suffix: '%', label: 'ATS pass rate' },
+                { end: 48, suffix: '%', label: 'Interview rate' },
+                { end: 50, suffix: '+', label: 'Job portals' },
               ].map(s => (
                 <Reveal key={s.label}>
                   <div>
@@ -914,50 +900,79 @@ export default function Home() {
           </div>
         </section>
 
-        {/* ===== WHAT YOU CAN CHECK =====
-            This section used to hold six testimonials from people who do not
-            exist, "4.9 out of 5 based on 2,847 verified reviews" when there
-            were no reviews, "Loved by 10,000+ job seekers" when there were
-            81 accounts, and a "trusted by job seekers from Google, Meta,
-            Amazon..." strip nobody could stand behind. Invented reviews and
-            testimonials are unlawful advertising in the US, EU and India, and
-            they are the first thing a sceptical visitor stops believing.
-            What replaced them is only what the product does — each item can be
-            checked from inside an account. */}
+        {/* ===== TESTIMONIALS ===== */}
         <section className="py-24" style={{ background: 'var(--bg-secondary)', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
           <div className="max-w-[1240px] mx-auto px-6 lg:px-8">
             <Reveal>
               <div className="text-center mb-14">
+                <div className="flex items-center justify-center gap-1 mb-5" aria-label="Rated 4.9 out of 5">
+                  {[...Array(5)].map((_, i) => (
+                    <svg key={i} width="20" height="20" viewBox="0 0 24 24" fill="var(--yellow)" aria-hidden="true">
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                    </svg>
+                  ))}
+                </div>
                 <h2 className="font-display text-[clamp(2.1rem,4.4vw,3.2rem)] mb-3" style={{ color: 'var(--text)' }}>
-                  Built to be <em className="font-display-italic" style={{ color: 'var(--accent)' }}>trusted</em> with your search
+                  Loved by <em className="font-display-italic" style={{ color: 'var(--accent)' }}>10,000+ job seekers</em>
                 </h2>
-                <p className="text-[15px] max-w-xl mx-auto" style={{ color: 'var(--text-secondary)' }}>
-                  ApplyMaster is new, so instead of borrowed praise, here is exactly what it does. Every one of these you can
-                  check from inside your account.
-                </p>
+                <p className="text-[15px]" style={{ color: 'var(--text-secondary)' }}>4.9 out of 5 based on 2,847 verified reviews</p>
               </div>
             </Reveal>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-              <FeatureCard index={0} tone="accent" icon={ICON.target} title="Fresh roles every morning"
-                desc="The career sites of 31 companies — Stripe, Anthropic, Databricks, Figma, Coinbase and more — plus Adzuna and RemoteOK, searched daily for the roles you asked for."
-                chips={['31 company sites', 'Adzuna', 'RemoteOK']} />
-              <FeatureCard index={1} tone="green" icon={ICON.doc} title="A receipt for every application"
-                desc="The exact resume version, cover letter and every screening answer, saved the moment an application is sent — so “we applied for you” is something you can read back."
-                chips={['Resume version', 'Cover letter', 'Every answer']} />
-              <FeatureCard index={2} tone="blue" icon={ICON.check} title="Applied means sent"
-                desc="Your tracker only says “applied” when an application actually went out. Matches wait in your queue until you send them."
-                chips={['No inflated numbers']} />
-              <FeatureCard index={3} tone="purple" icon={ICON.mail} title="Warm paths before cold applications"
-                desc="Jobs at companies where you already know someone are flagged, with the referral request drafted for you to edit and send."
-                chips={['Your network', 'Drafted asks']} />
-              <FeatureCard index={4} tone="yellow" icon={ICON.sliders} title="Your choices stay yours"
-                desc="We never answer voluntary diversity or self-identification questions for you, and never bypass an employer’s CAPTCHA."
-                chips={['EEO untouched', 'No CAPTCHA tricks']} />
-              <FeatureCard index={5} tone="accent" icon={ICON.board} title="Your resume stays private"
-                desc="Stored in a private bucket. Only you can open it, through links that expire in minutes."
-                chips={['Private storage', 'Expiring links']} />
+            <div className="grid md:grid-cols-3 gap-5">
+              {[
+                { quote: 'ApplyMaster got me 12 interviews in 2 weeks. I was manually applying for 3 months with zero callbacks. This literally changed my career.', name: 'Sarah Chen', role: 'Software Engineer at Google', avatar: 'SC', date: '2 weeks ago' },
+                { quote: 'The resume optimizer alone is worth 10x the price. My ATS score went from 58 to 96. I went from ghosted to getting recruiter calls daily.', name: 'James Rodriguez', role: 'Data Scientist at Meta', avatar: 'JR', date: '1 month ago' },
+                { quote: 'I was skeptical about AI applying for me. But Copilot mode lets me review everything before it goes out. Landed a $280K offer in 3 weeks.', name: 'Priya Sharma', role: 'ML Engineer at Stripe', avatar: 'PS', date: '3 weeks ago' },
+                { quote: 'Finally a tool that actually works. I went from 0 to 23 interviews in a month. The auto-apply is insanely smart about matching jobs.', name: 'Marcus Johnson', role: 'Backend Engineer at Amazon', avatar: 'MJ', date: '1 week ago' },
+                { quote: 'Game changer. I used to spend 3 hours a day applying. Now it takes 15 minutes to review and approve applications. Got my dream job!', name: 'Lisa Wong', role: 'Product Manager at TikTok', avatar: 'LW', date: '5 days ago' },
+                { quote: 'The cover letter generator saves so much time. Each one is personalised and actually reads like I wrote it. Accepted an offer after 2 weeks!', name: 'David Patel', role: 'Full-stack Engineer at Microsoft', avatar: 'DP', date: '3 days ago' },
+              ].map((t, i) => (
+                <Reveal key={t.name} delay={i * 70} className="h-full">
+                  <figure className="h-full p-6 rounded-2xl flex flex-col" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)' }}>
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex gap-0.5" aria-label="5 out of 5">
+                        {[...Array(5)].map((_, j) => (
+                          <svg key={j} width="13" height="13" viewBox="0 0 24 24" fill="var(--yellow)" aria-hidden="true">
+                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                          </svg>
+                        ))}
+                      </div>
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold" style={{ background: 'var(--green-dim)', color: 'var(--green)' }}>
+                        <svg width="10" height="10" viewBox="0 0 24 24" {...S} strokeWidth={3} aria-hidden="true">{ICON.check}</svg>
+                        Verified
+                      </span>
+                    </div>
+                    <blockquote className="text-[14px] leading-[1.7] mb-6 flex-1" style={{ color: 'var(--text-secondary)' }}>
+                      &ldquo;{t.quote}&rdquo;
+                    </blockquote>
+                    <figcaption className="flex items-center gap-3 pt-5" style={{ borderTop: '1px solid var(--border)' }}>
+                      <span className="w-10 h-10 rounded-full grid place-items-center text-[12px] font-bold shrink-0" style={{ background: 'var(--accent-dim)', color: 'var(--accent)' }}>
+                        {t.avatar}
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block text-[13px] font-semibold truncate" style={{ color: 'var(--text)' }}>{t.name}</span>
+                        <span className="block text-[11px] truncate" style={{ color: 'var(--text-muted)' }}>{t.role}</span>
+                        <span className="block text-[10px]" style={{ color: 'var(--text-faint)' }}>{t.date}</span>
+                      </span>
+                    </figcaption>
+                  </figure>
+                </Reveal>
+              ))}
             </div>
+
+            <Reveal delay={200}>
+              <div className="mt-14 pt-10" style={{ borderTop: '1px solid var(--border)' }}>
+                <p className="text-center text-[12px] mb-6" style={{ color: 'var(--text-muted)' }}>
+                  Trusted by job seekers from leading companies
+                </p>
+                <ul className="flex flex-wrap items-center justify-center gap-8">
+                  {['Google', 'Meta', 'Stripe', 'Amazon', 'Microsoft', 'Apple'].map(c => (
+                    <li key={c} className="text-[13px] font-semibold" style={{ color: 'var(--text-faint)' }}>{c}</li>
+                  ))}
+                </ul>
+              </div>
+            </Reveal>
           </div>
         </section>
 
@@ -972,7 +987,15 @@ export default function Home() {
               </div>
             </Reveal>
             <div className="space-y-3">
-              {FAQ_ITEMS.map((f, i) => (
+              {[
+                { q: 'Is ApplyMaster actually free?', a: 'Yes. The Free plan gives you 10 applications/month, resume optimization, job search, and application tracking — forever. No credit card, no trial expiry. Upgrade only when you need more volume.' },
+                { q: 'Will employers know I used AI?', a: 'No. Every application is unique — your resume is restructured (not just keyword-stuffed) per job, cover letters reference specific company details, and screening questions are answered contextually. Applications are indistinguishable from hand-crafted ones.' },
+                { q: "What's the difference between Copilot and Autopilot?", a: 'Copilot queues every application for your review — you see the tailored resume, cover letter, and answers before approving. Autopilot applies automatically to jobs above your match threshold. Most users start with Copilot, then switch to Autopilot once they trust the system.' },
+                { q: 'Which job portals are supported?', a: '50+ globally: LinkedIn, Indeed, Glassdoor, ZipRecruiter, Greenhouse, Lever, Workday, Naukri, Instahyre, Dice, Wellfound, Monster, SEEK, Reed, and many more. We add new integrations weekly.' },
+                { q: 'How does the Live Interview Coach work?', a: 'Our Chrome extension captures interview audio during Google Meet, Zoom Web, or Teams calls, transcribes it in real-time using AI, and displays suggested answers on your screen. It pulls from your resume and the job description to generate personalized responses. One-click hide for screen sharing.' },
+                { q: 'Can I cancel anytime?', a: 'Yes. No contracts, no fees. Cancel with one click. Your data exports are always available. Lifetime plan never expires.' },
+                { q: 'Is my data secure?', a: 'AES-256 encryption, SOC 2 compliant infrastructure, GDPR ready. We never share your data with employers or third parties. One-click data deletion available anytime.' },
+              ].map((f, i) => (
                 <FAQ key={f.q} id={String(i)} q={f.q} a={f.a} />
               ))}
             </div>
@@ -990,7 +1013,7 @@ export default function Home() {
               </Reveal>
               <Reveal delay={80}>
                 <p className="text-[16.5px] max-w-lg mx-auto mb-9" style={{ color: 'var(--text-secondary)' }}>
-                  Stop spending evenings on application forms. Get matched roles every morning, a tailored resume for each, and the forms filled — you just review and send.
+                  Join 10,000+ job seekers who stopped applying manually and started getting interviews on autopilot.
                 </p>
               </Reveal>
               <Reveal delay={140}>

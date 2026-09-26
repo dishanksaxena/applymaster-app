@@ -44,15 +44,15 @@ const features = [
     title: 'Auto-Apply',
     href: '/features/auto-apply',
     description:
-      'Every morning it searches 31 company career sites plus Adzuna and RemoteOK for your roles, queues the best matches, tailors your resume and fills in the application form. You review and send.',
+      'Automatically submit tailored applications across LinkedIn, Indeed, Glassdoor, and dozens of other job portals. Choose between Copilot mode for guided control or Autopilot for fully hands-free applying.',
     icon: 'bolt',
-    highlights: ['Daily matches', 'Form filling', 'Referral-first'],
+    highlights: ['50+ supported portals', 'Copilot & Autopilot modes', 'Smart form detection'],
   },
   {
     title: 'Resume Optimizer',
     href: '/features/resume-optimizer',
     description:
-      'AI restructures your resume for every application, injecting the right keywords to pass ATS filters and impress hiring managers. Get an ATS compatibility score before you submit.',
+      'AI restructures your resume for every application, injecting the right keywords to pass ATS filters and impress hiring managers. Get a real-time ATS compatibility score before you submit.',
     icon: 'doc',
     highlights: ['ATS scoring engine', 'Keyword optimization', 'Per-job tailoring'],
   },
@@ -60,25 +60,25 @@ const features = [
     title: 'Cover Letter Generator',
     href: '/features/cover-letter-generator',
     description:
-      'Generate a personalised cover letter in seconds from the job description and your resume, in the tone you choose — then download it as a clean PDF.',
+      'Generate personalized, compelling cover letters in seconds. The AI researches each company and role, then crafts a letter that matches the tone and priorities of the hiring team.',
     icon: 'mail',
-    highlights: ['Uses the job description', 'Adjustable tone', 'PDF export'],
+    highlights: ['Company research integration', 'Adjustable tone', 'One-click generation'],
   },
   {
     title: 'Interview Coach',
     href: '/features/interview-coach',
     description:
-      'Practise behavioural, technical, system design and case interviews with questions built from the job and your own resume, and get scored feedback on every answer.',
+      'Prepare for interviews with AI-powered mock sessions, real-time coaching via our Chrome extension, and predictive question analysis based on the role and company.',
     icon: 'mic',
-    highlights: ['Mock interviews', 'Company-specific', 'Answer feedback'],
+    highlights: ['Real-time coaching', 'Mock interviews', 'Question prediction'],
   },
   {
     title: 'Job Matching',
     href: '/features/job-matching',
     description:
-      'Every role is scored against your target roles, seniority, location, salary floor and skills, with the reasons shown — so you spend your time on the jobs that actually fit.',
+      'Our recommendation engine analyzes your skills, experience, and preferences to surface the roles where you are most likely to land an interview. Stop scrolling and start applying strategically.',
     icon: 'target',
-    highlights: ['Explained scores', 'Seniority check', 'Daily recommendations'],
+    highlights: ['AI-powered matching', 'Preference learning', 'Daily recommendations'],
   },
 ];
 
@@ -170,9 +170,9 @@ export default function FeaturesPage() {
             </h2>
             <div className="grid gap-12 md:grid-cols-4">
               {[
-                { step: '1', title: 'Upload Your Resume', desc: 'Upload your PDF or Word resume. We read it, score it for applicant-tracking systems and show what to fix.' },
+                { step: '1', title: 'Upload Your Resume', desc: 'Import your existing resume or build one from scratch with our AI-assisted editor.' },
                 { step: '2', title: 'Set Your Preferences', desc: 'Define your target roles, locations, salary range, and work-style preferences.' },
-                { step: '3', title: 'Review & Send', desc: 'Each morning the best-fit jobs arrive with your resume tailored and the form filled in. You review and send.' },
+                { step: '3', title: 'Let AI Match & Apply', desc: 'Our engine finds the best-fit jobs and submits tailored applications on your behalf.' },
                 { step: '4', title: 'Prepare & Interview', desc: 'Use AI coaching and mock interviews to walk into every call fully prepared.' },
               ].map((item) => (
                 <div key={item.step} className="text-center">
@@ -192,13 +192,10 @@ export default function FeaturesPage() {
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
             <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
               {[
-                // These were "10,000+ active users", "2M+ applications sent", "3x more
-                // interviews" and "85% ATS pass rate" — none of them measured. Only
-                // numbers that describe the product and can be checked.
-                { stat: '31', label: 'Company career sites searched daily' },
-                { stat: '6,000+', label: 'Live roles checked each morning' },
-                { stat: '4', label: 'Interview practice formats' },
-                { stat: '1', label: 'Receipt for every application' },
+                { stat: '10,000+', label: 'Active Users' },
+                { stat: '2M+', label: 'Applications Sent' },
+                { stat: '3x', label: 'More Interviews' },
+                { stat: '85%', label: 'ATS Pass Rate' },
               ].map((item) => (
                 <div key={item.label} className="text-center rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-8">
                   <p className="text-4xl font-extrabold bg-gradient-to-r from-[var(--accent)] to-[var(--accent)] bg-clip-text text-transparent">

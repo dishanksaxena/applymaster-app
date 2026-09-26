@@ -3,7 +3,7 @@ import Link from 'next/link'
 
 const title = 'AI Interview Coaching: Prepare for Any Interview in 30 Minutes'
 const description =
-  'Learn how AI interview coaches help you prepare for behavioral, technical, and case interviews with mock practice and personalized feedback.'
+  'Learn how AI interview coaches help you prepare for behavioral, technical, and case interviews with real-time suggestions, mock practice, and personalized feedback.'
 const url = 'https://applymaster.ai/blog/interview-preparation-guide'
 
 export const metadata: Metadata = {

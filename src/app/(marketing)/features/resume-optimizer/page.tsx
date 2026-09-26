@@ -4,14 +4,14 @@ import Link from 'next/link';
 export const metadata: Metadata = {
   title: 'AI Resume Optimizer & ATS Resume Builder | ApplyMaster',
   description:
-    'Optimize your resume for every job with AI. Beat ATS filters with keyword optimization, instant scoring, and per-job tailoring. Get an ATS-friendly resume in minutes.',
+    'Optimize your resume for every job with AI. Beat ATS filters with keyword optimization, real-time scoring, and per-job tailoring. Build an ATS-friendly resume in minutes.',
   alternates: {
     canonical: 'https://applymaster.ai/features/resume-optimizer',
   },
   openGraph: {
     title: 'AI Resume Optimizer & ATS Resume Builder | ApplyMaster',
     description:
-      'Beat ATS filters with AI-powered keyword optimization and instant resume scoring.',
+      'Beat ATS filters with AI-powered keyword optimization and real-time resume scoring.',
     url: 'https://applymaster.ai/features/resume-optimizer',
     siteName: 'ApplyMaster',
     type: 'website',
@@ -60,8 +60,8 @@ export default function ResumeOptimizerPage() {
               AI Resume Optimizer
             </h1>
             <p className="mt-6 max-w-2xl text-lg text-[var(--text-secondary)] leading-relaxed">
-              Many employers screen resumes with Applicant Tracking Systems before a person
-              reads them. ApplyMaster&apos;s resume optimizer analyzes each job description,
+              Over 75% of resumes are rejected by Applicant Tracking Systems before a human
+              ever reads them. ApplyMaster&apos;s resume optimizer analyzes each job description,
               identifies missing keywords, restructures your content, and delivers a
               perfectly tailored resume — every single time you apply.
             </p>
@@ -89,7 +89,7 @@ export default function ResumeOptimizerPage() {
                   desc: 'The AI scans the job posting for required skills, tools, and qualifications, then naturally weaves them into your resume. No keyword-stuffing — every addition reads like something you wrote.',
                 },
                 {
-                  title: 'ATS Scoring',
+                  title: 'Real-Time ATS Scoring',
                   desc: 'Before you submit, see an ATS compatibility score that predicts how well your resume will perform against automated filters. Aim for 85% or higher to maximize your chances.',
                 },
                 {

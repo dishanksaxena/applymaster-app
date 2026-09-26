@@ -45,7 +45,7 @@ const posts = [
   {
     slug: 'interview-preparation-guide',
     title: 'AI Interview Coaching: Prepare for Any Interview in 30 Minutes',
-    excerpt: 'From behavioral questions to system design, learn how to practise with mock interviews tailored to your target role and get useful feedback on every answer.',
+    excerpt: 'From behavioral questions to system design, learn how AI interview coaches provide real-time answer suggestions and help you practice with mock interviews tailored to your target role.',
     category: 'Interviews',
     date: 'March 15, 2025',
     readTime: '14 min read',

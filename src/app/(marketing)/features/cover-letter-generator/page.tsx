@@ -4,14 +4,14 @@ import Link from 'next/link';
 export const metadata: Metadata = {
   title: 'AI Cover Letter Generator | Write Cover Letters Instantly | ApplyMaster',
   description:
-    'Generate personalized cover letters in seconds with AI. ApplyMaster reads the job description and your resume and writes a letter in the tone you choose.',
+    'Generate personalized, compelling cover letters in seconds with AI. ApplyMaster researches each company and role to craft cover letters that match the hiring team\'s tone and priorities.',
   alternates: {
     canonical: 'https://applymaster.ai/features/cover-letter-generator',
   },
   openGraph: {
     title: 'AI Cover Letter Generator | ApplyMaster',
     description:
-      'Generate personalized cover letters in seconds. AI reads the job description and your resume and writes the letter.',
+      'Generate personalized cover letters in seconds. AI researches each company and crafts the perfect letter.',
     url: 'https://applymaster.ai/features/cover-letter-generator',
     siteName: 'ApplyMaster',
     type: 'website',
@@ -61,7 +61,7 @@ export default function CoverLetterGeneratorPage() {
             </h1>
             <p className="mt-6 max-w-2xl text-lg text-[var(--text-secondary)] leading-relaxed">
               Writing a great cover letter for every application is exhausting. ApplyMaster&apos;s
-              AI cover letter writer reads the job description and your resume, and produces a
+              AI cover letter writer researches the company, analyzes the role, and produces a
               personalized letter that connects your experience to what the hiring team actually
               cares about — in seconds, not hours.
             </p>
@@ -133,8 +133,8 @@ export default function CoverLetterGeneratorPage() {
                 },
                 {
                   step: '2',
-                  title: 'AI Reads & Writes',
-                  desc: 'The AI reads the role requirements in the job description and drafts a letter that connects your experience to them.',
+                  title: 'AI Researches & Writes',
+                  desc: 'The AI analyzes the role requirements, researches the company, and drafts a letter that bridges your experience with their needs.',
                 },
                 {
                   step: '3',
@@ -218,7 +218,7 @@ export default function CoverLetterGeneratorPage() {
                 },
                 {
                   q: 'What if the company does not require a cover letter?',
-                  a: 'Even when optional, a strong cover letter can set you apart. Many hiring managers still read them, and a strong one can make the case your resume alone does not. ApplyMaster makes it effortless to include one.',
+                  a: 'Even when optional, a strong cover letter can set you apart. Studies show that 83% of hiring managers say a great cover letter can earn an interview even if the resume is not a perfect match. ApplyMaster makes it effortless to include one.',
                 },
                 {
                   q: 'How does the AI research the company?',
