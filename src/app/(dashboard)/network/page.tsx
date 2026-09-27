@@ -549,6 +549,19 @@ export default function NetworkPage() {
 
   const [drafting, setDrafting] = useState<Connection | null>(null)
   const [linkedRole, setLinkedRole] = useState('')
+  const [importStep, setImportStep] = useState<'request' | 'upload' | undefined>(undefined)
+  const [importViaClaude, setImportViaClaude] = useState(false)
+
+  /* /network?import=linkedin[&step=upload][&via=claude] opens the LinkedIn
+     import directly. Claude's prompt lands here with via=claude, which keeps
+     the preview to a count so no connection appears in its screenshots. */
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search)
+    if (q.get('import') !== 'linkedin') return
+    setImportStep(q.get('step') === 'upload' ? 'upload' : undefined)
+    setImportViaClaude(q.get('via') === 'claude')
+    setImportOpen(true)
+  }, [])
   const linkHandled = useRef(false)
 
   const loadAll = useCallback(async () => {
@@ -1140,7 +1153,13 @@ export default function NetworkPage() {
 
       {importOpen && (
         <LinkedInImport
-          onClose={() => setImportOpen(false)}
+          initialStep={importStep}
+          viaClaude={importViaClaude}
+          onClose={() => {
+            setImportOpen(false)
+            setImportStep(undefined)
+            setImportViaClaude(false)
+          }}
           onImported={() => {
             loadAll()
             setHits(null)

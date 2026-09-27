@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { readLinkedInFile, type LinkedInConnection } from '@/lib/linkedin-import'
+import { claudeImportPrompt } from '@/lib/linkedin-claude-prompt'
 
 /**
  * Import your LinkedIn network.
@@ -35,6 +36,18 @@ function LinkedInMark({ size = 22 }: { size?: number }) {
         fill="#fff"
         d="M7.1 9.5h2.3v7.4H7.1zM8.25 5.9a1.33 1.33 0 110 2.66 1.33 1.33 0 010-2.66zM10.8 9.5h2.2v1h.03c.31-.58 1.06-1.2 2.18-1.2 2.33 0 2.76 1.53 2.76 3.53v4.07h-2.3v-3.6c0-.86-.02-1.97-1.2-1.97-1.2 0-1.38.94-1.38 1.9v3.67h-2.3z"
       />
+    </svg>
+  )
+}
+
+function ClaudeMark({ size = 14 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
+      <g stroke="#D97757" strokeWidth="2.6" strokeLinecap="round">
+        {[0, 45, 90, 135].map(a => (
+          <line key={a} x1="12" y1="2.5" x2="12" y2="21.5" transform={`rotate(${a} 12 12)`} />
+        ))}
+      </g>
     </svg>
   )
 }
@@ -79,12 +92,20 @@ function ExportIllustration() {
 export default function LinkedInImport({
   onClose,
   onImported,
+  initialStep,
+  viaClaude = false,
 }: {
   onClose: () => void
   onImported: (s: Summary) => void
+  /** Deep links open straight on a step (Claude uses step=upload). */
+  initialStep?: 'request' | 'upload'
+  /** Claude is driving: show counts only, so no names reach its screenshots. */
+  viaClaude?: boolean
 }) {
   const [requestedAt, setRequestedAt] = useState<number | null>(null)
-  const [step, setStep] = useState<Step>('request')
+  const [step, setStep] = useState<Step>(initialStep ?? 'request')
+  const [mode, setMode] = useState<'manual' | 'claude'>('manual')
+  const [copied, setCopied] = useState(false)
   const [error, setError] = useState('')
   const [rows, setRows] = useState<LinkedInConnection[]>([])
   const [fileName, setFileName] = useState('')
@@ -100,10 +121,21 @@ export default function LinkedInImport({
       const v = Number(localStorage.getItem(REQUESTED_KEY))
       if (v) {
         setRequestedAt(v)
-        setStep('upload')
+        if (!initialStep) setStep('upload')
       }
     } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  const copyPrompt = async () => {
+    try {
+      await navigator.clipboard.writeText(claudeImportPrompt(window.location.origin))
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2500)
+    } catch {
+      setError('Could not copy — your browser blocked clipboard access.')
+    }
+  }
 
   const busy = step === 'reading' || step === 'importing'
   const onKeyDown = useCallback(
@@ -224,8 +256,9 @@ export default function LinkedInImport({
                 Import your LinkedIn network
               </h2>
               <p className="text-[12px]" style={{ color: 'var(--text-muted)' }}>
-                {step === 'request' && 'Step 1 of 2 · Ask LinkedIn for your data'}
-                {(step === 'upload' || step === 'reading') && 'Step 2 of 2 · Upload the file LinkedIn sends you'}
+                {mode === 'claude' && (step === 'request' || step === 'upload') && 'Let Claude do it for you'}
+                {mode === 'manual' && step === 'request' && 'Step 1 of 2 · Ask LinkedIn for your data'}
+                {(step === 'reading' || (mode === 'manual' && step === 'upload')) && 'Step 2 of 2 · Upload the file LinkedIn sends you'}
                 {step === 'preview' && 'Check it, then import'}
                 {step === 'importing' && 'Importing…'}
                 {step === 'done' && 'Done'}
@@ -247,8 +280,116 @@ export default function LinkedInImport({
         </div>
 
         <div className="px-6 py-5">
-          {/* ── 1. Request ── */}
-          {step === 'request' && (
+          {(step === 'request' || step === 'upload') && !viaClaude && (
+            <div className="flex justify-center mb-5">
+              <div role="tablist" aria-label="How to import" className="inline-flex p-1 rounded-full" style={{ background: 'var(--bg-overlay)' }}>
+                {(['manual', 'claude'] as const).map(m => (
+                  <button
+                    key={m}
+                    role="tab"
+                    aria-selected={mode === m}
+                    onClick={() => setMode(m)}
+                    className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[13px] font-semibold transition-colors"
+                    style={mode === m ? { background: 'var(--bg-card)', color: 'var(--text)', boxShadow: 'var(--shadow-sm)' } : { color: 'var(--text-muted)' }}
+                  >
+                    {m === 'claude' && <ClaudeMark />}
+                    {m === 'manual' ? 'Manual' : 'Claude'}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* The two steps, always reachable. Step 2 used to hide its only
+              way back once the archive had been requested. */}
+          {mode === 'manual' && (step === 'request' || step === 'upload') && !viaClaude && (
+            <ol className="grid grid-cols-2 gap-2 mb-5" aria-label="Steps">
+              {([['request', '1', 'Request your archive'], ['upload', '2', 'Upload it']] as const).map(([id, n, label]) => {
+                const active = step === id
+                return (
+                  <li key={id}>
+                    <button
+                      onClick={() => {
+                        setError('')
+                        setStep(id)
+                      }}
+                      aria-current={active ? 'step' : undefined}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left text-[12.5px] font-semibold transition-colors"
+                      style={
+                        active
+                          ? { background: 'var(--accent-dim)', color: 'var(--accent)', boxShadow: 'inset 0 0 0 1px rgb(var(--accent-rgb) / 0.25)' }
+                          : { background: 'var(--bg-overlay)', color: 'var(--text-secondary)' }
+                      }
+                    >
+                      <span
+                        className="grid place-items-center w-5 h-5 rounded-full text-[11px] shrink-0"
+                        style={active ? { background: 'var(--accent-solid)', color: 'var(--text-on-accent)' } : { background: 'var(--bg-card)', color: 'var(--text-muted)' }}
+                      >
+                        {id === 'request' && requestedAt && !active ? '✓' : n}
+                      </span>
+                      {label}
+                    </button>
+                  </li>
+                )
+              })}
+            </ol>
+          )}
+
+          {mode === 'claude' && (step === 'request' || step === 'upload') && (
+            <>
+              <h3 className="text-[15px] font-semibold" style={{ color: 'var(--text)' }}>
+                Let Claude handle the export
+              </h3>
+              <p className="text-[13px] mt-1 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                Claude requests your LinkedIn archive, waits for it — which can take a day — and uploads it to ApplyMaster
+                for you.
+              </p>
+              <div className="mt-4 p-4 rounded-xl" style={card}>
+                <p className="text-[13px] font-semibold mb-2" style={{ color: 'var(--text)' }}>
+                  Before you start
+                </p>
+                <ul className="space-y-1.5 text-[12.5px] list-disc pl-5" style={{ color: 'var(--text-secondary)' }}>
+                  <li>Use Claude Cowork or Claude Code on a computer.</li>
+                  <li>Install the Claude Chrome extension when Claude asks.</li>
+                  <li>You need a paid Claude plan.</li>
+                  <li>Stay signed in to ApplyMaster and LinkedIn in that browser.</li>
+                </ul>
+              </div>
+              <button
+                onClick={copyPrompt}
+                className="w-full mt-5 flex items-center justify-center gap-2 py-3 rounded-xl text-[14px] font-semibold"
+                style={{ background: copied ? 'var(--green)' : 'var(--accent-solid)', color: '#fff' }}
+              >
+                {copied ? (
+                  <>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" aria-hidden="true">
+                      <path d="M20 6L9 17l-5-5" />
+                    </svg>
+                    Copied — paste it into Claude
+                  </>
+                ) : (
+                  <>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                      <rect x="9" y="9" width="12" height="12" rx="2" />
+                      <path d="M5 15V5a2 2 0 012-2h10" />
+                    </svg>
+                    Copy prompt
+                  </>
+                )}
+              </button>
+              {error && (
+                <p role="alert" className="mt-3 text-[12.5px]" style={{ color: 'var(--red)' }}>
+                  {error}
+                </p>
+              )}
+              <p className="text-[12px] mt-3 text-center leading-relaxed" style={{ color: 'var(--text-faint)' }}>
+                Claude never opens your archive — ApplyMaster reads it in your browser — and the page it uploads to shows only
+                a count, so your connections never appear on Claude’s screen.
+              </p>
+            </>
+          )}
+
+          {mode === 'manual' && step === 'request' && (
             <>
               <p className="text-[13.5px] leading-relaxed mb-4" style={{ color: 'var(--text-secondary)' }}>
                 LinkedIn doesn’t let apps read your connections directly, but it lets you download them. It takes two
@@ -285,7 +426,7 @@ export default function LinkedInImport({
           )}
 
           {/* ── 2. Upload ── */}
-          {(step === 'upload' || step === 'reading') && (
+          {((mode === 'manual' && step === 'upload') || step === 'reading') && (
             <>
               {requestedAt && (
                 <div className="flex gap-3 p-3 rounded-xl mb-4 text-[12.5px]" style={{ background: 'var(--blue-dim)', color: 'var(--text-secondary)' }}>
@@ -380,11 +521,6 @@ export default function LinkedInImport({
                 </span>
               </div>
 
-              {!requestedAt && (
-                <button onClick={() => setStep('request')} className="mt-3 text-[12.5px] font-semibold" style={{ color: 'var(--text-secondary)' }}>
-                  ← I haven’t requested it yet
-                </button>
-              )}
             </>
           )}
 
@@ -410,7 +546,7 @@ export default function LinkedInImport({
                 </div>
               </div>
 
-              {companies.length > 0 && (
+              {companies.length > 0 && !viaClaude && (
                 <>
                   <p className="text-[12px] font-semibold mb-2" style={{ color: 'var(--text-muted)' }}>
                     Where your network works most
@@ -425,6 +561,7 @@ export default function LinkedInImport({
                 </>
               )}
 
+              {!viaClaude && (
               <div className="rounded-xl overflow-hidden mb-4" style={{ boxShadow: 'inset 0 0 0 1px var(--card-ring)' }}>
                 {rows.slice(0, 5).map((r, i) => (
                   <div key={i} className="flex items-center justify-between gap-3 px-3.5 py-2.5 text-[12.5px]" style={{ borderTop: i ? '1px solid var(--border)' : 'none' }}>
@@ -442,6 +579,7 @@ export default function LinkedInImport({
                   </div>
                 )}
               </div>
+              )}
 
               {error && (
                 <p role="alert" className="mb-3 text-[12.5px]" style={{ color: 'var(--red)' }}>
