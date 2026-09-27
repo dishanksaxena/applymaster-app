@@ -11,8 +11,8 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 const PAGE = 1000
 const MAX_ROWS = 50_000 // LinkedIn caps connections at 30,000
 
-/** Columns added by add_network_signals.sql, from a person's LinkedIn archive. */
-const SIGNAL_COLUMNS = ['message_count', 'endorsed_you', 'would_help', 'connected_on', 'source']
+/** Columns added by add_network_signals.sql and add_contact_photos.sql. */
+const SIGNAL_COLUMNS = ['message_count', 'endorsed_you', 'would_help', 'connected_on', 'source', 'photo_url', 'photo_checked_at']
 
 /**
  * The same column list without the signal columns. Reads fall back to this if
@@ -27,6 +27,20 @@ export function withoutSignals(columns: string) {
     .join(', ')
 }
 
+/**
+ * The column list without the one named in a "column ... does not exist"
+ * error — or without every signal column if the message names none.
+ */
+function withoutColumn(columns: string, message?: string) {
+  const missing = message?.match(/column [\w.]*?(\w+) does not exist/)?.[1]
+  if (!missing || !SIGNAL_COLUMNS.includes(missing)) return withoutSignals(columns)
+  return columns
+    .split(',')
+    .map(c => c.trim())
+    .filter(c => c && c !== missing)
+    .join(', ')
+}
+
 /** Postgres "undefined column". */
 export const isMissingColumn = (e: { code?: string } | null | undefined) => e?.code === '42703'
 
@@ -37,20 +51,20 @@ export async function fetchAllConnections<T = Record<string, unknown>>(
 ): Promise<T[]> {
   const out: T[] = []
   for (let from = 0; from < MAX_ROWS; from += PAGE) {
-    let { data, error } = await db
-      .from('network_connections')
-      .select(columns)
-      .eq('user_id', userId)
-      .order('id', { ascending: true })
-      .range(from, from + PAGE - 1)
-    if (isMissingColumn(error) && withoutSignals(columns) !== columns) {
-      columns = withoutSignals(columns)
-      ;({ data, error } = await db
+    const page = () =>
+      db
         .from('network_connections')
         .select(columns)
         .eq('user_id', userId)
         .order('id', { ascending: true })
-        .range(from, from + PAGE - 1))
+        .range(from, from + PAGE - 1)
+    let { data, error } = await page()
+    // Drop just the column the database says is missing, and try again.
+    for (let tries = 0; isMissingColumn(error) && tries < SIGNAL_COLUMNS.length; tries++) {
+      const next = withoutColumn(columns, error?.message)
+      if (next === columns) break
+      columns = next
+      ;({ data, error } = await page())
     }
     if (error) throw new Error(error.message)
     out.push(...((data ?? []) as T[]))

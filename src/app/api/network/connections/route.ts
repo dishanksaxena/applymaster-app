@@ -26,7 +26,7 @@ export async function GET() {
     const rows = await fetchAllConnections<{ created_at: string }>(
       supabase,
       user.id,
-      'id, name, company, title, relationship, email, linkedin_url, seniority, can_refer, last_contacted_at, notes, created_at, message_count, endorsed_you, would_help, connected_on, source'
+      'id, name, company, title, relationship, email, linkedin_url, seniority, can_refer, last_contacted_at, notes, created_at, message_count, endorsed_you, would_help, connected_on, source, photo_url, photo_checked_at'
     )
     rows.sort((a, b) => (a.created_at < b.created_at ? 1 : -1))
     return Response.json({ connections: rows })

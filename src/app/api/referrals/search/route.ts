@@ -203,7 +203,7 @@ export async function POST(req: NextRequest) {
       all = await fetchAllConnections<Conn>(
         supabase,
         user.id,
-        'id, name, company, title, relationship, email, linkedin_url, seniority, can_refer, last_contacted_at, notes, message_count, endorsed_you, would_help, connected_on, source'
+        'id, name, company, title, relationship, email, linkedin_url, seniority, can_refer, last_contacted_at, notes, message_count, endorsed_you, would_help, connected_on, source, photo_url'
       )
     } catch (e) {
       return Response.json({ error: e instanceof Error ? e.message : 'Could not read your network' }, { status: 500 })

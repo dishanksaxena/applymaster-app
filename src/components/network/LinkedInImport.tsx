@@ -5,6 +5,8 @@ import { createClient } from '@/lib/supabase-browser'
 import { readLinkedInArchive, signalsFor, type LinkedInArchive } from '@/lib/linkedin-import'
 import { claudeImportPrompt } from '@/lib/linkedin-claude-prompt'
 import { CompanyLogo } from '@/components/network/CompanyLogo'
+import { PersonPhoto } from '@/components/network/PersonPhoto'
+import { fillPhotos, photosEnabled, setPhotosEnabled } from '@/components/network/contact-photos'
 
 /**
  * Import your LinkedIn network, then turn it into referral paths.
@@ -45,6 +47,8 @@ export type ImportedConnection = {
   endorsed_you?: number | null
   would_help?: boolean | null
   connected_on?: string | null
+  photo_url?: string | null
+  photo_checked_at?: string | null
 }
 
 const norm = (s: string | null | undefined) =>
@@ -107,7 +111,7 @@ function ClaudeMark({ size = 14 }: { size?: number }) {
 }
 
 /** A person: their initials, with their company's logo pinned to the corner. */
-function Initials({ name, company, size = 36 }: { name: string; company?: string | null; size?: number }) {
+function Initials({ name, company, photo, size = 36 }: { name: string; company?: string | null; photo?: string | null; size?: number }) {
   const ini = name.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]?.toUpperCase()).join('') || '?'
   const hue = [...name].reduce((a, c) => a + c.charCodeAt(0), 0) % 360
   return (
@@ -119,6 +123,7 @@ function Initials({ name, company, size = 36 }: { name: string; company?: string
       >
         {ini}
       </span>
+      <PersonPhoto src={photo} />
       <CompanyLogo company={company} badge size={Math.round(size * 0.4)} />
     </span>
   )
@@ -224,7 +229,11 @@ export default function LinkedInImport({
   const [progress, setProgress] = useState(0)
   const [summary, setSummary] = useState<Summary | null>(null)
   const [dragging, setDragging] = useState(false)
-  const [include, setInclude] = useState({ messages: true, endorsements: true, skills: true })
+  const [include, setInclude] = useState({ messages: true, endorsements: true, skills: true, photos: true })
+  const [photoByUrl, setPhotoByUrl] = useState<Record<string, string | null>>({})
+  const askedPhotos = useRef(new Set<string>())
+  const alive = useRef(true)
+  useEffect(() => () => void (alive.current = false), [])
   const [picked, setPicked] = useState<Set<string>>(new Set())
   const [helperQuery, setHelperQuery] = useState('')
   const [saving, setSaving] = useState(false)
@@ -296,7 +305,7 @@ export default function LinkedInImport({
       const a = await readLinkedInArchive(file)
       if (!a.connections.length) throw new Error('That file has no connections in it.')
       setArchive(a)
-      setInclude({ messages: !!a.messages, endorsements: !!a.endorsements, skills: !!a.skills?.length })
+      setInclude({ messages: !!a.messages, endorsements: !!a.endorsements, skills: !!a.skills?.length, photos: photosEnabled() })
       setStep('choose')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not read that file.')
@@ -315,6 +324,7 @@ export default function LinkedInImport({
     setStep('importing')
     setProgress(0)
     setError('')
+    setPhotosEnabled(include.photos)
     const rows = archive.connections
     let inserted = 0
     let updated = 0
@@ -473,6 +483,25 @@ export default function LinkedInImport({
     return { atApplied, recruiters, strongest }
   }, [imported, appCompanies])
 
+  /* Photos for whoever is on screen: the helper list, then the warm paths.
+     Helpers are matched by profile link — they come from the archive. */
+  const photoFor = (c: { linkedin_url: string | null; photo_url?: string | null }) =>
+    (c.linkedin_url ? photoByUrl[c.linkedin_url] : null) ?? c.photo_url ?? null
+  useEffect(() => {
+    if (!include.photos || (step !== 'helpers' && step !== 'paths')) return
+    const onScreen =
+      step === 'helpers'
+        ? helperCandidates.map(x => ({ linkedin_url: x.c.linkedin_url, done: false }))
+        : [...paths.atApplied, ...paths.recruiters, ...paths.strongest].map(x => ({
+            linkedin_url: x.c.linkedin_url,
+            done: !!(x.c.photo_url || x.c.photo_checked_at),
+          }))
+    const urls = onScreen.filter(x => x.linkedin_url && !x.done && !askedPhotos.current.has(x.linkedin_url)).map(x => x.linkedin_url!)
+    if (!urls.length) return
+    urls.forEach(u => askedPhotos.current.add(u))
+    fillPhotos({ linkedin_urls: urls }, b => setPhotoByUrl(p => ({ ...p, ...b.byUrl })), () => !alive.current)
+  }, [step, include.photos, helperCandidates, paths])
+
   const card = { background: 'var(--bg-overlay)', boxShadow: 'inset 0 0 0 1px var(--card-ring)' } as const
   const primaryBtn = { background: 'var(--accent-solid)', color: 'var(--text-on-accent)' } as const
   const wide = step === 'helpers' || step === 'paths'
@@ -516,7 +545,7 @@ export default function LinkedInImport({
         <ul className="rounded-xl overflow-hidden" style={{ boxShadow: 'inset 0 0 0 1px var(--card-ring)' }}>
           {rows.map(({ c, reasons }, i) => (
             <li key={c.id} className="flex items-start gap-3 px-4 py-3" style={{ borderTop: i ? '1px solid var(--border)' : 'none' }}>
-              <Initials name={c.name} company={c.company} size={40} />
+              <Initials name={c.name} company={c.company} photo={photoFor(c)} size={40} />
               <div className="min-w-0 flex-1">
                 <div className="text-[13.5px] font-semibold" style={{ color: 'var(--text)' }}>
                   {c.name}
@@ -886,15 +915,21 @@ export default function LinkedInImport({
                         : 'None in this file.',
                       available: !!archive.skills?.length,
                     },
+                    {
+                      key: 'photos',
+                      title: 'Profile photos',
+                      desc: 'Looked up from each person’s LinkedIn profile by a photo service — only for the people you look at, and saved so nobody is looked up twice.',
+                      available: true,
+                    },
                   ] as const
                 ).map((o, i) => {
-                  const on = o.key === 'connections' ? true : o.available && include[o.key as 'messages' | 'endorsements' | 'skills']
+                  const on = o.key === 'connections' ? true : o.available && include[o.key as 'messages' | 'endorsements' | 'skills' | 'photos']
                   return (
                     <button
                       key={o.key}
                       type="button"
                       disabled={o.key === 'connections' || !o.available}
-                      onClick={() => setInclude(v => ({ ...v, [o.key]: !v[o.key as 'messages' | 'endorsements' | 'skills'] }))}
+                      onClick={() => setInclude(v => ({ ...v, [o.key]: !v[o.key as 'messages' | 'endorsements' | 'skills' | 'photos'] }))}
                       aria-pressed={on}
                       className="w-full flex items-start gap-3 px-4 py-3 text-left disabled:cursor-default"
                       style={{ borderTop: i ? '1px solid var(--border)' : 'none', opacity: o.available ? 1 : 0.55 }}
@@ -1013,7 +1048,7 @@ export default function LinkedInImport({
                           boxShadow: `inset 0 0 0 1px ${on ? 'rgb(var(--green-rgb) / 0.4)' : 'var(--card-ring)'}`,
                         }}
                       >
-                        <Initials name={c.name} company={c.company} size={38} />
+                        <Initials name={c.name} company={c.company} photo={photoFor(c)} size={38} />
                         <span className="min-w-0 flex-1">
                           <span className="block text-[13px] font-semibold truncate" style={{ color: 'var(--text)' }}>
                             {c.name}

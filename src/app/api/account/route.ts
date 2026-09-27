@@ -39,6 +39,12 @@ export async function DELETE(req: NextRequest) {
     if (error || !files?.length) break
     await admin.storage.from('resumes').remove(files.map(f => `${user.id}/${f.name}`))
   }
+  // Photos of the people in their network.
+  for (let i = 0; i < 50; i++) {
+    const { data: files, error } = await admin.storage.from('contact-photos').list(user.id, { limit: 1000 })
+    if (error || !files?.length) break
+    await admin.storage.from('contact-photos').remove(files.map(f => `${user.id}/${f.name}`))
+  }
 
   // 2. Rows that do not cascade. Missing tables are fine.
   await admin.from('app_events').delete().eq('user_id', user.id)
