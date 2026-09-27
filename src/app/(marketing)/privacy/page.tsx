@@ -46,7 +46,7 @@ export default function PrivacyPage() {
       <main className="">
         <div className="mx-auto max-w-4xl px-6 py-16 lg:px-8">
           <h1 className="font-display text-[clamp(2rem,4vw,2.8rem)] mb-2">Privacy Policy</h1>
-          <p className="text-[var(--text-muted)] mb-12">Last updated: April 7, 2026</p>
+          <p className="text-[var(--text-muted)] mb-12">Last updated: September 27, 2026</p>
 
           <div className="prose prose-invert max-w-none space-y-10 text-[var(--text-secondary)] leading-relaxed">
             {/* Introduction */}
@@ -81,7 +81,7 @@ export default function PrivacyPage() {
                 <li><strong>Usage Data:</strong> Pages visited, features used, application submission history, and interaction patterns.</li>
                 <li><strong>Device Information:</strong> Browser type, operating system, device identifiers, and screen resolution.</li>
                 <li><strong>Log Data:</strong> IP address, access times, referring URLs, and error logs.</li>
-                <li><strong>Cookies and Similar Technologies:</strong> See Section 5 for details.</li>
+                <li><strong>Cookies and Similar Technologies:</strong> See Section 6 for details.</li>
               </ul>
 
               <h3 className="text-lg font-semibold text-ink mt-6 mb-3">2.3 Information from Third Parties</h3>
@@ -137,9 +137,65 @@ export default function PrivacyPage() {
               </ul>
             </section>
 
+            {/* Chrome extension */}
+            <section id="chrome-extension">
+              <h2 className="font-display text-[1.6rem] mb-4">5. The ApplyMaster Chrome Extension</h2>
+              <p>
+                The ApplyMaster extension fills job application forms on employers&apos; websites with your
+                ApplyMaster profile. You review every answer and submit the application yourself; the
+                extension then records it in your ApplyMaster account with a receipt.
+              </p>
+
+              <h3 className="text-lg font-semibold text-ink mt-6 mb-3">5.1 Where it runs</h3>
+              <ul className="list-disc pl-6 space-y-2">
+                <li>Automatically, only on job application pages at greenhouse.io, jobs.lever.co, jobs.ashbyhq.com and myworkdayjobs.com, and on the applymaster.ai/extension page where you connect it.</li>
+                <li>On any other website only when you click its toolbar button, and then only in that tab.</li>
+                <li>It does not read your browsing history, other tabs, or any page you have not opened it on.</li>
+              </ul>
+
+              <h3 className="text-lg font-semibold text-ink mt-6 mb-3">5.2 What it reads and sends to ApplyMaster</h3>
+              <ul className="list-disc pl-6 space-y-2">
+                <li><strong>The form&apos;s questions:</strong> the address of the application page, and the text of the questions it needs answered, so ApplyMaster can answer them from your profile and resume.</li>
+                <li><strong>What you submitted:</strong> when you press the form&apos;s own Submit button, the job title, the company, and the answers in the form at that moment, to create the receipt in your account.</li>
+                <li><strong>The employer&apos;s confirmation:</strong> the confirmation message shown after you submit, and any reference number in it.</li>
+              </ul>
+              <p className="mt-4">
+                It never sends your answers to voluntary demographic questions (gender, race or ethnicity,
+                veteran or disability status), passwords, payment details, or the contents of pages other
+                than the application you are filling.
+              </p>
+
+              <h3 className="text-lg font-semibold text-ink mt-6 mb-3">5.3 What it receives from ApplyMaster</h3>
+              <p>
+                Your profile details, your standing answers (such as work authorization), your resume file
+                through a short-lived private link, and written answers to the form&apos;s questions. These
+                are placed into the form on your screen and are not stored by the extension.
+              </p>
+
+              <h3 className="text-lg font-semibold text-ink mt-6 mb-3">5.4 What it stores in your browser</h3>
+              <ul className="list-disc pl-6 space-y-2">
+                <li>A connection key for your account and your account email. We store only a one-way hash of the key; you can revoke it at any time on applymaster.ai/extension.</li>
+                <li>While an application you submitted is waiting for the employer&apos;s confirmation, a record of it for up to 30 minutes, cleared once it is saved to your account.</li>
+              </ul>
+
+              <h3 className="text-lg font-semibold text-ink mt-6 mb-3">5.5 What it never does</h3>
+              <ul className="list-disc pl-6 space-y-2">
+                <li>Press Submit on your behalf, or solve CAPTCHAs.</li>
+                <li>Answer voluntary demographic questions, agree to terms, or tick consent boxes for you.</li>
+                <li>Show advertising, track you across websites, or sell or transfer your data to third parties.</li>
+              </ul>
+              <p className="mt-4">
+                Data from the extension is used only to fill your applications and keep your application
+                records, and is handled like the rest of your account data under this policy. The use of
+                information received from the extension adheres to the Chrome Web Store User Data Policy,
+                including the Limited Use requirements. Uninstalling the extension or disconnecting it stops
+                all of this; deleting your account deletes the records it created.
+              </p>
+            </section>
+
             {/* Cookies */}
             <section>
-              <h2 className="font-display text-[1.6rem] mb-4">5. Cookies and Tracking Technologies</h2>
+              <h2 className="font-display text-[1.6rem] mb-4">6. Cookies and Tracking Technologies</h2>
               <p>We use the following types of cookies:</p>
               <ul className="list-disc pl-6 space-y-2 mt-4">
                 <li><strong>Essential Cookies:</strong> Required for authentication, security, and basic functionality. These cannot be disabled.</li>
@@ -154,7 +210,7 @@ export default function PrivacyPage() {
 
             {/* Data Sharing */}
             <section>
-              <h2 className="font-display text-[1.6rem] mb-4">6. Data Sharing and Disclosure</h2>
+              <h2 className="font-display text-[1.6rem] mb-4">7. Data Sharing and Disclosure</h2>
               <p>We do not sell your personal information. We may share data in these circumstances:</p>
               <ul className="list-disc pl-6 space-y-2 mt-4">
                 <li><strong>Service Providers:</strong> With third-party vendors who process data on our behalf (see Section 4), under strict data processing agreements.</li>
@@ -166,7 +222,7 @@ export default function PrivacyPage() {
 
             {/* Data Security */}
             <section>
-              <h2 className="font-display text-[1.6rem] mb-4">7. Data Security</h2>
+              <h2 className="font-display text-[1.6rem] mb-4">8. Data Security</h2>
               <p>
                 We implement industry-standard security measures including encryption in transit (TLS 1.3),
                 encryption at rest (AES-256), access controls, and regular security audits. However, no
@@ -177,7 +233,7 @@ export default function PrivacyPage() {
 
             {/* Data Retention */}
             <section>
-              <h2 className="font-display text-[1.6rem] mb-4">8. Data Retention</h2>
+              <h2 className="font-display text-[1.6rem] mb-4">9. Data Retention</h2>
               <p>
                 We retain your personal data for as long as your account is active or as needed to
                 provide the Service. If you delete your account, we will delete your personal data
@@ -188,7 +244,7 @@ export default function PrivacyPage() {
 
             {/* GDPR */}
             <section>
-              <h2 className="font-display text-[1.6rem] mb-4">9. Your Rights (GDPR and CCPA)</h2>
+              <h2 className="font-display text-[1.6rem] mb-4">10. Your Rights (GDPR and CCPA)</h2>
               <p>Depending on your location, you may have the following rights:</p>
               <ul className="list-disc pl-6 space-y-2 mt-4">
                 <li><strong>Access:</strong> Request a copy of the personal data we hold about you.</li>
@@ -207,7 +263,7 @@ export default function PrivacyPage() {
 
             {/* International Transfers */}
             <section>
-              <h2 className="font-display text-[1.6rem] mb-4">10. International Data Transfers</h2>
+              <h2 className="font-display text-[1.6rem] mb-4">11. International Data Transfers</h2>
               <p>
                 Your data may be processed in countries outside your jurisdiction, including the United States.
                 We ensure appropriate safeguards are in place, including Standard Contractual Clauses (SCCs)
@@ -217,7 +273,7 @@ export default function PrivacyPage() {
 
             {/* Children */}
             <section>
-              <h2 className="font-display text-[1.6rem] mb-4">11. Children&apos;s Privacy</h2>
+              <h2 className="font-display text-[1.6rem] mb-4">12. Children&apos;s Privacy</h2>
               <p>
                 ApplyMaster is not intended for users under the age of 16. We do not knowingly collect
                 personal data from children. If you believe a child has provided us with personal data,
@@ -227,7 +283,7 @@ export default function PrivacyPage() {
 
             {/* Changes */}
             <section>
-              <h2 className="font-display text-[1.6rem] mb-4">12. Changes to This Policy</h2>
+              <h2 className="font-display text-[1.6rem] mb-4">13. Changes to This Policy</h2>
               <p>
                 We may update this Privacy Policy from time to time. We will notify you of material
                 changes by posting the new policy on this page and updating the &ldquo;Last updated&rdquo;
@@ -237,7 +293,7 @@ export default function PrivacyPage() {
 
             {/* Contact */}
             <section>
-              <h2 className="font-display text-[1.6rem] mb-4">13. Contact Us</h2>
+              <h2 className="font-display text-[1.6rem] mb-4">14. Contact Us</h2>
               <p>If you have questions or concerns about this Privacy Policy, contact us at:</p>
               <div className="mt-4 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-6">
                 <p><strong>ApplyMaster</strong></p>
