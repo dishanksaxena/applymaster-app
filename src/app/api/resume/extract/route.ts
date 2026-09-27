@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { createClient as createSessionClient } from '@/lib/supabase-server';
+import { saveParsedResume } from '@/lib/parsed-resume';
 import Anthropic from '@anthropic-ai/sdk';
 
 export const maxDuration = 60;
@@ -323,6 +324,11 @@ export async function POST(request: NextRequest) {
 
     if (resumeError) {
       console.error('[extract] Resume save error:', resumeError.message);
+    } else if (resumeResult?.id) {
+      /* The optimizer, tailoring and match scoring read parsed_resumes. This
+         path never wrote it, so a resume uploaded during onboarding was
+         invisible to all three ("No resume found"). */
+      await saveParsedResume(resumeResult.id, userId, parsed as unknown as Record<string, unknown>);
     }
 
     const totalTime = Date.now() - startTime;

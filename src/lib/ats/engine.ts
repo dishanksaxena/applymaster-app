@@ -273,8 +273,12 @@ export async function applyToJob(
        engine can put an answer in the wrong box. Re-locating by id each
        time is stable across those re-renders. */
     type Control = { id: string | null; index: number; label: string; kind: ReturnType<typeof classifyField>; type: string; required: boolean }
+    /* An attribute selector, not `#${CSS.escape(id)}`: this runs in Node,
+       where the browser's CSS global does not exist, so every fill crashed
+       with "CSS is not defined" the moment it addressed a field by id.
+       Greenhouse ids like "question_123[]" need quoting either way. */
     const locate = (c: Control): Locator =>
-      c.id ? page.locator(`#${CSS.escape(c.id)}`) : controls.nth(c.index)
+      c.id ? page.locator(`[id="${c.id.replace(/["\\]/g, '\\$&')}"]`) : controls.nth(c.index)
     const items: Control[] = []
 
     for (let i = 0; i < count; i++) {

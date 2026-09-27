@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
+import { loadParsedResume } from '@/lib/parsed-resume'
 import Anthropic from '@anthropic-ai/sdk'
 import { tryParseModelJson } from '@/lib/model-json'
 
@@ -19,21 +20,16 @@ export async function POST(req: NextRequest) {
     }
 
     // Get user's primary parsed resume
-    const { data: primaryResume } = await supabase
-      .from('resumes').select('id').eq('user_id', user.id).eq('is_primary', true).maybeSingle()
-
-    if (!primaryResume) {
-      return Response.json({ error: 'No primary resume found. Please upload your resume first.' }, { status: 404 })
+    // "Resume not yet parsed" was permanent for onboarding uploads, which never
+    // wrote the structured row; loadParsedResume repairs it from the resume.
+    const found = await loadParsedResume(supabase, user.id)
+    if (!found) {
+      return Response.json({ error: 'No resume found. Please upload your resume first.' }, { status: 404 })
     }
+    const primaryResume = { id: found.resumeId }
+    const parsedResume = found.parsed
 
-    const { data: parsedResume } = await supabase
-      .from('parsed_resumes').select('*').eq('resume_id', primaryResume.id).maybeSingle()
-
-    if (!parsedResume) {
-      return Response.json({ error: 'Resume not yet parsed. Please wait for parsing to complete.' }, { status: 404 })
-    }
-
-    const resumeText = parsedResume.raw_text || JSON.stringify(parsedResume, null, 2)
+    const resumeText = (typeof parsedResume.raw_text === 'string' && parsedResume.raw_text) || JSON.stringify(parsedResume, null, 2)
 
     const msg = await anthropic.messages.create({
       model: 'claude-sonnet-5',

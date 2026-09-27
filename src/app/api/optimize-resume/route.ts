@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
+import { loadParsedResume } from '@/lib/parsed-resume'
 import Anthropic from '@anthropic-ai/sdk'
 import { tryParseModelJson } from '@/lib/model-json'
 
@@ -20,37 +21,13 @@ export async function POST(req: NextRequest) {
     }
 
     // Get user's primary parsed resume
-    let rawText = ''
-    let parsedResume = null
-    let resumeRecordId = resume_id
-
-    if (resume_id) {
-      const { data } = await supabase
-        .from('parsed_resumes')
-        .select('*')
-        .eq('resume_id', resume_id)
-        .maybeSingle()
-      parsedResume = data
-      rawText = data?.raw_text || ''
-    } else {
-      const { data: primary } = await supabase
-        .from('resumes')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('is_primary', true)
-        .maybeSingle()
-
-      if (primary) {
-        resumeRecordId = primary.id
-        const { data } = await supabase
-          .from('parsed_resumes')
-          .select('*')
-          .eq('resume_id', primary.id)
-          .maybeSingle()
-        parsedResume = data
-        rawText = data?.raw_text || ''
-      }
-    }
+    // loadParsedResume repairs the structured row for resumes uploaded during
+    // onboarding, which never wrote one — the cause of "No resume found" for
+    // most users.
+    const found = await loadParsedResume(supabase, user.id, resume_id)
+    const parsedResume = found?.parsed ?? null
+    const rawText = typeof parsedResume?.raw_text === 'string' ? parsedResume.raw_text : ''
+    const resumeRecordId = found?.resumeId ?? resume_id
 
     if (!rawText && !parsedResume) {
       return Response.json({ error: 'No resume found. Please upload your resume first.' }, { status: 404 })

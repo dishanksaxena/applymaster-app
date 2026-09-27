@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
+import { loadParsedResume } from '@/lib/parsed-resume'
 import Anthropic from '@anthropic-ai/sdk'
 import { tryParseModelJson } from '@/lib/model-json'
 
@@ -20,35 +21,10 @@ export async function POST(req: NextRequest) {
     }
 
     // Get user's primary parsed resume
-    let parsedResume = null
-    let resumeRecordId = resume_id
-
-    if (resume_id) {
-      const { data } = await supabase
-        .from('parsed_resumes')
-        .select('*')
-        .eq('resume_id', resume_id)
-        .maybeSingle()
-      parsedResume = data
-    } else {
-      // Get primary resume
-      const { data: primaryResume } = await supabase
-        .from('resumes')
-        .select('id, parsed_data')
-        .eq('user_id', user.id)
-        .eq('is_primary', true)
-        .maybeSingle()
-
-      if (primaryResume) {
-        resumeRecordId = primaryResume.id
-        const { data } = await supabase
-          .from('parsed_resumes')
-          .select('*')
-          .eq('resume_id', primaryResume.id)
-          .maybeSingle()
-        parsedResume = data
-      }
-    }
+    // Repairs the structured row for onboarding uploads, which never wrote one.
+    const found = await loadParsedResume(supabase, user.id, resume_id)
+    const parsedResume = found?.parsed ?? null
+    const resumeRecordId = found?.resumeId ?? resume_id
 
     if (!parsedResume) {
       return Response.json({ error: 'No parsed resume found. Please upload your resume first.' }, { status: 404 })
@@ -57,7 +33,7 @@ export async function POST(req: NextRequest) {
     // Build resume summary for Claude
     const resumeSummary = `
 Name: ${parsedResume.full_name || 'Candidate'}
-Skills: ${(parsedResume.skills || []).join(', ')}
+Skills: ${(Array.isArray(parsedResume.skills) ? parsedResume.skills : []).join(', ')}
 Experience: ${JSON.stringify(parsedResume.experience || [])}
 Education: ${JSON.stringify(parsedResume.education || [])}
 Summary: ${parsedResume.summary || ''}
