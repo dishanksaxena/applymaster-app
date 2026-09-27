@@ -26,15 +26,16 @@ export type FieldKind =
   | 'cover_letter'
   | 'unknown'
 
+// Lever marks required fields with ✱ rather than *.
 const norm = (s: string) =>
-  s.toLowerCase().replace(/\*/g, '').replace(/\(required\)/g, '').replace(/\s+/g, ' ').trim()
+  s.toLowerCase().replace(/[*✱]/g, '').replace(/\(required\)/g, '').replace(/\s+/g, ' ').trim()
 
 type Rule = { kind: FieldKind; test: RegExp }
 
 const FIELD_RULES: Rule[] = [
   // Specific before general.
-  { kind: 'first_name', test: /^(first|given)[\s_-]?name/ },
-  { kind: 'last_name', test: /^(last|family|sur)[\s_-]?name/ },
+  { kind: 'first_name', test: /^(legal )?(first|given)[\s_-]?name/ },
+  { kind: 'last_name', test: /^(legal )?(last|family|sur)[\s_-]?name/ },
   { kind: 'email', test: /e-?mail/ },
   { kind: 'phone', test: /phone|mobile|telephone|contact number/ },
   { kind: 'linkedin', test: /linked-?in/ },
@@ -44,9 +45,9 @@ const FIELD_RULES: Rule[] = [
   // Country is its own field: a form asking for it wants a country, and
   // filling it with 'San Francisco, CA' is simply a wrong answer.
   { kind: 'country', test: /^country|country of residence$|^nation$/ },
-  { kind: 'location', test: /^location|^city|^town|where are you based|current residence/ },
+  { kind: 'location', test: /^location|^city|^town|where are you based|current residence|^current (location|city)/ },
   // Only after first/last have had their chance.
-  { kind: 'full_name', test: /^(full[\s_-]?)?name$/ },
+  { kind: 'full_name', test: /^((full|legal|complete)[\s_-]?)*name$/ },
 ]
 
 /**
@@ -201,6 +202,22 @@ export function knownAnswer(
  * guess, or with anything at all — takes that choice away and puts data the
  * user never volunteered in front of an employer.
  */
+/**
+ * Agreements, consents and attestations: always the applicant's own call.
+ *
+ * Live forms ask for these as ordinary questions: "Agreement to Arbitrate",
+ * "AI Policy for Application", "Check Yes or No to indicate your agreement
+ * to receive text messages". Answering one on someone's behalf is agreeing
+ * to terms for them. Facts we hold (sponsorship, years) are still answered
+ * even when a question mentions a policy; this only stops written answers.
+ */
+export function isPersonalConsent(label: string): boolean {
+  const l = norm(label)
+  return /\bagree|agreement|consent|acknowledg|certif(y|ication)|attest|arbitrat|terms (and|&) conditions|privacy (policy|notice)|\bpolicy\b|signature|e-?sign|opt[ -]?in\b|receive (text|sms|marketing|communication)/.test(
+    l
+  )
+}
+
 export function isVoluntaryDemographic(label: string): boolean {
   const l = norm(label)
   return /gender|hispanic|latino|race|ethnic|veteran|disability|sexual orientation|self-?identif|transgender|pronoun/.test(

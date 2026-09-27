@@ -31,6 +31,7 @@ const NAV: Cmd[] = [
   { id: 'nav-cover', label: 'Cover Letters', group: 'Navigate', href: '/cover-letters', keywords: 'letter' },
   { id: 'nav-auto', label: 'Auto-Apply Engine', group: 'Navigate', href: '/auto-apply', keywords: 'autopilot copilot engine' },
   { id: 'nav-network', label: 'Referral Network', group: 'Navigate', href: '/network', keywords: 'referral contacts intro' },
+  { id: 'nav-extension', label: 'Chrome Extension', group: 'Navigate', href: '/extension', keywords: 'chrome extension autofill fill form install' },
   { id: 'nav-coach', label: 'Interview Coach', group: 'Navigate', href: '/interview-coach', keywords: 'practice mock' },
   { id: 'nav-profile', label: 'Profile', group: 'Navigate', href: '/profile', keywords: 'account details' },
   { id: 'nav-settings', label: 'Settings', group: 'Navigate', href: '/settings', keywords: 'billing plan theme preferences' },

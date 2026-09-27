@@ -78,7 +78,8 @@ Return ONLY valid JSON (no markdown):
         user_id: user.id,
         resume_id: resumeRecordId,
         job_id,
-        optimized_text: result.optimized_resume_text || '',
+        // The model returns the text as tailored_resume; optimized_resume_text is only the parse-failure fallback.
+        optimized_text: result.tailored_resume || result.optimized_resume_text || '',
         ats_score: result.ats_score,
         changes_made: result.key_changes || [],
       })

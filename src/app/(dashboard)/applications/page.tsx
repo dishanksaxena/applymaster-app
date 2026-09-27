@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import ReceiptDrawer from '@/components/ReceiptDrawer'
+import ApplyKit from '@/components/ApplyKit'
 import ReferralPathBadge from '@/components/ReferralPathBadge'
 import { createClient } from '@/lib/supabase-browser'
 import type { Application } from '@/lib/database.types'
@@ -141,6 +142,7 @@ function daysAgo(dateStr: string | null): string {
 export default function ApplicationsPage() {
   const [applications, setApplications] = useState<Map<string, Application[]>>(new Map())
   const [receiptFor, setReceiptFor] = useState<{ id: string; title?: string; company?: string } | null>(null)
+  const [kitFor, setKitFor] = useState<string | null>(null)
   const [allApps, setAllApps] = useState<Application[]>([])
   const [loading, setLoading] = useState(true)
   const [view, setView] = useState<'kanban' | 'list'>('kanban')
@@ -785,9 +787,22 @@ export default function ApplicationsPage() {
                               </div>
                             )}
 
+                            <div className="mt-2.5 flex flex-wrap gap-1.5">
+                            {(status === 'saved' || status === 'queued') && (
+                              <button
+                                onClick={() => setKitFor(app.id)}
+                                className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10.5px] font-semibold transition-colors"
+                                style={{ background: 'var(--accent-dim)', color: 'var(--accent)' }}
+                              >
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                                  <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2M9 14l2 2 4-4" />
+                                </svg>
+                                Apply kit
+                              </button>
+                            )}
                             <button
                               onClick={() => setReceiptFor({ id: app.id, title: app.job?.title, company: app.job?.company })}
-                              className="mt-2.5 inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10.5px] font-semibold transition-colors"
+                              className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10.5px] font-semibold transition-colors"
                               style={{ background: 'var(--bg-overlay)', color: 'var(--text-secondary)' }}
                             >
                               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
@@ -795,6 +810,7 @@ export default function ApplicationsPage() {
                               </svg>
                               Receipt
                             </button>
+                            </div>
 
                             {/* Status Control */}
                             {status !== 'rejected' && status !== 'offer' ? (
@@ -956,13 +972,24 @@ export default function ApplicationsPage() {
                           {app.status === 'offer' ? 'Offer Received!' : 'Closed'}
                         </span>
                       )}
-                      <button
-                        onClick={() => setReceiptFor({ id: app.id, title: app.job?.title, company: app.job?.company })}
-                        className="mt-1.5 text-[10px] font-semibold underline underline-offset-2"
-                        style={{ color: 'var(--text-muted)' }}
-                      >
-                        Receipt
-                      </button>
+                      <div className="mt-1.5 flex gap-2.5">
+                        {(app.status === 'saved' || app.status === 'queued') && (
+                          <button
+                            onClick={() => setKitFor(app.id)}
+                            className="text-[10px] font-semibold underline underline-offset-2"
+                            style={{ color: 'var(--accent)' }}
+                          >
+                            Apply kit
+                          </button>
+                        )}
+                        <button
+                          onClick={() => setReceiptFor({ id: app.id, title: app.job?.title, company: app.job?.company })}
+                          className="text-[10px] font-semibold underline underline-offset-2"
+                          style={{ color: 'var(--text-muted)' }}
+                        >
+                          Receipt
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )
@@ -978,6 +1005,21 @@ export default function ApplicationsPage() {
         </>
       )}
     
+      {kitFor && (
+        <ApplyKit
+          applicationId={kitFor}
+          onClose={() => setKitFor(null)}
+          onRecorded={(id, openReceipt) => {
+            loadApplications()
+            if (openReceipt) {
+              const app = allApps.find(a => a.id === id)
+              setKitFor(null)
+              setReceiptFor({ id, title: app?.job?.title, company: app?.job?.company })
+            }
+          }}
+        />
+      )}
+
       {receiptFor && (
         <ReceiptDrawer
           applicationId={receiptFor.id}

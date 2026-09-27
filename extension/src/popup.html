@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>ApplyMaster</title>
+    <style>
+      * { box-sizing: border-box; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+      body { margin: 0; width: 300px; background: #fffdfb; color: #231a1e; font-size: 13px; line-height: 1.45; }
+      header { display: flex; align-items: center; gap: 8px; padding: 12px 14px; border-bottom: 1px solid #efe6ea; font-weight: 700; }
+      .logo { width: 22px; height: 22px; border-radius: 6px; background: #a8325c; color: #fff; display: grid; place-items: center; font-size: 10px; font-weight: 800; }
+      main { padding: 12px 14px 14px; }
+      .muted { color: #6f5f67; margin: 0 0 10px; }
+      .who { margin: 0 0 12px; }
+      button { width: 100%; border: 0; cursor: pointer; font-weight: 600; font-size: 13px; padding: 9px 12px; border-radius: 10px; margin-top: 6px; }
+      .primary { background: #a8325c; color: #fff; } .primary:hover { background: #922b4f; }
+      .quiet { background: #f4ecef; color: #231a1e; } .quiet:hover { background: #ebdfe4; }
+      .link { background: none; color: #6f5f67; font-weight: 500; text-decoration: underline; text-underline-offset: 2px; }
+      .err { color: #b42318; margin-top: 8px; }
+      button:focus-visible { outline: 2px solid #a8325c; outline-offset: 2px; }
+    </style>
+  </head>
+  <body>
+    <header><span class="logo">AM</span>ApplyMaster</header>
+    <main id="main"><p class="muted">Loading…</p></main>
+    <script src="popup.js"></script>
+  </body>
+</html>

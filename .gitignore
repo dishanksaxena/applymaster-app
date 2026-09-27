@@ -16,3 +16,8 @@ probe.mjs
 verify-resume.pdf
 .atstest/
 tailored-test.pdf
+
+# built by scripts/build-extension.mjs
+extension/dist/
+extension/dist-dev/
+public/downloads/applymaster-extension.zip

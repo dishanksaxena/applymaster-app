@@ -53,6 +53,11 @@ const icons = {
       <polygon points="13,2 3,14 12,14 11,22 21,10 12,10" />
     </svg>
   ),
+  extension: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M10 3h4v2.5a1.5 1.5 0 003 0V3h2a2 2 0 012 2v4h-2.5a1.5 1.5 0 000 3H21v7a2 2 0 01-2 2h-5v-2.5a1.5 1.5 0 00-3 0V21H5a2 2 0 01-2-2v-5h2.5a1.5 1.5 0 000-3H3V5a2 2 0 012-2h5z" />
+    </svg>
+  ),
   network: (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="18" r="2.5"/><circle cx="12" cy="12" r="3"/>
@@ -126,6 +131,7 @@ const navItems = [
   { label: 'Profile', href: '/profile', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> },
   { label: 'Cover Letters', href: '/cover-letters', icon: icons.coverLetters },
   { label: 'Auto-Apply', href: '/auto-apply', icon: icons.autoApply },
+  { label: 'Chrome Extension', href: '/extension', icon: icons.extension },
   { label: 'Referral Network', href: '/network', icon: icons.network },
   { label: 'Interview Coach', href: '/interview-coach', icon: icons.interviewCoach },
   { label: 'Help & support', href: '/support', icon: icons.support },
