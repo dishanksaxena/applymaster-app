@@ -693,7 +693,10 @@ export default function NetworkPage() {
   const photoOf = useCallback((c: { id: string; photo_url?: string | null }) => photos[c.id] ?? c.photo_url ?? null, [photos])
   const askedPhotos = useRef(new Set<string>())
   const mounted = useRef(true)
-  useEffect(() => () => void (mounted.current = false), [])
+  useEffect(() => {
+    mounted.current = true
+    return () => void (mounted.current = false)
+  }, [])
   useEffect(() => {
     if (!photosEnabled()) return
     const onScreen = [...(tab === 'network' ? visibleConnections.slice(0, shown) : []), ...(hits ?? []).map(h => h.connection)]

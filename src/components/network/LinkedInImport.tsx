@@ -233,7 +233,10 @@ export default function LinkedInImport({
   const [photoByUrl, setPhotoByUrl] = useState<Record<string, string | null>>({})
   const askedPhotos = useRef(new Set<string>())
   const alive = useRef(true)
-  useEffect(() => () => void (alive.current = false), [])
+  useEffect(() => {
+    alive.current = true
+    return () => void (alive.current = false)
+  }, [])
   const [picked, setPicked] = useState<Set<string>>(new Set())
   const [helperQuery, setHelperQuery] = useState('')
   const [saving, setSaving] = useState(false)

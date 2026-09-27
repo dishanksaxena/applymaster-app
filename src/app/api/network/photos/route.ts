@@ -6,12 +6,13 @@ import { createAdminClient } from '@/lib/supabase-admin'
  * Profile photos for people in someone's network.
  *
  * A LinkedIn archive has no photos — only each person's profile link. For
- * the people someone is looking at, this asks unavatar for the photo on that
- * LinkedIn profile, stores it in the contact-photos bucket, and remembers the
- * answer, so each person is looked up (and paid for) once.
+ * the people someone is looking at, this reads the photo from that public
+ * LinkedIn profile page (its og:image), stores it in the contact-photos
+ * bucket, and remembers the answer, so each person is looked up once.
  *
- * Costs money per lookup with UNAVATAR_API_KEY set; without it unavatar's
- * free allowance applies (25 a day). Either way a person gets at most
+ * When LinkedIn declines the request (status 999, or a sign-in wall), it
+ * falls back to unavatar, which costs money per lookup with UNAVATAR_API_KEY
+ * set and allows 25 a day without. Either way a person gets at most
  * DAILY_CAP new lookups a day, and only for contacts they own.
  */
 
@@ -27,9 +28,72 @@ type Row = { id: string; linkedin_url: string | null; photo_url: string | null; 
 const slugOf = (url: string | null) => url?.match(/linkedin\.com\/in\/([^/?#\s]+)/i)?.[1] ?? null
 const EXT: Record<string, string> = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' }
 
-type Outcome = { photo: string | null; checked: boolean; limited?: boolean }
+type Outcome = { photo: string | null; checked: boolean }
+type Found = { bytes: ArrayBuffer; type: string }
+type Source = 'linkedin' | 'service'
 
-async function lookup(slug: string): Promise<{ bytes: ArrayBuffer; type: string } | 'none' | 'limited' | 'error'> {
+// Says who is asking; no disguise.
+const AGENT = 'ApplyMaster/1.0 (+https://applymaster.ai)'
+
+async function image(url: string, headers: Record<string, string> = {}): Promise<Found | 'error'> {
+  try {
+    const res = await fetch(url, { headers, signal: AbortSignal.timeout(10_000) })
+    if (!res.ok) return 'error'
+    const type = (res.headers.get('content-type') || '').split(';')[0].trim()
+    if (!EXT[type]) return 'error'
+    const bytes = await res.arrayBuffer()
+    if (!bytes.byteLength || bytes.byteLength > MAX_BYTES) return 'error'
+    return { bytes, type }
+  } catch {
+    return 'error'
+  }
+}
+
+const OG_IMAGE = /property="og:image"\s+content="([^"]+)"/
+
+/** The start of a page, up to its <head> closing — profile pages run to 800 KB. */
+async function readHead(res: Response, limit = 400_000) {
+  const reader = res.body?.getReader()
+  if (!reader) return ''
+  const dec = new TextDecoder()
+  let text = ''
+  while (text.length < limit) {
+    const { done, value } = await reader.read()
+    if (done) break
+    text += dec.decode(value, { stream: true })
+    if (text.includes('</head>') || OG_IMAGE.test(text)) break
+  }
+  reader.cancel().catch(() => {})
+  return text
+}
+
+/**
+ * The photo on a public LinkedIn profile. 'unavailable' when LinkedIn will
+ * not show the page to us; 'none' when the page is there with no photo.
+ */
+async function fromLinkedIn(slug: string): Promise<Found | 'none' | 'unavailable'> {
+  try {
+    const res = await fetch(`https://www.linkedin.com/in/${encodeURIComponent(slug)}`, {
+      headers: { 'User-Agent': AGENT, 'Accept-Language': 'en' },
+      signal: AbortSignal.timeout(10_000),
+    })
+    if (!res.ok || /authwall|\/login|checkpoint/.test(res.url)) {
+      res.body?.cancel().catch(() => {})
+      return 'unavailable'
+    }
+    const og = (await readHead(res)).match(OG_IMAGE)?.[1]?.replace(/&amp;/g, '&')
+    if (!og) return 'unavailable'
+    // Anything but an uploaded profile photo is LinkedIn's default silhouette.
+    if (!og.startsWith('https://media.licdn.com/dms/image/') || !og.includes('profile-displayphoto')) return 'none'
+    const img = await image(og)
+    return img === 'error' ? 'unavailable' : img
+  } catch {
+    return 'unavailable'
+  }
+}
+
+/** unavatar: the fallback when LinkedIn declines. Paid with a key. */
+async function fromService(slug: string): Promise<Found | 'none' | 'limited' | 'error'> {
   const key = process.env.UNAVATAR_API_KEY
   try {
     const res = await fetch(`https://unavatar.io/linkedin/user:${encodeURIComponent(slug)}?fallback=false`, {
@@ -47,6 +111,12 @@ async function lookup(slug: string): Promise<{ bytes: ArrayBuffer; type: string 
   } catch {
     return 'error'
   }
+}
+
+async function lookup(slug: string): Promise<{ answer: Found | 'none' | 'limited' | 'error'; source: Source }> {
+  const direct = await fromLinkedIn(slug)
+  if (direct !== 'unavailable') return { answer: direct, source: 'linkedin' }
+  return { answer: await fromService(slug), source: 'service' }
 }
 
 export async function POST(req: NextRequest) {
@@ -89,14 +159,15 @@ export async function POST(req: NextRequest) {
   const admin = createAdminClient()
   const results = new Map<string, Outcome>()
   let limited = false
+  const sources: Record<Source, number> = { linkedin: 0, service: 0 }
 
-  // Four at a time; stop starting new lookups once the service says no.
+  // Three at a time; stop starting new lookups once the service says no.
   const queue = [...todo]
   await Promise.all(
-    Array.from({ length: 4 }, async () => {
+    Array.from({ length: 3 }, async () => {
       for (let r = queue.shift(); r; r = queue.shift()) {
         if (limited) break
-        const got = await lookup(slugOf(r.linkedin_url)!)
+        const { answer: got, source } = await lookup(slugOf(r.linkedin_url)!)
         if (got === 'limited') {
           limited = true
           break
@@ -114,6 +185,7 @@ export async function POST(req: NextRequest) {
         const photo = admin.storage.from(BUCKET).getPublicUrl(path).data.publicUrl
         await supabase.from('network_connections').update({ photo_url: photo, photo_checked_at: now }).eq('id', r.id).eq('user_id', user.id)
         results.set(r.id, { photo, checked: true })
+        sources[source] += 1
       }
     })
   )
@@ -129,5 +201,5 @@ export async function POST(req: NextRequest) {
     if (r.linkedin_url) byUrl[r.linkedin_url] = photo
   }
   const pending = rows.filter(r => !photos.hasOwnProperty(r.id) && slugOf(r.linkedin_url)).length
-  return Response.json({ photos, byUrl, pending, limited, capped: allowance === 0 })
+  return Response.json({ photos, byUrl, pending, limited, capped: allowance === 0, sources })
 }
