@@ -44,6 +44,7 @@ export const TRACK_EVENTS = [
   'plan_changed',
   'payment_webhook_failed',
   'account_deleted',
+  'network_imported',
 
   'support_opened',
   'support_submitted',
@@ -72,6 +73,7 @@ export const SERVER_ONLY_EVENTS = new Set<TrackEvent>([
   'plan_changed',
   'payment_webhook_failed',
   'account_deleted',
+  'network_imported',
   'support_submitted',
   'support_failed',
 ])
@@ -84,6 +86,6 @@ export function outcomeOf(event: TrackEvent): TrackProps['outcome'] {
   if (event === 'auth_page_view' || event === 'support_opened' || event === 'app_open') return 'view'
   if (event === 'upgrade_interest') return 'attempt'
   if (/_(failed|existing_account)$/.test(event)) return 'failure'
-  if (/_(success|submitted|updated|requested|changed)$/.test(event) || event === 'confirm_resend') return 'success'
+  if (/_(success|submitted|updated|requested|changed|imported)$/.test(event) || event === 'confirm_resend') return 'success'
   return 'attempt'
 }

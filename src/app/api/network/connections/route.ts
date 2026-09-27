@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
+import { fetchAllConnections } from '@/lib/network-data'
 
 /**
  * The user's network: read, add, update, remove.
@@ -10,7 +11,7 @@ import { createClient } from '@/lib/supabase-server'
  * point, not a dead end.
  */
 
-const ALLOWED_RELATIONSHIPS = ['direct', 'second_degree', 'alumni', 'imported']
+const ALLOWED_RELATIONSHIPS = ['direct', 'linkedin', 'second_degree', 'alumni', 'imported']
 
 export async function GET() {
   const supabase = createClient()
@@ -19,16 +20,19 @@ export async function GET() {
   } = await supabase.auth.getUser()
   if (!user) return Response.json({ error: 'Not authenticated' }, { status: 401 })
 
-  const { data, error } = await supabase
-    .from('network_connections')
-    .select(
+  try {
+    // Paged: a LinkedIn import is often thousands of people, and a single
+    // select stops at 1,000.
+    const rows = await fetchAllConnections<{ created_at: string }>(
+      supabase,
+      user.id,
       'id, name, company, title, relationship, email, linkedin_url, seniority, can_refer, last_contacted_at, notes, created_at'
     )
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: false })
-
-  if (error) return Response.json({ error: error.message }, { status: 500 })
-  return Response.json({ connections: data ?? [] })
+    rows.sort((a, b) => (a.created_at < b.created_at ? 1 : -1))
+    return Response.json({ connections: rows })
+  } catch (err) {
+    return Response.json({ error: err instanceof Error ? err.message : 'Could not load your network' }, { status: 500 })
+  }
 }
 
 export async function POST(req: NextRequest) {

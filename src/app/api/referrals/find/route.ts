@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import Anthropic from '@anthropic-ai/sdk'
+import { fetchAllConnections } from '@/lib/network-data'
 
 const anthropic = new Anthropic()
 
@@ -22,7 +23,7 @@ type Conn = {
   name: string
   company: string | null
   title: string | null
-  relationship: 'direct' | 'second_degree' | 'alumni' | 'imported'
+  relationship: 'direct' | 'linkedin' | 'second_degree' | 'alumni' | 'imported'
   email: string | null
   linkedin_url: string | null
   seniority: string | null
@@ -47,12 +48,14 @@ function score(conn: Conn, company: string): { strength: number; reason: string 
   // A direct contact can refer; a second-degree one has to introduce you first.
   const byRelationship: Record<Conn['relationship'], number> = {
     direct: 30,
+    linkedin: 20,
     second_degree: 15,
     alumni: 12,
     imported: 5,
   }
   s += byRelationship[conn.relationship] ?? 5
   if (conn.relationship === 'direct') reasons.push('you know them directly')
+  else if (conn.relationship === 'linkedin') reasons.push('LinkedIn connection')
   else if (conn.relationship === 'second_degree') reasons.push('second-degree connection')
   else if (conn.relationship === 'alumni') reasons.push('alumni connection')
 
@@ -83,15 +86,12 @@ export async function POST(req: NextRequest) {
     const { job_id, job_title, company, application_id, connection_id } = await req.json()
     if (!company) return Response.json({ error: 'company required' }, { status: 400 })
 
-    let query = supabase
-      .from('network_connections')
-      .select('id, name, company, title, relationship, email, linkedin_url, seniority, can_refer, last_contacted_at')
-      .eq('user_id', user.id)
-
-    // Asking about one specific person, rather than "who at this company".
-    if (connection_id) query = query.eq('id', connection_id)
-
-    const { data: connections } = await query
+    const COLS = 'id, name, company, title, relationship, email, linkedin_url, seniority, can_refer, last_contacted_at'
+    // One specific person, or the whole network — paged, since an imported
+    // LinkedIn network is usually past the 1,000-row page size.
+    const connections = connection_id
+      ? (await supabase.from('network_connections').select(COLS).eq('user_id', user.id).eq('id', connection_id)).data
+      : await fetchAllConnections(supabase, user.id, COLS)
 
     const scored = ((connections ?? []) as Conn[])
       // Must actually be at the company — that is what makes it a referral.
@@ -125,10 +125,10 @@ export async function POST(req: NextRequest) {
 Write that request as ${userName}, addressed to ${conn.name}.
 
 Contact: ${conn.name}${conn.title ? `, ${conn.title}` : ''} at ${company}
-Relationship to ${userName}: ${conn.relationship.replace('_', ' ')}
+Relationship to ${userName}: ${conn.relationship === 'linkedin' ? 'connected on LinkedIn (they may not know each other well)' : conn.relationship.replace('_', ' ')}
 Role ${userName} wants to be referred into: ${job_title || 'an open role'} at ${company}
 
-Constraints: under 90 words. Plain language. No flattery, no "I hope this finds you well". Acknowledge the relationship honestly — do not imply closeness that does not exist for a second-degree or alumni contact. Make one specific ask and make it easy to decline.
+Constraints: under 90 words. Plain language. No flattery, no "I hope this finds you well". Acknowledge the relationship honestly — do not imply closeness that does not exist for a LinkedIn-only, second-degree or alumni contact. Make one specific ask and make it easy to decline.
 
 Return only the message body: no subject line, no signature.`,
           }],

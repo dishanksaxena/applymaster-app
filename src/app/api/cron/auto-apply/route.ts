@@ -11,6 +11,7 @@ import {
   type FetchedJob,
 } from '@/lib/job-fetch'
 import { scoreJob, postingKey, type MatchPrefs } from '@/lib/job-match'
+import { fetchAllConnections } from '@/lib/network-data'
 
 export const maxDuration = 300
 export const dynamic = 'force-dynamic'
@@ -186,7 +187,7 @@ async function run(req: NextRequest) {
         .slice(0, room)
 
       // Referral-first: which of these are at companies where they know someone?
-      const { data: contacts } = await db.from('network_connections').select('company').eq('user_id', p.user_id)
+      const contacts = await fetchAllConnections<{ company: string | null }>(db, p.user_id, 'company')
       const known = new Set((contacts ?? []).map(c => (c.company || '').toLowerCase().replace(/[^a-z0-9]/g, '')).filter(Boolean))
       const warm = picks.filter(({ job }) => known.has(job.company.toLowerCase().replace(/[^a-z0-9]/g, '')))
 

@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import Anthropic from '@anthropic-ai/sdk'
+import { fetchAllConnections } from '@/lib/network-data'
 
 const anthropic = new Anthropic()
 
@@ -123,6 +124,11 @@ function rank(c: Conn, intent: Intent, rawQuery: string) {
   if (c.relationship === 'direct') {
     score += 18
     reasons.push('you know them directly')
+  } else if (c.relationship === 'linkedin') {
+    // Connected on LinkedIn: a real path, but most people's LinkedIn networks
+    // are largely acquaintances, so it ranks below "I know them".
+    score += 12
+    reasons.push('LinkedIn connection')
   } else if (c.relationship === 'second_degree') {
     score += 9
     reasons.push('second-degree connection')
@@ -171,16 +177,18 @@ export async function POST(req: NextRequest) {
       return Response.json({ error: 'query required' }, { status: 400 })
     }
 
-    const { data: connections, error } = await supabase
-      .from('network_connections')
-      .select(
+    // Paged: an imported LinkedIn network is often thousands of people and a
+    // single select stops at 1,000 — search would quietly miss the rest.
+    let all: Conn[]
+    try {
+      all = await fetchAllConnections<Conn>(
+        supabase,
+        user.id,
         'id, name, company, title, relationship, email, linkedin_url, seniority, can_refer, last_contacted_at, notes'
       )
-      .eq('user_id', user.id)
-
-    if (error) return Response.json({ error: error.message }, { status: 500 })
-
-    const all = (connections ?? []) as Conn[]
+    } catch (e) {
+      return Response.json({ error: e instanceof Error ? e.message : 'Could not read your network' }, { status: 500 })
+    }
     if (all.length === 0) {
       return Response.json({ results: [], intent: null, networkSize: 0, reason: 'empty_network' })
     }

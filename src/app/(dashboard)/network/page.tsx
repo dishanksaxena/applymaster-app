@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { PremiumCard } from '@/components/premium'
 import NetworkGraph from '@/components/NetworkGraph'
+import LinkedInImport from '@/components/network/LinkedInImport'
 import { tone, toneA, toneSurface, type Tone } from '@/lib/tone'
 
 /**
@@ -70,6 +71,7 @@ const initialsOf = (name: string) =>
 
 const RELATIONSHIP_LABEL: Record<string, string> = {
   direct: 'Know them directly',
+  linkedin: 'LinkedIn connection',
   second_degree: 'Second-degree',
   alumni: 'Alumni',
   imported: 'Imported',
@@ -256,6 +258,7 @@ function AddConnection({ onAdded }: { onAdded: (c: Connection) => void }) {
             style={{ background: 'var(--bg-input)', color: 'var(--text)', boxShadow: 'inset 0 0 0 1px var(--card-ring)' }}
           >
             <option value="direct">I know them directly</option>
+            <option value="linkedin">LinkedIn connection</option>
             <option value="second_degree">Second-degree connection</option>
             <option value="alumni">Alumni / same school</option>
             <option value="imported">Imported contact</option>
@@ -531,6 +534,9 @@ type Tab = 'find' | 'network' | 'requests'
 
 export default function NetworkPage() {
   const [tab, setTab] = useState<Tab>('find')
+  const [importOpen, setImportOpen] = useState(false)
+  const [networkFilter, setNetworkFilter] = useState('')
+  const [shown, setShown] = useState(60)
   const [connections, setConnections] = useState<Connection[]>([])
   const [requests, setRequests] = useState<ReferralRequest[]>([])
   const [loading, setLoading] = useState(true)
@@ -621,6 +627,12 @@ export default function NetworkPage() {
 
   /* Companies you actually have a way into — the most useful summary of a
      network for someone who is job hunting. */
+  const visibleConnections = useMemo(() => {
+    const q = networkFilter.trim().toLowerCase()
+    if (!q) return connections
+    return connections.filter(c => `${c.name} ${c.company ?? ''} ${c.title ?? ''}`.toLowerCase().includes(q))
+  }, [connections, networkFilter])
+
   const companies = useMemo(() => {
     const map = new Map<string, number>()
     for (const c of connections) {
@@ -649,6 +661,16 @@ export default function NetworkPage() {
           <p className="text-[13px] mt-1" style={{ color: 'var(--text-muted)' }}>
             A referral converts far better than a cold application. This finds the people you already know.
           </p>
+          <button
+            onClick={() => setImportOpen(true)}
+            className="mt-3 inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-[13px] font-semibold"
+            style={{ background: '#0A66C2', color: '#fff' }}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true">
+              <path fill="currentColor" d="M6.9 9.3h2.4v7.8H6.9zM8.1 5.5a1.4 1.4 0 110 2.8 1.4 1.4 0 010-2.8zM10.8 9.3h2.3v1.07h.03c.32-.6 1.1-1.26 2.28-1.26 2.44 0 2.89 1.6 2.89 3.7v4.3h-2.4v-3.8c0-.9-.02-2.07-1.26-2.07-1.26 0-1.45.98-1.45 2v3.87h-2.4z" />
+            </svg>
+            {connections.length ? 'Update from LinkedIn' : 'Import from LinkedIn'}
+          </button>
         </div>
         <div className="flex gap-6">
           <div>
@@ -805,7 +827,7 @@ export default function NetworkPage() {
               what this network is actually worth for a search. */}
           {hits === null && companies.length > 0 && (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {companies.map(([name, count], i) => {
+              {companies.slice(0, 12).map(([name, count], i) => {
                 const people = connections.filter(c => c.company === name)
                 const t = toneFor(name)
                 return (
@@ -897,7 +919,41 @@ export default function NetworkPage() {
       {/* ── Network ── */}
       {tab === 'network' && (
         <div className="space-y-4">
+          {connections.length === 0 && !loading && (
+            <PremiumCard accent="blue" hover={false}>
+              <div className="flex flex-wrap items-center gap-4 p-5">
+                <div className="min-w-0 flex-1">
+                  <p className="font-display text-[1.25rem]" style={{ color: 'var(--text)' }}>
+                    Start with your LinkedIn network
+                  </p>
+                  <p className="text-[12.5px] mt-1 leading-relaxed" style={{ color: 'var(--text-muted)' }}>
+                    Bring in every first-degree connection in one upload, then see who can refer you at any company.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setImportOpen(true)}
+                  className="px-4 py-2.5 rounded-xl text-[13px] font-semibold shrink-0"
+                  style={{ background: '#0A66C2', color: '#fff' }}
+                >
+                  Import from LinkedIn
+                </button>
+              </div>
+            </PremiumCard>
+          )}
           <AddConnection onAdded={c => setConnections(cs => [c, ...cs])} />
+          {connections.length > 12 && (
+            <input
+              value={networkFilter}
+              onChange={e => {
+                setNetworkFilter(e.target.value)
+                setShown(60)
+              }}
+              placeholder={`Filter ${connections.length.toLocaleString()} people by name, company or title`}
+              aria-label="Filter your network"
+              className="w-full px-4 py-2.5 rounded-xl text-[13.5px] outline-none"
+              style={{ background: 'var(--bg-input)', color: 'var(--text)', boxShadow: 'inset 0 0 0 1px var(--card-ring)' }}
+            />
+          )}
 
           {loading ? (
             <p className="text-[13px] px-1" style={{ color: 'var(--text-muted)' }}>
@@ -916,7 +972,7 @@ export default function NetworkPage() {
             </PremiumCard>
           ) : (
             <div className="grid gap-3 md:grid-cols-2">
-              {connections.map(c => {
+              {visibleConnections.slice(0, shown).map(c => {
                 const t = toneFor(c.id)
                 return (
                   <PremiumCard key={c.id} accent={t === 'accent' ? 'pink' : t} hover={false}>
@@ -966,6 +1022,21 @@ export default function NetworkPage() {
                 )
               })}
             </div>
+          )}
+          {/* A LinkedIn import is often thousands of people; render in pages. */}
+          {visibleConnections.length > shown && (
+            <button
+              onClick={() => setShown(n => n + 120)}
+              className="w-full py-2.5 rounded-xl text-[13px] font-semibold"
+              style={{ background: 'var(--bg-overlay)', color: 'var(--text-secondary)' }}
+            >
+              Show more · {(visibleConnections.length - shown).toLocaleString()} left
+            </button>
+          )}
+          {networkFilter && visibleConnections.length === 0 && (
+            <p className="text-[13px] px-1" style={{ color: 'var(--text-muted)' }}>
+              Nobody in your network matches “{networkFilter}”.
+            </p>
           )}
         </div>
       )}
@@ -1065,6 +1136,16 @@ export default function NetworkPage() {
             })
           )}
         </div>
+      )}
+
+      {importOpen && (
+        <LinkedInImport
+          onClose={() => setImportOpen(false)}
+          onImported={() => {
+            loadAll()
+            setHits(null)
+          }}
+        />
       )}
 
       {drafting && (

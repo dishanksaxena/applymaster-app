@@ -47,11 +47,21 @@ async function loadNetwork() {
         data: { user },
       } = await supabase.auth.getUser()
       if (!user) return (cache = { at: Date.now(), rows: [] })
-      const { data } = await supabase
-        .from('network_connections')
-        .select('id, name, company, title, can_refer')
-        .eq('user_id', user.id)
-      cache = { at: Date.now(), rows: data ?? [] }
+      /* Paged: Supabase returns at most 1,000 rows per request, and an
+         imported LinkedIn network is usually larger — every badge past the
+         first thousand contacts would otherwise have stayed silent. */
+      const rows: NetworkRow[] = []
+      for (let from = 0; from < 50_000; from += 1000) {
+        const { data } = await supabase
+          .from('network_connections')
+          .select('id, name, company, title, can_refer')
+          .eq('user_id', user.id)
+          .order('id', { ascending: true })
+          .range(from, from + 999)
+        rows.push(...((data ?? []) as NetworkRow[]))
+        if (!data || data.length < 1000) break
+      }
+      cache = { at: Date.now(), rows }
       return cache
     } finally {
       inflight = null
