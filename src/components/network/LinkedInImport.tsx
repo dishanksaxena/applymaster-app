@@ -1,24 +1,59 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { readLinkedInFile, type LinkedInConnection } from '@/lib/linkedin-import'
+import { createClient } from '@/lib/supabase-browser'
+import { readLinkedInArchive, signalsFor, type LinkedInArchive } from '@/lib/linkedin-import'
 import { claudeImportPrompt } from '@/lib/linkedin-claude-prompt'
 
 /**
- * Import your LinkedIn network.
+ * Import your LinkedIn network, then turn it into referral paths.
  *
  * LinkedIn does not give apps access to a member's connections, but it lets
  * every member download their own. This walks someone through requesting
- * that archive, then reads it — in the browser, so only the connection list
- * ever reaches ApplyMaster.
+ * that archive, reads it in the browser, and then does the part a raw list
+ * cannot: separates the people you actually know from the people you are
+ * merely connected to, and points them at the jobs you are chasing.
+ *
+ *   choose   what to import — connections, message history (who and when,
+ *            never the text), endorsements, skills
+ *   helpers  "who would refer you?" — ranked by who you actually talk to
+ *   paths    warm paths: people at companies you are applying to,
+ *            recruiters and hiring managers, your strongest relationships
  */
 
 const LINKEDIN_EXPORT_URL = 'https://www.linkedin.com/mypreferences/d/download-my-data'
 const REQUESTED_KEY = 'am_li_export_requested_at'
 const CHUNK = 1000
 
-type Step = 'request' | 'upload' | 'reading' | 'preview' | 'importing' | 'done'
-type Summary = { inserted: number; updated: number; total: number }
+type Step = 'request' | 'upload' | 'reading' | 'choose' | 'importing' | 'helpers' | 'paths' | 'done'
+type Summary = { inserted: number; updated: number; total: number; skillsAdded: number }
+
+export type ImportedConnection = {
+  id: string
+  name: string
+  company: string | null
+  title: string | null
+  relationship: string
+  email: string | null
+  linkedin_url: string | null
+  seniority: string | null
+  can_refer: boolean | null
+  last_contacted_at: string | null
+  notes: string | null
+  message_count?: number | null
+  endorsed_you?: number | null
+  would_help?: boolean | null
+  connected_on?: string | null
+}
+
+const norm = (s: string | null | undefined) =>
+  (s || '')
+    .toLowerCase()
+    .replace(/\b(inc|llc|ltd|corp|corporation|technologies|labs|group|the|pvt|private|limited)\b/g, '')
+    .replace(/[^a-z0-9]/g, '')
+
+const RECRUITER = /\b(recruit|talent|sourcer|hiring|people partner|hrbp|human resources|staffing)\w*/i
+const HIRING_LEVEL = /\b(manager|director|head of|vp|vice president|chief|cto|ceo|founder|principal|lead)\b/i
 
 function ago(ts: number) {
   const m = Math.round((Date.now() - ts) / 60000)
@@ -27,6 +62,24 @@ function ago(ts: number) {
   const h = Math.round(m / 60)
   return h < 48 ? `${h} hour${h === 1 ? '' : 's'} ago` : `${Math.round(h / 24)} days ago`
 }
+
+const monthYear = (iso: string | null | undefined) =>
+  iso ? new Date(iso).toLocaleDateString(undefined, { month: 'short', year: 'numeric' }) : ''
+
+function strengthOf(c: { would_help?: boolean | null; message_count?: number | null; endorsed_you?: number | null; last_contacted_at?: string | null }) {
+  let s = 0
+  if (c.would_help) s += 100
+  s += Math.min(40, (c.message_count ?? 0) * 2)
+  s += Math.min(15, (c.endorsed_you ?? 0) * 5)
+  if (c.last_contacted_at) {
+    const days = (Date.now() - new Date(c.last_contacted_at).getTime()) / 86400000
+    if (days < 180) s += 10
+    else if (days < 540) s += 4
+  }
+  return s
+}
+
+/* ── small pieces ─────────────────────────────────────────────────── */
 
 function LinkedInMark({ size = 22 }: { size?: number }) {
   return (
@@ -49,6 +102,55 @@ function ClaudeMark({ size = 14 }: { size?: number }) {
         ))}
       </g>
     </svg>
+  )
+}
+
+function Initials({ name, size = 36 }: { name: string; size?: number }) {
+  const ini = name.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]?.toUpperCase()).join('') || '?'
+  const hue = [...name].reduce((a, c) => a + c.charCodeAt(0), 0) % 360
+  return (
+    <span
+      aria-hidden="true"
+      className="grid place-items-center rounded-full font-semibold shrink-0"
+      style={{ width: size, height: size, fontSize: size * 0.36, background: `hsl(${hue} 45% 92%)`, color: `hsl(${hue} 40% 32%)` }}
+    >
+      {ini}
+    </span>
+  )
+}
+
+function Check({ on, disabled }: { on: boolean; disabled?: boolean }) {
+  return (
+    <span
+      aria-hidden="true"
+      className="grid place-items-center w-5 h-5 rounded-md shrink-0"
+      style={{
+        background: on ? (disabled ? 'rgb(var(--green-rgb) / 0.45)' : 'var(--green)') : 'var(--bg-card)',
+        boxShadow: on ? 'none' : 'inset 0 0 0 1.5px var(--border-hover)',
+      }}
+    >
+      {on && (
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3.4">
+          <path d="M20 6L9 17l-5-5" />
+        </svg>
+      )}
+    </span>
+  )
+}
+
+function Chip({ children, tone = 'neutral' }: { children: React.ReactNode; tone?: 'neutral' | 'green' | 'accent' | 'blue' }) {
+  const style =
+    tone === 'green'
+      ? { background: 'var(--green-dim)', color: 'var(--green)' }
+      : tone === 'accent'
+        ? { background: 'var(--accent-dim)', color: 'var(--accent)' }
+        : tone === 'blue'
+          ? { background: 'var(--blue-dim)', color: 'var(--blue)' }
+          : { background: 'var(--bg-overlay)', color: 'var(--text-secondary)' }
+  return (
+    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap" style={style}>
+      {children}
+    </span>
   )
 }
 
@@ -89,17 +191,22 @@ function ExportIllustration() {
   )
 }
 
+/* ── the dialog ───────────────────────────────────────────────────── */
+
 export default function LinkedInImport({
   onClose,
   onImported,
+  onDraft,
   initialStep,
   viaClaude = false,
 }: {
   onClose: () => void
   onImported: (s: Summary) => void
+  /** Open the referral-ask dialog for one imported person, with the role you're tracking there. */
+  onDraft?: (c: ImportedConnection, role?: string) => void
   /** Deep links open straight on a step (Claude uses step=upload). */
   initialStep?: 'request' | 'upload'
-  /** Claude is driving: show counts only, so no names reach its screenshots. */
+  /** Claude is driving: counts only, so no names reach its screenshots. */
   viaClaude?: boolean
 }) {
   const [requestedAt, setRequestedAt] = useState<number | null>(null)
@@ -107,15 +214,19 @@ export default function LinkedInImport({
   const [mode, setMode] = useState<'manual' | 'claude'>('manual')
   const [copied, setCopied] = useState(false)
   const [error, setError] = useState('')
-  const [rows, setRows] = useState<LinkedInConnection[]>([])
+  const [archive, setArchive] = useState<LinkedInArchive | null>(null)
   const [fileName, setFileName] = useState('')
   const [progress, setProgress] = useState(0)
   const [summary, setSummary] = useState<Summary | null>(null)
   const [dragging, setDragging] = useState(false)
+  const [include, setInclude] = useState({ messages: true, endorsements: true, skills: true })
+  const [picked, setPicked] = useState<Set<string>>(new Set())
+  const [helperQuery, setHelperQuery] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [imported, setImported] = useState<ImportedConnection[]>([])
+  const [appCompanies, setAppCompanies] = useState<Map<string, { name: string; n: number; role: string | null }>>(new Map())
   const panelRef = useRef<HTMLDivElement>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
 
-  // Someone who already requested the archive comes back to the upload step.
   useEffect(() => {
     try {
       const v = Number(localStorage.getItem(REQUESTED_KEY))
@@ -127,22 +238,15 @@ export default function LinkedInImport({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const copyPrompt = async () => {
-    try {
-      await navigator.clipboard.writeText(claudeImportPrompt(window.location.origin))
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2500)
-    } catch {
-      setError('Could not copy — your browser blocked clipboard access.')
-    }
-  }
-
-  const busy = step === 'reading' || step === 'importing'
+  const busy = step === 'reading' || step === 'importing' || saving
   const onKeyDown = useCallback(
     (e: KeyboardEvent) => {
+      // A draft dialog opened from the warm paths sits on top; leave its keys alone.
+      const active = document.activeElement
+      if (panelRef.current && active && active !== document.body && !panelRef.current.contains(active)) return
       if (e.key === 'Escape' && !busy) return onClose()
       if (e.key !== 'Tab' || !panelRef.current) return
-      const f = panelRef.current.querySelectorAll<HTMLElement>('button, a[href], input, [tabindex]:not([tabindex="-1"])')
+      const f = panelRef.current.querySelectorAll<HTMLElement>('button:not([disabled]), a[href], input, [tabindex]:not([tabindex="-1"])')
       if (!f.length) return
       if (e.shiftKey && document.activeElement === f[0]) {
         e.preventDefault()
@@ -169,15 +273,26 @@ export default function LinkedInImport({
     setStep('upload')
   }
 
+  const copyPrompt = async () => {
+    try {
+      await navigator.clipboard.writeText(claudeImportPrompt(window.location.origin))
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2500)
+    } catch {
+      setError('Could not copy — your browser blocked clipboard access.')
+    }
+  }
+
   const readFile = async (file: File) => {
     setError('')
     setFileName(file.name)
     setStep('reading')
     try {
-      const parsed = await readLinkedInFile(file)
-      if (!parsed.length) throw new Error('That file has no connections in it.')
-      setRows(parsed)
-      setStep('preview')
+      const a = await readLinkedInArchive(file)
+      if (!a.connections.length) throw new Error('That file has no connections in it.')
+      setArchive(a)
+      setInclude({ messages: !!a.messages, endorsements: !!a.endorsements, skills: !!a.skills?.length })
+      setStep('choose')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not read that file.')
       setStep('upload')
@@ -186,51 +301,259 @@ export default function LinkedInImport({
 
   const companies = useMemo(() => {
     const m = new Map<string, number>()
-    for (const r of rows) if (r.company) m.set(r.company, (m.get(r.company) ?? 0) + 1)
+    for (const r of archive?.connections ?? []) if (r.company) m.set(r.company, (m.get(r.company) ?? 0) + 1)
     return [...m.entries()].sort((a, b) => b[1] - a[1])
-  }, [rows])
+  }, [archive])
 
   const runImport = async () => {
+    if (!archive) return
     setStep('importing')
     setProgress(0)
     setError('')
+    const rows = archive.connections
     let inserted = 0
     let updated = 0
+    let skillsAdded = 0
     try {
       for (let i = 0; i < rows.length; i += CHUNK) {
-        const chunk = rows.slice(i, i + CHUNK).map(r => ({
-          name: r.name,
-          linkedin_url: r.linkedin_url,
-          email: r.email,
-          company: r.company,
-          title: r.title,
-        }))
         const last = i + CHUNK >= rows.length
+        const chunk = rows.slice(i, i + CHUNK).map(r => {
+          const sig = signalsFor(archive, r.linkedin_url)
+          return {
+            name: r.name,
+            linkedin_url: r.linkedin_url,
+            email: r.email,
+            company: r.company,
+            title: r.title,
+            connected_on: r.connected_on,
+            ...(include.messages ? { message_count: sig.messages, last_message_at: sig.lastMessageAt } : {}),
+            ...(include.endorsements ? { endorsed_you: sig.endorsements } : {}),
+          }
+        })
         const res = await fetch('/api/network/import', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ connections: chunk, final: last, total: rows.length }),
+          body: JSON.stringify({
+            connections: chunk,
+            final: last,
+            total: rows.length,
+            signals: last ? include : undefined,
+            skills: last && include.skills ? archive.skills ?? [] : undefined,
+          }),
         })
         const json = await res.json().catch(() => ({}))
         if (!res.ok) throw new Error(json.error || 'The import stopped part-way. Run it again — nothing will be duplicated.')
         inserted += json.inserted ?? 0
         updated += json.updated ?? 0
+        skillsAdded += json.skillsAdded ?? 0
         setProgress(Math.min(1, (i + CHUNK) / rows.length))
       }
       try {
         localStorage.removeItem(REQUESTED_KEY)
       } catch {}
-      const s = { inserted, updated, total: rows.length }
+      const s = { inserted, updated, total: rows.length, skillsAdded }
       setSummary(s)
-      setStep('done')
       onImported(s)
+      // Claude's run ends here: picking who would help is the person's call.
+      setStep(viaClaude ? 'done' : 'helpers')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Import failed')
-      setStep('preview')
+      setStep('choose')
     }
   }
 
+  /* People worth asking first: those you actually talk to, then those who
+     vouched for you, then seniority. The list a person picks from. */
+  const helperCandidates = useMemo(() => {
+    if (!archive) return []
+    const q = helperQuery.trim().toLowerCase()
+    return archive.connections
+      .map(c => {
+        const sig = signalsFor(archive, c.linkedin_url)
+        // Log scale: 30 messages beats 3 by a lot, 300 beats 30 by a little.
+        const recent = sig.lastMessageAt ? (Date.now() - new Date(sig.lastMessageAt).getTime()) / 86400000 : Infinity
+        const score =
+          (include.messages ? 12 * Math.log2(sig.messages + 1) + (recent < 180 ? 8 : recent < 540 ? 3 : 0) : 0) +
+          (include.endorsements && sig.endorsements ? 6 : 0) +
+          (HIRING_LEVEL.test(c.title || '') ? 3 : 0)
+        return { c, sig, score }
+      })
+      .filter(x => !q || `${x.c.name} ${x.c.company ?? ''} ${x.c.title ?? ''}`.toLowerCase().includes(q))
+      .sort((a, b) => b.score - a.score || a.c.name.localeCompare(b.c.name))
+      .slice(0, q ? 60 : 40)
+  }, [archive, helperQuery, include])
+
+  const loadPaths = async () => {
+    const [cRes, appsRes] = await Promise.all([
+      fetch('/api/network/connections').then(r => r.json()).catch(() => ({ connections: [] })),
+      (async () => {
+        const sb = createClient()
+        const {
+          data: { user },
+        } = await sb.auth.getUser()
+        if (!user) return []
+        const { data } = await sb
+          .from('applications')
+          .select('status, job:jobs(company, title)')
+          .eq('user_id', user.id)
+          .in('status', ['saved', 'queued', 'applied', 'screening', 'interview'])
+        return (data ?? []) as unknown as { status: string; job: { company: string | null; title: string | null } | null }[]
+      })(),
+    ])
+    setImported((cRes.connections ?? []) as ImportedConnection[])
+    const m = new Map<string, { name: string; n: number; role: string | null }>()
+    for (const a of appsRes) {
+      const name = a.job?.company
+      if (!name) continue
+      const k = norm(name)
+      const cur = m.get(k) ?? { name, n: 0, role: a.job?.title ?? null }
+      cur.n += 1
+      m.set(k, cur)
+    }
+    setAppCompanies(m)
+  }
+
+  const saveHelpers = async (skip: boolean) => {
+    setSaving(true)
+    setError('')
+    try {
+      if (!skip && picked.size) {
+        const res = await fetch('/api/network/helpers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ linkedin_urls: [...picked] }),
+        })
+        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'Could not save your picks')
+      }
+      await loadPaths()
+      setStep('paths')
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not save your picks')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  /* Warm paths, from facts only: where they work, what they do, how you
+     know them. No generated descriptions — nothing invented about people
+     you know. */
+  const paths = useMemo(() => {
+    const reasonsFor = (c: ImportedConnection) => {
+      const out: { text: string; tone: 'green' | 'accent' | 'blue' | 'neutral' }[] = []
+      const app = appCompanies.get(norm(c.company))
+      if (c.would_help) out.push({ text: 'You said they’d help', tone: 'green' })
+      if (app) out.push({ text: `${app.n} job${app.n === 1 ? '' : 's'} in your tracker here`, tone: 'accent' })
+      if (c.message_count) {
+        out.push({
+          text: `${c.message_count} message${c.message_count === 1 ? '' : 's'}${c.last_contacted_at ? ` · last ${monthYear(c.last_contacted_at)}` : ''}`,
+          tone: 'blue',
+        })
+      }
+      if (c.endorsed_you) out.push({ text: 'Endorsed you', tone: 'neutral' })
+      if (RECRUITER.test(c.title || '')) out.push({ text: 'Recruiter — can put you forward', tone: 'neutral' })
+      else if (HIRING_LEVEL.test(c.title || '')) out.push({ text: 'Senior enough to refer', tone: 'neutral' })
+      if (c.connected_on) out.push({ text: `Connected since ${new Date(c.connected_on).getFullYear()}`, tone: 'neutral' })
+      return out
+    }
+    const rank = (a: ImportedConnection, b: ImportedConnection) => strengthOf(b) - strengthOf(a)
+    const used = new Set<string>()
+    const take = (list: ImportedConnection[], n: number) => {
+      const out = list.filter(c => !used.has(c.id)).sort(rank).slice(0, n)
+      out.forEach(c => used.add(c.id))
+      return out.map(c => ({ c, reasons: reasonsFor(c) }))
+    }
+    const atApplied = take(imported.filter(c => appCompanies.has(norm(c.company))), 6)
+    const recruiters = take(imported.filter(c => RECRUITER.test(c.title || '')), 5)
+    const strongest = take(imported.filter(c => strengthOf(c) > 0), 6)
+    return { atApplied, recruiters, strongest }
+  }, [imported, appCompanies])
+
   const card = { background: 'var(--bg-overlay)', boxShadow: 'inset 0 0 0 1px var(--card-ring)' } as const
+  const primaryBtn = { background: 'var(--accent-solid)', color: 'var(--text-on-accent)' } as const
+  const wide = step === 'helpers' || step === 'paths'
+
+  const subtitle =
+    mode === 'claude' && (step === 'request' || step === 'upload')
+      ? 'Let Claude do it for you'
+      : step === 'request'
+        ? 'Step 1 of 2 · Ask LinkedIn for your data'
+        : step === 'upload' || step === 'reading'
+          ? 'Step 2 of 2 · Upload the file LinkedIn sends you'
+          : step === 'choose'
+            ? 'Choose what to import'
+            : step === 'importing'
+              ? 'Importing…'
+              : step === 'helpers'
+                ? 'Who would refer you?'
+                : step === 'paths'
+                  ? 'Your warm paths'
+                  : 'Done'
+
+  /* ── render ── */
+
+  const PathSection = ({
+    title,
+    note,
+    rows,
+  }: {
+    title: string
+    note: string
+    rows: { c: ImportedConnection; reasons: { text: string; tone: 'green' | 'accent' | 'blue' | 'neutral' }[] }[]
+  }) =>
+    rows.length ? (
+      <section className="mb-6">
+        <h3 className="text-[14px] font-semibold" style={{ color: 'var(--text)' }}>
+          {title}
+        </h3>
+        <p className="text-[12px] mb-2.5" style={{ color: 'var(--text-muted)' }}>
+          {note}
+        </p>
+        <ul className="rounded-xl overflow-hidden" style={{ boxShadow: 'inset 0 0 0 1px var(--card-ring)' }}>
+          {rows.map(({ c, reasons }, i) => (
+            <li key={c.id} className="flex items-start gap-3 px-4 py-3" style={{ borderTop: i ? '1px solid var(--border)' : 'none' }}>
+              <Initials name={c.name} />
+              <div className="min-w-0 flex-1">
+                <div className="text-[13.5px] font-semibold" style={{ color: 'var(--text)' }}>
+                  {c.name}
+                </div>
+                <div className="text-[12px] leading-snug" style={{ color: 'var(--text-secondary)' }}>
+                  {[c.title, c.company].filter(Boolean).join(' · ') || 'No role on file'}
+                </div>
+                <div className="flex flex-wrap gap-1.5 mt-1.5">
+                  {reasons.map(r => (
+                    <Chip key={r.text} tone={r.tone}>
+                      {r.text}
+                    </Chip>
+                  ))}
+                </div>
+              </div>
+              <div className="flex flex-col items-end gap-1.5 shrink-0">
+                {onDraft && c.company && (
+                  <button
+                    onClick={() => onDraft(c, appCompanies.get(norm(c.company))?.role ?? undefined)}
+                    className="px-3 py-1.5 rounded-lg text-[12px] font-semibold"
+                    style={primaryBtn}
+                  >
+                    Draft the ask
+                  </button>
+                )}
+                {c.linkedin_url && (
+                  <a
+                    href={c.linkedin_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-[11.5px] font-semibold"
+                    style={{ color: '#0A66C2' }}
+                  >
+                    <LinkedInMark size={12} /> Profile
+                  </a>
+                )}
+              </div>
+            </li>
+          ))}
+        </ul>
+      </section>
+    ) : null
 
   return (
     <div
@@ -244,24 +567,23 @@ export default function LinkedInImport({
         role="dialog"
         aria-modal="true"
         aria-label="Import your LinkedIn network"
-        className="w-full max-w-[560px] max-h-[90vh] overflow-y-auto rounded-2xl"
+        className={`w-full ${wide ? 'max-w-[760px]' : 'max-w-[560px]'} max-h-[90vh] flex flex-col rounded-2xl`}
         style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow-xl), 0 0 0 1px var(--card-ring)' }}
         onClick={e => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between gap-4 px-6 pt-5 pb-4" style={{ borderBottom: '1px solid var(--border)' }}>
+        <div className="flex items-center justify-between gap-4 px-6 pt-5 pb-4 shrink-0" style={{ borderBottom: '1px solid var(--border)' }}>
           <div className="flex items-center gap-3">
             <LinkedInMark size={28} />
             <div>
               <h2 className="font-display text-[1.35rem] leading-tight" style={{ color: 'var(--text)' }}>
-                Import your LinkedIn network
+                {step === 'helpers' ? 'Who would refer you?' : step === 'paths' ? 'Your warm paths' : 'Import your LinkedIn network'}
               </h2>
               <p className="text-[12px]" style={{ color: 'var(--text-muted)' }}>
-                {mode === 'claude' && (step === 'request' || step === 'upload') && 'Let Claude do it for you'}
-                {mode === 'manual' && step === 'request' && 'Step 1 of 2 · Ask LinkedIn for your data'}
-                {(step === 'reading' || (mode === 'manual' && step === 'upload')) && 'Step 2 of 2 · Upload the file LinkedIn sends you'}
-                {step === 'preview' && 'Check it, then import'}
-                {step === 'importing' && 'Importing…'}
-                {step === 'done' && 'Done'}
+                {step === 'helpers'
+                  ? 'The people who’d actually open a door if you asked'
+                  : step === 'paths'
+                    ? 'Where your network meets your job search'
+                    : subtitle}
               </p>
             </div>
           </div>
@@ -279,7 +601,8 @@ export default function LinkedInImport({
           )}
         </div>
 
-        <div className="px-6 py-5">
+        <div className="px-6 py-5 overflow-y-auto">
+          {/* Manual / Claude */}
           {(step === 'request' || step === 'upload') && !viaClaude && (
             <div className="flex justify-center mb-5">
               <div role="tablist" aria-label="How to import" className="inline-flex p-1 rounded-full" style={{ background: 'var(--bg-overlay)' }}>
@@ -300,8 +623,7 @@ export default function LinkedInImport({
             </div>
           )}
 
-          {/* The two steps, always reachable. Step 2 used to hide its only
-              way back once the archive had been requested. */}
+          {/* The two steps, always reachable in both directions. */}
           {mode === 'manual' && (step === 'request' || step === 'upload') && !viaClaude && (
             <ol className="grid grid-cols-2 gap-2 mb-5" aria-label="Steps">
               {([['request', '1', 'Request your archive'], ['upload', '2', 'Upload it']] as const).map(([id, n, label]) => {
@@ -335,14 +657,14 @@ export default function LinkedInImport({
             </ol>
           )}
 
+          {/* ── Claude ── */}
           {mode === 'claude' && (step === 'request' || step === 'upload') && (
             <>
               <h3 className="text-[15px] font-semibold" style={{ color: 'var(--text)' }}>
                 Let Claude handle the export
               </h3>
               <p className="text-[13px] mt-1 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                Claude requests your LinkedIn archive, waits for it — which can take a day — and uploads it to ApplyMaster
-                for you.
+                Claude requests your LinkedIn archive, waits for it — which can take a day — and uploads it to ApplyMaster for you.
               </p>
               <div className="mt-4 p-4 rounded-xl" style={card}>
                 <p className="text-[13px] font-semibold mb-2" style={{ color: 'var(--text)' }}>
@@ -360,22 +682,7 @@ export default function LinkedInImport({
                 className="w-full mt-5 flex items-center justify-center gap-2 py-3 rounded-xl text-[14px] font-semibold"
                 style={{ background: copied ? 'var(--green)' : 'var(--accent-solid)', color: '#fff' }}
               >
-                {copied ? (
-                  <>
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" aria-hidden="true">
-                      <path d="M20 6L9 17l-5-5" />
-                    </svg>
-                    Copied — paste it into Claude
-                  </>
-                ) : (
-                  <>
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                      <rect x="9" y="9" width="12" height="12" rx="2" />
-                      <path d="M5 15V5a2 2 0 012-2h10" />
-                    </svg>
-                    Copy prompt
-                  </>
-                )}
+                {copied ? 'Copied — paste it into Claude' : 'Copy prompt'}
               </button>
               {error && (
                 <p role="alert" className="mt-3 text-[12.5px]" style={{ color: 'var(--red)' }}>
@@ -383,17 +690,18 @@ export default function LinkedInImport({
                 </p>
               )}
               <p className="text-[12px] mt-3 text-center leading-relaxed" style={{ color: 'var(--text-faint)' }}>
-                Claude never opens your archive — ApplyMaster reads it in your browser — and the page it uploads to shows only
-                a count, so your connections never appear on Claude’s screen.
+                Claude never opens your archive — ApplyMaster reads it in your browser — and the page it uploads to shows only a count, so
+                your connections never appear on Claude’s screen. Afterwards, you pick who would help.
               </p>
             </>
           )}
 
+          {/* ── 1. Request ── */}
           {mode === 'manual' && step === 'request' && (
             <>
               <p className="text-[13.5px] leading-relaxed mb-4" style={{ color: 'var(--text-secondary)' }}>
-                LinkedIn doesn’t let apps read your connections directly, but it lets you download them. It takes two
-                minutes, then one upload.
+                LinkedIn doesn’t let apps read your connections directly, but it lets you download them. It takes two minutes, then one
+                upload.
               </p>
               <ExportIllustration />
               <ol className="mt-4 space-y-2 text-[13px]" style={{ color: 'var(--text-secondary)' }}>
@@ -415,11 +723,7 @@ export default function LinkedInImport({
                 <LinkedInMark size={18} />
                 Continue to LinkedIn
               </button>
-              <button
-                onClick={() => setStep('upload')}
-                className="w-full mt-2 py-2.5 text-[13px] font-semibold"
-                style={{ color: 'var(--text-secondary)' }}
-              >
+              <button onClick={() => setStep('upload')} className="w-full mt-2 py-2.5 text-[13px] font-semibold" style={{ color: 'var(--text-secondary)' }}>
                 I already have the file
               </button>
             </>
@@ -428,21 +732,20 @@ export default function LinkedInImport({
           {/* ── 2. Upload ── */}
           {((mode === 'manual' && step === 'upload') || step === 'reading') && (
             <>
-              {requestedAt && (
+              {requestedAt && step === 'upload' && (
                 <div className="flex gap-3 p-3 rounded-xl mb-4 text-[12.5px]" style={{ background: 'var(--blue-dim)', color: 'var(--text-secondary)' }}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0 mt-0.5" style={{ color: 'var(--blue)' }} aria-hidden="true">
                     <path d="M4 4h16v16H4zM22 6l-10 7L2 6" />
                   </svg>
                   <span>
-                    You asked LinkedIn for your archive <strong style={{ color: 'var(--text)' }}>{ago(requestedAt)}</strong>. Look for an email
-                    from LinkedIn titled “Your LinkedIn data archive is ready”, download the ZIP, and drop it below.{' '}
+                    You asked LinkedIn for your archive <strong style={{ color: 'var(--text)' }}>{ago(requestedAt)}</strong>. Look for an email from LinkedIn titled “Your
+                    LinkedIn data archive is ready”, download the ZIP, and drop it below.{' '}
                     <button onClick={goToLinkedIn} className="underline underline-offset-2" style={{ color: 'var(--blue)' }}>
                       Open LinkedIn again
                     </button>
                   </span>
                 </div>
               )}
-
               <label
                 htmlFor="li-file"
                 onDragOver={e => {
@@ -460,21 +763,16 @@ export default function LinkedInImport({
                 style={{
                   background: dragging ? 'var(--accent-dim)' : 'var(--bg-overlay)',
                   boxShadow: `inset 0 0 0 1.5px ${dragging ? 'var(--accent)' : 'var(--card-ring)'}`,
-                  borderRadius: 16,
                 }}
               >
                 {step === 'reading' ? (
                   <>
-                    <span
-                      className="w-6 h-6 rounded-full animate-spin"
-                      style={{ border: '2.5px solid var(--border)', borderTopColor: 'var(--accent)' }}
-                      aria-hidden="true"
-                    />
+                    <span className="w-6 h-6 rounded-full animate-spin" style={{ border: '2.5px solid var(--border)', borderTopColor: 'var(--accent)' }} aria-hidden="true" />
                     <span className="text-[13.5px] font-semibold" style={{ color: 'var(--text)' }}>
                       Reading {fileName}…
                     </span>
                     <span className="text-[12px]" style={{ color: 'var(--text-muted)' }}>
-                      Only your connections list is being read.
+                      On your device — nothing has been sent yet.
                     </span>
                   </>
                 ) : (
@@ -486,13 +784,12 @@ export default function LinkedInImport({
                       Drop your LinkedIn export here, or click to browse
                     </span>
                     <span className="text-[12px]" style={{ color: 'var(--text-muted)' }}>
-                      The ZIP LinkedIn emails you, or Connections.csv on its own
+                      The ZIP LinkedIn emails you · you choose what to import next
                     </span>
                   </>
                 )}
               </label>
               <input
-                ref={inputRef}
                 id="li-file"
                 type="file"
                 accept=".zip,.csv,application/zip,text/csv"
@@ -503,37 +800,34 @@ export default function LinkedInImport({
                   e.target.value = ''
                 }}
               />
-
               {error && (
                 <p role="alert" className="mt-3 text-[12.5px]" style={{ color: 'var(--red)' }}>
                   {error}
                 </p>
               )}
-
               <div className="flex gap-2.5 mt-4 p-3 rounded-xl text-[12px] leading-relaxed" style={card}>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0 mt-0.5" style={{ color: 'var(--green)' }} aria-hidden="true">
                   <rect x="4" y="11" width="16" height="10" rx="2" />
                   <path d="M8 11V7a4 4 0 018 0v4" />
                 </svg>
                 <span style={{ color: 'var(--text-secondary)' }}>
-                  <strong style={{ color: 'var(--text)' }}>Opened on your device.</strong> Only your connections — names, companies, job
-                  titles and profile links — are sent to ApplyMaster. Your messages and the rest of the archive never leave your computer.
+                  <strong style={{ color: 'var(--text)' }}>Opened on your device.</strong> You choose what to import on the next screen. Message text never leaves
+                  your computer, and neither does anything else you don’t select.
                 </span>
               </div>
-
             </>
           )}
 
-          {/* ── Preview ── */}
-          {step === 'preview' && (
+          {/* ── Choose what to import ── */}
+          {step === 'choose' && archive && (
             <>
-              <div className="flex items-end gap-6 mb-4">
+              <div className="flex items-end gap-8 mb-4">
                 <div>
                   <div className="font-display text-[2.2rem] leading-none tabular-nums" style={{ color: 'var(--text)' }}>
-                    {rows.length.toLocaleString()}
+                    {archive.connections.length.toLocaleString()}
                   </div>
                   <div className="text-[12px] mt-1" style={{ color: 'var(--text-muted)' }}>
-                    connections found
+                    connections
                   </div>
                 </div>
                 <div>
@@ -544,15 +838,84 @@ export default function LinkedInImport({
                     companies
                   </div>
                 </div>
+                {archive.messages && (
+                  <div>
+                    <div className="font-display text-[2.2rem] leading-none tabular-nums" style={{ color: 'var(--text)' }}>
+                      {archive.messages.people.toLocaleString()}
+                    </div>
+                    <div className="text-[12px] mt-1" style={{ color: 'var(--text-muted)' }}>
+                      you’ve messaged
+                    </div>
+                  </div>
+                )}
               </div>
 
-              {companies.length > 0 && !viaClaude && (
+              <p className="text-[13px] font-semibold mb-2" style={{ color: 'var(--text)' }}>
+                Choose what to import
+              </p>
+              <div className="rounded-xl overflow-hidden mb-4" style={{ boxShadow: 'inset 0 0 0 1px var(--card-ring)' }}>
+                {(
+                  [
+                    { key: 'connections', title: 'Connections', desc: `${archive.connections.length.toLocaleString()} people, with where they work and their profile links`, available: true, required: true },
+                    {
+                      key: 'messages',
+                      title: 'Message history',
+                      desc: archive.messages
+                        ? `Who you’ve messaged and when — ${archive.messages.people.toLocaleString()} people. The text of your messages is never uploaded.`
+                        : 'Not in this file. Upload the full ZIP to see who you actually talk to.',
+                      available: !!archive.messages,
+                    },
+                    {
+                      key: 'endorsements',
+                      title: 'Endorsements',
+                      desc: archive.endorsements
+                        ? `${archive.endorsements.people.toLocaleString()} people who endorsed your skills — they can vouch for your work`
+                        : 'None in this file.',
+                      available: !!archive.endorsements,
+                    },
+                    {
+                      key: 'skills',
+                      title: 'Your skills',
+                      desc: archive.skills?.length
+                        ? `${archive.skills.length} skills, added to the ones your daily job matches use`
+                        : 'None in this file.',
+                      available: !!archive.skills?.length,
+                    },
+                  ] as const
+                ).map((o, i) => {
+                  const on = o.key === 'connections' ? true : o.available && include[o.key as 'messages' | 'endorsements' | 'skills']
+                  return (
+                    <button
+                      key={o.key}
+                      type="button"
+                      disabled={o.key === 'connections' || !o.available}
+                      onClick={() => setInclude(v => ({ ...v, [o.key]: !v[o.key as 'messages' | 'endorsements' | 'skills'] }))}
+                      aria-pressed={on}
+                      className="w-full flex items-start gap-3 px-4 py-3 text-left disabled:cursor-default"
+                      style={{ borderTop: i ? '1px solid var(--border)' : 'none', opacity: o.available ? 1 : 0.55 }}
+                    >
+                      <Check on={on} disabled={o.key === 'connections'} />
+                      <span className="min-w-0">
+                        <span className="flex items-center gap-2 text-[13.5px] font-semibold" style={{ color: 'var(--text)' }}>
+                          {o.title}
+                          {'required' in o && o.required && <Chip tone="green">Required</Chip>}
+                        </span>
+                        <span className="block text-[12px] mt-0.5 leading-snug" style={{ color: 'var(--text-muted)' }}>
+                          {o.desc}
+                        </span>
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+
+              {!viaClaude && companies.length > 0 && (
                 <>
                   <p className="text-[12px] font-semibold mb-2" style={{ color: 'var(--text-muted)' }}>
                     Where your network works most
                   </p>
                   <div className="flex flex-wrap gap-1.5 mb-4">
-                    {companies.slice(0, 12).map(([c, n]) => (
+                    {companies.slice(0, 10).map(([c, n]) => (
                       <span key={c} className="px-2.5 py-1 rounded-full text-[12px]" style={{ background: 'var(--bg-overlay)', color: 'var(--text-secondary)' }}>
                         {c} <span style={{ color: 'var(--text-faint)' }}>{n}</span>
                       </span>
@@ -561,39 +924,19 @@ export default function LinkedInImport({
                 </>
               )}
 
-              {!viaClaude && (
-              <div className="rounded-xl overflow-hidden mb-4" style={{ boxShadow: 'inset 0 0 0 1px var(--card-ring)' }}>
-                {rows.slice(0, 5).map((r, i) => (
-                  <div key={i} className="flex items-center justify-between gap-3 px-3.5 py-2.5 text-[12.5px]" style={{ borderTop: i ? '1px solid var(--border)' : 'none' }}>
-                    <span className="font-medium truncate" style={{ color: 'var(--text)' }}>
-                      {r.name}
-                    </span>
-                    <span className="truncate text-right" style={{ color: 'var(--text-muted)' }}>
-                      {[r.title, r.company].filter(Boolean).join(' · ') || '—'}
-                    </span>
-                  </div>
-                ))}
-                {rows.length > 5 && (
-                  <div className="px-3.5 py-2 text-[11.5px]" style={{ borderTop: '1px solid var(--border)', color: 'var(--text-faint)' }}>
-                    and {(rows.length - 5).toLocaleString()} more
-                  </div>
-                )}
-              </div>
-              )}
-
               {error && (
                 <p role="alert" className="mb-3 text-[12.5px]" style={{ color: 'var(--red)' }}>
                   {error}
                 </p>
               )}
-
-              <button
-                onClick={runImport}
-                className="w-full py-3 rounded-xl text-[14px] font-semibold"
-                style={{ background: 'var(--accent-solid)', color: 'var(--text-on-accent)' }}
-              >
-                Import {rows.length.toLocaleString()} connections
-              </button>
+              <div className="flex gap-2">
+                <button onClick={() => setStep('upload')} className="px-4 py-3 rounded-xl text-[13.5px] font-semibold" style={{ background: 'var(--bg-overlay)', color: 'var(--text)' }}>
+                  Back
+                </button>
+                <button onClick={runImport} className="flex-1 py-3 rounded-xl text-[14px] font-semibold" style={primaryBtn}>
+                  Import {archive.connections.length.toLocaleString()} connections
+                </button>
+              </div>
               <p className="text-[11.5px] mt-2 text-center" style={{ color: 'var(--text-faint)' }}>
                 People already in your network are updated with where they work now, not duplicated.
               </p>
@@ -604,7 +947,7 @@ export default function LinkedInImport({
           {step === 'importing' && (
             <div className="py-6">
               <p className="text-[13.5px] font-semibold mb-3" style={{ color: 'var(--text)' }}>
-                Importing {rows.length.toLocaleString()} connections…
+                Importing {archive?.connections.length.toLocaleString()} connections…
               </p>
               <div className="h-2 rounded-full overflow-hidden" style={{ background: 'var(--bg-overlay)' }}>
                 <div className="h-full rounded-full transition-all duration-300" style={{ width: `${Math.max(4, progress * 100)}%`, background: 'var(--accent-solid)' }} />
@@ -615,7 +958,121 @@ export default function LinkedInImport({
             </div>
           )}
 
-          {/* ── Done ── */}
+          {/* ── Who would refer you? ── */}
+          {step === 'helpers' && archive && (
+            <>
+              {summary && (
+                <p className="text-[12.5px] mb-3 px-3 py-2 rounded-lg" style={{ background: 'var(--green-dim)', color: 'var(--green)' }}>
+                  Imported {summary.inserted.toLocaleString()} {summary.inserted === 1 ? 'person' : 'people'}
+                  {summary.updated ? ` · ${summary.updated.toLocaleString()} updated with new jobs` : ''}
+                  {summary.skillsAdded ? ` · ${summary.skillsAdded} skills added to your job matching` : ''}
+                </p>
+              )}
+              <p className="text-[13.5px] leading-relaxed mb-3" style={{ color: 'var(--text-secondary)' }}>
+                Pick the people who’d make an intro or put you forward if you asked. They’re ranked first in every referral search.
+                {include.messages && archive.messages ? ' The list starts with who you talk to most.' : ''}{' '}
+                <strong style={{ color: 'var(--text)' }}>Pick at least 3.</strong>
+              </p>
+              <input
+                value={helperQuery}
+                onChange={e => setHelperQuery(e.target.value)}
+                placeholder="Search your connections by name, company or title…"
+                aria-label="Search your connections"
+                className="w-full px-4 py-2.5 rounded-xl text-[13.5px] outline-none mb-3"
+                style={{ background: 'var(--bg-input)', color: 'var(--text)', boxShadow: 'inset 0 0 0 1px var(--card-ring)' }}
+              />
+              <ul className="grid sm:grid-cols-2 gap-2">
+                {helperCandidates.map(({ c, sig }) => {
+                  const on = !!c.linkedin_url && picked.has(c.linkedin_url)
+                  return (
+                    <li key={c.linkedin_url ?? c.name}>
+                      <button
+                        type="button"
+                        disabled={!c.linkedin_url}
+                        aria-pressed={on}
+                        onClick={() =>
+                          setPicked(p => {
+                            const n = new Set(p)
+                            if (c.linkedin_url) (n.has(c.linkedin_url) ? n.delete(c.linkedin_url) : n.add(c.linkedin_url))
+                            return n
+                          })
+                        }
+                        className="w-full flex items-center gap-3 p-3 rounded-xl text-left transition-colors"
+                        style={{
+                          background: on ? 'var(--green-dim)' : 'var(--bg-card)',
+                          boxShadow: `inset 0 0 0 1px ${on ? 'rgb(var(--green-rgb) / 0.4)' : 'var(--card-ring)'}`,
+                        }}
+                      >
+                        <Initials name={c.name} size={34} />
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-[13px] font-semibold truncate" style={{ color: 'var(--text)' }}>
+                            {c.name}
+                          </span>
+                          <span
+                            className="text-[11.5px] leading-snug overflow-hidden"
+                            style={{ color: 'var(--text-muted)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}
+                          >
+                            {[c.title, c.company].filter(Boolean).join(' · ')}
+                          </span>
+                          {(sig.messages > 0 || sig.endorsements > 0) && (
+                            <span className="block text-[11px] mt-0.5" style={{ color: 'var(--blue)' }}>
+                              {[
+                                sig.messages ? `${sig.messages} message${sig.messages === 1 ? '' : 's'}` : '',
+                                sig.endorsements ? 'endorsed you' : '',
+                              ]
+                                .filter(Boolean)
+                                .join(' · ')}
+                            </span>
+                          )}
+                        </span>
+                        <Check on={on} />
+                      </button>
+                    </li>
+                  )
+                })}
+              </ul>
+              {helperCandidates.length === 0 && (
+                <p className="text-[13px] py-6 text-center" style={{ color: 'var(--text-muted)' }}>
+                  Nobody matches “{helperQuery}”.
+                </p>
+              )}
+              {error && (
+                <p role="alert" className="mt-3 text-[12.5px]" style={{ color: 'var(--red)' }}>
+                  {error}
+                </p>
+              )}
+            </>
+          )}
+
+          {/* ── Warm paths ── */}
+          {step === 'paths' && (
+            <>
+              <PathSection
+                title="At companies you’re applying to"
+                note="People inside the companies in your application tracker — the most valuable referral you can get."
+                rows={paths.atApplied}
+              />
+              <PathSection title="Recruiters in your network" note="They can put you forward directly, at their company or elsewhere." rows={paths.recruiters} />
+              <PathSection title="Your strongest relationships" note="The people you actually talk to — most likely to say yes." rows={paths.strongest} />
+              {!paths.atApplied.length && !paths.recruiters.length && !paths.strongest.length && (
+                <div className="py-8 text-center">
+                  <p className="text-[14px] font-semibold" style={{ color: 'var(--text)' }}>
+                    Your network is in
+                  </p>
+                  <p className="text-[12.5px] mt-1 max-w-sm mx-auto" style={{ color: 'var(--text-muted)' }}>
+                    Save or queue jobs and ApplyMaster will show who you know at each company, right on the job card.
+                  </p>
+                </div>
+              )}
+              {!appCompanies.size && (paths.recruiters.length > 0 || paths.strongest.length > 0) && (
+                <p className="text-[12px] mb-2" style={{ color: 'var(--text-muted)' }}>
+                  Add jobs to your tracker and you’ll also see who you know at each of those companies.
+                </p>
+              )}
+            </>
+          )}
+
+          {/* ── Done (Claude's run ends here) ── */}
           {step === 'done' && summary && (
             <div className="text-center py-4">
               <div className="w-12 h-12 rounded-full grid place-items-center mx-auto mb-3" style={{ background: 'var(--green-dim)', color: 'var(--green)' }}>
@@ -634,18 +1091,40 @@ export default function LinkedInImport({
                   : ''}
               </p>
               <p className="text-[12.5px] mt-3" style={{ color: 'var(--text-muted)' }}>
-                Jobs at companies where you know someone are now flagged across ApplyMaster.
+                Open ApplyMaster’s network page to pick who would help you.
               </p>
-              <button
-                onClick={onClose}
-                className="mt-5 px-6 py-2.5 rounded-xl text-[13.5px] font-semibold"
-                style={{ background: 'var(--accent-solid)', color: 'var(--text-on-accent)' }}
-              >
-                Find a referral
-              </button>
             </div>
           )}
         </div>
+
+        {/* Sticky actions for the two longer steps */}
+        {step === 'helpers' && (
+          <div className="flex items-center justify-between gap-3 px-6 py-4 shrink-0" style={{ borderTop: '1px solid var(--border)' }}>
+            <span className="text-[12.5px] tabular-nums" style={{ color: 'var(--text-muted)' }}>
+              {picked.size} selected
+            </span>
+            <div className="flex gap-2">
+              <button onClick={() => saveHelpers(true)} disabled={saving} className="px-4 py-2.5 rounded-xl text-[13px] font-semibold" style={{ color: 'var(--text-secondary)' }}>
+                Skip for now
+              </button>
+              <button
+                onClick={() => saveHelpers(false)}
+                disabled={saving || picked.size < 3}
+                className="px-5 py-2.5 rounded-xl text-[13px] font-semibold disabled:opacity-45"
+                style={primaryBtn}
+              >
+                {saving ? 'Saving…' : picked.size < 3 ? `Pick ${3 - picked.size} more` : 'See my warm paths'}
+              </button>
+            </div>
+          </div>
+        )}
+        {step === 'paths' && (
+          <div className="flex items-center justify-end gap-3 px-6 py-4 shrink-0" style={{ borderTop: '1px solid var(--border)' }}>
+            <button onClick={onClose} className="px-5 py-2.5 rounded-xl text-[13px] font-semibold" style={primaryBtn}>
+              Done
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )

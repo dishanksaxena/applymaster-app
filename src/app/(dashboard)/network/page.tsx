@@ -36,6 +36,10 @@ type Connection = {
   last_contacted_at: string | null
   notes: string | null
   created_at?: string
+  message_count?: number | null
+  endorsed_you?: number | null
+  would_help?: boolean | null
+  connected_on?: string | null
 }
 
 type SearchHit = { connection: Connection; score: number; reason: string }
@@ -628,6 +632,16 @@ export default function NetworkPage() {
     setHits(h => (h ? h.filter(x => x.connection.id !== id) : h))
   }
 
+  const toggleHelper = async (c: Connection) => {
+    const would_help = !c.would_help
+    setConnections(cs => cs.map(x => (x.id === c.id ? { ...x, would_help } : x)))
+    await fetch('/api/network/connections', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: c.id, would_help }),
+    })
+  }
+
   const setRequestStatus = async (id: string, status: string) => {
     setRequests(rs => rs.map(r => (r.id === id ? { ...r, status } : r)))
     await fetch('/api/referrals/requests', {
@@ -642,8 +656,15 @@ export default function NetworkPage() {
      network for someone who is job hunting. */
   const visibleConnections = useMemo(() => {
     const q = networkFilter.trim().toLowerCase()
-    if (!q) return connections
-    return connections.filter(c => `${c.name} ${c.company ?? ''} ${c.title ?? ''}`.toLowerCase().includes(q))
+    // People you know first: the ones you said would help, the ones you added
+    // by hand, then whoever you actually message. Newest first after that.
+    const strength = (c: Connection) =>
+      (c.would_help ? 1000 : 0) + (c.relationship !== 'linkedin' ? 500 : 0) + Math.min(400, (c.message_count ?? 0) * 4) + (c.endorsed_you ? 20 : 0)
+    const list = q ? connections.filter(c => `${c.name} ${c.company ?? ''} ${c.title ?? ''}`.toLowerCase().includes(q)) : connections
+    return list
+      .map((c, i) => ({ c, i, s: strength(c) }))
+      .sort((a, b) => b.s - a.s || a.i - b.i)
+      .map(x => x.c)
   }, [connections, networkFilter])
 
   const companies = useMemo(() => {
@@ -1005,6 +1026,30 @@ export default function NetworkPage() {
                           >
                             {RELATIONSHIP_LABEL[c.relationship] ?? c.relationship}
                           </span>
+                          {c.message_count ? (
+                            <span className="text-[10.5px] font-semibold" style={{ color: 'var(--blue)' }}>
+                              {c.message_count} message{c.message_count === 1 ? '' : 's'}
+                            </span>
+                          ) : null}
+                          {c.endorsed_you ? (
+                            <span className="text-[10.5px]" style={{ color: 'var(--text-muted)' }}>
+                              endorsed you
+                            </span>
+                          ) : null}
+                          <button
+                            type="button"
+                            onClick={() => toggleHelper(c)}
+                            aria-pressed={!!c.would_help}
+                            title={c.would_help ? 'Ranked first when you search for referrals' : 'Mark as someone who would refer you'}
+                            className="px-2 py-0.5 rounded-full text-[10.5px] font-semibold"
+                            style={
+                              c.would_help
+                                ? { background: 'var(--green-dim)', color: 'var(--green)' }
+                                : { color: 'var(--text-faint)', boxShadow: 'inset 0 0 0 1px var(--border)' }
+                            }
+                          >
+                            {c.would_help ? '✓ Would help' : '+ Would help'}
+                          </button>
                           {c.can_refer === false && (
                             <span className="text-[10.5px]" style={{ color: 'var(--text-faint)' }}>
                               cannot refer
@@ -1163,6 +1208,10 @@ export default function NetworkPage() {
           onImported={() => {
             loadAll()
             setHits(null)
+          }}
+          onDraft={(c, role) => {
+            setLinkedRole(role ?? '')
+            setDrafting(c)
           }}
         />
       )}

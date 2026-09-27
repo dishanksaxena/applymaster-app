@@ -7,10 +7,12 @@
  * to an app of their choosing. That is what this reads.
  *
  * It runs client-side on purpose. The "larger data archive" LinkedIn sends
- * holds messages, invitations, search history and more; only Connections.csv
- * is needed. The ZIP is opened in the browser, only that one file is
- * decompressed, and only the parsed connection list is sent to ApplyMaster.
- * Everything else in the archive never leaves the person's computer.
+ * holds messages, invitations, search history and more. The ZIP is opened in
+ * the browser and only four files are decompressed: connections, messages,
+ * endorsements received, and skills. What reaches ApplyMaster is the
+ * connection list plus, if the person chooses, a per-person message count,
+ * last-message date and endorsement count. Message text, and everything else
+ * in the archive, never leaves the person's computer.
  */
 import { unzip } from 'fflate'
 
@@ -131,35 +133,187 @@ export function parseConnectionsCsv(text: string): LinkedInConnection[] {
   return out
 }
 
-/** Pull Connections.csv out of a LinkedIn archive, decompressing nothing else. */
-function extractConnectionsFromZip(buf: Uint8Array): Promise<string> {
+
+/* ── The whole archive ──────────────────────────────────────────────── */
+
+/** Per-person signals derived in the browser. Only these leave the device. */
+export type PersonSignals = { messages: number; lastMessageAt: string | null; endorsements: number }
+
+export type LinkedInArchive = {
+  connections: LinkedInConnection[]
+  /** Keyed by normalised profile URL. Null when the archive had no messages file. */
+  messages: { byUrl: Map<string, { count: number; last: string | null }>; people: number } | null
+  endorsements: { byUrl: Map<string, number>; people: number } | null
+  skills: string[] | null
+}
+
+const WANTED = /(^|\/)(connections|messages|endorsement_received_info|skills)\.csv$/i
+
+function unzipWanted(buf: Uint8Array): Promise<Record<string, string>> {
   return new Promise((resolve, reject) => {
-    unzip(
-      buf,
-      {
-        // Only this one entry is inflated; messages and the rest are skipped.
-        filter: f => /(^|\/)connections\.csv$/i.test(f.name),
-      },
-      (err, files) => {
-        if (err) return reject(new Error('Could not open that ZIP file.'))
-        const key = Object.keys(files)[0]
-        if (!key) {
-          return reject(
-            new Error(
-              'That archive has no Connections.csv. On LinkedIn, choose "Download larger data archive" — the smaller export leaves connections out.'
-            )
-          )
-        }
-        resolve(new TextDecoder('utf-8').decode(files[key]))
+    // Only these four entries are inflated. Everything else in the archive —
+    // invitations, search history, ads data — is never even decompressed.
+    unzip(buf, { filter: f => WANTED.test(f.name) }, (err, files) => {
+      if (err) return reject(new Error('Could not open that ZIP file.'))
+      const out: Record<string, string> = {}
+      const dec = new TextDecoder('utf-8')
+      for (const [name, data] of Object.entries(files)) {
+        const base = name.split('/').pop()!.toLowerCase()
+        out[base] = dec.decode(data)
       }
-    )
+      resolve(out)
+    })
   })
 }
 
-/** Accepts the ZIP LinkedIn emails you, or Connections.csv on its own. */
-export async function readLinkedInFile(file: File): Promise<LinkedInConnection[]> {
+/**
+ * Profile URLs of your connections, and a name -> URL lookup for files that
+ * lack URLs. A name two connections share is left out: matching on it would
+ * credit one person's messages to their namesake.
+ */
+function connectionIndex(connections: LinkedInConnection[]) {
+  const connUrls = new Set<string>()
+  const urlByName = new Map<string, string | null>()
+  for (const c of connections) {
+    if (!c.linkedin_url) continue
+    connUrls.add(c.linkedin_url)
+    const k = c.name.toLowerCase()
+    urlByName.set(k, urlByName.has(k) && urlByName.get(k) !== c.linkedin_url ? null : c.linkedin_url)
+  }
+  return { connUrls, byName: (name: string) => urlByName.get(name.trim().toLowerCase()) ?? null }
+}
+
+const headerIndex = (rows: string[][], must: string) =>
+  rows.findIndex(r => r.some(c => c.trim().toLowerCase() === must))
+
+function toIso(raw: string): string | null {
+  const s = (raw || '').trim()
+  if (!s) return null
+  const d = new Date(s.replace(' UTC', 'Z').replace(/^(\d{4}-\d{2}-\d{2}) /, '$1T'))
+  return isNaN(d.getTime()) ? null : d.toISOString()
+}
+
+/**
+ * messages.csv -> how many messages you exchanged with each person, and when
+ * the last one was. The text column is parsed along with the rest of the
+ * row (CSV has to be read whole) but nothing from it is kept.
+ */
+function messageSignals(text: string, connections: LinkedInConnection[]) {
+  const rows = parseCsv(text)
+  const h = headerIndex(rows, 'date')
+  if (h === -1) return null
+  const head = rows[h].map(c => c.trim().toLowerCase())
+  const iSenderUrl = head.findIndex(c => c === 'sender profile url')
+  const iRecipUrls = head.findIndex(c => c === 'recipient profile urls')
+  const iFrom = head.indexOf('from')
+  const iTo = head.indexOf('to')
+  const iDate = head.indexOf('date')
+
+  const { connUrls, byName } = connectionIndex(connections)
+
+  const perMessage: { urls: string[]; at: string | null }[] = []
+  for (const r of rows.slice(h + 1)) {
+    const urls = new Set<string>()
+    for (const u of [iSenderUrl >= 0 ? r[iSenderUrl] || '' : '', ...(iRecipUrls >= 0 ? r[iRecipUrls] || '' : '').split(/[\s,]+/)]) {
+      const n = normalizeLinkedInUrl(u)
+      if (n) urls.add(n)
+    }
+    // Names back up URLs, for older exports without URL columns or a profile
+    // URL that differs from the one in Connections.csv — only when the URLs
+    // matched none of your connections.
+    if (![...urls].some(u => connUrls.has(u))) {
+      for (const name of [iFrom >= 0 ? r[iFrom] || '' : '', ...(iTo >= 0 ? r[iTo] || '' : '').split(',')]) {
+        const u = byName(name)
+        if (u) urls.add(u)
+      }
+    }
+    if (!urls.size) continue
+    perMessage.push({ urls: [...urls], at: toIso(r[iDate] || '') })
+  }
+
+  // Only connections are counted. That leaves out you — you are in every
+  // conversation, but never your own connection — and InMail from strangers,
+  // which says nothing about who would help.
+  const byUrl = new Map<string, { count: number; last: string | null }>()
+  for (const m of perMessage) {
+    for (const u of m.urls) {
+      if (!connUrls.has(u)) continue
+      const cur = byUrl.get(u) ?? { count: 0, last: null }
+      cur.count += 1
+      if (m.at && (!cur.last || m.at > cur.last)) cur.last = m.at
+      byUrl.set(u, cur)
+    }
+  }
+  return { byUrl, people: byUrl.size }
+}
+
+/** Endorsement_Received_Info.csv -> who endorsed you, and how often. */
+function endorsementSignals(text: string, connections: LinkedInConnection[]) {
+  const rows = parseCsv(text)
+  const h = headerIndex(rows, 'skill name')
+  if (h === -1) return null
+  const head = rows[h].map(c => c.trim().toLowerCase())
+  const iUrl = head.findIndex(c => c.includes('public url'))
+  const iFirst = head.findIndex(c => c.includes('first name'))
+  const iLast = head.findIndex(c => c.includes('last name'))
+  const { connUrls, byName } = connectionIndex(connections)
+
+  const byUrl = new Map<string, number>()
+  for (const r of rows.slice(h + 1)) {
+    const fromUrl = normalizeLinkedInUrl(iUrl >= 0 ? r[iUrl] : '')
+    const url =
+      fromUrl && connUrls.has(fromUrl)
+        ? fromUrl
+        : byName(`${(r[iFirst] || '').trim()} ${(r[iLast] || '').trim()}`)
+    if (url) byUrl.set(url, (byUrl.get(url) ?? 0) + 1)
+  }
+  return { byUrl, people: byUrl.size }
+}
+
+function skillList(text: string): string[] {
+  const rows = parseCsv(text)
+  const h = headerIndex(rows, 'name')
+  if (h === -1) return []
+  const i = rows[h].map(c => c.trim().toLowerCase()).indexOf('name')
+  return [...new Set(rows.slice(h + 1).map(r => (r[i] || '').trim()).filter(Boolean))]
+}
+
+/**
+ * Read a LinkedIn export: the ZIP LinkedIn emails you, or Connections.csv on
+ * its own. Everything here runs in the browser.
+ */
+export async function readLinkedInArchive(file: File): Promise<LinkedInArchive> {
   const buf = new Uint8Array(await file.arrayBuffer())
   const isZip = buf[0] === 0x50 && buf[1] === 0x4b // "PK"
-  const text = isZip ? await extractConnectionsFromZip(buf) : new TextDecoder('utf-8').decode(buf)
-  return parseConnectionsCsv(text)
+
+  if (!isZip) {
+    const connections = parseConnectionsCsv(new TextDecoder('utf-8').decode(buf))
+    return { connections, messages: null, endorsements: null, skills: null }
+  }
+
+  const files = await unzipWanted(buf)
+  if (!files['connections.csv']) {
+    throw new Error(
+      'That archive has no Connections.csv. On LinkedIn, choose "Download larger data archive" — the smaller export leaves connections out.'
+    )
+  }
+  const connections = parseConnectionsCsv(files['connections.csv'])
+  return {
+    connections,
+    messages: files['messages.csv'] ? messageSignals(files['messages.csv'], connections) : null,
+    endorsements: files['endorsement_received_info.csv']
+      ? endorsementSignals(files['endorsement_received_info.csv'], connections)
+      : null,
+    skills: files['skills.csv'] ? skillList(files['skills.csv']) : null,
+  }
+}
+
+/** One person's signals, for ranking and for what gets sent. */
+export function signalsFor(archive: LinkedInArchive, url: string | null): PersonSignals {
+  const m = url ? archive.messages?.byUrl.get(url) : undefined
+  return {
+    messages: m?.count ?? 0,
+    lastMessageAt: m?.last ?? null,
+    endorsements: (url && archive.endorsements?.byUrl.get(url)) || 0,
+  }
 }

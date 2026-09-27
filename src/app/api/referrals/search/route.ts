@@ -36,6 +36,9 @@ type Conn = {
   can_refer: boolean | null
   last_contacted_at: string | null
   notes: string | null
+  message_count?: number | null
+  endorsed_you?: number | null
+  would_help?: boolean | null
 }
 
 type Intent = {
@@ -137,6 +140,22 @@ function rank(c: Conn, intent: Intent, rawQuery: string) {
     reasons.push('alumni connection')
   }
 
+  /* What separates the 30 people you know from the 700 you are connected
+     to: you said they would help, you actually message them, they vouched
+     for your work. These come from the person's own LinkedIn archive. */
+  if (c.would_help) {
+    score += 20
+    reasons.push('you said they would help')
+  }
+  if (c.message_count && c.message_count > 0) {
+    score += Math.min(14, 4 + Math.round(Math.log2(c.message_count + 1) * 2))
+    reasons.push(`${c.message_count} message${c.message_count === 1 ? '' : 's'} between you`)
+  }
+  if (c.endorsed_you && c.endorsed_you > 0) {
+    score += 6
+    reasons.push('endorsed your skills')
+  }
+
   if (SENIOR.test(c.seniority || c.title || '')) {
     score += 8
     reasons.push('senior enough to be heard internally')
@@ -184,7 +203,7 @@ export async function POST(req: NextRequest) {
       all = await fetchAllConnections<Conn>(
         supabase,
         user.id,
-        'id, name, company, title, relationship, email, linkedin_url, seniority, can_refer, last_contacted_at, notes'
+        'id, name, company, title, relationship, email, linkedin_url, seniority, can_refer, last_contacted_at, notes, message_count, endorsed_you, would_help, connected_on, source'
       )
     } catch (e) {
       return Response.json({ error: e instanceof Error ? e.message : 'Could not read your network' }, { status: 500 })

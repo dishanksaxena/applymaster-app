@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import Anthropic from '@anthropic-ai/sdk'
-import { fetchAllConnections } from '@/lib/network-data'
+import { fetchAllConnections, isMissingColumn, withoutSignals } from '@/lib/network-data'
 
 const anthropic = new Anthropic()
 
@@ -29,6 +29,9 @@ type Conn = {
   seniority: string | null
   can_refer: boolean | null
   last_contacted_at: string | null
+  message_count?: number | null
+  endorsed_you?: number | null
+  would_help?: boolean | null
 }
 
 const norm = (s: string | null | undefined) =>
@@ -59,6 +62,13 @@ function score(conn: Conn, company: string): { strength: number; reason: string 
   else if (conn.relationship === 'second_degree') reasons.push('second-degree connection')
   else if (conn.relationship === 'alumni') reasons.push('alumni connection')
 
+  if (conn.would_help) { s += 15; reasons.push('you said they would help') }
+  if (conn.message_count && conn.message_count > 0) {
+    s += Math.min(12, 3 + Math.round(Math.log2(conn.message_count + 1) * 2))
+    reasons.push(`${conn.message_count} message${conn.message_count === 1 ? '' : 's'} between you`)
+  }
+  if (conn.endorsed_you && conn.endorsed_you > 0) { s += 5; reasons.push('endorsed your skills') }
+
   // Seniority matters: referrals from people senior enough to be heard land better.
   const sen = (conn.seniority || conn.title || '').toLowerCase()
   if (/(director|vp|head|principal|staff|lead|manager)/.test(sen)) {
@@ -86,11 +96,15 @@ export async function POST(req: NextRequest) {
     const { job_id, job_title, company, application_id, connection_id } = await req.json()
     if (!company) return Response.json({ error: 'company required' }, { status: 400 })
 
-    const COLS = 'id, name, company, title, relationship, email, linkedin_url, seniority, can_refer, last_contacted_at'
+    const COLS = 'id, name, company, title, relationship, email, linkedin_url, seniority, can_refer, last_contacted_at, message_count, endorsed_you, would_help'
     // One specific person, or the whole network — paged, since an imported
     // LinkedIn network is usually past the 1,000-row page size.
     const connections = connection_id
-      ? (await supabase.from('network_connections').select(COLS).eq('user_id', user.id).eq('id', connection_id)).data
+      ? await (async () => {
+          const one = await supabase.from('network_connections').select(COLS).eq('user_id', user.id).eq('id', connection_id)
+          if (!isMissingColumn(one.error)) return one.data
+          return (await supabase.from('network_connections').select(withoutSignals(COLS)).eq('user_id', user.id).eq('id', connection_id)).data
+        })()
       : await fetchAllConnections(supabase, user.id, COLS)
 
     const scored = ((connections ?? []) as Conn[])
@@ -125,7 +139,7 @@ export async function POST(req: NextRequest) {
 Write that request as ${userName}, addressed to ${conn.name}.
 
 Contact: ${conn.name}${conn.title ? `, ${conn.title}` : ''} at ${company}
-Relationship to ${userName}: ${conn.relationship === 'linkedin' ? 'connected on LinkedIn (they may not know each other well)' : conn.relationship.replace('_', ' ')}
+Relationship to ${userName}: ${conn.relationship === 'linkedin' ? (conn.message_count ? `connected on LinkedIn; they have exchanged ${conn.message_count} messages` : 'connected on LinkedIn (they may not know each other well)') : conn.relationship.replace('_', ' ')}
 Role ${userName} wants to be referred into: ${job_title || 'an open role'} at ${company}
 
 Constraints: under 90 words. Plain language. No flattery, no "I hope this finds you well". Acknowledge the relationship honestly — do not imply closeness that does not exist for a LinkedIn-only, second-degree or alumni contact. Make one specific ask and make it easy to decline.

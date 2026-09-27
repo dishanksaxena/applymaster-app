@@ -26,7 +26,7 @@ export async function GET() {
     const rows = await fetchAllConnections<{ created_at: string }>(
       supabase,
       user.id,
-      'id, name, company, title, relationship, email, linkedin_url, seniority, can_refer, last_contacted_at, notes, created_at'
+      'id, name, company, title, relationship, email, linkedin_url, seniority, can_refer, last_contacted_at, notes, created_at, message_count, endorsed_you, would_help, connected_on, source'
     )
     rows.sort((a, b) => (a.created_at < b.created_at ? 1 : -1))
     return Response.json({ connections: rows })
@@ -90,6 +90,7 @@ export async function PATCH(req: NextRequest) {
     patch.relationship = rest.relationship
   }
   if ('can_refer' in rest) patch.can_refer = Boolean(rest.can_refer)
+  if ('would_help' in rest) patch.would_help = Boolean(rest.would_help)
   if ('last_contacted_at' in rest) patch.last_contacted_at = rest.last_contacted_at
 
   const { data, error } = await supabase
