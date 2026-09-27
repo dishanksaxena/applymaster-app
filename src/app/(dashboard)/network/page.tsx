@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { PremiumCard } from '@/components/premium'
 import NetworkGraph from '@/components/NetworkGraph'
 import LinkedInImport from '@/components/network/LinkedInImport'
+import { CompanyLogo } from '@/components/network/CompanyLogo'
 import { tone, toneA, toneSurface, type Tone } from '@/lib/tone'
 
 /**
@@ -103,15 +104,15 @@ const STATUS_LABEL: Record<string, string> = {
    Small pieces
    ============================================================ */
 
-function Avatar({ name, id, size = 40 }: { name: string; id: string; size?: number }) {
+/** A person: initials, with their company's logo pinned to the corner when we can find it. */
+function Avatar({ name, id, company, size = 40 }: { name: string; id: string; company?: string | null; size?: number }) {
   const t = toneFor(id)
   return (
+    <span className="relative shrink-0" style={{ width: size, height: size }}>
     <span
       aria-hidden="true"
-      className="grid place-items-center rounded-full font-semibold shrink-0"
+      className="grid place-items-center rounded-full font-semibold w-full h-full"
       style={{
-        width: size,
-        height: size,
         fontSize: size * 0.36,
         background: toneSurface(t, 0.16),
         color: tone(t),
@@ -119,6 +120,8 @@ function Avatar({ name, id, size = 40 }: { name: string; id: string; size?: numb
       }}
     >
       {initialsOf(name)}
+    </span>
+    {size >= 32 && <CompanyLogo company={company} badge size={Math.round(size * 0.4)} />}
     </span>
   )
 }
@@ -411,7 +414,7 @@ function DraftDialog({
       >
         <div className="flex items-start justify-between gap-4 px-5 pt-5 pb-4">
           <div className="flex items-center gap-3 min-w-0">
-            <Avatar name={connection.name} id={connection.id} />
+            <Avatar name={connection.name} id={connection.id} company={connection.company} />
             <div className="min-w-0">
               <h2 className="font-display text-[1.3rem] leading-tight" style={{ color: 'var(--text)' }}>
                 Ask {connection.name.split(' ')[0]} for a referral
@@ -911,7 +914,7 @@ export default function NetworkPage() {
                 >
                   <PremiumCard accent={t === 'accent' ? 'pink' : t} hover={false}>
                     <div className="flex flex-wrap items-center gap-4 p-4">
-                      <Avatar name={hit.connection.name} id={hit.connection.id} size={44} />
+                      <Avatar name={hit.connection.name} id={hit.connection.id} company={hit.connection.company} size={44} />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-[14px] font-semibold" style={{ color: 'var(--text)' }}>
@@ -1011,7 +1014,7 @@ export default function NetworkPage() {
                 return (
                   <PremiumCard key={c.id} accent={t === 'accent' ? 'pink' : t} hover={false}>
                     <div className="flex items-start gap-3 p-4">
-                      <Avatar name={c.name} id={c.id} />
+                      <Avatar name={c.name} id={c.id} company={c.company} />
                       <div className="min-w-0 flex-1">
                         <div className="text-[13.5px] font-semibold truncate" style={{ color: 'var(--text)' }}>
                           {c.name}
@@ -1121,7 +1124,7 @@ export default function NetworkPage() {
                 <PremiumCard key={r.id} accent={t === 'accent' ? 'pink' : t} hover={false}>
                   <div className="p-4">
                     <div className="flex flex-wrap items-start gap-3">
-                      {r.connection && <Avatar name={r.connection.name} id={r.connection.id} />}
+                      {r.connection && <Avatar name={r.connection.name} id={r.connection.id} company={r.connection.company} />}
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-[13.5px] font-semibold" style={{ color: 'var(--text)' }}>

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase-browser'
 import { readLinkedInArchive, signalsFor, type LinkedInArchive } from '@/lib/linkedin-import'
 import { claudeImportPrompt } from '@/lib/linkedin-claude-prompt'
+import { CompanyLogo } from '@/components/network/CompanyLogo'
 
 /**
  * Import your LinkedIn network, then turn it into referral paths.
@@ -105,16 +106,20 @@ function ClaudeMark({ size = 14 }: { size?: number }) {
   )
 }
 
-function Initials({ name, size = 36 }: { name: string; size?: number }) {
+/** A person: their initials, with their company's logo pinned to the corner. */
+function Initials({ name, company, size = 36 }: { name: string; company?: string | null; size?: number }) {
   const ini = name.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]?.toUpperCase()).join('') || '?'
   const hue = [...name].reduce((a, c) => a + c.charCodeAt(0), 0) % 360
   return (
-    <span
-      aria-hidden="true"
-      className="grid place-items-center rounded-full font-semibold shrink-0"
-      style={{ width: size, height: size, fontSize: size * 0.36, background: `hsl(${hue} 45% 92%)`, color: `hsl(${hue} 40% 32%)` }}
-    >
-      {ini}
+    <span className="relative shrink-0" style={{ width: size, height: size }}>
+      <span
+        aria-hidden="true"
+        className="grid place-items-center rounded-full font-semibold w-full h-full"
+        style={{ fontSize: size * 0.36, background: `hsl(${hue} 45% 92%)`, color: `hsl(${hue} 40% 32%)` }}
+      >
+        {ini}
+      </span>
+      <CompanyLogo company={company} badge size={Math.round(size * 0.4)} />
     </span>
   )
 }
@@ -511,7 +516,7 @@ export default function LinkedInImport({
         <ul className="rounded-xl overflow-hidden" style={{ boxShadow: 'inset 0 0 0 1px var(--card-ring)' }}>
           {rows.map(({ c, reasons }, i) => (
             <li key={c.id} className="flex items-start gap-3 px-4 py-3" style={{ borderTop: i ? '1px solid var(--border)' : 'none' }}>
-              <Initials name={c.name} />
+              <Initials name={c.name} company={c.company} size={40} />
               <div className="min-w-0 flex-1">
                 <div className="text-[13.5px] font-semibold" style={{ color: 'var(--text)' }}>
                   {c.name}
@@ -916,7 +921,12 @@ export default function LinkedInImport({
                   </p>
                   <div className="flex flex-wrap gap-1.5 mb-4">
                     {companies.slice(0, 10).map(([c, n]) => (
-                      <span key={c} className="px-2.5 py-1 rounded-full text-[12px]" style={{ background: 'var(--bg-overlay)', color: 'var(--text-secondary)' }}>
+                      <span
+                        key={c}
+                        className="inline-flex items-center gap-1.5 pl-1.5 pr-2.5 py-1 rounded-full text-[12px]"
+                        style={{ background: 'var(--bg-overlay)', color: 'var(--text-secondary)' }}
+                      >
+                        <CompanyLogo company={c} size={16} />
                         {c} <span style={{ color: 'var(--text-faint)' }}>{n}</span>
                       </span>
                     ))}
@@ -1003,7 +1013,7 @@ export default function LinkedInImport({
                           boxShadow: `inset 0 0 0 1px ${on ? 'rgb(var(--green-rgb) / 0.4)' : 'var(--card-ring)'}`,
                         }}
                       >
-                        <Initials name={c.name} size={34} />
+                        <Initials name={c.name} company={c.company} size={38} />
                         <span className="min-w-0 flex-1">
                           <span className="block text-[13px] font-semibold truncate" style={{ color: 'var(--text)' }}>
                             {c.name}
