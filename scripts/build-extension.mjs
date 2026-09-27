@@ -69,8 +69,12 @@ function build(outDir, origins) {
 }
 
 const prodDir = path.join(ROOT, 'extension', 'dist')
-build(prodDir, ['https://applymaster.ai'])
-build(path.join(ROOT, 'extension', 'dist-dev'), ['https://applymaster.ai', 'http://localhost:3000'])
+/* The site lives at www: applymaster.ai redirects there, and a redirect to
+   another host strips the extension's Authorization header. So www comes
+   first (it is the default address) and the bare domain is still accepted. */
+const SITE = ['https://www.applymaster.ai', 'https://applymaster.ai']
+build(prodDir, SITE)
+build(path.join(ROOT, 'extension', 'dist-dev'), [...SITE, 'http://localhost:3000'])
 
 // The downloadable zip is the production build.
 const entries = {}
