@@ -73,10 +73,18 @@ async function readHead(res: Response, limit = 400_000) {
  */
 async function fromLinkedIn(slug: string): Promise<Found | 'none' | 'unavailable'> {
   try {
-    const res = await fetch(`https://www.linkedin.com/in/${encodeURIComponent(slug)}`, {
-      headers: { 'User-Agent': AGENT, 'Accept-Language': 'en' },
-      signal: AbortSignal.timeout(10_000),
-    })
+    const page = () =>
+      fetch(`https://www.linkedin.com/in/${encodeURIComponent(slug)}`, {
+        headers: { 'User-Agent': AGENT, 'Accept-Language': 'en' },
+        signal: AbortSignal.timeout(10_000),
+      })
+    let res = await page()
+    // 999 means private — or "not so fast". A second try after a pause tells them apart.
+    if (res.status === 999) {
+      res.body?.cancel().catch(() => {})
+      await new Promise(r => setTimeout(r, 1500))
+      res = await page()
+    }
     if (!res.ok || /authwall|\/login|checkpoint/.test(res.url)) {
       res.body?.cancel().catch(() => {})
       return 'unavailable'
@@ -101,7 +109,8 @@ async function fromService(slug: string): Promise<Found | 'none' | 'limited' | '
       signal: AbortSignal.timeout(12_000),
     })
     if (res.status === 404) return 'none'
-    if (res.status === 429 || res.status === 402) return 'limited'
+    // Out of lookups, or a missing/expired key: the service is off for this batch.
+    if ([401, 402, 403, 429].includes(res.status)) return 'limited'
     if (!res.ok) return 'error'
     const type = (res.headers.get('content-type') || '').split(';')[0].trim()
     if (!EXT[type]) return 'error'
@@ -113,11 +122,34 @@ async function fromService(slug: string): Promise<Found | 'none' | 'limited' | '
   }
 }
 
-async function lookup(slug: string): Promise<{ answer: Found | 'none' | 'limited' | 'error'; source: Source }> {
+/**
+ * LinkedIn first, the service when LinkedIn will not show the profile.
+ * 'hidden' means neither could see a photo: the profile or its photo is
+ * visible to connections only. 'error' is a hiccup worth retrying soon.
+ */
+async function lookup(
+  slug: string,
+  service: { off: boolean }
+): Promise<{ answer: Found | 'none' | 'hidden' | 'error'; source: Source }> {
   const direct = await fromLinkedIn(slug)
   if (direct !== 'unavailable') return { answer: direct, source: 'linkedin' }
-  return { answer: await fromService(slug), source: 'service' }
+  if (service.off) return { answer: 'hidden', source: 'service' }
+  const got = await fromService(slug)
+  if (got === 'limited') {
+    // Out of lookups for today. Keep going with LinkedIn for everyone else.
+    service.off = true
+    return { answer: 'hidden', source: 'service' }
+  }
+  return { answer: got, source: 'service' }
 }
+
+/**
+ * Someone with no photo is looked at again after a week: they may make it
+ * public, or a paid key may have been added since.
+ */
+const RECHECK_MS = 7 * 86_400_000
+const due = (r: Row) =>
+  !r.photo_url && (!r.photo_checked_at || Date.parse(r.photo_checked_at) < Date.now() - RECHECK_MS)
 
 export async function POST(req: NextRequest) {
   const supabase = createClient()
@@ -155,27 +187,27 @@ export async function POST(req: NextRequest) {
     .gte('photo_checked_at', since)
   const allowance = Math.max(0, DAILY_CAP - (count ?? 0))
 
-  const todo = rows.filter(r => !r.photo_checked_at && slugOf(r.linkedin_url)).slice(0, Math.min(PER_REQUEST, allowance))
+  const todo = rows.filter(r => due(r) && slugOf(r.linkedin_url)).slice(0, Math.min(PER_REQUEST, allowance))
   const admin = createAdminClient()
   const results = new Map<string, Outcome>()
-  let limited = false
+  const service = { off: false }
   const sources: Record<Source, number> = { linkedin: 0, service: 0 }
+  let hidden = 0
 
-  // Three at a time; stop starting new lookups once the service says no.
+  // Two at a time: LinkedIn turns bursts away with the same 999 it uses for private profiles.
   const queue = [...todo]
   await Promise.all(
-    Array.from({ length: 3 }, async () => {
+    Array.from({ length: 2 }, async () => {
       for (let r = queue.shift(); r; r = queue.shift()) {
-        if (limited) break
-        const { answer: got, source } = await lookup(slugOf(r.linkedin_url)!)
-        if (got === 'limited') {
-          limited = true
-          break
-        }
+        const { answer: got, source } = await lookup(slugOf(r.linkedin_url)!, service)
         if (got === 'error') continue // not an answer: try again another time
         const now = new Date().toISOString()
-        if (got === 'none') {
-          await supabase.from('network_connections').update({ photo_checked_at: now }).eq('id', r.id).eq('user_id', user.id)
+        if (got === 'none' || got === 'hidden') {
+          if (got === 'hidden') hidden += 1
+          // A silhouette on a public page is a real answer: look again in a week. A 999
+          // may have been LinkedIn slowing us down, so date it for a look tomorrow.
+          const checked = got === 'none' ? now : new Date(Date.now() - RECHECK_MS + 86_400_000).toISOString()
+          await supabase.from('network_connections').update({ photo_checked_at: checked }).eq('id', r.id).eq('user_id', user.id)
           results.set(r.id, { photo: null, checked: true })
           continue
         }
@@ -194,12 +226,11 @@ export async function POST(req: NextRequest) {
   const byUrl: Record<string, string | null> = {}
   for (const r of rows) {
     const out = results.get(r.id)
+    if (!out && due(r)) continue // still unanswered
     const photo = out ? out.photo : r.photo_url
-    const done = out?.checked || !!r.photo_checked_at
-    if (!done) continue
     photos[r.id] = photo
     if (r.linkedin_url) byUrl[r.linkedin_url] = photo
   }
   const pending = rows.filter(r => !photos.hasOwnProperty(r.id) && slugOf(r.linkedin_url)).length
-  return Response.json({ photos, byUrl, pending, limited, capped: allowance === 0, sources })
+  return Response.json({ photos, byUrl, pending, capped: allowance === 0, serviceOff: service.off, hidden, sources })
 }

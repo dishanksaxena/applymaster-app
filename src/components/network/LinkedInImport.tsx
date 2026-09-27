@@ -6,7 +6,7 @@ import { readLinkedInArchive, signalsFor, type LinkedInArchive } from '@/lib/lin
 import { claudeImportPrompt } from '@/lib/linkedin-claude-prompt'
 import { CompanyLogo } from '@/components/network/CompanyLogo'
 import { PersonPhoto } from '@/components/network/PersonPhoto'
-import { fillPhotos, photosEnabled, setPhotosEnabled } from '@/components/network/contact-photos'
+import { fillPhotos, needsPhoto, photosEnabled, setPhotosEnabled } from '@/components/network/contact-photos'
 
 /**
  * Import your LinkedIn network, then turn it into referral paths.
@@ -26,10 +26,27 @@ import { fillPhotos, photosEnabled, setPhotosEnabled } from '@/components/networ
 
 const LINKEDIN_EXPORT_URL = 'https://www.linkedin.com/mypreferences/d/download-my-data'
 const REQUESTED_KEY = 'am_li_export_requested_at'
-const CHUNK = 1000
+// Small enough that the progress bar moves for a network of a few hundred.
+const CHUNK = 150
 
 type Step = 'request' | 'upload' | 'reading' | 'choose' | 'importing' | 'helpers' | 'paths' | 'done'
 type Summary = { inserted: number; updated: number; total: number; skillsAdded: number }
+
+/** What an import did, in words. A re-import adds nobody but refreshes everyone. */
+function importedLine(s: Summary) {
+  const existing = s.total - s.inserted
+  const parts = [
+    s.inserted ? `Imported ${s.inserted.toLocaleString()} new ${s.inserted === 1 ? 'person' : 'people'}` : '',
+    existing
+      ? s.inserted
+        ? `${existing.toLocaleString()} already here, brought up to date`
+        : `All ${s.total.toLocaleString()} were already in your network, now brought up to date`
+      : '',
+    s.updated ? `${s.updated.toLocaleString()} changed jobs` : '',
+    s.skillsAdded ? `${s.skillsAdded} skills added to your job matching` : '',
+  ]
+  return parts.filter(Boolean).join(' · ')
+}
 
 export type ImportedConnection = {
   id: string
@@ -370,6 +387,8 @@ export default function LinkedInImport({
         localStorage.removeItem(REQUESTED_KEY)
       } catch {}
       const s = { inserted, updated, total: rows.length, skillsAdded }
+      setProgress(1)
+      await new Promise(r => setTimeout(r, 500)) // let the full bar register
       setSummary(s)
       onImported(s)
       // Claude's run ends here: picking who would help is the person's call.
@@ -497,7 +516,7 @@ export default function LinkedInImport({
         ? helperCandidates.map(x => ({ linkedin_url: x.c.linkedin_url, done: false }))
         : [...paths.atApplied, ...paths.recruiters, ...paths.strongest].map(x => ({
             linkedin_url: x.c.linkedin_url,
-            done: !!(x.c.photo_url || x.c.photo_checked_at),
+            done: !needsPhoto(x.c),
           }))
     const urls = onScreen.filter(x => x.linkedin_url && !x.done && !askedPhotos.current.has(x.linkedin_url)).map(x => x.linkedin_url!)
     if (!urls.length) return
@@ -1001,7 +1020,8 @@ export default function LinkedInImport({
                 <div className="h-full rounded-full transition-all duration-300" style={{ width: `${Math.max(4, progress * 100)}%`, background: 'var(--accent-solid)' }} />
               </div>
               <p className="text-[12px] mt-2 tabular-nums" style={{ color: 'var(--text-muted)' }}>
-                {Math.round(progress * 100)}%
+                {Math.min(archive?.connections.length ?? 0, Math.round(progress * (archive?.connections.length ?? 0))).toLocaleString()} of{' '}
+                {archive?.connections.length.toLocaleString()} · {Math.round(progress * 100)}%
               </p>
             </div>
           )}
@@ -1011,9 +1031,7 @@ export default function LinkedInImport({
             <>
               {summary && (
                 <p className="text-[12.5px] mb-3 px-3 py-2 rounded-lg" style={{ background: 'var(--green-dim)', color: 'var(--green)' }}>
-                  Imported {summary.inserted.toLocaleString()} {summary.inserted === 1 ? 'person' : 'people'}
-                  {summary.updated ? ` · ${summary.updated.toLocaleString()} updated with new jobs` : ''}
-                  {summary.skillsAdded ? ` · ${summary.skillsAdded} skills added to your job matching` : ''}
+                  {importedLine(summary)}
                 </p>
               )}
               <p className="text-[13.5px] leading-relaxed mb-3" style={{ color: 'var(--text-secondary)' }}>

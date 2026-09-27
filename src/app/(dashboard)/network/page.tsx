@@ -7,7 +7,7 @@ import NetworkGraph from '@/components/NetworkGraph'
 import LinkedInImport from '@/components/network/LinkedInImport'
 import { CompanyLogo } from '@/components/network/CompanyLogo'
 import { PersonPhoto } from '@/components/network/PersonPhoto'
-import { fillPhotos, photosEnabled } from '@/components/network/contact-photos'
+import { fillPhotos, needsPhoto, photosEnabled } from '@/components/network/contact-photos'
 import { tone, toneA, toneSurface, type Tone } from '@/lib/tone'
 
 /**
@@ -701,7 +701,7 @@ export default function NetworkPage() {
     if (!photosEnabled()) return
     const onScreen = [...(tab === 'network' ? visibleConnections.slice(0, shown) : []), ...(hits ?? []).map(h => h.connection)]
     const ids = onScreen
-      .filter(c => c.linkedin_url && !c.photo_url && !c.photo_checked_at && !askedPhotos.current.has(c.id))
+      .filter(c => needsPhoto(c) && !askedPhotos.current.has(c.id))
       .map(c => c.id)
       .slice(0, 100)
     if (!ids.length) return
