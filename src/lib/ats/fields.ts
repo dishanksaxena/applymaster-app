@@ -37,6 +37,10 @@ const FIELD_RULES: Rule[] = [
   { kind: 'first_name', test: /^(legal )?(first|given)[\s_-]?name/ },
   { kind: 'last_name', test: /^(legal )?(last|family|sur)[\s_-]?name/ },
   { kind: 'email', test: /e-?mail/ },
+  // "Phone country code" (LinkedIn) is a country, not the number.
+  { kind: 'country', test: /country (phone )?code|phone country/ },
+  // "Phone Device Type" (Workday) asks what kind of phone, not for the number.
+  { kind: 'unknown', test: /device type|phone type|type of phone/ },
   { kind: 'phone', test: /phone|mobile|telephone|contact number/ },
   { kind: 'linkedin', test: /linked-?in/ },
   { kind: 'website', test: /website|portfolio|personal site|github|url$/ },
@@ -154,7 +158,7 @@ export function knownAnswer(
 ): { answer: string; source: 'preferences' | 'profile' } | null {
   const q = norm(question)
 
-  if (/sponsor|visa|work permit|right to work|work authoriz|legally authorized|authorised to work/.test(q)) {
+  if (/sponsor|visa|work permit|right to work|work authori[sz]|authori[sz]ed to work|eligible to work/.test(q)) {
     // Read the polarity of the question before answering it: "will you
     // require sponsorship" and "are you authorised to work" want opposite
     // answers from the same fact.
@@ -179,8 +183,17 @@ export function knownAnswer(
     return { answer: 'No', source: 'profile' }
   }
 
-  if (/years of experience|how many years/.test(q) && ctx.yearsExperience != null) {
-    return { answer: String(ctx.yearsExperience), source: 'profile' }
+  /* Total years answers "how many years of experience do you have", not "...
+     with Go" or "...in B2B sales": a skill-specific question needs the resume,
+     and answering it with the career total would overstate the skill. */
+  if (/years of (\w+ )?experience|how many years/.test(q) && ctx.yearsExperience != null) {
+    const tail = q.split(/experience/)[1] ?? ''
+    const specific = /\b(with|in|using|of)\s+(?!(the )?(industry|workforce|total|overall|professional|work))\w/.test(tail)
+    if (!specific) return { answer: String(ctx.yearsExperience), source: 'profile' }
+  }
+
+  if (/phone (device )?type|type of phone|device type/.test(q)) {
+    return { answer: 'Mobile', source: 'profile' }
   }
 
   if (/salary|compensation expectation|expected (pay|ctc)/.test(q) && ctx.salaryExpectation) {

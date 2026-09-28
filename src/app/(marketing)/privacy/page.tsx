@@ -148,7 +148,7 @@ export default function PrivacyPage() {
 
               <h3 className="text-lg font-semibold text-ink mt-6 mb-3">5.1 Where it runs</h3>
               <ul className="list-disc pl-6 space-y-2">
-                <li>Automatically, only on job application pages at greenhouse.io, jobs.lever.co, jobs.ashbyhq.com and myworkdayjobs.com, and on the applymaster.ai/extension page where you connect it.</li>
+                <li>Automatically, only on job application pages at greenhouse.io, jobs.lever.co, jobs.ashbyhq.com, myworkdayjobs.com and myworkdaysite.com, Indeed&apos;s application pages (smartapply.indeed.com), and LinkedIn job pages, where it reads only the Easy Apply form and nothing else on LinkedIn; and on the applymaster.ai/extension page where you connect it.</li>
                 <li>On any other website only when you click its toolbar button, and then only in that tab.</li>
                 <li>It does not read your browsing history, other tabs, or any page you have not opened it on.</li>
               </ul>

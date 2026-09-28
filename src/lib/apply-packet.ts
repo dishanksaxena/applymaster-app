@@ -45,6 +45,9 @@ export type ApplyPacket = {
   /** For answering screening questions. */
   context: AnswerContext
   resume_summary: string
+  /** Work history and education as the resume states them: Workday asks for each field. */
+  experience: { title: string; company: string; location: string | null; start: string | null; end: string | null; current: boolean; description: string | null }[]
+  education: { school: string; degree: string | null; field: string | null; start: string | null; end: string | null }[]
 }
 
 /** Contact links written into the resume itself: the profile has no fields for them. */
@@ -224,6 +227,28 @@ export async function buildPacket(
       noticePeriod: facts.notice_period,
     },
     resume_summary: resumeSummary,
+    experience: (Array.isArray(parsed?.experience) ? (parsed.experience as Record<string, unknown>[]) : [])
+      .filter(e => e && (e.title || e.company))
+      .slice(0, 6)
+      .map(e => ({
+        title: String(e.title ?? ''),
+        company: String(e.company ?? ''),
+        location: (e.location as string) || null,
+        start: e.start_date != null ? String(e.start_date) : null,
+        end: e.end_date != null ? String(e.end_date) : null,
+        current: !!e.is_current,
+        description: (e.description as string) || null,
+      })),
+    education: (Array.isArray(parsed?.education) ? (parsed.education as Record<string, unknown>[]) : [])
+      .filter(e => e && (e.institution || e.school))
+      .slice(0, 3)
+      .map(e => ({
+        school: String(e.institution ?? e.school ?? ''),
+        degree: (e.degree as string) || null,
+        field: ((e.field ?? e.field_of_study) as string) || null,
+        start: e.start_date != null ? String(e.start_date) : null,
+        end: e.end_date != null ? String(e.end_date) : null,
+      })),
   }
 }
 

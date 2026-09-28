@@ -105,6 +105,16 @@ async function handle(msg, sender) {
       if (!res.error && tabId != null) await chrome.storage.session.remove(`pending:${tabId}`)
       return res
     }
+    case 'ack:get': {
+      // Warnings the person has read (LinkedIn's rules), so they are shown once.
+      const { acks = {} } = await chrome.storage.local.get('acks')
+      return { ok: !!acks[msg.key] }
+    }
+    case 'ack:set': {
+      const { acks = {} } = await chrome.storage.local.get('acks')
+      await chrome.storage.local.set({ acks: { ...acks, [msg.key]: Date.now() } })
+      return { ok: true }
+    }
     case 'open': {
       const a = await auth()
       const base = a?.apiBase ?? ALLOWED_ORIGINS[0]

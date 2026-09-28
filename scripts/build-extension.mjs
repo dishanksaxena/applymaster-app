@@ -21,9 +21,21 @@ import { zipSync } from 'fflate'
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const SRC = path.join(ROOT, 'extension', 'src')
 const ICONS = path.join(ROOT, 'extension', 'icons')
-const VERSION = '1.0.0'
+const VERSION = '1.1.0'
 
-const ATS_SITES = ['https://*.greenhouse.io/*', 'https://jobs.lever.co/*', 'https://jobs.ashbyhq.com/*', 'https://*.myworkdayjobs.com/*']
+// Only where applications are filled. LinkedIn: job pages, where Easy Apply
+// opens (the script reads nothing outside that dialog). Indeed: its apply flow.
+const ATS_SITES = [
+  'https://*.greenhouse.io/*',
+  'https://jobs.lever.co/*',
+  'https://jobs.ashbyhq.com/*',
+  'https://*.myworkdayjobs.com/*',
+  'https://*.myworkdaysite.com/*',
+  'https://www.linkedin.com/jobs/*',
+  'https://smartapply.indeed.com/*',
+  'https://apply.indeed.com/*',
+  'https://m5.apply.indeed.com/*',
+]
 
 function fieldsBundle() {
   const source = fs.readFileSync(path.join(ROOT, 'src', 'lib', 'ats', 'fields.ts'), 'utf8')

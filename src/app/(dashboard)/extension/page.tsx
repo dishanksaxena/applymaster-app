@@ -202,11 +202,16 @@ export default function ExtensionPage() {
         <Step n={3} title="Apply" done={false}>
           <ul className="space-y-1.5">
             <li>
-              Open an application on <strong style={{ color: 'var(--text)' }}>Greenhouse, Lever, Ashby or Workday</strong> and press{' '}
+              Open an application on <strong style={{ color: 'var(--text)' }}>Workday, Greenhouse, Lever, Ashby, Indeed or LinkedIn Easy Apply</strong> and press{' '}
               <strong style={{ color: 'var(--text)' }}>Fill with ApplyMaster</strong>. On any other site, click the ApplyMaster button in
               Chrome&apos;s toolbar.
             </li>
             <li>It fills your details, attaches your resume and answers the standard questions. Anything written from your resume is highlighted in amber: read those.</li>
+            <li>On forms with several pages (Workday, Indeed, LinkedIn), each page is filled as you reach it, including your work history and education on Workday. You press every Next yourself.</li>
+            <li>
+              LinkedIn does not allow extensions that automate activity on LinkedIn and may restrict accounts it believes use them. ApplyMaster
+              only fills the Easy Apply form, and asks before the first time. Whether to use it there is your call.
+            </li>
             <li>You check everything, complete any CAPTCHA and press the form&apos;s Submit. When the employer confirms, it&apos;s in your tracker as Applied, with a receipt.</li>
           </ul>
         </Step>
