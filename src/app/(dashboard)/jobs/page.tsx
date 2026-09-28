@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { createClient } from '@/lib/supabase-browser'
 import { PremiumCard, PremiumButton } from '@/components/premium'
@@ -8,6 +8,9 @@ import { staggerContainer, fadeInUp } from '@/lib/animations'
 import dynamic from 'next/dynamic'
 import { toast } from '@/components/Toast'
 import ReferralPathBadge from '@/components/ReferralPathBadge'
+import Autocomplete, { type Suggestion } from '@/components/Autocomplete'
+import { JOB_TITLES } from '@/lib/constants/job-titles'
+import { suggestScore } from '@/lib/suggest-score'
 
 const JobsGlobe = dynamic(() => import('@/components/JobsGlobe'), {
   ssr: false,
@@ -73,25 +76,12 @@ export default function JobsPage() {
   const [mounted, setMounted] = useState(false)
   const [country, setCountry] = useState('US')
   const [city, setCity] = useState('')
-  const [citySuggestions, setCitySuggestions] = useState<string[]>([])
-  const [showCitySuggestions, setShowCitySuggestions] = useState(false)
   const [remote, setRemote] = useState('any')
   const [salaryIdx, setSalaryIdx] = useState(0)
   const [daysOld, setDaysOld] = useState(0)
   const [viewMode, setViewMode] = useState<'list' | 'globe'>('list')
-  const cityRef = useRef<HTMLDivElement>(null)
+  const [recent, setRecent] = useState<string[]>([])
   const supabase = createClient()
-
-  const CITY_DATA: Record<string, string[]> = {
-    US: ['New York', 'San Francisco', 'Seattle', 'Austin', 'Boston', 'Chicago', 'Los Angeles', 'Denver', 'Atlanta', 'Miami', 'Dallas', 'Washington DC', 'Portland'],
-    IN: ['Bangalore', 'Mumbai', 'Delhi', 'Hyderabad', 'Pune', 'Chennai', 'Kolkata', 'Ahmedabad', 'Noida', 'Gurgaon', 'Kochi', 'Jaipur'],
-    GB: ['London', 'Manchester', 'Birmingham', 'Edinburgh', 'Bristol', 'Leeds', 'Glasgow'],
-    CA: ['Toronto', 'Vancouver', 'Montreal', 'Calgary', 'Ottawa', 'Edmonton'],
-    AU: ['Sydney', 'Melbourne', 'Brisbane', 'Perth', 'Adelaide'],
-    DE: ['Berlin', 'Munich', 'Hamburg', 'Frankfurt', 'Cologne'],
-    SG: ['Singapore'],
-    AE: ['Dubai', 'Abu Dhabi', 'Sharjah'],
-  }
 
   useEffect(() => { setMounted(true) }, [])
 
@@ -137,33 +127,49 @@ export default function JobsPage() {
     setSalaryIdx(0)
   }, [country])
 
+  /* Suggestions: the person's own roles and resume first, then titles hiring
+     now, then common titles; cities for the chosen country. See /api/suggest. */
+  const RECENT_KEY = 'am_recent_job_searches'
   useEffect(() => {
-    const handleClick = (e: MouseEvent) => {
-      if (cityRef.current && !cityRef.current.contains(e.target as Node)) {
-        setShowCitySuggestions(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
+    try {
+      setRecent(JSON.parse(localStorage.getItem(RECENT_KEY) || '[]'))
+    } catch {}
   }, [])
-
-  const handleCityInput = (val: string) => {
-    setCity(val)
-    if (val.length > 0) {
-      const cities = CITY_DATA[country] || []
-      const matches = cities.filter(c => c.toLowerCase().startsWith(val.toLowerCase()))
-      setCitySuggestions(matches)
-      setShowCitySuggestions(matches.length > 0)
-    } else {
-      setShowCitySuggestions(false)
-    }
+  const remember = (q: string) => {
+    const next = [q, ...recent.filter(r => r.toLowerCase() !== q.toLowerCase())].slice(0, 6)
+    setRecent(next)
+    try {
+      localStorage.setItem(RECENT_KEY, JSON.stringify(next))
+    } catch {}
   }
+  // The person's own roles, kept from the first lookup, so typing can match them instantly.
+  const mineRef = useRef<Suggestion[]>([])
+  const fetchRoles = useCallback(async (q: string): Promise<Suggestion[]> => {
+    const items: Suggestion[] = (await (await fetch(`/api/suggest?type=role&q=${encodeURIComponent(q)}`)).json()).items ?? []
+    if (!q.trim()) mineRef.current = items
+    return items
+  }, [])
+  const instantRoles = useCallback((q: string): Suggestion[] => {
+    const mine = mineRef.current.filter(i => suggestScore(i.label, q) > 0)
+    const common = JOB_TITLES.map(t => ({ t, s: suggestScore(t, q) }))
+      .filter(x => x.s > 0 && !mine.some(m => m.label.toLowerCase() === x.t.toLowerCase()))
+      .sort((a, b) => b.s - a.s || a.t.length - b.t.length)
+      .slice(0, 7)
+      .map(x => ({ label: x.t, group: 'Job titles' }))
+    return [...mine, ...common]
+  }, [])
+  const fetchCities = useCallback(
+    async (q: string): Promise<Suggestion[]> =>
+      (await (await fetch(`/api/suggest?type=city&country=${country}&q=${encodeURIComponent(q)}`)).json()).items ?? [],
+    [country]
+  )
 
   const currencyKey = country === 'IN' ? 'INR' : 'USD'
   const salaryRanges = SALARY_RANGES[currencyKey]
 
   const searchJobs = async () => {
     if (!searchTerm) return
+    remember(searchTerm.trim())
     setLoading(true)
     try {
       const selectedSalary = salaryRanges[salaryIdx]
@@ -428,10 +434,18 @@ export default function JobsPage() {
           <div className="p-6 space-y-4">
           {/* Keyword */}
           <div className="relative">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="1.8" className="absolute left-4 top-1/2 -translate-y-1/2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
-            <input value={searchTerm} onChange={e => setSearchTerm(e.target.value)} onKeyDown={e => e.key === 'Enter' && searchJobs()}
+            <Autocomplete
+              value={searchTerm}
+              onChange={setSearchTerm}
+              onSubmit={searchJobs}
+              fetchItems={fetchRoles}
+              instant={instantRoles}
+              recent={recent}
+              ariaLabel="Job title, skill, or keyword"
               placeholder="Job title, skill, or keyword..."
-              className="w-full pl-12 pr-4 py-4 rounded-xl bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text)] text-[15px] placeholder-[var(--text-faint)] focus:outline-none focus:border-[rgb(var(--accent-rgb)/0.3)] transition-all" />
+              icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="1.8" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>}
+              inputClassName="w-full pl-12 pr-4 py-4 rounded-xl bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text)] text-[15px] placeholder-[var(--text-faint)] focus:outline-none focus:border-[rgb(var(--accent-rgb)/0.3)] transition-all"
+            />
           </div>
 
           {/* Row 1: Country + City */}
@@ -439,29 +453,16 @@ export default function JobsPage() {
             <select value={country} onChange={e => setCountry(e.target.value)} className={selectCls}>
               {COUNTRIES.map(c => <option key={c.code} value={c.code}>{c.name}</option>)}
             </select>
-            <div ref={cityRef} className="relative">
-              <input
-                value={city}
-                onChange={e => handleCityInput(e.target.value)}
-                onFocus={() => city && setShowCitySuggestions(citySuggestions.length > 0)}
-                placeholder="City (optional)"
-                className={`w-full ${inputCls}`}
-              />
-              <AnimatePresence>
-                {showCitySuggestions && (
-                  <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                    className="absolute top-full left-0 right-0 mt-1 rounded-xl overflow-hidden z-50"
-                    style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>
-                    {citySuggestions.map(s => (
-                      <button key={s} onClick={() => { setCity(s); setShowCitySuggestions(false) }}
-                        className="w-full text-left px-4 py-2.5 text-[13px] text-ink hover:bg-[var(--bg-overlay)] transition-colors">
-                        {s}
-                      </button>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+            <Autocomplete
+              value={city}
+              onChange={setCity}
+              onSubmit={searchJobs}
+              fetchItems={fetchCities}
+              resetKey={country}
+              ariaLabel="City"
+              placeholder="City (optional)"
+              inputClassName={`w-full ${inputCls}`}
+            />
           </div>
 
           {/* Row 2: Work Type + Date Posted + Salary */}
