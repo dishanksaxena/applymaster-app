@@ -176,11 +176,26 @@ export default function ApplicationsPage() {
     setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10)
   }, [])
 
+  /* The board fits the screen: columns share the width, empty columns fold
+     into a thin rail, and cards go compact when their column gets narrow.
+     Below the lg breakpoint there is simply not room, and it scrolls. */
+  const [compact, setCompact] = useState(false)
   useEffect(() => {
-    checkScroll()
-    window.addEventListener('resize', checkScroll)
-    return () => window.removeEventListener('resize', checkScroll)
-  }, [checkScroll])
+    const el = kanbanScrollRef.current
+    if (!el) return
+    const measure = () => {
+      const counts = statuses.map(st => (applications.get(st) || []).length)
+      const full = counts.filter(n => n > 0).length || 1
+      const rails = counts.length - full
+      const colWidth = (el.clientWidth - rails * 52 - (counts.length - 1) * 12) / full
+      setCompact(colWidth < 230)
+      checkScroll()
+    }
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [applications, checkScroll, view])
 
   const scroll = (direction: 'left' | 'right') => {
     if (!kanbanScrollRef.current) return
@@ -661,14 +676,41 @@ export default function ApplicationsPage() {
                 onScroll={checkScroll}
                 className="overflow-x-auto pb-6 scroll-smooth"
               >
-                <div className="flex gap-5 min-w-max">
+                <div className="flex gap-3 min-w-[920px] lg:min-w-0 items-start">
                 {statuses.map((status, colIndex) => {
                   const apps = applications.get(status) || []
                   const config = statusConfig[status]
+                  // An empty column folds into a rail: it still takes a dragged card.
+                  if (apps.length === 0) {
+                    return (
+                      <div
+                        key={status}
+                        onDragOver={handleDragOver}
+                        onDragEnter={() => handleDragEnterColumn(status)}
+                        onDragLeave={handleDragLeaveColumn}
+                        onDrop={e => handleDropOnColumn(e, status)}
+                        title={`${config.label}: none yet`}
+                        className="shrink-0 w-[52px] self-stretch min-h-[220px] rounded-xl flex flex-col items-center gap-2 py-3 transition-colors"
+                        style={{
+                          background: dropTargetStatus === status ? config.bg : 'var(--bg-overlay)',
+                          boxShadow: dropTargetStatus === status ? `inset 0 0 0 2px ${config.color}` : 'none',
+                          animation: `floatUp 0.4s ease ${0.35 + colIndex * 0.05}s both`,
+                        }}
+                      >
+                        <div className="flex items-center justify-center w-7 h-7 rounded-lg" style={{ color: config.color, backgroundColor: config.bg }}>
+                          {config.icon}
+                        </div>
+                        <span className="text-[11px] font-black" style={{ color: config.color }}>0</span>
+                        <span className="text-[12px] font-bold text-[var(--text-muted)]" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
+                          {config.label}
+                        </span>
+                      </div>
+                    )
+                  }
                   return (
                     <div
                       key={status}
-                      className="flex-shrink-0 w-[300px]"
+                      className="flex-1 min-w-0 max-w-[380px]"
                       style={{ animation: `floatUp 0.4s ease ${0.35 + colIndex * 0.05}s both` }}
                     >
                       {/* Column Header */}
@@ -680,7 +722,7 @@ export default function ApplicationsPage() {
                         }}
                       >
                         <div className="absolute inset-0 opacity-[0.07]" style={{ background: `linear-gradient(180deg, ${config.color}, transparent)` }} />
-                        <div className="relative flex items-center gap-2.5 px-4 py-3">
+                        <div className={`relative flex items-center ${compact ? 'gap-2 px-2.5 py-2.5' : 'gap-2.5 px-4 py-3'}`}>
                           <div
                             className="flex items-center justify-center w-7 h-7 rounded-lg"
                             style={{ color: config.color, backgroundColor: config.bg }}
@@ -714,7 +756,7 @@ export default function ApplicationsPage() {
                         style={{
                           backgroundColor: dropTargetStatus === status ? 'var(--bg-overlay)' : 'transparent',
                           borderRadius: '0.75rem',
-                          padding: '0.75rem',
+                          padding: compact ? '0.25rem' : '0.75rem',
                           transition: 'background-color 0.2s ease',
                           minHeight: apps.length === 0 ? '180px' : 'auto',
                         }}
@@ -725,7 +767,7 @@ export default function ApplicationsPage() {
                             draggable={!isSwappingCard}
                             onDragStart={(e) => handleDragStart(e, app.id, status, app.position || cardIndex)}
                             onDragEnd={handleDragEnd}
-                            className={`card-hover relative rounded-2xl border border-[var(--border)] p-4 cursor-grab active:cursor-grabbing group transition-all ${
+                            className={`card-hover relative rounded-2xl border border-[var(--border)] ${compact ? 'p-3' : 'p-4'} cursor-grab active:cursor-grabbing group transition-all ${
                               draggedCardId === app.id ? 'opacity-50 scale-95' : 'opacity-100 scale-100'
                             }`}
                             style={{
@@ -744,10 +786,10 @@ export default function ApplicationsPage() {
                               el.style.boxShadow = 'none'
                             }}
                           >
-                            <div className="flex items-start gap-3">
-                              {/* Company Logo Placeholder */}
+                            <div className={`flex items-start ${compact ? 'gap-2' : 'gap-3'}`}>
+                              {/* Company Logo Placeholder: dropped when the column is narrow */}
                               <div
-                                className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center text-[14px] font-black text-[var(--text-on-accent)]"
+                                className={`${compact ? 'hidden' : 'flex'} flex-shrink-0 w-10 h-10 rounded-xl items-center justify-center text-[14px] font-black text-[var(--text-on-accent)]`}
                                 style={{
                                   background: `linear-gradient(135deg, ${withAlpha(config.color, 0.26)}, ${withAlpha(config.color, 0.14, true)})`,
                                   border: `1px solid ${withAlpha(config.color, 0.14, true)}`,
@@ -756,7 +798,7 @@ export default function ApplicationsPage() {
                                 {(app.job?.company || 'C')[0].toUpperCase()}
                               </div>
                               <div className="flex-1 min-w-0">
-                                <div className="text-[13px] font-bold text-[var(--text)] mb-0.5 line-clamp-2 leading-tight">
+                                <div className={`${compact ? 'text-[12.5px]' : 'text-[13px]'} font-bold text-[var(--text)] mb-0.5 line-clamp-2 leading-tight`}>
                                   {app.job?.title || 'Job Title'}
                                 </div>
                                 <div className="text-[11px] text-[var(--text-secondary)] line-clamp-1">
@@ -770,20 +812,19 @@ export default function ApplicationsPage() {
                                 </div>
                               </div>
                               {/* Match Ring */}
-                              {app.match_score != null && (
-                                <MatchRing score={app.match_score} color={config.color} />
-                              )}
+                              {/* In a narrow column the title needs the width; the score moves to the date line. */}
+                              {app.match_score != null && !compact && <MatchRing score={app.match_score} color={config.color} />}
                             </div>
 
                             {/* Timestamp */}
-                            {app.applied_at && (
-                              <div className="mt-3 text-[10px] text-[var(--text-faint)] font-medium">
-                                Applied {daysAgo(app.applied_at)}
-                              </div>
-                            )}
-                            {!app.applied_at && app.created_at && (
-                              <div className="mt-3 text-[10px] text-[var(--text-faint)] font-medium">
-                                Added {daysAgo(app.created_at)}
+                            {(app.applied_at || app.created_at) && (
+                              <div className={`${compact ? 'mt-2' : 'mt-3'} text-[10px] text-[var(--text-faint)] font-medium`}>
+                                {app.applied_at ? `Applied ${daysAgo(app.applied_at)}` : `Added ${daysAgo(app.created_at)}`}
+                                {compact && app.match_score != null && (
+                                  <span className="font-bold" style={{ color: config.color }} title="Match score">
+                                    {' '}· {app.match_score}%
+                                  </span>
+                                )}
                               </div>
                             )}
 
@@ -791,24 +832,28 @@ export default function ApplicationsPage() {
                             {(status === 'saved' || status === 'queued') && (
                               <button
                                 onClick={() => setKitFor(app.id)}
+                                aria-label="Apply kit"
+                                title="Apply kit"
                                 className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10.5px] font-semibold transition-colors"
                                 style={{ background: 'var(--accent-dim)', color: 'var(--accent)' }}
                               >
                                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                                   <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2M9 14l2 2 4-4" />
                                 </svg>
-                                Apply kit
+                                {!compact && 'Apply kit'}
                               </button>
                             )}
                             <button
                               onClick={() => setReceiptFor({ id: app.id, title: app.job?.title, company: app.job?.company })}
+                              aria-label="Receipt"
+                              title="Receipt"
                               className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10.5px] font-semibold transition-colors"
                               style={{ background: 'var(--bg-overlay)', color: 'var(--text-secondary)' }}
                             >
                               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                                 <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zM14 2v6h6M9 13h6M9 17h4" />
                               </svg>
-                              Receipt
+                              {!compact && 'Receipt'}
                             </button>
                             </div>
 
@@ -818,7 +863,7 @@ export default function ApplicationsPage() {
                                 <select
                                   value={status}
                                   onChange={e => updateStatus(app.id, e.target.value)}
-                                  className="filter-select w-full text-[11px] font-semibold px-3 py-2 rounded-xl border transition-all cursor-pointer focus:outline-none"
+                                  className={`filter-select w-full text-[11px] font-semibold ${compact ? 'px-2.5 py-1.5' : 'px-3 py-2'} rounded-xl border transition-all cursor-pointer focus:outline-none`}
                                   style={{
                                     color: config.color,
                                     backgroundColor: config.bg,
