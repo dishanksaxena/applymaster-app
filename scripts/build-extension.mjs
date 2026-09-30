@@ -21,7 +21,7 @@ import { zipSync } from 'fflate'
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const SRC = path.join(ROOT, 'extension', 'src')
 const ICONS = path.join(ROOT, 'extension', 'icons')
-const VERSION = '1.1.0'
+const VERSION = '1.2.0'
 
 // Only where applications are filled. LinkedIn: job pages, where Easy Apply
 // opens (the script reads nothing outside that dialog). Indeed: its apply flow.
@@ -35,13 +35,26 @@ const ATS_SITES = [
   'https://smartapply.indeed.com/*',
   'https://apply.indeed.com/*',
   'https://m5.apply.indeed.com/*',
+  // Public application forms, tested live (fill only)
+  'https://apply.workable.com/*',
+  'https://jobs.smartrecruiters.com/*',
+  'https://*.recruitee.com/*',
+  'https://*.teamtailor.com/*',
+  'https://jobs.jobvite.com/*',
+  // Enterprise systems behind an employer account
+  'https://*.icims.com/*',
+  'https://*.taleo.net/*',
+  'https://*.successfactors.com/*',
+  'https://*.successfactors.eu/*',
+  'https://*.sapsf.com/*',
+  'https://*.sapsf.eu/*',
 ]
 
 function fieldsBundle() {
   const source = fs.readFileSync(path.join(ROOT, 'src', 'lib', 'ats', 'fields.ts'), 'utf8')
   const js = ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.ESNext } }).outputText
   const body = js.replace(/^export\s+(?=(const|function|let|class)\b)/gm, '').replace(/^export\s*\{\s*\};?\s*$/gm, '')
-  return `const AMFields = (() => {\n${body}\nreturn { classifyField, valueForField, knownAnswer, isVoluntaryDemographic, isPersonalConsent }\n})();\n`
+  return `const AMFields = (() => {\n${body}\nreturn { classifyField, valueForField, knownAnswer, isVoluntaryDemographic, isPersonalConsent, wantsOwnWords }\n})();\n`
 }
 
 function manifest(origins) {

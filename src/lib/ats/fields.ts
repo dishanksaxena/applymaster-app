@@ -152,6 +152,30 @@ export type KnownAnswerContext = {
   company?: string
 }
 
+/* Countries a question can name, by a key both sides can agree on. */
+const COUNTRY_NAMES: [string, RegExp][] = [
+  ['us', /\b(united states|u\.?s\.?a?\.?|america)\b/],
+  ['ca', /\bcanada\b/],
+  ['uk', /\b(united kingdom|u\.?k\.?|britain|england|scotland|wales)\b/],
+  ['in', /\bindia\b/],
+  ['de', /\bgermany\b/],
+  ['au', /\baustralia\b/],
+  ['sg', /\bsingapore\b/],
+  ['ae', /\b(uae|united arab emirates|dubai)\b/],
+  ['ie', /\bireland\b/],
+  ['nl', /\b(netherlands|holland)\b/],
+  ['fr', /\bfrance\b/],
+  ['es', /\bspain\b/],
+  ['pl', /\bpoland\b/],
+  ['br', /\bbrazil\b/],
+  ['mx', /\bmexico\b/],
+  ['jp', /\bjapan\b/],
+  ['il', /\bisrael\b/],
+  ['eu', /\b(european union|the eu|eea)\b/],
+]
+const countryKey = (s?: string | null) => (s ? COUNTRY_NAMES.find(([, re]) => re.test(s.toLowerCase()))?.[0] ?? null : null)
+const countryIn = (q: string) => countryKey(q)
+
 export function knownAnswer(
   question: string,
   ctx: KnownAnswerContext
@@ -164,6 +188,11 @@ export function knownAnswer(
     // answers from the same fact.
     const asksForSponsorship = /require|need|sponsor/.test(q) && !/authoriz|authoris|eligible|permitted/.test(q)
     if (ctx.requiresSponsorship == null) return null
+    /* The profile's answer holds for the person's own country only. "Are you
+       eligible to work in Canada?" from someone authorised in the US is not
+       a question their profile answers. */
+    const asked = countryIn(q)
+    if (asked && asked !== countryKey(ctx.country)) return null
     const yes = asksForSponsorship ? ctx.requiresSponsorship : !ctx.requiresSponsorship
     return { answer: yes ? 'Yes' : 'No', source: 'preferences' }
   }
@@ -226,7 +255,20 @@ export function knownAnswer(
  */
 export function isPersonalConsent(label: string): boolean {
   const l = norm(label)
-  return /\bagree|agreement|consent|acknowledg|certif(y|ication)|attest|arbitrat|terms (and|&) conditions|privacy (policy|notice)|\bpolicy\b|signature|e-?sign|opt[ -]?in\b|receive (text|sms|marketing|communication)/.test(
+  return /\bagree|agreement|consent|acknowledg|certif(y|ication)|attest|arbitrat|terms (and|&) conditions|privacy (policy|notice)|\bpolicy\b|signature|e-?sign|opt[ -]?in\b|receive (text|sms|marketing|communication)|confirm (that )?(everything|all|the information)|is (true|accurate) and|true and (complete|accurate|your own)/.test(
+    l
+  )
+}
+
+/**
+ * The employer asks for the applicant's own words ("Write it yourself",
+ * "don't use AI"). ApplyMaster does not draft these: an answer the employer
+ * said must be the person's own should be.
+ */
+export function wantsOwnWords(label: string): boolean {
+  const l = norm(label)
+  // Also the employer's checks that the posting was read ("start your answer with the exact phrase…").
+  return /exact (phrase|word)|phrase we asked|keyword we asked|your own words|write it yourself|written by you|in your words|without (the )?(use of |using )?(ai|chatgpt|generative ai|gen ai)|do not use (ai|chatgpt)|don t use (ai|chatgpt)|no ai\b|not (be )?(ai|machine)[ -]?generated|copy[ -]?pasted/.test(
     l
   )
 }

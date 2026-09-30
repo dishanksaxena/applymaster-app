@@ -13,7 +13,7 @@ async function render() {
   }
   main.innerHTML = `
     <p class="who">Connected as <b>${esc(s.email || 'your account')}</b></p>
-    <p class="muted">On Workday, Greenhouse, Lever, Ashby, Indeed and LinkedIn Easy Apply forms the Fill button appears by itself. On any other site, use this:</p>
+    <p class="muted">On Workday, Greenhouse, Lever, Ashby, iCIMS, Taleo, SuccessFactors, SmartRecruiters, Workable, Jobvite, Recruitee, Teamtailor, Indeed and LinkedIn Easy Apply the Fill button appears by itself. On any other site, use this:</p>
     <button class="primary" id="fill">Fill this page</button>
     <button class="quiet" id="tracker">Open my applications</button>
     <button class="link" id="disconnect">Disconnect</button>

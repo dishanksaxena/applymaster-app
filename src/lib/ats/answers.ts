@@ -1,6 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { tryParseModelJson } from '@/lib/model-json'
-import { isPersonalConsent, isVoluntaryDemographic, knownAnswer, type KnownAnswerContext } from './fields'
+import { isPersonalConsent, isVoluntaryDemographic, knownAnswer, wantsOwnWords, type KnownAnswerContext } from './fields'
 
 /**
  * Answering an employer's screening questions as the applicant.
@@ -125,7 +125,8 @@ export async function answerQuestions(questions: string[], ctx: AnswerContext, r
     if (isVoluntaryDemographic(q)) continue
     const known = knownAnswer(q, ctx)
     if (known) out.push({ question: q, answer: known.answer, source: known.source })
-    else if (!isPersonalConsent(q)) open.push(q) // agreements are never written for anyone
+    // Agreements are never written for anyone, nor answers the employer asked to be the person's own.
+    else if (!isPersonalConsent(q) && !wantsOwnWords(q)) open.push(q)
   }
   if (open.length) {
     const written = await answerScreeningQuestions(open, ctx, resumeSummary).catch(() => ({}) as Record<string, string>)

@@ -226,7 +226,7 @@ export default function ExtensionPage() {
         <Step n={3} title="Apply" done={false}>
           <ul className="space-y-1.5">
             <li>
-              Open an application on <strong style={{ color: 'var(--text)' }}>Workday, Greenhouse, Lever, Ashby, Indeed or LinkedIn Easy Apply</strong> and press{' '}
+              Open an application on <strong style={{ color: 'var(--text)' }}>Workday, Greenhouse, Lever, Ashby, iCIMS, Taleo, SuccessFactors, SmartRecruiters, Workable, Jobvite, Recruitee, Teamtailor, Indeed or LinkedIn Easy Apply</strong> and press{' '}
               <strong style={{ color: 'var(--text)' }}>Fill with ApplyMaster</strong>. On any other site, click the ApplyMaster button in
               Chrome&apos;s toolbar.
             </li>

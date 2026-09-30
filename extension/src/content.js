@@ -25,21 +25,25 @@
   const F = AMFields
 
   const HOST = location.hostname
-  const VENDOR = /greenhouse\.io$/.test(HOST)
-    ? 'greenhouse'
-    : /lever\.co$/.test(HOST)
-      ? 'lever'
-      : /ashbyhq\.com$/.test(HOST)
-        ? 'ashby'
-        : /myworkday(jobs|site)\.com$/.test(HOST)
-          ? 'workday'
-          : /(^|\.)linkedin\.com$/.test(HOST)
-            ? 'linkedin'
-            : /(^|\.)indeed\.com$/.test(HOST)
-              ? 'indeed'
-              : 'other'
+  const VENDORS = [
+    ['greenhouse', /greenhouse\.io$/],
+    ['lever', /lever\.co$/],
+    ['ashby', /ashbyhq\.com$/],
+    ['workday', /myworkday(jobs|site)\.com$/],
+    ['linkedin', /(^|\.)linkedin\.com$/],
+    ['indeed', /(^|\.)indeed\.com$/],
+    ['workable', /(^|\.)workable\.com$/],
+    ['smartrecruiters', /(^|\.)smartrecruiters\.com$/],
+    ['recruitee', /(^|\.)recruitee\.com$/],
+    ['teamtailor', /(^|\.)teamtailor\.com$/],
+    ['jobvite', /(^|\.)jobvite\.com$/],
+    ['icims', /(^|\.)icims\.com$/],
+    ['taleo', /(^|\.)taleo\.net$/],
+    ['successfactors', /(^|\.)(successfactors\.(com|eu)|sapsf\.(com|eu))$/],
+  ]
+  const VENDOR = VENDORS.find(([, re]) => re.test(HOST))?.[0] ?? 'other'
   // Forms that go page by page inside one page load.
-  const MULTI_STEP = ['workday', 'linkedin', 'indeed'].includes(VENDOR)
+  const MULTI_STEP = ['workday', 'linkedin', 'indeed', 'icims', 'taleo', 'successfactors'].includes(VENDOR)
 
   const send = (type, payload = {}) =>
     new Promise(resolve => {
@@ -72,6 +76,28 @@
     return dialog && visible(dialog) ? dialog : null
   }
 
+  /* Forms built from web components (SmartRecruiters and others) keep their
+     fields inside shadow roots, out of reach of document.querySelectorAll.
+     Look inside every open one; labels are found in the field's own root. */
+  function deepAll(root, sel) {
+    const out = [...root.querySelectorAll(sel)]
+    const walk = r => {
+      for (const host of r.querySelectorAll('*')) {
+        if (host.shadowRoot && host.id !== 'applymaster-root') {
+          out.push(...host.shadowRoot.querySelectorAll(sel))
+          walk(host.shadowRoot)
+        }
+      }
+    }
+    walk(root)
+    return out
+  }
+  const scope = el => {
+    const r = el.getRootNode()
+    return r && r.querySelector ? r : document
+  }
+  const byId = (el, id) => scope(el).getElementById?.(id) || document.getElementById(id)
+
   /** A label's own words, without the text of any control inside it. */
   function textOf(node) {
     const c = node.cloneNode(true)
@@ -82,40 +108,40 @@
   /* A label ends at its required marker (* or Lever's ✱). Anything after it is
      the form's own status text ("Analyzing resume...", "No location found"). */
   function stripRequired(s) {
-    const t = clean(s)
+    // Workable puts the marker first ("*First name"); Teamtailor glues a word on ("First nameRequired").
+    const t = clean(s).replace(/^[*✱]\s*/, '')
     const cut = t.search(/[*✱]/)
-    return (cut > 0 ? t.slice(0, cut) : t).replace(/\(required\)/i, '').trim()
+    return (cut > 0 ? t.slice(0, cut) : t)
+      .replace(/\(required\)/i, '')
+      .replace(/\s*\(optional\)\s*$/i, '')
+      .replace(/(?<=\S)\s*Required$/, '')
+      .trim()
   }
 
   function rawLabel(el) {
     const id = el.getAttribute('id')
     if (id) {
-      const l = document.querySelector(`label[for="${CSS.escape(id)}"]`)
+      const l = scope(el).querySelector(`label[for="${CSS.escape(id)}"]`)
       if (l && textOf(l)) return textOf(l)
     }
     const wrap = el.closest('label')
     if (wrap && textOf(wrap)) return textOf(wrap)
     const by = el.getAttribute('aria-labelledby')
     if (by) {
-      const t = clean(by.split(/\s+/).map(i => document.getElementById(i)?.textContent || '').join(' '))
+      const t = clean(by.split(/\s+/).map(i => byId(el, i)?.textContent || '').join(' '))
       if (t) return t
     }
     if (el.getAttribute('aria-label')) return clean(el.getAttribute('aria-label'))
     // Lever, Ashby, Indeed and hand-built forms: the label is a sibling in the same question block.
-    let node = el.parentElement
-    for (let i = 0; i < 4 && node && node !== document.body; i++, node = node.parentElement) {
-      const cand = [...node.querySelectorAll('label, legend, .application-label, [class*="label" i], [class*="question-title" i]')].find(
-        c => !c.contains(el) && textOf(c)
-      )
-      if (cand) return textOf(cand)
-    }
+    const near = nearestLabel(el, 'label, legend, .application-label, [class*="label" i], [class*="question-title" i]', 4)
+    if (near) return near
     return clean(el.getAttribute('placeholder') || '')
   }
 
   const labelOf = el => stripRequired(rawLabel(el))
 
   function isRequired(el, raw) {
-    return el.required || el.getAttribute('aria-required') === 'true' || /[*✱]/.test(clean(raw)) || /\(required\)|\brequired\b$/i.test(raw)
+    return el.required || el.getAttribute('aria-required') === 'true' || /[*✱]/.test(clean(raw)) || /\(required\)|required$/i.test(clean(raw))
   }
 
   /* Upload buttons are labelled by what they do ("Attach"); the question they
@@ -123,14 +149,23 @@
   function fileLabel(el) {
     const own = rawLabel(el)
     if (own && !/^(attach|upload|browse|choose( a)? file|drop|select file|select files|enter manually)/i.test(own)) return own
+    return nearestLabel(el, 'label, legend, [class*="label" i], h3, h4', 5, t => !/^(attach|upload|browse|choose|drop|select files?|enter manually)/i.test(t)) || own
+  }
+
+  /**
+   * The label closest before a control, searching outward a few levels. The
+   * nearest one, not the first: taking the first label in a block gave a
+   * resume upload the label of the question above it (Teamtailor).
+   */
+  function nearestLabel(el, selector, levels, ok = () => true) {
     let node = el.parentElement
-    for (let i = 0; i < 5 && node && node !== document.body; i++, node = node.parentElement) {
-      const cand = [...node.querySelectorAll('label, legend, [class*="label" i], h3, h4')].find(
-        c => !c.contains(el) && textOf(c) && !/^(attach|upload|browse|choose|drop|select files?|enter manually)/i.test(textOf(c))
+    for (let i = 0; i < levels && node && node !== document.body; i++, node = node.parentElement) {
+      const before = [...node.querySelectorAll(selector)].filter(
+        c => !c.contains(el) && textOf(c) && ok(textOf(c)) && c.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING
       )
-      if (cand) return textOf(cand)
+      if (before.length) return textOf(before[before.length - 1])
     }
-    return own
+    return ''
   }
 
   function radioQuestion(radio) {
@@ -139,7 +174,7 @@
     const group = radio.closest('[role="radiogroup"]')
     if (group) {
       const by = group.getAttribute('aria-labelledby')
-      if (by && document.getElementById(by)) return stripRequired(textOf(document.getElementById(by)))
+      if (by && byId(radio, by)) return stripRequired(textOf(byId(radio, by)))
       if (group.getAttribute('aria-label')) return stripRequired(group.getAttribute('aria-label'))
     }
     // The question sits above the options, outside every option's own label.
@@ -155,7 +190,7 @@
 
   const optionLabel = radio => {
     const id = radio.getAttribute('id')
-    const l = (id && document.querySelector(`label[for="${CSS.escape(id)}"]`)) || radio.closest('label')
+    const l = (id && scope(radio).querySelector(`label[for="${CSS.escape(id)}"]`)) || radio.closest('label')
     return clean(l ? textOf(l) : radio.value)
   }
 
@@ -172,7 +207,10 @@
   }
 
   // Workday dropdowns are buttons that open a list; its search boxes are inputs that do.
-  const isListButton = el => el.tagName === 'BUTTON' && el.getAttribute('aria-haspopup') === 'listbox'
+  // Also SAP UI5 (SuccessFactors): a div with role="combobox" that opens a list — unless it wraps its own input.
+  const isListButton = el =>
+    (el.tagName === 'BUTTON' && el.getAttribute('aria-haspopup') === 'listbox') ||
+    (el.getAttribute('role') === 'combobox' && !['INPUT', 'TEXTAREA'].includes(el.tagName) && !el.querySelector('input, textarea'))
   const isSearchPrompt = el => el.getAttribute('data-uxi-widget-type') === 'selectinput' || !!el.closest('[data-automation-id="multiSelectContainer"]')
 
   /** Every control a person would fill, grouped the way they read them. */
@@ -182,7 +220,7 @@
     const out = []
     const seen = new Set()
     const radioNames = new Set()
-    for (const el of root.querySelectorAll('input, textarea, select, button[aria-haspopup="listbox"]')) {
+    for (const el of deepAll(root, 'input, textarea, select, button[aria-haspopup="listbox"], [role="combobox"]:not(input):not(textarea)')) {
       if (seen.has(el) || el.closest('#applymaster-root')) continue
       seen.add(el)
       if (VENDOR === 'workday' && historyBlock(el)) continue
@@ -209,7 +247,7 @@
         const key = el.name || radioQuestion(el)
         if (radioNames.has(key)) continue
         radioNames.add(key)
-        const group = el.name ? [...root.querySelectorAll(`input[type="radio"][name="${CSS.escape(el.name)}"]`)] : [el]
+        const group = el.name ? [...scope(el).querySelectorAll(`input[type="radio"][name="${CSS.escape(el.name)}"]`)] : [el]
         out.push({ el, kind: 'radio', group, label: radioQuestion(el), required: group.some(r => r.required || r.getAttribute('aria-required') === 'true') })
         continue
       }
@@ -327,7 +365,7 @@
   }
 
   const OPTIONS = '[role="option"], [data-automation-id="promptOption"]'
-  const openOptions = () => [...document.querySelectorAll(OPTIONS)].filter(o => visible(o) && !o.closest('#applymaster-root'))
+  const openOptions = () => deepAll(document, OPTIONS).filter(o => visible(o) && !o.closest('#applymaster-root'))
 
   function choose(opt) {
     opt.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }))
@@ -743,6 +781,11 @@
       if (F.isPersonalConsent(c.label)) {
         // Agreeing to terms is the person's own act.
         if (c.required) results.push({ ...c, status: 'needs', note: `Your call: ${c.label}` })
+        continue
+      }
+      if (F.wantsOwnWords(c.label)) {
+        // The employer asked for the person's own words; drafting one would defeat the question.
+        if (c.required) results.push({ ...c, status: 'needs', note: `In your own words: ${c.label.slice(0, 80)}` })
         continue
       }
       if (kind === 'unknown') open.push(c)
