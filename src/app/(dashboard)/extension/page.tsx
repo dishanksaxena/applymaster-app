@@ -12,6 +12,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 type Connection = { id: string; label: string | null; created_at: string; last_used_at: string | null }
 
+const STORE = 'https://chromewebstore.google.com/detail/applymaster-fill-job-appl/jpnbfdkbfgeojdihbolnnipjmkhjnfni'
+// For browsers without the store (and for testing a build before it is published).
 const ZIP = '/downloads/applymaster-extension.zip'
 
 function browserLabel() {
@@ -147,23 +149,45 @@ export default function ExtensionPage() {
             <p>Installed in this browser (version {installed}).</p>
           ) : (
             <>
-              <p>Until it&apos;s listed in the Chrome Web Store, install it from a download:</p>
-              <ol className="list-decimal pl-5 mt-2 space-y-1">
-                <li>
-                  <a href={ZIP} download className="font-semibold underline underline-offset-2" style={{ color: 'var(--accent)' }}>
-                    Download the extension
-                  </a>{' '}
-                  and unzip it.
-                </li>
-                <li>
-                  Open <code className="px-1 rounded" style={{ background: 'var(--bg-overlay)' }}>chrome://extensions</code> and switch on{' '}
-                  <strong style={{ color: 'var(--text)' }}>Developer mode</strong> (top right).
-                </li>
-                <li>
-                  Click <strong style={{ color: 'var(--text)' }}>Load unpacked</strong> and choose the <code className="px-1 rounded" style={{ background: 'var(--bg-overlay)' }}>applymaster-extension</code> folder.
-                </li>
-                <li>Reload this page.</li>
-              </ol>
+              <p>Free, from the Chrome Web Store. Works in Chrome, Edge and Brave.</p>
+              <a
+                href={STORE}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-3 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-[13.5px] font-semibold"
+                style={{ background: 'var(--accent-solid)', color: 'var(--text-on-accent)' }}
+              >
+                Add to Chrome
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
+                  <path d="M7 17 17 7M9 7h8v8" />
+                </svg>
+              </a>
+              <p className="mt-2 text-[12.5px]" style={{ color: 'var(--text-muted)' }}>
+                Once it&apos;s added, come back and{' '}
+                <button type="button" onClick={() => location.reload()} className="underline underline-offset-2" style={{ color: 'var(--accent)' }}>
+                  reload this page
+                </button>
+                .
+              </p>
+              <details className="mt-3 text-[12.5px]" style={{ color: 'var(--text-muted)' }}>
+                <summary className="cursor-pointer">Can&apos;t use the Chrome Web Store?</summary>
+                <ol className="list-decimal pl-5 mt-2 space-y-1">
+                  <li>
+                    <a href={ZIP} download className="font-semibold underline underline-offset-2" style={{ color: 'var(--accent)' }}>
+                      Download the extension
+                    </a>{' '}
+                    and unzip it.
+                  </li>
+                  <li>
+                    Open <code className="px-1 rounded" style={{ background: 'var(--bg-overlay)' }}>chrome://extensions</code> and switch on{' '}
+                    <strong style={{ color: 'var(--text)' }}>Developer mode</strong> (top right).
+                  </li>
+                  <li>
+                    Click <strong style={{ color: 'var(--text)' }}>Load unpacked</strong> and choose the{' '}
+                    <code className="px-1 rounded" style={{ background: 'var(--bg-overlay)' }}>applymaster-extension</code> folder, then reload this page.
+                  </li>
+                </ol>
+              </details>
             </>
           )}
         </Step>
