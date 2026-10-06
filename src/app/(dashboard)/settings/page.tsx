@@ -103,9 +103,52 @@ export default function SettingsPage() {
     if (error) { setResetMsg(error.message) } else { setResetMsg('Password reset email sent! Check your inbox.') }
   }
 
-  /* Paid plans are not open yet (the payment store is not activated). The
-     server records the interest and says so; this used to redirect to a
-     checkout link that answered 404. */
+  /* Back from Stripe. The plan is changed by the webhook, not by this page,
+     so wait for it to land rather than claiming it already has. */
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const upgraded = params.get('upgraded')
+    const cancelled = params.get('checkout') === 'cancelled'
+    if (!upgraded && !cancelled) return
+    window.history.replaceState(null, '', window.location.pathname)
+    if (cancelled) {
+      toast.info('Checkout cancelled. You were not charged.')
+      return
+    }
+    const label = upgraded!.charAt(0).toUpperCase() + upgraded!.slice(1)
+    let tries = 0
+    let stop = false
+    const check = async () => {
+      if (stop) return
+      const { data: { user } } = await supabase.auth.getUser()
+      const { data } = user ? await supabase.from('profiles').select('plan').eq('id', user.id).maybeSingle() : { data: null }
+      if (data?.plan === upgraded) {
+        setProfile(p => (p ? { ...p, plan: data.plan } : p))
+        toast.success(`You're on ${label}. Thank you!`)
+      } else if (++tries < 15) setTimeout(check, 2000)
+      else toast.info(`Payment received. ${label} can take a minute to switch on; refresh this page shortly.`)
+    }
+    check()
+    return () => { stop = true }
+  }, [supabase])
+
+  const [billingLoading, setBillingLoading] = useState(false)
+  const openBilling = async () => {
+    setBillingLoading(true)
+    try {
+      const res = await fetch('/api/billing/portal', { method: 'POST' })
+      const json = await res.json().catch(() => ({}))
+      if (json.url) { window.location.href = json.url; return }
+      toast.error(json.error || 'Billing is unavailable right now')
+    } catch {
+      toast.error('Billing is unavailable right now')
+    }
+    setBillingLoading(false)
+  }
+
+  /* Opens Stripe Checkout, or the billing portal to switch an existing
+     monthly plan. While checkout is not open to this account the server
+     records the interest and says so instead. */
   const handleCheckout = async (plan: string) => {
     try {
       const response = await fetch('/api/checkout', {
@@ -169,6 +212,9 @@ export default function SettingsPage() {
     { name: 'elite', price: 59, period: '/mo', color: 'var(--purple)', popular: true, features: ['Unlimited applications', 'Priority AI processing', 'Auto-apply engine', 'Interview coaching', 'Priority support'], icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> },
     { name: 'lifetime', price: 199, period: ' once', color: 'var(--green)', features: ['Everything in Elite', 'Lifetime access', 'All future features', 'VIP support', 'Early access'], icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> },
   ]
+
+  const rank = (p?: string) => ['free', 'pro', 'elite', 'lifetime'].indexOf(p || 'free')
+  const paid = rank(profile?.plan) > 0
 
   if (!mounted) return <div className="p-8" />
 
@@ -241,8 +287,19 @@ export default function SettingsPage() {
 
       {/* Billing */}
       <motion.div variants={fadeUp} className="theme-card-gradient p-6">
-        <h3 className="text-[16px] font-bold mb-1" style={{ color: 'var(--text)' }}>Upgrade Your Plan</h3>
-        <p className="text-[12px] mb-6" style={{ color: 'var(--text-muted)' }}>Unlock more features</p>
+        <div className="flex items-start justify-between gap-4 mb-6">
+          <div>
+            <h3 className="text-[16px] font-bold mb-1" style={{ color: 'var(--text)' }}>{paid ? 'Your Plan' : 'Upgrade Your Plan'}</h3>
+            <p className="text-[12px]" style={{ color: 'var(--text-muted)' }}>
+              {paid ? 'Switch plans, update your card, cancel, or download invoices.' : 'Unlock more features'}
+            </p>
+          </div>
+          {paid && (
+            <motion.button whileTap={{ scale: 0.95 }} onClick={openBilling} disabled={billingLoading} className="px-4 py-2.5 rounded-xl text-[12px] font-bold shrink-0" style={{ background: 'var(--bg-overlay)', color: 'var(--text)', border: '1px solid var(--border)' }}>
+              {billingLoading ? 'Opening…' : 'Manage billing'}
+            </motion.button>
+          )}
+        </div>
         <div className="grid sm:grid-cols-3 gap-4">
           {plans.map(plan => (
             <motion.div key={plan.name} whileHover={{ y: -4, scale: 1.02 }} className="relative p-5 rounded-2xl group" style={{ background: 'var(--bg-card)', border: `1px solid ${plan.popular ? `${withAlpha(plan.color, 0.18, true)}` : 'var(--border)'}`, boxShadow: 'var(--shadow-sm)' }}>
@@ -260,8 +317,14 @@ export default function SettingsPage() {
                   </div>
                 ))}
               </div>
-              <motion.button whileTap={{ scale: 0.95 }} onClick={() => handleCheckout(plan.name)} disabled={profile?.plan === plan.name} className="w-full py-2.5 rounded-xl text-[12px] font-bold disabled:opacity-30" style={{ background: `${withAlpha(plan.color, 0.09, true)}`, color: plan.color, border: `1px solid ${withAlpha(plan.color, 0.14, true)}` }}>
-                {profile?.plan === plan.name ? 'Current Plan' : 'Upgrade'}
+              <motion.button whileTap={{ scale: 0.95 }} onClick={() => handleCheckout(plan.name)} disabled={profile?.plan === plan.name || profile?.plan === 'lifetime'} className="w-full py-2.5 rounded-xl text-[12px] font-bold disabled:opacity-30" style={{ background: `${withAlpha(plan.color, 0.09, true)}`, color: plan.color, border: `1px solid ${withAlpha(plan.color, 0.14, true)}` }}>
+                {profile?.plan === plan.name
+                  ? 'Current Plan'
+                  : profile?.plan === 'lifetime'
+                    ? 'Included'
+                    : rank(plan.name) < rank(profile?.plan)
+                      ? `Switch to ${plan.name.charAt(0).toUpperCase() + plan.name.slice(1)}`
+                      : 'Upgrade'}
               </motion.button>
             </motion.div>
           ))}
