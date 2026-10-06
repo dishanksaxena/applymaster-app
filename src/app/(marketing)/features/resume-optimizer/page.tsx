@@ -2,17 +2,17 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'AI Resume Optimizer & ATS Resume Builder | ApplyMaster',
+  title: { absolute: 'AI Resume Optimizer & ATS Resume Builder | ApplyMaster' },
   description:
     'Optimize your resume for every job with AI. Beat ATS filters with keyword optimization, real-time scoring, and per-job tailoring. Build an ATS-friendly resume in minutes.',
   alternates: {
-    canonical: 'https://applymaster.ai/features/resume-optimizer',
+    canonical: 'https://www.applymaster.ai/features/resume-optimizer',
   },
   openGraph: {
     title: 'AI Resume Optimizer & ATS Resume Builder | ApplyMaster',
     description:
       'Beat ATS filters with AI-powered keyword optimization and real-time resume scoring.',
-    url: 'https://applymaster.ai/features/resume-optimizer',
+    url: 'https://www.applymaster.ai/features/resume-optimizer',
     siteName: 'ApplyMaster',
     type: 'website',
   },
@@ -31,7 +31,7 @@ const jsonLd = {
   applicationCategory: 'BusinessApplication',
   description:
     'AI-powered resume optimizer that tailors your resume for each job application and maximizes ATS compatibility.',
-  url: 'https://applymaster.ai/features/resume-optimizer',
+  url: 'https://www.applymaster.ai/features/resume-optimizer',
   offers: {
     '@type': 'Offer',
     price: '0',

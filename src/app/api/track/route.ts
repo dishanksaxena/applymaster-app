@@ -34,6 +34,8 @@ function limited(key: string): boolean {
 
 const noContent = () => new Response(null, { status: 204 })
 
+const BOTS = /bot|crawl|spider|slurp|headless|lighthouse|pagespeed|playwright|puppeteer|phantom|preview|monitor|uptime|curl|wget|python|axios|node-fetch/i
+
 export async function POST(req: NextRequest) {
   try {
     const raw = await req.text()
@@ -44,6 +46,8 @@ export async function POST(req: NextRequest) {
 
     const body = JSON.parse(raw)
     if (!isTrackEvent(body.event) || SERVER_ONLY_EVENTS.has(body.event)) return noContent()
+    // Crawlers, test browsers and uptime checkers are not visitors.
+    if (body.event === 'page_view' && BOTS.test(req.headers.get('user-agent') || '')) return noContent()
 
     // Attach the user when there is a session, so a failure after sign-in
     // (a password change, say) is tied to the account.

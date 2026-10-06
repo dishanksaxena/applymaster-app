@@ -1,8 +1,9 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import { THEME_INIT_SCRIPT } from '@/lib/theme'
+import SiteAnalytics from '@/components/SiteAnalytics'
 
-const SITE_URL = 'https://applymaster.ai'
+const SITE_URL = 'https://www.applymaster.ai'
 const SITE_NAME = 'ApplyMaster'
 const SITE_TITLE = 'ApplyMaster — AI Auto Job Application System | Never Apply Manually Again'
 const SITE_DESC = 'ApplyMaster uses AI to automatically apply to 50+ job portals, optimize your resume for ATS, write cover letters, and coach you through interviews in real-time. 10x your job search — get hired faster.'
@@ -103,11 +104,11 @@ export const metadata: Metadata = {
     canonical: SITE_URL,
   },
 
+  // Search console ownership tags, set in Vercel: GOOGLE_SITE_VERIFICATION, BING_SITE_VERIFICATION, YANDEX_SITE_VERIFICATION.
   verification: {
-    // Add your verification codes here once you register:
-    // google: 'YOUR_GOOGLE_VERIFICATION_CODE',
-    // yandex: 'YOUR_YANDEX_VERIFICATION_CODE',
-    // bing: 'YOUR_BING_VERIFICATION_CODE',
+    google: process.env.GOOGLE_SITE_VERIFICATION || undefined,
+    yandex: process.env.YANDEX_SITE_VERIFICATION || undefined,
+    other: process.env.BING_SITE_VERIFICATION ? { 'msvalidate.01': process.env.BING_SITE_VERIFICATION } : undefined,
   },
 
   other: {
@@ -292,7 +293,10 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body>{children}</body>
+      <body>
+        {children}
+        <SiteAnalytics />
+      </body>
     </html>
   )
 }

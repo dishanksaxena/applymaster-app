@@ -31,6 +31,17 @@ export async function recordEvent(
       const s = JSON.stringify(props.meta)
       meta = s.length <= 2000 ? props.meta : { truncated: true }
     }
+    // City and region as the edge resolved them from the IP; the IP itself is never stored.
+    const city = headers?.get('x-vercel-ip-city')
+    const region = headers?.get('x-vercel-ip-country-region')
+    if (city) {
+      try {
+        meta.city = decodeURIComponent(city).slice(0, 80)
+      } catch {
+        meta.city = city.slice(0, 80)
+      }
+    }
+    if (region) meta.region = region.slice(0, 20)
 
     const { error } = await supabase.from('app_events').insert({
       event,

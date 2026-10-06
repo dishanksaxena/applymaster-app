@@ -5,11 +5,11 @@ import { withAlpha } from '@/lib/tone'
 export const metadata: Metadata = {
   title: 'Blog — Job Search Tips, AI Career Advice & Resume Guides',
   description: 'Expert guides on AI-powered job searching, resume optimization for ATS, cover letter writing, interview preparation, and career growth strategies. Updated weekly.',
-  alternates: { canonical: 'https://applymaster.ai/blog' },
+  alternates: { canonical: 'https://www.applymaster.ai/blog' },
   openGraph: {
     title: 'ApplyMaster Blog — Job Search & Career Advice',
     description: 'Expert guides on AI job searching, ATS resume optimization, and interview prep.',
-    url: 'https://applymaster.ai/blog',
+    url: 'https://www.applymaster.ai/blog',
     type: 'website',
   },
 }

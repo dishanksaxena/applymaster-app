@@ -49,6 +49,20 @@ export const TRACK_EVENTS = [
   'support_opened',
   'support_submitted',
   'support_failed',
+
+  // Every page anyone opens, public site and app alike: visitors per day,
+  // where they come from, what they use. Skipped for browsers that send
+  // Global Privacy Control or Do Not Track.
+  'page_view',
+
+  // Problems people hit, recorded as they saw them: an error message shown
+  // in a toast, a request to our API that failed, a crash in the page.
+  'ui_error',
+  'api_error',
+  'client_error',
+
+  // A job search: what people look for, and the searches that found nothing.
+  'job_search',
 ] as const
 
 export type TrackEvent = (typeof TRACK_EVENTS)[number]
@@ -76,6 +90,7 @@ export const SERVER_ONLY_EVENTS = new Set<TrackEvent>([
   'network_imported',
   'support_submitted',
   'support_failed',
+  'job_search',
 ])
 
 export const isTrackEvent = (e: unknown): e is TrackEvent =>
@@ -83,7 +98,9 @@ export const isTrackEvent = (e: unknown): e is TrackEvent =>
 
 /** Outcome implied by the event name when the caller does not say. */
 export function outcomeOf(event: TrackEvent): TrackProps['outcome'] {
-  if (event === 'auth_page_view' || event === 'support_opened' || event === 'app_open') return 'view'
+  if (event === 'auth_page_view' || event === 'support_opened' || event === 'app_open' || event === 'page_view') return 'view'
+  if (event.endsWith('_error')) return 'failure'
+  if (event === 'job_search') return 'success'
   if (event === 'upgrade_interest') return 'attempt'
   if (/_(failed|existing_account)$/.test(event)) return 'failure'
   if (/_(success|submitted|updated|requested|changed|imported)$/.test(event) || event === 'confirm_resend') return 'success'

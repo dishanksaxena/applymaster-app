@@ -4,7 +4,7 @@ import Link from 'next/link'
 const title = 'The Complete Guide to AI Job Applications in 2025'
 const description =
   'Learn how AI job application tools automate your job search, apply to hundreds of positions, and personalize every submission. The definitive guide to automatic job applications.'
-const url = 'https://applymaster.ai/blog/ai-job-application-guide'
+const url = 'https://www.applymaster.ai/blog/ai-job-application-guide'
 
 export const metadata: Metadata = {
   title,
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
     authors: ['ApplyMaster Team'],
     images: [
       {
-        url: 'https://applymaster.ai/og/ai-job-application-guide.png',
+        url: 'https://www.applymaster.ai/og/ai-job-application-guide.png',
         width: 1200,
         height: 630,
         alt: title,
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title,
     description,
-    images: ['https://applymaster.ai/og/ai-job-application-guide.png'],
+    images: ['https://www.applymaster.ai/og/ai-job-application-guide.png'],
   },
 }
 
@@ -50,12 +50,12 @@ const jsonLd = {
   '@type': 'Article',
   headline: title,
   description,
-  image: 'https://applymaster.ai/og/ai-job-application-guide.png',
-  author: { '@type': 'Organization', name: 'ApplyMaster', url: 'https://applymaster.ai' },
+  image: 'https://www.applymaster.ai/og/ai-job-application-guide.png',
+  author: { '@type': 'Organization', name: 'ApplyMaster', url: 'https://www.applymaster.ai' },
   publisher: {
     '@type': 'Organization',
     name: 'ApplyMaster',
-    logo: { '@type': 'ImageObject', url: 'https://applymaster.ai/logo.png' },
+    logo: { '@type': 'ImageObject', url: 'https://www.applymaster.ai/logo.png' },
   },
   datePublished: '2025-04-02T08:00:00Z',
   dateModified: '2025-04-02T08:00:00Z',

@@ -2,17 +2,17 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'AI Job Matching & Smart Job Recommendation Engine | ApplyMaster',
+  title: { absolute: 'AI Job Matching & Smart Job Recommendation Engine | ApplyMaster' },
   description:
     'Find the perfect job with AI-powered matching. ApplyMaster analyzes your skills, experience, and preferences to recommend roles where you are most likely to get an interview.',
   alternates: {
-    canonical: 'https://applymaster.ai/features/job-matching',
+    canonical: 'https://www.applymaster.ai/features/job-matching',
   },
   openGraph: {
     title: 'AI Job Matching & Smart Job Search | ApplyMaster',
     description:
       'Stop scrolling job boards. Let AI surface the roles you are most qualified for.',
-    url: 'https://applymaster.ai/features/job-matching',
+    url: 'https://www.applymaster.ai/features/job-matching',
     siteName: 'ApplyMaster',
     type: 'website',
   },
@@ -31,7 +31,7 @@ const jsonLd = {
   applicationCategory: 'BusinessApplication',
   description:
     'AI-powered job recommendation engine that matches candidates with roles based on skills, experience, and preferences.',
-  url: 'https://applymaster.ai/features/job-matching',
+  url: 'https://www.applymaster.ai/features/job-matching',
   offers: {
     '@type': 'Offer',
     price: '0',

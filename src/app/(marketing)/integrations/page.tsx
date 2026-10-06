@@ -2,15 +2,15 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Supported Job Boards & ATS Platforms | ApplyMaster',
+  title: { absolute: 'Supported Job Boards & ATS Platforms | ApplyMaster' },
   description:
     'Every job board and applicant tracking system ApplyMaster applies through — LinkedIn, Indeed, Greenhouse, Lever, Workday, Ashby, Naukri and 45 more. Named, not just counted.',
-  alternates: { canonical: 'https://applymaster.ai/integrations' },
+  alternates: { canonical: 'https://www.applymaster.ai/integrations' },
   openGraph: {
     title: 'Supported Job Boards & ATS Platforms | ApplyMaster',
     description:
       'Every job board and ATS ApplyMaster applies through, named in full: LinkedIn, Indeed, Greenhouse, Lever, Workday, Ashby and more.',
-    url: 'https://applymaster.ai/integrations',
+    url: 'https://www.applymaster.ai/integrations',
     siteName: 'ApplyMaster',
     type: 'website',
   },
@@ -107,7 +107,7 @@ const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'WebPage',
   name: 'Supported Job Boards & ATS Platforms',
-  url: 'https://applymaster.ai/integrations',
+  url: 'https://www.applymaster.ai/integrations',
   description: `ApplyMaster applies through ${TOTAL} job boards and applicant tracking systems.`,
 }
 

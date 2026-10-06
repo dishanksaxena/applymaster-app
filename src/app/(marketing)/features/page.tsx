@@ -3,17 +3,17 @@ import Link from 'next/link';
 import FeatureIcon, { type FeatureIconName } from '@/components/marketing/FeatureIcon';
 
 export const metadata: Metadata = {
-  title: 'AI Job Application Features | ApplyMaster',
+  title: { absolute: 'AI Job Application Features | ApplyMaster' },
   description:
     'Explore ApplyMaster\'s full suite of AI-powered job application features: auto-apply, resume optimization, cover letter generation, interview coaching, and intelligent job matching.',
   alternates: {
-    canonical: 'https://applymaster.ai/features',
+    canonical: 'https://www.applymaster.ai/features',
   },
   openGraph: {
     title: 'AI Job Application Features | ApplyMaster',
     description:
       'Explore ApplyMaster\'s full suite of AI-powered job application features: auto-apply, resume optimization, cover letter generation, interview coaching, and intelligent job matching.',
-    url: 'https://applymaster.ai/features',
+    url: 'https://www.applymaster.ai/features',
     siteName: 'ApplyMaster',
     type: 'website',
   },
@@ -31,11 +31,11 @@ const jsonLd = {
   name: 'AI Job Application Features',
   description:
     'Explore ApplyMaster\'s full suite of AI-powered job search automation tools.',
-  url: 'https://applymaster.ai/features',
+  url: 'https://www.applymaster.ai/features',
   isPartOf: {
     '@type': 'WebSite',
     name: 'ApplyMaster',
-    url: 'https://applymaster.ai',
+    url: 'https://www.applymaster.ai',
   },
 };
 

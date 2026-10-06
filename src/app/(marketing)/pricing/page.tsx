@@ -2,17 +2,17 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'Pricing | ApplyMaster - AI Job Application Tool Plans',
+  title: { absolute: 'Pricing | ApplyMaster - AI Job Application Tool Plans' },
   description:
     'ApplyMaster pricing plans: Free ($0, 10 apps/month), Pro ($29/mo, unlimited), and Lifetime ($199 one-time). Compare features and find the right plan for your job search.',
   alternates: {
-    canonical: 'https://applymaster.ai/pricing',
+    canonical: 'https://www.applymaster.ai/pricing',
   },
   openGraph: {
     title: 'Pricing | ApplyMaster',
     description:
       'Free, Pro, and Lifetime plans. Start applying with AI for $0 and upgrade when ready.',
-    url: 'https://applymaster.ai/pricing',
+    url: 'https://www.applymaster.ai/pricing',
     siteName: 'ApplyMaster',
     type: 'website',
   },
@@ -29,7 +29,7 @@ const jsonLd = {
   '@type': 'WebPage',
   name: 'ApplyMaster Pricing',
   description: 'Pricing plans for ApplyMaster AI job application platform.',
-  url: 'https://applymaster.ai/pricing',
+  url: 'https://www.applymaster.ai/pricing',
   mainEntity: [
     {
       '@type': 'Product',

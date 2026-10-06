@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 import SupportForm from './SupportForm'
 
 export const metadata: Metadata = {
-  title: 'Support — ApplyMaster',
+  title: { absolute: 'Support — ApplyMaster' },
   description: 'Trouble signing in, a bug, or a question about billing? Message the ApplyMaster team.',
 }
 

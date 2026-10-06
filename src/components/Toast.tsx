@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { tone, toneA, toneSurface, type Tone } from '@/lib/tone'
+import { reportProblem } from '@/lib/track'
 
 /**
  * Toasts, replacing 21 native `alert()` calls.
@@ -28,6 +29,8 @@ let nextId = 1
 
 function emit(kind: ToastKind, message: string) {
   const item = { id: nextId++, kind, message: String(message ?? '').slice(0, 400) }
+  // An error toast is a problem someone saw, word for word: the owner's /admin lists them.
+  if (kind === 'error' && typeof window !== 'undefined') reportProblem('ui_error', item.message)
   // Nothing mounted yet (or a server render): fall back so a message is
   // never simply swallowed.
   if (listeners.size === 0) {

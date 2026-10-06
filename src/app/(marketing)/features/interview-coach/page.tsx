@@ -2,17 +2,17 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'AI Interview Coach & Preparation Tool | ApplyMaster',
+  title: { absolute: 'AI Interview Coach & Preparation Tool | ApplyMaster' },
   description:
     'Prepare for interviews with AI-powered mock sessions, real-time coaching via Chrome extension, and predictive question analysis. Get real-time interview help when it matters most.',
   alternates: {
-    canonical: 'https://applymaster.ai/features/interview-coach',
+    canonical: 'https://www.applymaster.ai/features/interview-coach',
   },
   openGraph: {
     title: 'AI Interview Coach & Preparation Tool | ApplyMaster',
     description:
       'Real-time AI interview coaching, mock interviews, and question prediction for your next job interview.',
-    url: 'https://applymaster.ai/features/interview-coach',
+    url: 'https://www.applymaster.ai/features/interview-coach',
     siteName: 'ApplyMaster',
     type: 'website',
   },
@@ -31,7 +31,7 @@ const jsonLd = {
   applicationCategory: 'BusinessApplication',
   description:
     'AI-powered interview preparation tool with real-time coaching, mock interviews, and question prediction.',
-  url: 'https://applymaster.ai/features/interview-coach',
+  url: 'https://www.applymaster.ai/features/interview-coach',
   offers: {
     '@type': 'Offer',
     price: '0',

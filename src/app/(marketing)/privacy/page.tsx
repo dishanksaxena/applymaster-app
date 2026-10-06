@@ -2,16 +2,16 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy | ApplyMaster',
+  title: { absolute: 'Privacy Policy | ApplyMaster' },
   description:
     'ApplyMaster privacy policy. Learn how we collect, use, and protect your personal data including information about cookies, third-party services, GDPR rights, and data retention.',
   alternates: {
-    canonical: 'https://applymaster.ai/privacy',
+    canonical: 'https://www.applymaster.ai/privacy',
   },
   openGraph: {
     title: 'Privacy Policy | ApplyMaster',
     description: 'How ApplyMaster collects, uses, and protects your personal data.',
-    url: 'https://applymaster.ai/privacy',
+    url: 'https://www.applymaster.ai/privacy',
     siteName: 'ApplyMaster',
     type: 'website',
   },
@@ -27,11 +27,11 @@ const jsonLd = {
   '@type': 'WebPage',
   name: 'Privacy Policy',
   description: 'ApplyMaster privacy policy and data protection practices.',
-  url: 'https://applymaster.ai/privacy',
+  url: 'https://www.applymaster.ai/privacy',
   isPartOf: {
     '@type': 'WebSite',
     name: 'ApplyMaster',
-    url: 'https://applymaster.ai',
+    url: 'https://www.applymaster.ai',
   },
 };
 

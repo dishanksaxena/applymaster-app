@@ -2,17 +2,17 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'AI Cover Letter Generator | Write Cover Letters Instantly | ApplyMaster',
+  title: { absolute: 'AI Cover Letter Generator | Write Cover Letters Instantly | ApplyMaster' },
   description:
     'Generate personalized, compelling cover letters in seconds with AI. ApplyMaster researches each company and role to craft cover letters that match the hiring team\'s tone and priorities.',
   alternates: {
-    canonical: 'https://applymaster.ai/features/cover-letter-generator',
+    canonical: 'https://www.applymaster.ai/features/cover-letter-generator',
   },
   openGraph: {
     title: 'AI Cover Letter Generator | ApplyMaster',
     description:
       'Generate personalized cover letters in seconds. AI researches each company and crafts the perfect letter.',
-    url: 'https://applymaster.ai/features/cover-letter-generator',
+    url: 'https://www.applymaster.ai/features/cover-letter-generator',
     siteName: 'ApplyMaster',
     type: 'website',
   },
@@ -31,7 +31,7 @@ const jsonLd = {
   applicationCategory: 'BusinessApplication',
   description:
     'AI-powered cover letter writer that generates personalized cover letters for each job application.',
-  url: 'https://applymaster.ai/features/cover-letter-generator',
+  url: 'https://www.applymaster.ai/features/cover-letter-generator',
   offers: {
     '@type': 'Offer',
     price: '0',

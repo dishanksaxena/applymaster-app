@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
+import { recordEvent } from '@/lib/track-server'
 
 const ADZUNA_APP_ID = process.env.ADZUNA_APP_ID
 const ADZUNA_APP_KEY = process.env.ADZUNA_APP_KEY
@@ -160,6 +161,13 @@ export async function POST(req: NextRequest) {
       return db - da
     })
 
+    // What people look for, and the searches that come back empty (/admin → Jobs).
+    await recordEvent(
+      'job_search',
+      { user_id: user.id, email: user.email ?? null, meta: { query: String(query).slice(0, 120), location: String(location || '').slice(0, 80), country, remote: remote || null, page, results: deduped.length } },
+      req.headers
+    )
+
     return Response.json({
       jobs: deduped,
       total: deduped.length,
@@ -168,6 +176,7 @@ export async function POST(req: NextRequest) {
     })
   } catch (err) {
     console.error('Job search error:', err)
+    await recordEvent('api_error', { user_id: user.id, error_message: `/api/search-jobs: ${err instanceof Error ? err.message : 'search failed'}`, meta: { status: 500 } }, req.headers)
     return Response.json({ error: 'Search failed' }, { status: 500 })
   }
 }

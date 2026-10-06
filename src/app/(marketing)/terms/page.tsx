@@ -2,16 +2,16 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'Terms of Service | ApplyMaster',
+  title: { absolute: 'Terms of Service | ApplyMaster' },
   description:
     'ApplyMaster terms of service. Read our terms and conditions governing the use of our AI-powered job application platform.',
   alternates: {
-    canonical: 'https://applymaster.ai/terms',
+    canonical: 'https://www.applymaster.ai/terms',
   },
   openGraph: {
     title: 'Terms of Service | ApplyMaster',
     description: 'Terms and conditions for using the ApplyMaster platform.',
-    url: 'https://applymaster.ai/terms',
+    url: 'https://www.applymaster.ai/terms',
     siteName: 'ApplyMaster',
     type: 'website',
   },
@@ -27,11 +27,11 @@ const jsonLd = {
   '@type': 'WebPage',
   name: 'Terms of Service',
   description: 'ApplyMaster terms of service and conditions of use.',
-  url: 'https://applymaster.ai/terms',
+  url: 'https://www.applymaster.ai/terms',
   isPartOf: {
     '@type': 'WebSite',
     name: 'ApplyMaster',
-    url: 'https://applymaster.ai',
+    url: 'https://www.applymaster.ai',
   },
 };
 

@@ -1,4 +1,5 @@
 import 'server-only'
+import { notFound, redirect } from 'next/navigation'
 import { createAdminClient, isMissingTable } from './supabase-admin'
 import { createClient } from './supabase-server'
 import { isAdminEmail } from './supabase-admin'
@@ -24,7 +25,18 @@ export async function getAdmin(): Promise<AdminUser> {
   return { id: user.id, email: user.email }
 }
 
-type AuthUserRow = {
+/** For every /admin page: sign in first, and anyone who is not an admin gets a plain 404. */
+export async function requireAdmin(next = '/admin'): Promise<{ id: string; email: string }> {
+  const {
+    data: { user },
+  } = await createClient().auth.getUser()
+  if (!user) redirect(`/login?next=${encodeURIComponent(next)}`)
+  const admin = await getAdmin()
+  if (!admin) notFound()
+  return admin
+}
+
+export type AuthUserRow = {
   id: string
   email: string | null
   created_at: string
@@ -71,9 +83,22 @@ const t = (iso: string | null | undefined) => (iso ? new Date(iso).getTime() : 0
 
 /* Accounts that belong to the business rather than to customers. Counting
    them would inflate every number on the page. */
-const INTERNAL = /(@applymaster\.ai$)|(^dishanksaxena)/i
+export const INTERNAL = new RegExp(
+  [
+    '@applymaster\\.ai$',
+    '^dishanksaxena',
+    '^dishank110@gmail\\.com$',
+    // More team or test accounts, comma-separated, without a code change.
+    ...(process.env.INTERNAL_EMAILS || '')
+      .split(',')
+      .map(e => e.trim())
+      .filter(Boolean)
+      .map(e => `^${e.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`),
+  ].join('|'),
+  'i'
+)
 
-async function listAuthUsers(): Promise<AuthUserRow[]> {
+export async function listAuthUsers(): Promise<AuthUserRow[]> {
   const admin = createAdminClient()
   const out: AuthUserRow[] = []
   for (let page = 1; page < 50; page++) {
@@ -96,7 +121,7 @@ async function listAuthUsers(): Promise<AuthUserRow[]> {
   return out
 }
 
-const FAILURE_EVENTS = new Set([
+export const FAILURE_EVENTS = new Set([
   'login_failed',
   'signup_failed',
   'signup_existing_account',
@@ -128,10 +153,12 @@ export async function loadAdminData() {
       users => ({ users, error: null as string | null }),
       err => ({ users: [] as AuthUserRow[], error: err instanceof Error ? err.message : String(err) })
     ),
+    // Page views and searches have their own tabs; leaving them out keeps this window to auth and support.
     admin
       .from('app_events')
       .select('*')
       .gte('created_at', new Date(since(30)).toISOString())
+      .not('event', 'in', '(page_view,job_search)')
       .order('created_at', { ascending: false })
       .limit(10000),
     admin.from('support_messages').select('*').order('created_at', { ascending: false }).limit(200),
@@ -145,6 +172,17 @@ export async function loadAdminData() {
     .in('event', ['upgrade_interest', 'plan_changed', 'payment_webhook_failed'])
     .order('created_at', { ascending: false })
     .limit(1000)
+
+  // Today at a glance: visitors (from page views), customers active, paying, problems.
+  const [{ data: viewRows }, { data: subRows }] = await Promise.all([
+    admin
+      .from('app_events')
+      .select('anon_id, user_id, email, created_at')
+      .eq('event', 'page_view')
+      .gte('created_at', new Date(since(7)).toISOString())
+      .limit(50000),
+    admin.from('subscriptions').select('user_id, plan, status, stripe_customer_id'),
+  ])
 
   const trackingReady = !isMissingTable(eventsResult.error)
   const supportReady = !isMissingTable(supportResult.error)
@@ -292,7 +330,42 @@ export async function loadAdminData() {
     .sort((a, b) => t(b.last) - t(a.last))
   const planChanges = pay.filter(e => e.event === 'plan_changed' || e.event === 'payment_webhook_failed').slice(0, 30)
 
+  // ── Today ───────────────────────────────────────────────────────────
+  const internalIds = new Set(allUsers.filter(u => INTERNAL.test(u.email || '')).map(u => u.id))
+  type ViewRow = { anon_id: string | null; user_id: string | null; email: string | null; created_at: string }
+  const viewList = (viewRows ?? []) as ViewRow[]
+  const internalAnons = new Set(viewList.filter(v => v.anon_id && v.user_id && internalIds.has(v.user_id)).map(v => v.anon_id as string))
+  for (const e of events) if (e.anon_id && ((e.user_id && internalIds.has(e.user_id)) || (e.email && INTERNAL.test(e.email)))) internalAnons.add(e.anon_id)
+  const views = viewList.filter(v => !(v.user_id && internalIds.has(v.user_id)) && !(v.anon_id && internalAnons.has(v.anon_id)))
+  const startOfDay = new Date(new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }) + 'T00:00:00+05:30').getTime()
+  const distinct = (list: ViewRow[]) => new Set(list.map(v => v.anon_id || v.user_id || v.created_at)).size
+  const activeIn = (from: number) =>
+    new Set([
+      ...views.filter(v => v.user_id && t(v.created_at) >= from).map(v => v.user_id as string),
+      ...events.filter(e => e.event === 'app_open' && e.user_id && !internalIds.has(e.user_id) && t(e.created_at) >= from).map(e => e.user_id as string),
+    ]).size
+  const problems7 = ev7.filter(
+    e => ['ui_error', 'api_error', 'client_error'].includes(e.event) && !(e.user_id && internalIds.has(e.user_id)) && !(e.anon_id && internalAnons.has(e.anon_id))
+  )
+  const paidSubs = ((subRows ?? []) as { user_id: string; plan: string; status: string; stripe_customer_id: string | null }[]).filter(
+    s => s.stripe_customer_id && s.status !== 'canceled' && !internalIds.has(s.user_id)
+  )
+  const planCounts = new Map<string, number>()
+  for (const s of paidSubs) planCounts.set(s.plan, (planCounts.get(s.plan) ?? 0) + 1)
+  const today = {
+    visitors: distinct(views.filter(v => t(v.created_at) >= startOfDay)),
+    visitors7: distinct(views),
+    now: distinct(views.filter(v => t(v.created_at) > Date.now() - 5 * 60000)),
+    activeUsers: activeIn(startOfDay),
+    activeUsers7: activeIn(since(7)),
+    paying: paidSubs.length,
+    plans: [...planCounts.entries()].map(([p, n]) => `${n} ${p}`).join(' · '),
+    issues7: problems7.length,
+    issuePeople7: new Set(problems7.map(e => e.user_id || e.anon_id || e.id)).size,
+  }
+
   return {
+    today,
     upgradeInterest,
     planChanges,
     trackingReady,
@@ -307,7 +380,7 @@ export async function loadAdminData() {
     usage,
     failureReasons,
     stuck: stuck.slice(0, 50),
-    recentEvents: events.slice(0, 60),
+    recentEvents: events.filter(e => !['ui_error', 'api_error', 'client_error'].includes(e.event)).slice(0, 60),
     support,
     openSupport: support.filter(s => s.status === 'open').length,
   }

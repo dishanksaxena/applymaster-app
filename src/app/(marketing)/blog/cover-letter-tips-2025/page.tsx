@@ -4,7 +4,7 @@ import Link from 'next/link'
 const title = 'How to Write a Cover Letter That Actually Gets Read (2025)'
 const description =
   'Master the 3-paragraph cover letter formula, learn AI-assisted personalization techniques, avoid common mistakes, and use templates that hiring managers actually respond to.'
-const url = 'https://applymaster.ai/blog/cover-letter-tips-2025'
+const url = 'https://www.applymaster.ai/blog/cover-letter-tips-2025'
 
 export const metadata: Metadata = {
   title,
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
     authors: ['ApplyMaster Team'],
     images: [
       {
-        url: 'https://applymaster.ai/og/cover-letter-tips-2025.png',
+        url: 'https://www.applymaster.ai/og/cover-letter-tips-2025.png',
         width: 1200,
         height: 630,
         alt: title,
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title,
     description,
-    images: ['https://applymaster.ai/og/cover-letter-tips-2025.png'],
+    images: ['https://www.applymaster.ai/og/cover-letter-tips-2025.png'],
   },
 }
 
@@ -50,12 +50,12 @@ const jsonLd = {
   '@type': 'Article',
   headline: title,
   description,
-  image: 'https://applymaster.ai/og/cover-letter-tips-2025.png',
-  author: { '@type': 'Organization', name: 'ApplyMaster', url: 'https://applymaster.ai' },
+  image: 'https://www.applymaster.ai/og/cover-letter-tips-2025.png',
+  author: { '@type': 'Organization', name: 'ApplyMaster', url: 'https://www.applymaster.ai' },
   publisher: {
     '@type': 'Organization',
     name: 'ApplyMaster',
-    logo: { '@type': 'ImageObject', url: 'https://applymaster.ai/logo.png' },
+    logo: { '@type': 'ImageObject', url: 'https://www.applymaster.ai/logo.png' },
   },
   datePublished: '2025-03-20T08:00:00Z',
   dateModified: '2025-03-20T08:00:00Z',

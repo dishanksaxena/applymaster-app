@@ -2,17 +2,17 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'Auto Apply Jobs Automatically | ApplyMaster',
+  title: { absolute: 'Auto Apply Jobs Automatically | ApplyMaster' },
   description:
     'Automatically apply to jobs across LinkedIn, Indeed, Glassdoor, and 50+ portals. Choose Copilot for guided control or Autopilot for hands-free automatic job applications.',
   alternates: {
-    canonical: 'https://applymaster.ai/features/auto-apply',
+    canonical: 'https://www.applymaster.ai/features/auto-apply',
   },
   openGraph: {
     title: 'Auto Apply Jobs Automatically | ApplyMaster',
     description:
       'Automatically apply to jobs across LinkedIn, Indeed, Glassdoor, and 50+ portals with AI-powered form filling.',
-    url: 'https://applymaster.ai/features/auto-apply',
+    url: 'https://www.applymaster.ai/features/auto-apply',
     siteName: 'ApplyMaster',
     type: 'website',
   },
@@ -31,7 +31,7 @@ const jsonLd = {
   applicationCategory: 'BusinessApplication',
   description:
     'Automatically apply to jobs across 50+ portals with AI-powered form detection and filling.',
-  url: 'https://applymaster.ai/features/auto-apply',
+  url: 'https://www.applymaster.ai/features/auto-apply',
   offers: {
     '@type': 'Offer',
     price: '0',

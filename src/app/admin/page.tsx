@@ -4,26 +4,10 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase-server'
 import { getAdmin, loadAdminData } from '@/lib/admin-data'
 import { AutoRefresh, SupportStatus, ResendConfirmation } from './AdminActions'
+import { AdminShell, Card, SectionHead, Kpi, Pill, Empty, ago, when } from './ui'
 
 export const dynamic = 'force-dynamic'
 export const metadata: Metadata = { title: 'Admin — ApplyMaster', robots: { index: false, follow: false } }
-
-/* ── formatting ───────────────────────────────────────────────────── */
-
-const IST: Intl.DateTimeFormatOptions = { timeZone: 'Asia/Kolkata' }
-const when = (iso: string | null) =>
-  iso
-    ? new Date(iso).toLocaleString('en-IN', { ...IST, day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
-    : '—'
-
-function ago(iso: string | null) {
-  if (!iso) return 'never'
-  const s = (Date.now() - new Date(iso).getTime()) / 1000
-  if (s < 60) return 'just now'
-  if (s < 3600) return `${Math.floor(s / 60)}m ago`
-  if (s < 86400) return `${Math.floor(s / 3600)}h ago`
-  return `${Math.floor(s / 86400)}d ago`
-}
 
 const EVENT_LABEL: Record<string, string> = {
   auth_page_view: 'Opened',
@@ -47,6 +31,12 @@ const EVENT_LABEL: Record<string, string> = {
   support_opened: 'Opened support',
   support_submitted: 'Sent support message',
   support_failed: 'Support message failed',
+  app_open: 'Opened the app',
+  upgrade_interest: 'Clicked a paid plan',
+  plan_changed: 'Plan changed',
+  payment_webhook_failed: 'Payment problem',
+  network_imported: 'Imported LinkedIn network',
+  account_deleted: 'Deleted their account',
 }
 
 const CATEGORY_LABEL: Record<string, string> = {
@@ -62,76 +52,6 @@ const toneOf = (outcome: string | null) =>
   outcome === 'failure' ? 'red' : outcome === 'success' ? 'green' : outcome === 'attempt' ? 'blue' : 'text-muted'
 
 /* ── pieces ───────────────────────────────────────────────────────── */
-
-function Card({ children, className = '' }: { children: React.ReactNode; className?: string }) {
-  return (
-    <section
-      className={`rounded-2xl ${className}`}
-      style={{ background: 'var(--card-face)', boxShadow: 'var(--card-lift), inset 0 1px 0 var(--card-edge-top), 0 0 0 1px var(--card-ring)' }}
-    >
-      {children}
-    </section>
-  )
-}
-
-function SectionHead({ title, note, right }: { title: string; note?: string; right?: React.ReactNode }) {
-  return (
-    <div className="flex flex-wrap items-end justify-between gap-3 px-5 pt-5 pb-3">
-      <div>
-        <h2 className="font-display text-[1.3rem] leading-tight" style={{ color: 'var(--text)' }}>
-          {title}
-        </h2>
-        {note && (
-          <p className="text-[12px] mt-0.5" style={{ color: 'var(--text-muted)' }}>
-            {note}
-          </p>
-        )}
-      </div>
-      {right}
-    </div>
-  )
-}
-
-function Kpi({ label, value, sub, tone }: { label: string; value: number | string; sub?: string; tone?: string }) {
-  return (
-    <Card className="p-4">
-      <div className="text-[10.5px] font-semibold uppercase tracking-[0.07em]" style={{ color: 'var(--text-muted)' }}>
-        {label}
-      </div>
-      <div
-        className="font-display text-[2.2rem] leading-none mt-2 tabular-nums"
-        style={{ color: tone ? `var(--${tone})` : 'var(--text)' }}
-      >
-        {value}
-      </div>
-      {sub && (
-        <div className="text-[11.5px] mt-1.5" style={{ color: 'var(--text-muted)' }}>
-          {sub}
-        </div>
-      )}
-    </Card>
-  )
-}
-
-function Pill({ children, tone }: { children: React.ReactNode; tone: string }) {
-  return (
-    <span
-      className="inline-flex items-center px-2 py-0.5 rounded-full text-[10.5px] font-semibold whitespace-nowrap"
-      style={{ background: `rgb(var(--${tone}-rgb) / calc(0.12 * var(--tint-scale)))`, color: `var(--${tone})` }}
-    >
-      {children}
-    </span>
-  )
-}
-
-function Empty({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="px-5 pb-6 pt-1 text-[13px]" style={{ color: 'var(--text-muted)' }}>
-      {children}
-    </p>
-  )
-}
-
 function SignupBars({ data }: { data: { day: string; n: number }[] }) {
   const max = Math.max(1, ...data.map(d => d.n))
   const total = data.reduce((a, d) => a + d.n, 0)
@@ -202,22 +122,27 @@ export default async function AdminPage() {
   const f = d.funnel
 
   return (
-    <div className="min-h-screen" style={{ background: 'var(--bg)' }}>
-      <div className="max-w-[1360px] mx-auto px-4 sm:px-6 py-8 space-y-5">
-        <header className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <Link href="/dashboard" className="text-[12px] font-semibold" style={{ color: 'var(--text-muted)' }}>
-              ← ApplyMaster
-            </Link>
-            <h1 className="font-display text-[clamp(1.9rem,3vw,2.5rem)] leading-tight mt-1" style={{ color: 'var(--text)' }}>
-              Who’s using ApplyMaster
-            </h1>
-            <p className="text-[13px] mt-1" style={{ color: 'var(--text-muted)' }}>
-              Sign-ups, sign-ins, the people who tried and could not get in, and support messages.
-            </p>
-          </div>
-          <AutoRefresh />
-        </header>
+    <AdminShell
+      active="/admin"
+      title="Who’s using ApplyMaster"
+      note="Today at a glance, sign-ups and sign-ins, the people who tried and could not get in, and support messages."
+      right={<AutoRefresh />}
+    >
+        {/* Today at a glance: each tile opens the tab with the detail */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <Link href="/admin/traffic" className="block">
+            <Kpi label="Visitors today" value={d.today.visitors} sub={`${d.today.visitors7} in 7 days · ${d.today.now} on the site now`} tone="accent" />
+          </Link>
+          <Link href="/admin/people" className="block">
+            <Kpi label="Customers active today" value={d.today.activeUsers} sub={`${d.today.activeUsers7} in 7 days`} tone="green" />
+          </Link>
+          <Link href="/admin/people" className="block">
+            <Kpi label="Paying customers" value={d.today.paying} sub={d.today.plans || 'no paid plans yet'} tone="purple" />
+          </Link>
+          <Link href="/admin/issues" className="block">
+            <Kpi label="Problems · 7 days" value={d.today.issues7} sub={`${d.today.issuePeople7} people affected`} tone={d.today.issues7 ? 'red' : undefined} />
+          </Link>
+        </div>
 
         {(!d.trackingReady || !d.supportReady) && (
           <Card className="p-5">
@@ -645,7 +570,6 @@ export default async function AdminPage() {
             )}
           </Card>
         </div>
-      </div>
-    </div>
+    </AdminShell>
   )
 }
