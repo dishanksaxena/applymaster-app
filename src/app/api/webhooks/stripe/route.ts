@@ -74,19 +74,13 @@ async function applySubscription(db: Db, sub: Stripe.Subscription, event: string
   const mapped = mapStatus(sub.status)
   if (!plan || plan === 'lifetime' || !mapped) return { matched: true, skipped: sub.status }
 
+  const { data: row } = await db.from('subscriptions').select('stripe_subscription_id, status, plan').eq('user_id', userId).maybeSingle()
+  // Lifetime replaced the monthly plan; that subscription's later events (its cancellation) change nothing.
+  if (row?.plan === 'lifetime') return { matched: true, skipped: 'lifetime' }
   // An older subscription ending must not undo a newer one.
-  const { data: row } = await db.from('subscriptions').select('stripe_subscription_id, status').eq('user_id', userId).maybeSingle()
   const onRecord = row?.stripe_subscription_id
   if (onRecord && onRecord !== sub.id && !mapped.keeps) return { matched: true, skipped: 'superseded' }
-
-  // Bought a different plan while the old subscription is still running: stop charging for the old one.
-  if (onRecord && onRecord !== sub.id && mapped.keeps && row?.status !== 'canceled') {
-    try {
-      await stripe().subscriptions.cancel(onRecord)
-    } catch (e) {
-      console.warn('[stripe] could not cancel superseded subscription', onRecord, e)
-    }
-  }
+  const replaced = onRecord && onRecord !== sub.id && row?.status !== 'canceled' ? onRecord : null
 
   await saveRow(db, {
     user_id: userId,
@@ -98,7 +92,19 @@ async function applySubscription(db: Db, sub: Stripe.Subscription, event: string
     current_period_end: iso(item?.current_period_end),
   })
   const next = await setPlan(db, userId, mapped.keeps ? plan : 'free', { event, subscription: sub.id, status: sub.status })
+
+  // Bought a different plan while the old subscription was still running: stop
+  // charging for the old one. After saving, so its "deleted" event is already superseded.
+  if (replaced && mapped.keeps) await cancelQuietly(replaced)
   return { matched: true, plan: next }
+}
+
+async function cancelQuietly(subscription: string) {
+  try {
+    await stripe().subscriptions.cancel(subscription)
+  } catch (e) {
+    console.warn('[stripe] could not cancel replaced subscription', subscription, e)
+  }
 }
 
 async function applyCheckout(db: Db, session: Stripe.Checkout.Session, event: string) {
@@ -119,14 +125,7 @@ async function applyCheckout(db: Db, session: Stripe.Checkout.Session, event: st
 
   const customer = idOf(session.customer)
   const { data: row } = await db.from('subscriptions').select('stripe_subscription_id, status').eq('user_id', userId).maybeSingle()
-  // Lifetime replaces any monthly plan, so stop billing for it.
-  if (row?.stripe_subscription_id && row.status !== 'canceled') {
-    try {
-      await stripe().subscriptions.cancel(row.stripe_subscription_id)
-    } catch (e) {
-      console.warn('[stripe] could not cancel subscription after lifetime purchase', e)
-    }
-  }
+  const monthly = row?.stripe_subscription_id && row.status !== 'canceled' ? row.stripe_subscription_id : null
   await saveRow(db, {
     user_id: userId,
     stripe_customer_id: customer,
@@ -136,7 +135,10 @@ async function applyCheckout(db: Db, session: Stripe.Checkout.Session, event: st
     current_period_start: iso(session.created),
     current_period_end: null,
   })
-  return { matched: true, plan: await setPlan(db, userId, 'lifetime', { event, checkout: session.id }) }
+  const next = await setPlan(db, userId, 'lifetime', { event, checkout: session.id })
+  // Lifetime replaces any monthly plan, so stop billing for it (after saving, as above).
+  if (monthly) await cancelQuietly(monthly)
+  return { matched: true, plan: next }
 }
 
 /** A fully refunded lifetime purchase ends the lifetime plan. Monthly refunds leave the plan to the subscription. */

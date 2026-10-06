@@ -31,6 +31,9 @@ export async function POST(request: Request) {
     return Response.json({ error: 'Invalid request' }, { status: 400 })
   }
 
+  const { data: profile } = await createAdminClient().from('profiles').select('plan').eq('id', user.id).maybeSingle()
+  if (profile?.plan === 'lifetime') return Response.json({ error: 'You already have Lifetime, which includes every plan.' }, { status: 409 })
+
   if (!canCheckout(user.email)) {
     await recordEvent('upgrade_interest', { email: user.email, user_id: user.id, meta: { plan } }, request.headers)
     return Response.json({ waitlist: true, plan })
