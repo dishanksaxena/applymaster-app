@@ -113,4 +113,9 @@ const walk = (dir, prefix = '') => {
 walk(prodDir)
 fs.mkdirSync(path.join(ROOT, 'public', 'downloads'), { recursive: true })
 fs.writeFileSync(path.join(ROOT, 'public', 'downloads', 'applymaster-extension.zip'), zipSync(entries, { level: 9 }))
-console.log(`ApplyMaster extension ${VERSION} built: extension/dist, extension/dist-dev, public/downloads/applymaster-extension.zip`)
+
+// The Chrome Web Store wants manifest.json at the top of the zip, not inside a folder.
+const store = Object.fromEntries(Object.entries(entries).map(([k, v]) => [k.replace(/^applymaster-extension\//, ''), v]))
+fs.mkdirSync(path.join(ROOT, 'extension', 'store'), { recursive: true })
+fs.writeFileSync(path.join(ROOT, 'extension', 'store', `applymaster-extension-${VERSION}.zip`), zipSync(store, { level: 9 }))
+console.log(`ApplyMaster extension ${VERSION} built: extension/dist, extension/dist-dev, public/downloads/applymaster-extension.zip, extension/store/applymaster-extension-${VERSION}.zip (upload this one to the Chrome Web Store)`)
