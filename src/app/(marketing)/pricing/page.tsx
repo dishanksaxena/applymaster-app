@@ -155,7 +155,7 @@ const tiers = [
       'Lifetime access, no recurring fees',
       'All future feature updates included',
       'Priority support forever',
-      'Early access to beta features',
+      'Early access to new features',
     ],
     limitations: [],
   },

@@ -374,7 +374,7 @@ export default function Home() {
     { name: 'Elite', price: billing === 'mo' ? 59 : 35, desc: 'Maximum firepower', cta: 'Go Elite', pop: false,
       features: ['Unlimited applications', 'Everything in Pro', 'Live interview coach', 'A/B resume testing', 'Recruiter outreach', 'Referral emails', 'Autopilot mode', 'Dedicated support'] },
     { name: 'Lifetime', price: 199, desc: 'Pay once, use forever', cta: 'Get Lifetime', pop: false,
-      features: ['Everything in Elite', 'Lifetime access', 'All future features', 'Priority everything', 'Early beta access', '1-on-1 onboarding'] },
+      features: ['Everything in Elite', 'Lifetime access', 'All future features', 'Priority everything', 'Early access to new features', '1-on-1 onboarding'] },
   ]
 
   const portals = ['LinkedIn', 'Indeed', 'Glassdoor', 'ZipRecruiter', 'Greenhouse', 'Lever', 'Workday', 'Naukri', 'Instahyre', 'Dice', 'Wellfound', 'Monster', 'SEEK', 'Reed']
@@ -488,7 +488,7 @@ export default function Home() {
                     style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', color: 'var(--text-secondary)', boxShadow: 'var(--shadow-sm)' }}
                   >
                     <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--green)' }} />
-                    Now in public beta &mdash; free forever plan available
+                    Now live &mdash; free forever plan available
                   </div>
                 </Reveal>
 
