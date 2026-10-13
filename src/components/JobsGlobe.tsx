@@ -113,9 +113,28 @@ function latLngToVector3(lat: number, lng: number, r: number): THREE.Vector3 {
   )
 }
 
-function hexToRgb(hex: string): [number, number, number] {
-  const h = hex.replace('#', '')
-  return [parseInt(h.substr(0, 2), 16), parseInt(h.substr(2, 2), 16), parseInt(h.substr(4, 2), 16)]
+/* Canvas and three.js only understand real colour values, not CSS variables:
+   `fillStyle = 'var(--x)'` is silently ignored and `addColorStop('var(--x)')`
+   throws, which crashed the globe. Tokens are read from the page and
+   converted to numbers before anything is drawn. */
+function toRgb(color: string): [number, number, number] {
+  let c = color.trim()
+  const v = c.match(/^var\((--[\w-]+)\)$/)
+  if (v && typeof document !== 'undefined') c = getComputedStyle(document.documentElement).getPropertyValue(v[1]).trim()
+  const hex = c.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i)
+  if (hex) {
+    const h = hex[1].length === 3 ? hex[1].replace(/./g, x => x + x) : hex[1]
+    return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)]
+  }
+  const nums = c.match(/^rgba?\(\s*([\d.]+)[\s,]+([\d.]+)[\s,]+([\d.]+)/i)
+  if (nums) return [Number(nums[1]), Number(nums[2]), Number(nums[3])]
+  return [160, 160, 170]
+}
+
+/** A theme token as a colour string a canvas accepts. */
+const rgba = (token: string, alpha = 1) => {
+  const [r, g, b] = toRgb(token)
+  return `rgba(${r},${g},${b},${alpha})`
 }
 
 // ── Draw rounded rect helper (cross-browser) ──
@@ -139,13 +158,13 @@ function makeFlagTexture(job: Job, color: string): THREE.CanvasTexture {
   const canvas = document.createElement('canvas')
   canvas.width = W; canvas.height = H
   const ctx = canvas.getContext('2d')!
-  const [r, g, b] = hexToRgb(color)
+  const [r, g, b] = toRgb(color)
 
   // Outer glow
   ctx.shadowColor = `rgba(${r},${g},${b},0.6)`
   ctx.shadowBlur = 12
   rrect(ctx, 2, 2, W - 4, H - 4, 9)
-  ctx.fillStyle = 'var(--bg-card)'
+  ctx.fillStyle = rgba('var(--bg-card)', 0.96)
   ctx.fill()
   ctx.shadowBlur = 0
 
@@ -171,7 +190,7 @@ function makeFlagTexture(job: Job, color: string): THREE.CanvasTexture {
   ctx.fillText(salary, W - salaryW - 1, 21)
 
   // Job title
-  ctx.fillStyle = 'var(--bg-overlay)'
+  ctx.fillStyle = rgba('var(--text)')
   ctx.font = 'bold 14px system-ui, sans-serif'
   const title = job.title.length > 26 ? job.title.slice(0, 26) + '…' : job.title
   ctx.fillText(title, 13, 26)
@@ -183,7 +202,7 @@ function makeFlagTexture(job: Job, color: string): THREE.CanvasTexture {
   ctx.fillText(company, 13, 44)
 
   // Location
-  ctx.fillStyle = 'var(--bg-overlay)'
+  ctx.fillStyle = rgba('var(--text-muted)')
   ctx.font = '10px system-ui, sans-serif'
   const cityName = job.location?.split(',')[0]?.trim()?.slice(0, 28) || 'Remote'
   ctx.fillText(`📍 ${cityName}`, 13, 62)
@@ -197,11 +216,11 @@ function makeBaseDot(color: string): THREE.CanvasTexture {
   const canvas = document.createElement('canvas')
   canvas.width = S; canvas.height = S
   const ctx = canvas.getContext('2d')!
-  const [r, g, b] = hexToRgb(color)
+  const [r, g, b] = toRgb(color)
   const cx = S / 2
 
   const g1 = ctx.createRadialGradient(cx, cx, 0, cx, cx, cx)
-  g1.addColorStop(0, `var(--bg-overlay)`)
+  g1.addColorStop(0, 'rgba(255,255,255,0.95)') // white-hot core of the glow
   g1.addColorStop(0.25, `rgba(${r},${g},${b},0.9)`)
   g1.addColorStop(0.6, `rgba(${r},${g},${b},0.3)`)
   g1.addColorStop(1, `rgba(${r},${g},${b},0)`)
@@ -216,7 +235,7 @@ function makePulseTexture(color: string): THREE.CanvasTexture {
   const canvas = document.createElement('canvas')
   canvas.width = S; canvas.height = S
   const ctx = canvas.getContext('2d')!
-  const [r, g, b] = hexToRgb(color)
+  const [r, g, b] = toRgb(color)
   const cx = S / 2
   ctx.beginPath()
   ctx.arc(cx, cx, cx * 0.88, 0, Math.PI * 2)
@@ -481,7 +500,7 @@ export default function JobsGlobe({ jobs, onSave, onApply, savedJobs, appliedJob
       // ── 2. Thin stem line ──
       const stemGeo = new THREE.BufferGeometry().setFromPoints([basePos, stemTop])
       const stem = new THREE.Line(stemGeo, new THREE.LineBasicMaterial({
-        color: new THREE.Color(p.color),
+        color: new THREE.Color(...toRgb(p.color).map(n => n / 255) as [number, number, number]),
         transparent: true,
         opacity: 0.75,
         blending: THREE.AdditiveBlending,

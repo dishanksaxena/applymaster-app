@@ -32,6 +32,9 @@ export const TRACK_EVENTS = [
   'oauth_failed',
   'oauth_callback_success',
   'oauth_callback_failed',
+  // A confirmation link opened in another browser: the address IS confirmed,
+  // only the automatic sign-in could not happen. Not a failure.
+  'email_confirmed_elsewhere',
 
   'password_reset_requested',
   'password_reset_failed',
@@ -83,6 +86,7 @@ export type TrackProps = {
 export const SERVER_ONLY_EVENTS = new Set<TrackEvent>([
   'oauth_callback_success',
   'oauth_callback_failed',
+  'email_confirmed_elsewhere',
   'upgrade_interest',
   'plan_changed',
   'payment_webhook_failed',
@@ -100,7 +104,7 @@ export const isTrackEvent = (e: unknown): e is TrackEvent =>
 export function outcomeOf(event: TrackEvent): TrackProps['outcome'] {
   if (event === 'auth_page_view' || event === 'support_opened' || event === 'app_open' || event === 'page_view') return 'view'
   if (event.endsWith('_error')) return 'failure'
-  if (event === 'job_search') return 'success'
+  if (event === 'job_search' || event === 'email_confirmed_elsewhere') return 'success'
   if (event === 'upgrade_interest') return 'attempt'
   if (/_(failed|existing_account)$/.test(event)) return 'failure'
   if (/_(success|submitted|updated|requested|changed|imported)$/.test(event) || event === 'confirm_resend') return 'success'

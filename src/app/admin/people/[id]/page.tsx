@@ -15,6 +15,7 @@ const LABEL: Record<string, string> = {
   login_success: 'Logged in',
   login_failed: 'Login failed',
   oauth_callback_success: 'Signed in with Google',
+  email_confirmed_elsewhere: 'Confirmed email (in another browser)',
   signup_success: 'Signed up',
   upgrade_interest: 'Clicked a paid plan',
   plan_changed: 'Plan changed',

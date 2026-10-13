@@ -79,7 +79,14 @@ export async function GET(request: Request) {
        we are here Supabase has already confirmed the email address, so the
        honest thing to tell the person is "you're confirmed — sign in". */
     const verifier = /code verifier|flow state|both auth code/i.test(error.message)
-    return fail(verifier ? 'link_other_browser' : 'exchange_failed', error.message, {
+    if (verifier) {
+      // Not a failure: recorded as such, and the login page shows it as good news.
+      await recordEvent('email_confirmed_elsewhere', { method: 'email_link', path: '/auth/callback', anon_id: anonId }, request.headers)
+      const to = new URL('/login', request.url)
+      to.searchParams.set('error', 'link_other_browser')
+      return NextResponse.redirect(to)
+    }
+    return fail('exchange_failed', error.message, {
       status: (error as { status?: number }).status ?? null,
     })
   }

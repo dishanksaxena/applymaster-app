@@ -32,6 +32,7 @@ const EVENT_LABEL: Record<string, string> = {
   support_submitted: 'Sent support message',
   support_failed: 'Support message failed',
   app_open: 'Opened the app',
+  email_confirmed_elsewhere: 'Confirmed email (in another browser)',
   upgrade_interest: 'Clicked a paid plan',
   plan_changed: 'Plan changed',
   payment_webhook_failed: 'Payment problem',

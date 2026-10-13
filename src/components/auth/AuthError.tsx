@@ -13,7 +13,8 @@ import Link from 'next/link'
  * and every one ends in a way to reach a human.
  */
 
-type Explained = { title: string; body: string; action?: 'resend' | 'google' | 'reset' }
+/** `ok`: good news delivered through the error channel (shown in green, not red). */
+type Explained = { title: string; body: string; action?: 'resend' | 'google' | 'reset'; ok?: boolean }
 
 export function explainAuthError(codeOrMessage: string): Explained {
   const m = (codeOrMessage || '').toLowerCase()
@@ -25,6 +26,7 @@ export function explainAuthError(codeOrMessage: string): Explained {
     return {
       title: 'Your email is confirmed — please sign in',
       body: 'The link was opened in a different browser from the one you signed up in, so we could not sign you in automatically. Your address is verified; sign in below.',
+      ok: true,
     }
   }
   if (m === 'oauth_provider_error' || m === 'exchange_failed' || m === 'missing_code' || m === 'auth_failed') {
@@ -86,14 +88,15 @@ export default function AuthError({
 }) {
   const e = explainAuthError(error)
   const supportHref = `/support?topic=${topic}&error=${encodeURIComponent(error.slice(0, 160))}`
+  const tone = e.ok ? 'green' : 'red'
 
   return (
     <div
-      role="alert"
+      role={e.ok ? 'status' : 'alert'}
       className="p-3.5 rounded-xl text-[13px] mb-6"
-      style={{ background: 'var(--red-dim)', boxShadow: 'inset 0 0 0 1px rgb(var(--red-rgb) / 0.18)' }}
+      style={{ background: `var(--${tone}-dim)`, boxShadow: `inset 0 0 0 1px rgb(var(--${tone}-rgb) / 0.18)` }}
     >
-      <p className="font-semibold" style={{ color: 'var(--red)' }}>
+      <p className="font-semibold" style={{ color: `var(--${tone})` }}>
         {e.title}
       </p>
       <p className="mt-1 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
@@ -123,9 +126,11 @@ export default function AuthError({
             Request a new link
           </Link>
         )}
-        <Link href={supportHref} className="font-semibold underline underline-offset-2" style={{ color: 'var(--text-secondary)' }}>
-          Still stuck? Message us
-        </Link>
+        {!e.ok && (
+          <Link href={supportHref} className="font-semibold underline underline-offset-2" style={{ color: 'var(--text-secondary)' }}>
+            Still stuck? Message us
+          </Link>
+        )}
       </div>
     </div>
   )
