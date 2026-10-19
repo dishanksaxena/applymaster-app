@@ -30,6 +30,7 @@ const COLUMNS: { heading: string; links: [string, string][] }[] = [
       ['Keyword Extractor', '/tools/job-description-keyword-extractor'],
       ['Workday Autofill', '/autofill/workday'],
       ['Autofill Extension', '/autofill'],
+      ['Jobs at Top Companies', '/companies'],
       ['Compare Tools', '/compare'],
       ['Guides', '/guides'],
     ],

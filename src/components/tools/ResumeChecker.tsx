@@ -62,9 +62,9 @@ function Chip({ k, showFound }: { k: Keyword; showFound: boolean }) {
   )
 }
 
-export default function ResumeChecker({ mode = 'resume' }: { mode?: 'resume' | 'jd' }) {
+export default function ResumeChecker({ mode = 'resume', initialJd = '', jdLabel }: { mode?: 'resume' | 'jd'; initialJd?: string; jdLabel?: string }) {
   const [resume, setResume] = useState('')
-  const [jd, setJd] = useState('')
+  const [jd, setJd] = useState(initialJd)
   const [fileName, setFileName] = useState<string | null>(null)
   const [reading, setReading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -146,7 +146,7 @@ export default function ResumeChecker({ mode = 'resume' }: { mode?: 'resume' | '
         )}
         <div>
           <label htmlFor="tool-jd" className="block text-[14px] font-semibold mb-2" style={{ color: 'var(--text)' }}>
-            The job description
+            {jdLabel ?? 'The job description'}
           </label>
           <textarea
             id="tool-jd"

@@ -89,7 +89,10 @@ const STOP = new Set(
    have has had do does did not no yes if then than so such into over under about across within per via etc also more most other some any all each every both either
    work working job role team teams company candidate candidates experience experienced years year required requirements preferred qualifications responsibilities
    ability able strong excellent good great knowledge understanding skills skill including include includes plus using use used new well based level
-   us usa inc llc ltd eg ie e.g i.e`.split(/\s+/)
+   us usa inc llc ltd eg ie e.g i.e please see while staying relating regarding within apply applicants applicant offer offers position positions
+   salary usd eur gbp inr compensation range location locations hiring process information notice opportunity opportunities day days week weeks
+   help helping make making take taking get getting go going way ways build building like looking want wants need needs one two three first best
+   world across part people person everyone someone here there what who how why when where which whether just really very much many`.split(/\s+/)
 )
 
 /* Uppercase tokens that are ordinary words or noise, not credentials. */
@@ -150,8 +153,28 @@ export type Result = {
   words: number
 }
 
+/* Legal and HR boilerplate most postings end with: equal opportunity,
+   privacy, accommodation, pay ranges, scam warnings. Its repeated phrases
+   ("personal data", "equal opportunity") are not what the job asks for. */
+const BOILERPLATE =
+  /equal (employment )?opportunit|\beeo\b|affirmative action|privacy (notice|policy|statement)|personal (data|information)|reasonable accommodation|accommodations? request|protected veteran|sexual orientation|gender identity|national origin|genetic information|disabilit(y|ies)|job scams?|recruitment fraud|pay transparency|(salary|pay|compensation|wage) (range|band)|base (salary|pay)|on-target earnings|benefits (include|package)|401\(?k\)?|health insurance|paid time off|e-verify|background check|vevraa|federal contractor|@[\w-]+\.(com|io|ai)|recruit(ing|ment)? agenc|\bscams?\b|phishing|impersonat|encourage(d)? (you )?to apply|every (single )?qualification|imposter syndrome/i
+
+const VISA = /sponsor(ship)? (visas?|for visas?)|visa sponsorship|work authori[sz]ation.*(sponsor|required)/i
+/* Section headings that happen to be skill words ("Logistics", "Finance"). */
+const HEADING = /^\s*(logistics|benefits|compensation|perks|education|location|recruiting|operations|finance|about( us| the (role|team|company))?|how we.?re different|come work with us|our culture|the team|why join us|who you are|what you.?ll do)\s*:?\s*$/i
+
+function stripBoilerplate(raw: string) {
+  return raw
+    .split(/\r?\n/)
+    .filter(line => !HEADING.test(line))
+    .flatMap(line => line.split(/(?<=[.!?])\s+(?=[A-Z])/))
+    .filter(s => !BOILERPLATE.test(s) && !VISA.test(s))
+    .join('\n')
+}
+
 /** The terms a job description leans on, most important first. */
-export function extractKeywords(jdRaw: string): Omit<Keyword, 'found'>[] {
+export function extractKeywords(input: string): Omit<Keyword, 'found'>[] {
+  const jdRaw = stripBoilerplate(input)
   const jd = norm(jdRaw)
   const req = requiredText(jdRaw)
   const found = new Map<string, Omit<Keyword, 'found'>>()
@@ -178,12 +201,16 @@ export function extractKeywords(jdRaw: string): Omit<Keyword, 'found'>[] {
   }
 
   // Repeated two- and three-word phrases ("payment systems", "data platform").
-  const words = jd.trim().split(' ')
+  // Sentence-final full stops would make "roadmap." a different word from "roadmap".
+  const words = jd
+    .trim()
+    .split(' ')
+    .map(w => (/^[a-z]+\.$/.test(w) ? w.slice(0, -1) : w))
   const grams = new Map<string, number>()
   for (let n = 2; n <= 3; n++) {
     for (let i = 0; i + n <= words.length; i++) {
       const g = words.slice(i, i + n)
-      if (STOP.has(g[0]) || STOP.has(g[n - 1]) || g.some(w => w.length < 2 || /^\d+$/.test(w))) continue
+      if (g.some(w => STOP.has(w) || w.length < 3 || /^\d/.test(w))) continue
       const k = g.join(' ')
       grams.set(k, (grams.get(k) ?? 0) + 1)
     }

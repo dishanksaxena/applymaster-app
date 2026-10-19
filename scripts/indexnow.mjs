@@ -17,13 +17,21 @@ const paths = process.argv.slice(2).map(p => p.replace(/^[A-Za-z]:[\\/].*?[\\/]G
 let urls
 if (paths.length) urls = paths.map(p => SITE + p)
 else {
-  const xml = await (await fetch(SITE + '/sitemap.xml')).text()
-  urls = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(m => m[1])
+  // Both sitemaps: the site's pages and the public job pages.
+  urls = []
+  for (const sm of ['/sitemap.xml', '/sitemap-jobs.xml']) {
+    const xml = await (await fetch(SITE + sm)).text()
+    urls.push(...[...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(m => m[1].replace(/&amp;/g, '&')))
+  }
 }
-const res = await fetch('https://api.indexnow.org/indexnow', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json; charset=utf-8' },
-  body: JSON.stringify({ host: new URL(SITE).host, key: KEY, keyLocation: SITE + '/' + KEY + '.txt', urlList: urls }),
-})
-console.log('IndexNow', res.status, res.statusText, '-', urls.length, 'URLs')
-if (res.status >= 400) console.log(await res.text())
+// IndexNow takes up to 10,000 URLs per request.
+for (let i = 0; i < urls.length; i += 10000) {
+  const batch = urls.slice(i, i + 10000)
+  const res = await fetch('https://api.indexnow.org/indexnow', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json; charset=utf-8' },
+    body: JSON.stringify({ host: new URL(SITE).host, key: KEY, keyLocation: SITE + '/' + KEY + '.txt', urlList: batch }),
+  })
+  console.log('IndexNow', res.status, res.statusText, '-', batch.length, 'URLs')
+  if (res.status >= 400) console.log(await res.text())
+}

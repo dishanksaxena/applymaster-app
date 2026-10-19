@@ -58,7 +58,7 @@ export default function robots(): MetadataRoute.Robots {
       { userAgent: '*', allow: '/', disallow: PRIVATE },
       { userAgent: AI_CRAWLERS, allow: '/', disallow: PRIVATE },
     ],
-    sitemap: `${SITE_URL}/sitemap.xml`,
+    sitemap: [`${SITE_URL}/sitemap.xml`, `${SITE_URL}/sitemap-jobs.xml`],
     host: SITE_URL,
   }
 }
