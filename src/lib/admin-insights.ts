@@ -154,7 +154,7 @@ export const SECTION: [RegExp, string][] = [
   [/^\/pricing/, 'Pricing page'],
   [/^\/features/, 'Feature pages'],
   [/^\/blog/, 'Blog'],
-  [/^\/(autofill|compare|alternatives|tools)/, 'Search landing pages'],
+  [/^\/(autofill|compare|alternatives|tools|guides|about)/, 'Search landing pages'],
   [/^\/(privacy|terms)/, 'Legal pages'],
   [/^\/admin/, 'Admin'],
 ]

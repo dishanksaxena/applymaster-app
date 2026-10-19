@@ -38,12 +38,15 @@ function Reveal({
   children,
   className = '',
   delay = 0,
+  as: Tag = 'div',
 }: {
   children: React.ReactNode
   className?: string
   delay?: number
+  /** 'li' when the revealed block is an item of a list, so the list stays valid HTML. */
+  as?: 'div' | 'li'
 }) {
-  const ref = useRef<HTMLDivElement>(null)
+  const ref = useRef<HTMLDivElement & HTMLLIElement>(null)
   const [shown, setShown] = useState(false)
   const reduced = useReducedMotion()
 
@@ -65,7 +68,7 @@ function Reveal({
   }, [delay, reduced])
 
   return (
-    <div
+    <Tag
       ref={ref}
       data-reveal
       className={className}
@@ -76,7 +79,7 @@ function Reveal({
       }}
     >
       {children}
-    </div>
+    </Tag>
   )
 }
 
@@ -704,15 +707,15 @@ export default function Home() {
                 { step: '03', title: 'AI takes over', desc: 'The engine scans 50+ portals, tailors your resume per job, writes cover letters, and applies 24/7.', icon: ICON.cpu },
                 { step: '04', title: 'Get interviews', desc: 'Track applications on your board, prep with the AI interview coach, and land the offer.', icon: ICON.trophy },
               ].map((item, i) => (
-                <Reveal key={item.step} delay={i * 90}>
-                  <li className="list-none">
+                <Reveal key={item.step} delay={i * 90} as="li" className="list-none">
+                  <div>
                     <div className="flex items-center gap-3 mb-4 pb-3" style={{ borderBottom: '1px solid var(--border-accent)' }}>
                       <span className="font-mono text-[12px] font-semibold" style={{ color: 'var(--accent)' }}>{item.step}</span>
                       <span style={{ color: 'var(--accent)' }}><Icon path={item.icon} size={17} /></span>
                     </div>
                     <h3 className="text-[16px] font-semibold mb-2" style={{ color: 'var(--text)' }}>{item.title}</h3>
                     <p className="text-[13.5px] leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{item.desc}</p>
-                  </li>
+                  </div>
                 </Reveal>
               ))}
             </ol>
@@ -905,7 +908,7 @@ export default function Home() {
           <div className="max-w-[1240px] mx-auto px-6 lg:px-8">
             <Reveal>
               <div className="text-center mb-14">
-                <div className="flex items-center justify-center gap-1 mb-5" aria-label="Rated 4.9 out of 5">
+                <div className="flex items-center justify-center gap-1 mb-5" role="img" aria-label="Rated 4.9 out of 5">
                   {[...Array(5)].map((_, i) => (
                     <svg key={i} width="20" height="20" viewBox="0 0 24 24" fill="var(--yellow)" aria-hidden="true">
                       <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
@@ -931,7 +934,7 @@ export default function Home() {
                 <Reveal key={t.name} delay={i * 70} className="h-full">
                   <figure className="h-full p-6 rounded-2xl flex flex-col" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)' }}>
                     <div className="flex items-center justify-between mb-4">
-                      <div className="flex gap-0.5" aria-label="5 out of 5">
+                      <div className="flex gap-0.5" role="img" aria-label="5 out of 5">
                         {[...Array(5)].map((_, j) => (
                           <svg key={j} width="13" height="13" viewBox="0 0 24 24" fill="var(--yellow)" aria-hidden="true">
                             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
@@ -1030,7 +1033,7 @@ export default function Home() {
       {/* ===== FOOTER ===== */}
       <footer className="py-14" style={{ borderTop: '1px solid var(--border)' }}>
         <div className="max-w-[1240px] mx-auto px-6 lg:px-8">
-          <div className="grid md:grid-cols-4 gap-10 mb-10">
+          <div className="grid sm:grid-cols-2 md:grid-cols-5 gap-10 mb-10">
             <div>
               <a href="/" className="flex items-center gap-2.5 mb-4">
                 <span className="w-8 h-8 rounded-lg grid place-items-center font-bold text-[11px]" style={{ background: 'var(--accent-solid)', color: 'var(--text-on-accent)' }}>AM</span>
@@ -1047,7 +1050,8 @@ export default function Home() {
             {[
               { h: 'Product', links: [['Features', '/features'], ['Auto Apply', '/features/auto-apply'], ['Resume Optimizer', '/features/resume-optimizer'], ['Interview Coach', '/features/interview-coach'], ['Integrations', '/integrations'], ['Pricing', '/pricing']] },
               { h: 'Resources', links: [['Blog', '/blog'], ['AI Job Application Guide', '/blog/ai-job-application-guide'], ['ATS Resume Guide', '/blog/ats-resume-optimization'], ['LinkedIn Auto Apply Guide', '/blog/linkedin-auto-apply-guide'], ['About 3GP.AI', 'https://3gp.ai']] },
-              { h: 'Legal', links: [['Privacy Policy', '/privacy'], ['Terms of Service', '/terms']] },
+              { h: 'Free tools', links: [['ATS Resume Checker', '/tools/ats-resume-checker'], ['Keyword Extractor', '/tools/job-description-keyword-extractor'], ['Workday Autofill', '/autofill/workday'], ['Autofill Extension', '/autofill'], ['Compare Tools', '/compare'], ['Guides', '/guides']] },
+              { h: 'Legal', links: [['Privacy Policy', '/privacy'], ['Terms of Service', '/terms'], ['About', '/about']] },
             ].map(col => (
               <div key={col.h}>
                 <h2 className="font-semibold text-[12px] uppercase tracking-wider mb-4" style={{ color: 'var(--text-muted)' }}>{col.h}</h2>

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { CHECKED, COMPETITORS } from '@/lib/seo/competitors'
+import { COMPETITORS } from '@/lib/seo/competitors'
 import { SITE_URL, breadcrumbs } from '@/lib/seo/site'
 import { Crumbs, Ctas, JsonLd, Section } from '@/components/marketing/Landing'
 
@@ -38,7 +38,7 @@ export default function CompareHub() {
         </div>
       </section>
 
-      <Section kicker={`Checked ${CHECKED}`} title="Comparisons">
+      <Section kicker="Each comparison is dated and linked to its sources" title="Comparisons">
         <ul className="grid sm:grid-cols-2 gap-4">
           {COMPETITORS.map(c => (
             <li key={c.slug}>

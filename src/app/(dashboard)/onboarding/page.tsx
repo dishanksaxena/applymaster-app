@@ -319,7 +319,8 @@ export default function OnboardingPage() {
       }
       if (file.name.endsWith('.pdf')) {
         const pdfjs = await import('pdfjs-dist')
-        pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`
+        // pdf.js 4 ships its worker as .mjs; the old .js path answers 404 and every PDF read silently failed.
+        pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.mjs`
         const arrayBuffer = await file.arrayBuffer()
         const pdf = await pdfjs.getDocument(arrayBuffer).promise
         let text = ''

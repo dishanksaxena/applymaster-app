@@ -33,6 +33,11 @@ export function GET() {
 ${livePortals()
   .map(p => `- [${p.name} autofill](${SITE_URL}/autofill/${p.slug}): what it fills on ${p.name}`)
   .join('\n')}
+- [Free ATS resume checker](${SITE_URL}/tools/ats-resume-checker): match a resume to a job description, keyword by keyword; free, no sign-up, runs in the browser
+- [Job description keyword extractor](${SITE_URL}/tools/job-description-keyword-extractor): the skills and phrases a posting leans on, ranked
+- [How to apply on Workday faster](${SITE_URL}/guides/workday-application-tips): what each Workday page asks, and tips
+- [Finding and using resume keywords](${SITE_URL}/guides/resume-keywords)
+- [About ApplyMaster](${SITE_URL}/about): who builds it and the lines it holds
 - [Comparisons](${SITE_URL}/compare): ApplyMaster compared with ${COMPETITORS.map(c => c.name).join(', ')}
 ${COMPETITORS.map(c => `- [ApplyMaster vs ${c.name}](${SITE_URL}/compare/${c.slug})`).join('\n')}
 - [Pricing](${SITE_URL}/pricing)

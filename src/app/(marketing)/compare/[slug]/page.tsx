@@ -15,7 +15,7 @@ export function generateMetadata({ params }: { params: { slug: string } }): Meta
   const c = competitorBySlug(params.slug)
   if (!c) return {}
   const title = `ApplyMaster vs ${c.name}: An Honest Comparison`
-  const description = `${c.name} or ApplyMaster? Who submits your applications, what each costs, where each works, and when ${c.name} is the better choice. Checked ${CHECKED}.`
+  const description = `${c.name} or ApplyMaster? Who submits your applications, what each costs, where each works, and when ${c.name} is the better choice. Checked ${c.checked ?? CHECKED}.`
   const url = `${SITE_URL}/compare/${c.slug}`
   return {
     title: { absolute: `${title} | ApplyMaster` },
@@ -55,7 +55,7 @@ export default function ComparePage({ params }: { params: { slug: string } }) {
             differ, using what {c.name} publishes about itself.
           </p>
           <p className="mt-4 text-[13px]" style={{ color: 'var(--text-muted)' }}>
-            Checked {CHECKED}. Prices and features change; follow the links under the table for {c.name}’s current terms.
+            Checked {c.checked ?? CHECKED}. Prices and features change; follow the links under the table for {c.name}’s current terms.
           </p>
         </div>
       </section>

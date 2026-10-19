@@ -24,10 +24,22 @@ const COLUMNS: { heading: string; links: [string, string][] }[] = [
     ],
   },
   {
+    heading: 'Free tools',
+    links: [
+      ['ATS Resume Checker', '/tools/ats-resume-checker'],
+      ['Keyword Extractor', '/tools/job-description-keyword-extractor'],
+      ['Workday Autofill', '/autofill/workday'],
+      ['Autofill Extension', '/autofill'],
+      ['Compare Tools', '/compare'],
+      ['Guides', '/guides'],
+    ],
+  },
+  {
     heading: 'Legal',
     links: [
       ['Privacy Policy', '/privacy'],
       ['Terms of Service', '/terms'],
+      ['About', '/about'],
     ],
   },
 ]
@@ -42,7 +54,7 @@ export default function SiteFooter() {
   return (
     <footer className="py-14" style={{ borderTop: '1px solid var(--border)' }}>
       <div className="max-w-[1240px] mx-auto px-6 lg:px-8">
-        <div className="grid md:grid-cols-4 gap-10 mb-10">
+        <div className="grid sm:grid-cols-2 md:grid-cols-5 gap-10 mb-10">
           <div>
             <Link href="/" className="flex items-center gap-2.5 mb-4">
               <span

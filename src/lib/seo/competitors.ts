@@ -18,6 +18,8 @@ export type Competitor = {
   slug: string
   name: string
   site: string
+  /** When these facts were checked, if not CHECKED. */
+  checked?: string
   /** One sentence: what they are, in their own terms. */
   summary: string
   rows: Row[]
@@ -168,6 +170,116 @@ export const COMPETITORS: Competitor[] = [
       {
         q: 'What is the difference between ApplyMaster and JobCopilot?',
         a: 'JobCopilot applies for you automatically. ApplyMaster fills applications in your browser and you submit them, with a receipt of each.',
+      },
+    ],
+  },
+  {
+    slug: 'lazyapply',
+    name: 'LazyApply',
+    site: 'lazyapply.com',
+    checked: '18 October 2026',
+    summary: 'LazyApply is an auto-apply service with yearly plans, built around a daily application allowance on job sites like Greenhouse, Dice, Indeed and ZipRecruiter.',
+    rows: [
+      { label: 'Who submits the application', them: 'LazyApply: its agent “handles the entire application process”.', us: US.submit },
+      { label: 'How it is priced', them: 'Yearly: Basic $99, Premium $149, Ultimate $999.', us: US.price },
+      { label: 'Volume', them: '15, 150 or 1,500 applications a day, depending on the plan.', us: 'As many as you choose to send; daily matches are queued for you to review.' },
+      { label: 'Free to start', them: 'No free plan or trial listed; a 30-day refund window.', us: US.free },
+      { label: 'Where it applies', them: 'Names Greenhouse, Dice, Indeed and ZipRecruiter.', us: US.portals },
+      { label: 'Account requirement', them: 'Plans require a Gmail address.', us: 'Any email address, or Google sign-in.' },
+    ],
+    chooseThem: ['You want to send a very high number of applications a day and are happy to pay yearly.'],
+    chooseUs: [
+      'You want to read each application before it goes, on the employer’s own site.',
+      'You want to start free, and keep a receipt of what each employer received.',
+      'You apply through Workday, Lever or Ashby as well as Greenhouse.',
+    ],
+    sources: [{ label: 'LazyApply pricing', url: 'https://lazyapply.com/pricing' }],
+    faqs: [
+      {
+        q: 'Is ApplyMaster a LazyApply alternative?',
+        a: 'Yes, for people who would rather fill and send each application themselves. LazyApply is built for volume, with daily allowances of up to 1,500 applications; ApplyMaster fills the form and you submit it.',
+      },
+    ],
+  },
+  {
+    slug: 'loopcv',
+    name: 'LoopCV',
+    site: 'loopcv.pro',
+    checked: '18 October 2026',
+    summary: 'LoopCV scans job boards daily, matches roles to your CV and submits applications under your name, with a free plan and paid plans for more volume.',
+    rows: [
+      { label: 'Who submits the application', them: 'LoopCV “submits applications on your behalf automatically”, under your name.', us: US.submit },
+      { label: 'How it is priced', them: 'Free forever plan; paid plans (Pro, Premium) from €9.99 a month.', us: US.price },
+      { label: 'Free to start', them: 'Yes, no card needed.', us: US.free },
+      { label: 'Where it applies', them: '“30+ job boards”, not named on its pricing page; a browser extension for boards that need a login.', us: US.portals },
+      { label: 'Also included', them: 'CV matching, an application dashboard, and follow-up emails.', us: US.extras },
+    ],
+    chooseThem: ['You want applications sent across many job boards every day without opening them.'],
+    chooseUs: [
+      'You want to check and submit each application yourself, on the employer’s site.',
+      'You also want interview practice and referral paths through people you know.',
+    ],
+    sources: [{ label: 'LoopCV pricing', url: 'https://www.loopcv.pro/pricing/' }],
+    faqs: [
+      {
+        q: 'What is the difference between ApplyMaster and LoopCV?',
+        a: 'LoopCV applies for you across job boards automatically. ApplyMaster fills applications on employers’ sites, such as Workday and Greenhouse, and leaves Submit to you, with a receipt of each.',
+      },
+    ],
+  },
+  {
+    slug: 'jobright',
+    name: 'Jobright',
+    site: 'jobright.ai',
+    checked: '18 October 2026',
+    summary: 'Jobright is an AI job-search platform: job matching across a large job feed, an autofill extension, resume tailoring, insider connections, and an AI Agent that applies for you.',
+    rows: [
+      { label: 'Who submits the application', them: 'Jobright’s AI Agent: “matching roles, customizing your resume, and applying for you”. Its autofill extension also fills forms for you.', us: US.submit },
+      { label: 'How it is priced', them: 'Free to try; plan prices are not listed on its public site.', us: US.price },
+      { label: 'Where it applies', them: 'Not listed by name on its public pages.', us: US.portals },
+      { label: 'Also included', them: 'Job matching, resume AI, insider connections and an AI copilot.', us: US.extras },
+      { label: 'What you keep', them: 'Not stated on its public pages.', us: US.record },
+    ],
+    chooseThem: ['You want one large job feed with matching, and an agent that can apply for you.'],
+    chooseUs: [
+      'You want a receipt of exactly what each employer received.',
+      'You want questions you should answer yourself, like demographics and consent, always left to you.',
+      'You want clear, public pricing with a free plan.',
+    ],
+    sources: [
+      { label: 'Jobright AI Agent', url: 'https://jobright.ai/ai-agent' },
+      { label: 'Jobright', url: 'https://jobright.ai/' },
+    ],
+    faqs: [
+      {
+        q: 'How is ApplyMaster different from Jobright?',
+        a: 'Both match jobs and fill applications. Jobright also offers an agent that applies for you; ApplyMaster always leaves Submit to you and keeps a receipt of each application.',
+      },
+    ],
+  },
+  {
+    slug: 'teal',
+    name: 'Teal',
+    site: 'tealhq.com',
+    checked: '18 October 2026',
+    summary: 'Teal is a resume builder and job tracker: tailored resumes, keyword matching against job descriptions, AI writing help and a place to track applications.',
+    rows: [
+      { label: 'What it does', them: 'Builds and tailors resumes, matches them to job descriptions, and tracks your applications.', us: 'Fills applications on employers’ sites, tailors resumes and cover letters, and tracks every application with a receipt.' },
+      { label: 'Who submits the application', them: 'Its plans are about preparing and tracking applications; applying is up to you.', us: US.submit },
+      { label: 'How it is priced', them: 'Free plan; Teal+ $13 per week, $29 per 30 days or $79 per 90 days.', us: US.price },
+      { label: 'Keyword matching', them: 'Top 5 keywords free; all keywords and a match score on Teal+.', us: 'A free ATS resume checker shows every keyword and a match score, with no account.' },
+      { label: 'Free to start', them: 'Yes, no card needed.', us: US.free },
+    ],
+    chooseThem: ['You mainly want a resume builder with many templates and design controls.'],
+    chooseUs: [
+      'You also want the application itself filled on Workday, Greenhouse or Lever, then a receipt of what you sent.',
+      'You want job matches and interview practice alongside your tracker.',
+    ],
+    sources: [{ label: 'Teal pricing', url: 'https://www.tealhq.com/pricing' }],
+    faqs: [
+      {
+        q: 'Is ApplyMaster a Teal alternative?',
+        a: 'For people who want help applying as well as preparing, yes. Teal focuses on building resumes and tracking jobs; ApplyMaster also fills the application on the employer’s site and records what you sent.',
       },
     ],
   },

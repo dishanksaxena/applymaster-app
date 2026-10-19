@@ -66,6 +66,9 @@ export const TRACK_EVENTS = [
 
   // A job search: what people look for, and the searches that found nothing.
   'job_search',
+
+  // Someone used a free tool on the public site (the score only, never the text).
+  'tool_used',
 ] as const
 
 export type TrackEvent = (typeof TRACK_EVENTS)[number]
