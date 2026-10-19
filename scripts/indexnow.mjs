@@ -12,7 +12,8 @@
 const SITE = 'https://www.applymaster.ai'
 const KEY = 'b240f9946492ca02bfb7aba2407dfe83'
 
-const paths = process.argv.slice(2)
+// Git Bash rewrites "/tools" into "C:/Program Files/Git/tools" before Node sees it; undo that.
+const paths = process.argv.slice(2).map(p => p.replace(/^[A-Za-z]:[\\/].*?[\\/]Git(?=[\\/])/i, '').replace(/\\/g, '/'))
 let urls
 if (paths.length) urls = paths.map(p => SITE + p)
 else {
