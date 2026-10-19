@@ -154,8 +154,10 @@ export function toBlocks(escaped: string): Block[] {
     const t = clean(html)
     if (t) blocks.push({ type: 'p', text: t })
   }
-  // A paragraph that is only bold text reads as a heading.
-  return blocks.map(b => (b.type === 'p' && b.text.length < 60 && /:$/.test(b.text) ? { type: 'h', text: b.text.replace(/:$/, '') } : b))
+  // A paragraph that is only bold text reads as a heading; one that is only an internal code ("SLSQ427R938") goes.
+  return blocks
+    .filter(b => !(b.type === 'p' && /^[A-Z0-9][A-Z0-9_-]{5,}$/.test(b.text) && /\d/.test(b.text)))
+    .map(b => (b.type === 'p' && b.text.length < 60 && /:$/.test(b.text) ? { type: 'h', text: b.text.replace(/:$/, '') } : b))
 }
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
