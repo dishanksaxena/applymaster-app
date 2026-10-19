@@ -63,8 +63,8 @@ export const companyName = (board: string) => boardName(board)
 
 export const slugify = (s: string) =>
   s
+    .normalize('NFKD') // before lowercasing: NFKD turns "™" into "TM"
     .toLowerCase()
-    .normalize('NFKD')
     .replace(/[^\w\s-]/g, ' ')
     .replace(/[\s_-]+/g, '-')
     .replace(/^-|-$/g, '')
