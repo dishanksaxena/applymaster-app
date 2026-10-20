@@ -4,6 +4,7 @@ import path from 'node:path'
 import { livePortals } from '@/lib/seo/portals'
 import { COMPETITORS } from '@/lib/seo/competitors'
 import { SITE_URL } from '@/lib/seo/site'
+import { ROLES } from '@/lib/role-insights'
 
 /**
  * Every public page, on the www host the site is served from. Built from the
@@ -37,6 +38,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     page('/tools/job-description-keyword-extractor', 0.85),
     page('/compare', 0.8),
     ...COMPETITORS.map(c => page(`/compare/${c.slug}`, 0.8)),
+    page('/roles', 0.8, 'daily'),
+    ...ROLES.map(r => page(`/roles/${r.slug}`, 0.8, 'daily')),
     page('/guides', 0.7),
     page('/guides/workday-application-tips', 0.8, 'monthly'),
     page('/guides/resume-keywords', 0.8, 'monthly'),

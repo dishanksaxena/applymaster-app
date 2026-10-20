@@ -1050,7 +1050,7 @@ export default function Home() {
             {[
               { h: 'Product', links: [['Features', '/features'], ['Auto Apply', '/features/auto-apply'], ['Resume Optimizer', '/features/resume-optimizer'], ['Interview Coach', '/features/interview-coach'], ['Integrations', '/integrations'], ['Pricing', '/pricing']] },
               { h: 'Resources', links: [['Blog', '/blog'], ['AI Job Application Guide', '/blog/ai-job-application-guide'], ['ATS Resume Guide', '/blog/ats-resume-optimization'], ['LinkedIn Auto Apply Guide', '/blog/linkedin-auto-apply-guide'], ['About 3GP.AI', 'https://3gp.ai']] },
-              { h: 'Free tools', links: [['ATS Resume Checker', '/tools/ats-resume-checker'], ['Keyword Extractor', '/tools/job-description-keyword-extractor'], ['Workday Autofill', '/autofill/workday'], ['Autofill Extension', '/autofill'], ['Jobs at Top Companies', '/companies'], ['Compare Tools', '/compare'], ['Guides', '/guides']] },
+              { h: 'Free tools', links: [['ATS Resume Checker', '/tools/ats-resume-checker'], ['Keyword Extractor', '/tools/job-description-keyword-extractor'], ['Workday Autofill', '/autofill/workday'], ['Autofill Extension', '/autofill'], ['Jobs at Top Companies', '/companies'], ['Skills & Pay by Role', '/roles'], ['Compare Tools', '/compare'], ['Guides', '/guides']] },
               { h: 'Legal', links: [['Privacy Policy', '/privacy'], ['Terms of Service', '/terms'], ['About', '/about']] },
             ].map(col => (
               <div key={col.h}>

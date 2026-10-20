@@ -46,7 +46,7 @@ analytical skills,decision making,interpersonal skills,self-starter,customer foc
    "a swift response"): they only count when written with a capital, as a
    product name is. */
 const CASED: Record<string, RegExp> = {
-  go: /(?<![\w.])Go(?![\w])/g,
+  go: /(?<![\w.-])Go(?![\w-])/g, // not "Go-to-market"
   rust: /\bRust\b/g,
   swift: /\bSwift\b/g,
   r: /(?<![\w.])R(?![\w&/])/g,

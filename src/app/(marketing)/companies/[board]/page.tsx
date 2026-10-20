@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import { Crumbs, Ctas, JsonLd } from '@/components/marketing/Landing'
 import { SITE_URL, breadcrumbs } from '@/lib/seo/site'
 import { BOARDS, companyName, getBoardJobs, isBoard, jobPath, parseLocation } from '@/lib/public-jobs'
+import { sourceBySlug } from '@/lib/job-boards'
 
 export const revalidate = 21600
 export function generateStaticParams() {
@@ -31,6 +32,7 @@ export default async function CompanyJobs({ params }: { params: { board: string 
   const jobs = await getBoardJobs(params.board)
   if (!jobs) notFound()
   const company = companyName(params.board)
+  const ats = sourceBySlug(params.board)?.ats === 'lever' ? 'Lever' : 'Greenhouse'
   const remote = jobs.filter(j => parseLocation(j.location).remote).length
   const places = new Map<string, number>()
   for (const j of jobs) for (const p of parseLocation(j.location).places) if (p.city) places.set(p.city, (places.get(p.city) ?? 0) + 1)
@@ -61,13 +63,13 @@ export default async function CompanyJobs({ params }: { params: { board: string 
             {company} jobs <span style={{ color: 'var(--text-muted)' }}>· {jobs.length} open</span>
           </h1>
           <p className="max-w-2xl text-lg leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-            Every open role at {company}, read from {company}’s own Greenhouse job board and refreshed every few hours.
+            Every open role at {company}, read from {company}’s own {ats} job board and refreshed every few hours.
             {remote ? ` ${remote} of them can be done remotely.` : ''}
             {topPlaces.length ? ` Most are in ${topPlaces.slice(0, 3).map(([c]) => c).join(', ')}.` : ''}
           </p>
           <Ctas />
           <p className="mt-3 text-[13px]" style={{ color: 'var(--text-muted)' }}>
-            {company} applications run on Greenhouse, which the free ApplyMaster extension fills from your resume.
+            {company} applications run on {ats}, which the free ApplyMaster extension fills from your resume.
           </p>
         </div>
       </section>

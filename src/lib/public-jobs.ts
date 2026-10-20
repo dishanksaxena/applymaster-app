@@ -1,23 +1,21 @@
 import 'server-only'
-import { GREENHOUSE_BOARDS, boardName } from './job-fetch'
+import { BOARD_SOURCES, sourceBySlug, type BoardSource } from './job-boards'
 
 /**
- * Public job pages (/companies/...): live openings from the employers'
- * own Greenhouse boards, read through Greenhouse's public Job Board API and
- * cached for six hours. Nothing is stored: a job that closes disappears from
- * the board, so its page answers 404 at the next refresh.
+ * Public job pages (/companies/...): live openings from employers' own job
+ * boards on Greenhouse and Lever, read through their public APIs and cached
+ * for six hours. Nothing is stored: a job that closes disappears from its
+ * board, so its page answers 404 at the next refresh.
  *
- * Descriptions arrive as escaped HTML. They are never injected as HTML:
- * they are reduced to headings, paragraphs and list items, which the page
- * renders itself.
+ * Descriptions are never injected as HTML: they are reduced to headings,
+ * paragraphs and list items, which the page renders itself.
  */
 
-export const BOARDS = GREENHOUSE_BOARDS
-const API = 'https://boards-api.greenhouse.io/v1/boards'
+export const BOARDS = BOARD_SOURCES.map(b => b.slug)
 const REVALIDATE = 6 * 3600
 
 export type ListedJob = {
-  id: number
+  id: string
   title: string
   location: string
   url: string
@@ -33,33 +31,12 @@ export type JobDetail = ListedJob & {
   board: string
   departments: string[]
   blocks: Block[]
+  /** Where the employer takes the application, for the copy on the page. */
+  ats: 'Greenhouse' | 'Lever'
 }
 
-type GhJob = {
-  id: number
-  title: string
-  absolute_url: string
-  location?: { name?: string }
-  updated_at: string
-  first_published?: string | null
-  application_deadline?: string | null
-  company_name?: string
-  content?: string
-  departments?: { name: string }[]
-}
-
-const toListed = (j: GhJob): ListedJob => ({
-  id: j.id,
-  title: j.title.trim(),
-  location: (j.location?.name || '').trim(),
-  url: j.absolute_url,
-  updated: j.updated_at,
-  published: j.first_published ?? null,
-  deadline: j.application_deadline ?? null,
-})
-
-export const isBoard = (b: string) => (BOARDS as readonly string[]).includes(b)
-export const companyName = (board: string) => boardName(board)
+export const isBoard = (slug: string) => !!sourceBySlug(slug)
+export const companyName = (slug: string) => sourceBySlug(slug)?.name ?? slug
 
 export const slugify = (s: string) =>
   s
@@ -70,41 +47,144 @@ export const slugify = (s: string) =>
     .replace(/^-|-$/g, '')
     .slice(0, 70)
 
-export const jobPath = (board: string, j: { id: number; title: string }) => `/companies/${board}/jobs/${j.id}-${slugify(j.title)}`
-export const idFromParam = (p: string) => Number(p.split('-')[0]) || null
+export const jobPath = (board: string, j: { id: string; title: string }) => `/companies/${board}/jobs/${j.id}-${slugify(j.title)}`
+
+/** The job id at the start of the address: a number (Greenhouse) or a UUID (Lever). */
+export function idFromParam(p: string): string | null {
+  const uuid = p.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i)
+  if (uuid) return uuid[0].toLowerCase()
+  const n = p.match(/^\d+/)
+  return n ? n[0] : null
+}
+
+const byNewest = (a: ListedJob, b: ListedJob) => (b.published ?? b.updated).localeCompare(a.published ?? a.updated)
+
+/* ── Greenhouse ─────────────────────────────────────────────────────── */
+
+const GH = 'https://boards-api.greenhouse.io/v1/boards'
+type GhJob = {
+  id: number
+  title: string
+  absolute_url: string
+  location?: { name?: string }
+  updated_at: string
+  first_published?: string | null
+  application_deadline?: string | null
+  content?: string
+  departments?: { name: string }[]
+}
+const ghListed = (j: GhJob): ListedJob => ({
+  id: String(j.id),
+  title: j.title.trim(),
+  location: (j.location?.name || '').trim(),
+  url: j.absolute_url,
+  updated: j.updated_at,
+  published: j.first_published ?? null,
+  deadline: j.application_deadline ?? null,
+})
+
+async function ghBoard(src: BoardSource) {
+  const res = await fetch(`${GH}/${src.token}/jobs`, { next: { revalidate: REVALIDATE } })
+  if (!res.ok) return null
+  return (((await res.json()) as { jobs?: GhJob[] }).jobs ?? []).map(ghListed)
+}
+
+async function ghJob(src: BoardSource, id: string): Promise<JobDetail | null> {
+  if (!/^\d+$/.test(id)) return null
+  const res = await fetch(`${GH}/${src.token}/jobs/${id}`, { next: { revalidate: REVALIDATE } })
+  if (!res.ok) return null
+  const j = (await res.json()) as GhJob
+  return {
+    ...ghListed(j),
+    board: src.slug,
+    company: src.name,
+    ats: 'Greenhouse',
+    // Some boards prefix department names with an internal code ("6532 Benefits").
+    departments: (j.departments ?? []).map(d => d.name.replace(/^\d+\s+/, '').trim()).filter(Boolean),
+    blocks: toBlocks(j.content ?? ''),
+  }
+}
+
+/* ── Lever ──────────────────────────────────────────────────────────── */
+
+const LEVER = 'https://api.lever.co/v0/postings'
+type LeverJob = {
+  id: string
+  text: string
+  hostedUrl: string
+  createdAt: number
+  workplaceType?: string
+  country?: string
+  categories?: { location?: string; allLocations?: string[]; team?: string; department?: string; commitment?: string }
+  description?: string
+  lists?: { text: string; content: string }[]
+  additional?: string
+}
+function leverLocation(j: LeverJob) {
+  const places = j.categories?.allLocations?.length ? j.categories.allLocations : j.categories?.location ? [j.categories.location] : []
+  const where = places.join('; ')
+  // Lever marks remote roles separately; keep it in the text the location parser reads.
+  if (j.workplaceType === 'remote' && !/remote/i.test(where)) return `Remote${j.country ? ` - ${j.country}` : ''}${where ? `; ${where}` : ''}`
+  return where
+}
+const leverListed = (j: LeverJob): ListedJob => {
+  const when = new Date(j.createdAt).toISOString()
+  return { id: j.id, title: j.text.trim(), location: leverLocation(j), url: j.hostedUrl, updated: when, published: when, deadline: null }
+}
+
+async function leverBoard(src: BoardSource) {
+  // Pages of 100 keep each cached response well under the 2 MB cache limit.
+  const all: LeverJob[] = []
+  for (let skip = 0; skip < 3000; skip += 100) {
+    const res = await fetch(`${LEVER}/${src.token}?mode=json&skip=${skip}&limit=100`, { next: { revalidate: REVALIDATE } })
+    if (!res.ok) return all.length ? all.map(leverListed) : null
+    const page = (await res.json()) as LeverJob[]
+    all.push(...page)
+    if (page.length < 100) break
+  }
+  return all.map(leverListed)
+}
+
+async function leverJob(src: BoardSource, id: string): Promise<JobDetail | null> {
+  if (!/^[0-9a-f-]{36}$/.test(id)) return null
+  const res = await fetch(`${LEVER}/${src.token}/${id}?mode=json`, { next: { revalidate: REVALIDATE } })
+  if (!res.ok) return null
+  const j = (await res.json()) as LeverJob
+  const html = `${j.description ?? ''}${(j.lists ?? []).map(l => `<h3>${l.text}</h3><ul>${l.content}</ul>`).join('')}${j.additional ?? ''}`
+  return {
+    ...leverListed(j),
+    board: src.slug,
+    company: src.name,
+    ats: 'Lever',
+    departments: [j.categories?.team, j.categories?.department].filter((d): d is string => !!d && d.trim().length > 0),
+    blocks: toBlocks(html),
+  }
+}
+
+/* ── Either ─────────────────────────────────────────────────────────── */
 
 /** Every open role on one board, newest first. Null when the board cannot be read. */
-export async function getBoardJobs(board: string): Promise<ListedJob[] | null> {
-  if (!isBoard(board)) return null
+export async function getBoardJobs(slug: string): Promise<ListedJob[] | null> {
+  const src = sourceBySlug(slug)
+  if (!src) return null
   try {
-    const res = await fetch(`${API}/${board}/jobs`, { next: { revalidate: REVALIDATE } })
-    if (!res.ok) return null
-    const data = (await res.json()) as { jobs?: GhJob[] }
-    return (data.jobs ?? []).map(toListed).sort((a, b) => (b.published ?? b.updated).localeCompare(a.published ?? a.updated))
+    const jobs = src.ats === 'lever' ? await leverBoard(src) : await ghBoard(src)
+    return jobs ? jobs.sort(byNewest) : null
   } catch {
     return null
   }
 }
 
 export async function getAllBoards() {
-  const rows = await Promise.all(BOARDS.map(async board => ({ board, company: companyName(board), jobs: (await getBoardJobs(board)) ?? [] })))
+  const rows = await Promise.all(BOARD_SOURCES.map(async b => ({ board: b.slug, company: b.name, ats: b.ats, jobs: (await getBoardJobs(b.slug)) ?? [] })))
   return rows.filter(r => r.jobs.length > 0)
 }
 
-export async function getJob(board: string, id: number): Promise<JobDetail | null> {
-  if (!isBoard(board) || !Number.isFinite(id)) return null
+export async function getJob(slug: string, id: string): Promise<JobDetail | null> {
+  const src = sourceBySlug(slug)
+  if (!src) return null
   try {
-    const res = await fetch(`${API}/${board}/jobs/${id}`, { next: { revalidate: REVALIDATE } })
-    if (!res.ok) return null
-    const j = (await res.json()) as GhJob
-    return {
-      ...toListed(j),
-      board,
-      company: j.company_name?.trim() || companyName(board),
-      // Some boards prefix department names with an internal code ("6532 Benefits").
-      departments: (j.departments ?? []).map(d => d.name.replace(/^\d+\s+/, '').trim()).filter(Boolean),
-      blocks: toBlocks(j.content ?? ''),
-    }
+    return src.ats === 'lever' ? await leverJob(src, id) : await ghJob(src, id)
   } catch {
     return null
   }
@@ -295,7 +375,8 @@ export function jobPostingSchema(job: JobDetail, pageUrl: string) {
   let sameAs: string | undefined
   try {
     const host = new URL(job.url).hostname
-    if (!/greenhouse\.io$/.test(host)) sameAs = `https://${host.replace(/^(boards|job-boards|careers|jobs)\./, '')}`
+    // The employer's own site, never the job board host (Greenhouse, Lever).
+    if (!/(greenhouse\.io|lever\.co)$/.test(host)) sameAs =`https://${host.replace(/^(boards|job-boards|careers|jobs)\./, '')}`
   } catch {}
   const type = /\bintern(ship)?\b/i.test(job.title) ? 'INTERN' : /\bcontract(or)?\b/i.test(job.title) ? 'CONTRACTOR' : /\bpart[- ]time\b/i.test(job.title) ? 'PART_TIME' : undefined
   return {

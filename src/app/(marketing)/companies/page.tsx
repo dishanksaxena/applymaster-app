@@ -34,7 +34,7 @@ export default async function Companies() {
           <h1 className="font-display text-[clamp(2.3rem,5vw,3.5rem)] leading-[1.05] mb-4">Jobs at top tech companies</h1>
           <p className="max-w-2xl text-lg leading-relaxed mb-10" style={{ color: 'var(--text-secondary)' }}>
             {total.toLocaleString('en-US')} open roles at {boards.length} companies, read from each company’s own job board
-            and refreshed every few hours. Each one applies through Greenhouse, which the free ApplyMaster extension fills
+            and refreshed every few hours. Each one applies through Greenhouse or Lever, which the free ApplyMaster extension fills
             from your resume.
           </p>
           <ul className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">

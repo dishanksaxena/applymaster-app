@@ -111,7 +111,7 @@ export default async function JobPage({ params }: { params: Params }) {
             </a>
           </div>
           <p className="mt-3 text-[13px]" style={{ color: 'var(--text-muted)' }}>
-            {company} takes applications through Greenhouse. The free ApplyMaster extension fills that form from your resume;
+            {company} takes applications through {job.ats}. The free ApplyMaster extension fills that form from your resume;
             you check it and press Submit.
           </p>
         </div>
@@ -141,7 +141,7 @@ export default async function JobPage({ params }: { params: Params }) {
               )}
             </div>
             <p className="mt-6 text-[12.5px]" style={{ color: 'var(--text-muted)' }}>
-              Source: {company}’s job board on Greenhouse, refreshed every few hours. If the role has closed, this page will
+              Source: {company}’s job board on {job.ats}, refreshed every few hours. If the role has closed, this page will
               disappear.
             </p>
           </article>

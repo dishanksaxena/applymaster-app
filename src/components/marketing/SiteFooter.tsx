@@ -31,6 +31,7 @@ const COLUMNS: { heading: string; links: [string, string][] }[] = [
       ['Workday Autofill', '/autofill/workday'],
       ['Autofill Extension', '/autofill'],
       ['Jobs at Top Companies', '/companies'],
+      ['Skills & Pay by Role', '/roles'],
       ['Compare Tools', '/compare'],
       ['Guides', '/guides'],
     ],
