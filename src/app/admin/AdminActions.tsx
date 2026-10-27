@@ -4,19 +4,37 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 /** Re-render the server page every minute so the dashboard stays live. */
-export function AutoRefresh({ seconds = 60 }: { seconds?: number }) {
+/**
+ * Re-render the server page every few minutes so the dashboard stays live,
+ * but only while the tab is on screen: a forgotten background tab used to
+ * reload every page of data once a minute, all day.
+ */
+export function AutoRefresh({ seconds = 300 }: { seconds?: number }) {
   const router = useRouter()
   const [at, setAt] = useState(() => new Date())
   useEffect(() => {
-    const id = setInterval(() => {
+    let last = Date.now()
+    const refresh = () => {
       router.refresh()
+      last = Date.now()
       setAt(new Date())
+    }
+    const id = setInterval(() => {
+      if (document.visibilityState === 'visible') refresh()
     }, seconds * 1000)
-    return () => clearInterval(id)
+    // Coming back to a stale tab refreshes once, straight away.
+    const onShow = () => {
+      if (document.visibilityState === 'visible' && Date.now() - last > seconds * 1000) refresh()
+    }
+    document.addEventListener('visibilitychange', onShow)
+    return () => {
+      clearInterval(id)
+      document.removeEventListener('visibilitychange', onShow)
+    }
   }, [router, seconds])
   return (
     <span className="text-[11px] tabular-nums" style={{ color: 'var(--text-faint)' }}>
-      Updated {at.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })} · refreshes every minute
+      Updated {at.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })} · refreshes every {Math.round(seconds / 60)} min while open
     </span>
   )
 }

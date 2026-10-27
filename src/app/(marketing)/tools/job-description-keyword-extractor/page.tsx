@@ -80,7 +80,7 @@ export default function KeywordExtractorPage() {
           ]}
         />
         <p className="mt-6">
-          <Link href="/tools/ats-resume-checker" className="inline-block rounded-full bg-[var(--accent-solid)] px-7 py-3 text-sm font-semibold text-[var(--text-on-accent)]">
+          <Link prefetch={false} href="/tools/ats-resume-checker" className="inline-block rounded-full bg-[var(--accent-solid)] px-7 py-3 text-sm font-semibold text-[var(--text-on-accent)]">
             Open the ATS resume checker
           </Link>
         </p>

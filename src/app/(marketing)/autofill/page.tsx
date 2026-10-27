@@ -53,7 +53,7 @@ export default function AutofillHub() {
         <ul className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {portals.map(p => (
             <li key={p.slug}>
-              <Link
+              <Link prefetch={false}
                 href={`/autofill/${p.slug}`}
                 className="block h-full rounded-2xl p-5 transition-transform hover:-translate-y-0.5"
                 style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}

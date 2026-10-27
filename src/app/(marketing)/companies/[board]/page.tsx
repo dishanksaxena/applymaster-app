@@ -6,7 +6,7 @@ import { SITE_URL, breadcrumbs } from '@/lib/seo/site'
 import { BOARDS, companyName, getBoardJobs, isBoard, jobPath, parseLocation } from '@/lib/public-jobs'
 import { sourceBySlug } from '@/lib/job-boards'
 
-export const revalidate = 21600
+export const revalidate = 86400 // daily: job pages are crawled heavily, and roles rarely change faster
 export function generateStaticParams() {
   return BOARDS.map(board => ({ board }))
 }
@@ -16,7 +16,7 @@ export async function generateMetadata({ params }: { params: { board: string } }
   const jobs = (await getBoardJobs(params.board)) ?? []
   const company = companyName(params.board)
   const title = `${company} Jobs: ${jobs.length} Open Roles`
-  const description = `All ${jobs.length} open roles at ${company}, updated every few hours from ${company}’s own job board, with what each posting asks for and a free tool to fill the application.`
+  const description = `All ${jobs.length} open roles at ${company}, updated daily from ${company}’s own job board, with what each posting asks for and a free tool to fill the application.`
   const url = `${SITE_URL}/companies/${params.board}`
   return {
     title: { absolute: `${title} | ApplyMaster` },
@@ -63,7 +63,7 @@ export default async function CompanyJobs({ params }: { params: { board: string 
             {company} jobs <span style={{ color: 'var(--text-muted)' }}>· {jobs.length} open</span>
           </h1>
           <p className="max-w-2xl text-lg leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-            Every open role at {company}, read from {company}’s own {ats} job board and refreshed every few hours.
+            Every open role at {company}, read from {company}’s own {ats} job board and refreshed daily.
             {remote ? ` ${remote} of them can be done remotely.` : ''}
             {topPlaces.length ? ` Most are in ${topPlaces.slice(0, 3).map(([c]) => c).join(', ')}.` : ''}
           </p>
@@ -78,7 +78,7 @@ export default async function CompanyJobs({ params }: { params: { board: string 
           <ul className="divide-y rounded-2xl overflow-hidden" style={{ border: '1px solid var(--border)', background: 'var(--bg-card)' }}>
             {jobs.map(j => (
               <li key={j.id} style={{ borderColor: 'var(--border)' }}>
-                <Link href={jobPath(params.board, j)} className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 px-5 py-3.5 hover:bg-[var(--bg-overlay)]">
+                <Link prefetch={false} href={jobPath(params.board, j)} className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 px-5 py-3.5 hover:bg-[var(--bg-overlay)]">
                   <span className="text-[15px] font-medium" style={{ color: 'var(--text)' }}>
                     {j.title}
                   </span>

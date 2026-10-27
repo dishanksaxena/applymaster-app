@@ -58,7 +58,7 @@ export default function SiteFooter() {
       <div className="max-w-[1240px] mx-auto px-6 lg:px-8">
         <div className="grid sm:grid-cols-2 md:grid-cols-5 gap-10 mb-10">
           <div>
-            <Link href="/" className="flex items-center gap-2.5 mb-4">
+            <Link prefetch={false} href="/" className="flex items-center gap-2.5 mb-4">
               <span
                 className="w-8 h-8 rounded-lg grid place-items-center font-bold text-[11px]"
                 style={{ background: 'var(--accent-solid)', color: 'var(--text-on-accent)' }}
@@ -88,7 +88,7 @@ export default function SiteFooter() {
               </h2>
               <div className="space-y-2.5">
                 {col.links.map(([label, href]) => (
-                  <Link
+                  <Link prefetch={false}
                     key={label}
                     href={href}
                     className="block text-[13px] transition-opacity hover:opacity-70"

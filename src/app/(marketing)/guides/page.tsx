@@ -46,7 +46,7 @@ export default function GuidesHub() {
           <ul className="grid sm:grid-cols-2 gap-4">
             {GUIDES.map(g => (
               <li key={g.href}>
-                <Link href={g.href} className="block h-full rounded-2xl p-5 transition-transform hover:-translate-y-0.5" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+                <Link prefetch={false} href={g.href} className="block h-full rounded-2xl p-5 transition-transform hover:-translate-y-0.5" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
                   <h2 className="text-[17px] font-semibold" style={{ color: 'var(--text)' }}>
                     {g.name}
                   </h2>

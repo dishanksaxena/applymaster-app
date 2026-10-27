@@ -265,10 +265,10 @@ export default function ResumeChecker({ mode = 'resume', initialJd = '', jdLabel
                 for you to check and submit. Free to start.
               </p>
               <div className="mt-4 flex flex-wrap gap-3">
-                <Link href="/signup" className="rounded-full bg-[var(--accent-solid)] px-6 py-2.5 text-[14px] font-semibold text-[var(--text-on-accent)]">
+                <Link prefetch={false} href="/signup" className="rounded-full bg-[var(--accent-solid)] px-6 py-2.5 text-[14px] font-semibold text-[var(--text-on-accent)]">
                   Create a free account
                 </Link>
-                <Link href="/autofill" className="rounded-full px-6 py-2.5 text-[14px] font-semibold" style={{ border: '1px solid var(--border)', color: 'var(--text)' }}>
+                <Link prefetch={false} href="/autofill" className="rounded-full px-6 py-2.5 text-[14px] font-semibold" style={{ border: '1px solid var(--border)', color: 'var(--text)' }}>
                   See the extension
                 </Link>
               </div>

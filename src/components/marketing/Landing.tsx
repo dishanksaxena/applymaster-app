@@ -16,7 +16,7 @@ export function Crumbs({ items }: { items: { name: string; href?: string }[] }) 
           <li key={it.name} className="flex items-center gap-1.5">
             {i > 0 && <span aria-hidden="true">/</span>}
             {it.href ? (
-              <Link href={it.href} className="hover:underline" style={{ color: 'var(--accent)' }}>
+              <Link prefetch={false} href={it.href} className="hover:underline" style={{ color: 'var(--accent)' }}>
                 {it.name}
               </Link>
             ) : (
@@ -47,7 +47,7 @@ export function Ctas({ extension = true }: { extension?: boolean }) {
           Add to Chrome, free
         </a>
       )}
-      <Link
+      <Link prefetch={false}
         href="/signup"
         className="rounded-full px-7 py-3 text-sm font-semibold transition-colors"
         style={extension ? { border: '1px solid var(--border-strong, var(--border))', color: 'var(--text)' } : { background: 'var(--accent-solid)', color: 'var(--text-on-accent)' }}

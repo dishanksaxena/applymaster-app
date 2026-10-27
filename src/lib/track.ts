@@ -114,8 +114,19 @@ function session(): { id: string; n: number; source: Record<string, string> } | 
   }
 }
 
+/* Crawlers that run JavaScript (Googlebot renders pages) would otherwise
+   send a beacon for every page they read: a server call each, for a visit
+   that is not a person. */
+const isBot = () => {
+  try {
+    return navigator.webdriver === true || /bot|crawl|spider|slurp|headless|lighthouse|pagespeed|preview|google-inspectiontool|chrome-lighthouse/i.test(navigator.userAgent)
+  } catch {
+    return false
+  }
+}
+
 export function trackPageView(path: string): void {
-  if (optedOut()) return
+  if (optedOut() || isBot()) return
   const s = session()
   track('page_view', {
     meta: {

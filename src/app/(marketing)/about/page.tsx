@@ -89,7 +89,7 @@ export default function AboutPage() {
               support@applymaster.ai
             </a>{' '}
             or use the{' '}
-            <Link href="/support" className="underline" style={{ color: 'var(--accent)' }}>
+            <Link prefetch={false} href="/support" className="underline" style={{ color: 'var(--accent)' }}>
               support form
             </Link>
             .

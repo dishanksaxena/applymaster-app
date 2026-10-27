@@ -51,8 +51,13 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // Exclude API routes, static files, and Next.js internals — they don't need auth middleware
+  /* Only the signed-in app and the sign-in pages need the session. Public
+     pages (the site, job pages, tools, guides, sitemaps) are served straight
+     from the cache: running this on them made every crawler request on the
+     17,000 job pages an extra middleware run. Keep in step with protectedPaths. */
   matcher: [
-    '/((?!api/|_next/static|_next/image|favicon|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
+    '/dashboard/:path*', '/onboarding/:path*', '/jobs/:path*', '/applications/:path*', '/resume/:path*', '/auto-apply/:path*',
+    '/settings/:path*', '/cover-letters/:path*', '/network/:path*', '/profile/:path*', '/notifications/:path*', '/saved-jobs/:path*',
+    '/interview-coach/:path*', '/extension/:path*', '/admin/:path*', '/login', '/signup',
   ],
 }

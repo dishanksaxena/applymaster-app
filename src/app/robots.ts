@@ -52,11 +52,20 @@ const AI_CRAWLERS = [
   'CCBot',
 ]
 
+/* SEO-tool and scraper bots: they crawl every page for their own databases
+   and send no visitors. Shut out entirely; Google and Bing are unaffected. */
+const NO_VALUE_BOTS = [
+  'AhrefsBot', 'SemrushBot', 'MJ12bot', 'DotBot', 'PetalBot', 'Bytespider', 'DataForSeoBot', 'BLEXBot', 'Barkrowler', 'serpstatbot',
+  'SeekportBot', 'MauiBot', 'Awario', 'ImagesiftBot', 'Timpibot', 'omgili', 'Diffbot',
+]
+
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
       { userAgent: '*', allow: '/', disallow: PRIVATE },
-      { userAgent: AI_CRAWLERS, allow: '/', disallow: PRIVATE },
+      // AI assistants may read and cite the site, but not crawl the 17,000 job pages: those are for search engines' job listings.
+      { userAgent: AI_CRAWLERS, allow: '/', disallow: [...PRIVATE, '/companies/'] },
+      { userAgent: NO_VALUE_BOTS, disallow: '/' },
     ],
     sitemap: [`${SITE_URL}/sitemap.xml`, `${SITE_URL}/sitemap-jobs.xml`],
     host: SITE_URL,

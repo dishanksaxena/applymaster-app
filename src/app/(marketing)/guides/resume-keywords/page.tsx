@@ -69,7 +69,7 @@ export default function ResumeKeywordsGuide() {
       </ol>
       <p>
         Our{' '}
-        <Link href="/tools/job-description-keyword-extractor" className="underline" style={{ color: 'var(--accent)' }}>
+        <Link prefetch={false} href="/tools/job-description-keyword-extractor" className="underline" style={{ color: 'var(--accent)' }}>
           job description keyword extractor
         </Link>{' '}
         does this in seconds: paste a posting and it ranks the skills, tools and phrases, marking the ones in its
@@ -111,7 +111,7 @@ export default function ResumeKeywordsGuide() {
       <H2 id="check">Check before you apply</H2>
       <p>
         Paste your resume and the posting into the{' '}
-        <Link href="/tools/ats-resume-checker" className="underline" style={{ color: 'var(--accent)' }}>
+        <Link prefetch={false} href="/tools/ats-resume-checker" className="underline" style={{ color: 'var(--accent)' }}>
           free ATS resume checker
         </Link>{' '}
         to see your keyword match and what is missing. It runs in your browser, so your resume is not uploaded anywhere.

@@ -131,14 +131,14 @@ export default function WorkdayGuide() {
         <li>
           <strong style={{ color: 'var(--text)' }}>Match the posting’s keywords before you apply.</strong> Recruiters search
           Workday for the posting’s terms. Our{' '}
-          <Link href="/tools/ats-resume-checker" className="underline" style={{ color: 'var(--accent)' }}>
+          <Link prefetch={false} href="/tools/ats-resume-checker" className="underline" style={{ color: 'var(--accent)' }}>
             free ATS resume checker
           </Link>{' '}
           shows which you are missing.
         </li>
         <li>
           <strong style={{ color: 'var(--text)' }}>Let an autofill do the typing.</strong> The{' '}
-          <Link href="/autofill/workday" className="underline" style={{ color: 'var(--accent)' }}>
+          <Link prefetch={false} href="/autofill/workday" className="underline" style={{ color: 'var(--accent)' }}>
             ApplyMaster extension for Workday
           </Link>{' '}
           fills My Information and every job and school in My Experience from your resume, and fills each new page as you

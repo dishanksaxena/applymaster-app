@@ -7,7 +7,7 @@ import { SITE_URL } from '@/lib/seo/site'
  * next to the main sitemap.
  */
 
-export const revalidate = 21600
+export const revalidate = 86400 // daily: job pages are crawled heavily, and roles rarely change faster
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 

@@ -157,7 +157,7 @@ export default function ComparePage({ params }: { params: { slug: string } }) {
         <ul className="flex flex-wrap gap-2.5">
           {others.map(o => (
             <li key={o.slug}>
-              <Link
+              <Link prefetch={false}
                 href={`/compare/${o.slug}`}
                 className="inline-block rounded-full px-4 py-2 text-[14px] font-medium"
                 style={{ border: '1px solid var(--border)', color: 'var(--text)', background: 'var(--bg-card)' }}
@@ -167,7 +167,7 @@ export default function ComparePage({ params }: { params: { slug: string } }) {
             </li>
           ))}
           <li>
-            <Link
+            <Link prefetch={false}
               href="/autofill"
               className="inline-block rounded-full px-4 py-2 text-[14px] font-medium"
               style={{ border: '1px solid var(--border)', color: 'var(--accent)', background: 'var(--bg-card)' }}

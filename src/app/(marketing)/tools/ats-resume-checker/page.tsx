@@ -114,11 +114,11 @@ export default function AtsResumeCheckerPage() {
         </div>
         <p className="mt-6 text-[14.5px] leading-relaxed max-w-3xl" style={{ color: 'var(--text-secondary)' }}>
           Want to see a posting’s keywords without a resume? Use the{' '}
-          <Link href="/tools/job-description-keyword-extractor" className="underline" style={{ color: 'var(--accent)' }}>
+          <Link prefetch={false} href="/tools/job-description-keyword-extractor" className="underline" style={{ color: 'var(--accent)' }}>
             job description keyword extractor
           </Link>
           . Applying on Workday or Greenhouse? The{' '}
-          <Link href="/autofill" className="underline" style={{ color: 'var(--accent)' }}>
+          <Link prefetch={false} href="/autofill" className="underline" style={{ color: 'var(--accent)' }}>
             ApplyMaster extension
           </Link>{' '}
           fills those forms from your resume.

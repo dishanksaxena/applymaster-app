@@ -49,7 +49,7 @@ export function Guide({ meta, children, extraSchema = [] }: { meta: GuideMeta; c
         </h1>
         <p className="text-[13.5px] mb-8" style={{ color: 'var(--text-muted)' }}>
           By the{' '}
-          <Link href="/about" className="underline underline-offset-2">
+          <Link prefetch={false} href="/about" className="underline underline-offset-2">
             ApplyMaster team
           </Link>{' '}
           · {meta.updated ? `Updated ${date(meta.updated)}` : date(meta.published)}

@@ -106,7 +106,7 @@ export default function PortalPage({ params }: { params: { portal: string } }) {
         <ul className="flex flex-wrap gap-2.5">
           {others.map(o => (
             <li key={o.slug}>
-              <Link
+              <Link prefetch={false}
                 href={`/autofill/${o.slug}`}
                 className="inline-block rounded-full px-4 py-2 text-[14px] font-medium transition-colors"
                 style={{ border: '1px solid var(--border)', color: 'var(--text)', background: 'var(--bg-card)' }}

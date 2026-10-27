@@ -51,7 +51,7 @@ export default function SiteNav({ anchors = false }: { anchors?: boolean }) {
       }}
     >
       <div className="max-w-[1240px] mx-auto px-6 lg:px-8 flex items-center justify-between h-[72px]">
-        <Link href="/" className="flex items-center gap-2.5">
+        <Link prefetch={false} href="/" className="flex items-center gap-2.5">
           <span
             className="w-9 h-9 rounded-lg grid place-items-center font-bold text-[12px]"
             style={{ background: 'var(--accent-solid)', color: 'var(--text-on-accent)' }}
@@ -65,7 +65,7 @@ export default function SiteNav({ anchors = false }: { anchors?: boolean }) {
 
         <div className="hidden lg:flex items-center gap-1">
           {links.map(([label, href]) => (
-            <Link
+            <Link prefetch={false}
               key={label}
               href={href}
               className="px-3 py-2 rounded-lg text-[13.5px] font-medium transition-colors hover:opacity-70"
@@ -79,7 +79,7 @@ export default function SiteNav({ anchors = false }: { anchors?: boolean }) {
         <div className="flex items-center gap-2">
           <ThemeToggle />
           {signedIn ? (
-            <Link
+            <Link prefetch={false}
               href="/dashboard"
               className="inline-flex items-center px-5 py-2.5 rounded-full text-[13px] font-semibold"
               style={{ background: 'var(--accent-solid)', color: 'var(--text-on-accent)' }}
@@ -88,14 +88,14 @@ export default function SiteNav({ anchors = false }: { anchors?: boolean }) {
             </Link>
           ) : (
             <>
-              <Link
+              <Link prefetch={false}
                 href="/login"
                 className="hidden lg:inline-block px-4 py-2 text-[13.5px] font-semibold rounded-lg"
                 style={{ color: 'var(--text-secondary)' }}
               >
                 Log in
               </Link>
-              <Link
+              <Link prefetch={false}
                 href="/signup"
                 className="hidden lg:inline-flex items-center px-5 py-2.5 rounded-full text-[13px] font-semibold"
                 style={{ background: 'var(--accent-solid)', color: 'var(--text-on-accent)' }}
@@ -127,7 +127,7 @@ export default function SiteNav({ anchors = false }: { anchors?: boolean }) {
           style={{ background: 'var(--bg-card)', borderTop: '1px solid var(--border)', boxShadow: 'var(--shadow-lg)' }}
         >
           {links.map(([label, href]) => (
-            <Link
+            <Link prefetch={false}
               key={label}
               href={href}
               onClick={() => setOpen(false)}
@@ -138,7 +138,7 @@ export default function SiteNav({ anchors = false }: { anchors?: boolean }) {
             </Link>
           ))}
           <div className="pt-3">
-            <Link
+            <Link prefetch={false}
               href={signedIn ? '/dashboard' : '/signup'}
               className="block text-center py-3 rounded-full font-semibold"
               style={{ background: 'var(--accent-solid)', color: 'var(--text-on-accent)' }}

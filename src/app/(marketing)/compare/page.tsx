@@ -42,7 +42,7 @@ export default function CompareHub() {
         <ul className="grid sm:grid-cols-2 gap-4">
           {COMPETITORS.map(c => (
             <li key={c.slug}>
-              <Link
+              <Link prefetch={false}
                 href={`/compare/${c.slug}`}
                 className="block h-full rounded-2xl p-5 transition-transform hover:-translate-y-0.5"
                 style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}

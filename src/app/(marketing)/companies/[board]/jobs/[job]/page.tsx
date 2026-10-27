@@ -1,16 +1,16 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound, permanentRedirect } from 'next/navigation'
-import ResumeChecker from '@/components/tools/ResumeChecker'
+import JobResumeCheck from '@/components/tools/JobResumeCheck'
 import { Crumbs, JsonLd } from '@/components/marketing/Landing'
 import { SITE_URL, STORE_URL, breadcrumbs } from '@/lib/seo/site'
 import { extractKeywords } from '@/lib/tools/keywords'
-import { blocksToText, companyName, getBoardJobs, getJob, idFromParam, jobPath, jobPostingSchema, slugify } from '@/lib/public-jobs'
+import { blocksToText, boardSummary, companyName, getJob, idFromParam, jobPath, jobPostingSchema, slugify } from '@/lib/public-jobs'
 
-export const revalidate = 21600
+export const revalidate = 86400 // daily: job pages are crawled heavily, and roles rarely change faster
 export const dynamicParams = true
 export function generateStaticParams() {
-  return [] // rendered on first visit, then cached for six hours
+  return [] // rendered on first visit, then cached for a day
 }
 
 type Params = { board: string; job: string }
@@ -52,7 +52,7 @@ export default async function JobPage({ params }: { params: Params }) {
   const schema = jobPostingSchema(job, url)
   const text = blocksToText(job.blocks)
   const keywords = extractKeywords(text).slice(0, 14)
-  const others = ((await getBoardJobs(params.board)) ?? []).filter(j => j.id !== job.id).slice(0, 8)
+  const others = (await boardSummary(params.board)).filter(j => j.id !== job.id).slice(0, 8)
   const company = job.company || companyName(params.board)
 
   return (
@@ -141,7 +141,7 @@ export default async function JobPage({ params }: { params: Params }) {
               )}
             </div>
             <p className="mt-6 text-[12.5px]" style={{ color: 'var(--text-muted)' }}>
-              Source: {company}’s job board on {job.ats}, refreshed every few hours. If the role has closed, this page will
+              Source: {company}’s job board on {job.ats}, refreshed daily. If the role has closed, this page will
               disappear.
             </p>
           </article>
@@ -172,7 +172,7 @@ export default async function JobPage({ params }: { params: Params }) {
                 <ul className="space-y-2.5">
                   {others.map(o => (
                     <li key={o.id}>
-                      <Link href={jobPath(params.board, o)} className="block text-[13.5px] leading-snug hover:underline" style={{ color: 'var(--text)' }}>
+                      <Link prefetch={false} href={jobPath(params.board, o)} className="block text-[13.5px] leading-snug hover:underline" style={{ color: 'var(--text)' }}>
                         {o.title}
                       </Link>
                       <span className="text-[12px]" style={{ color: 'var(--text-muted)' }}>
@@ -181,7 +181,7 @@ export default async function JobPage({ params }: { params: Params }) {
                     </li>
                   ))}
                 </ul>
-                <Link href={`/companies/${params.board}`} className="inline-block mt-3 text-[13px] font-semibold" style={{ color: 'var(--accent)' }}>
+                <Link prefetch={false} href={`/companies/${params.board}`} className="inline-block mt-3 text-[13px] font-semibold" style={{ color: 'var(--accent)' }}>
                   All {company} jobs →
                 </Link>
               </div>
@@ -196,10 +196,10 @@ export default async function JobPage({ params }: { params: Params }) {
             Check your resume against this job
           </h2>
           <p className="text-[15px] mb-6 max-w-2xl" style={{ color: 'var(--text-secondary)' }}>
-            The posting is already filled in. Add your resume to see which of its keywords you have and which are missing.
-            Free, and your resume never leaves your browser.
+            The posting fills itself in. Add your resume to see which of its keywords you have and which are missing. Free, and
+            your resume never leaves your browser.
           </p>
-          <ResumeChecker mode="resume" initialJd={`${job.title}\n${text}`} jdLabel={`${job.title} at ${company}`} />
+          <JobResumeCheck board={params.board} id={job.id} label={`${job.title} at ${company}`} />
         </div>
       </section>
     </div>

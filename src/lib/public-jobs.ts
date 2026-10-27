@@ -1,10 +1,11 @@
 import 'server-only'
+import { unstable_cache } from 'next/cache'
 import { BOARD_SOURCES, sourceBySlug, type BoardSource } from './job-boards'
 
 /**
  * Public job pages (/companies/...): live openings from employers' own job
  * boards on Greenhouse and Lever, read through their public APIs and cached
- * for six hours. Nothing is stored: a job that closes disappears from its
+ * for a day. Nothing is stored: a job that closes disappears from its
  * board, so its page answers 404 at the next refresh.
  *
  * Descriptions are never injected as HTML: they are reduced to headings,
@@ -12,7 +13,7 @@ import { BOARD_SOURCES, sourceBySlug, type BoardSource } from './job-boards'
  */
 
 export const BOARDS = BOARD_SOURCES.map(b => b.slug)
-const REVALIDATE = 6 * 3600
+const REVALIDATE = 24 * 3600 // daily; see the page files
 
 export type ListedJob = {
   id: string
@@ -174,6 +175,17 @@ export async function getBoardJobs(slug: string): Promise<ListedJob[] | null> {
     return null
   }
 }
+
+/**
+ * The newest dozen roles on a board, as a small cached list. Job pages show
+ * "More jobs at …" from this instead of reading the whole board (up to
+ * ~1.7 MB for SpaceX) on every render, which was most of the cache traffic.
+ */
+export const boardSummary = unstable_cache(
+  async (slug: string) => ((await getBoardJobs(slug)) ?? []).slice(0, 13).map(j => ({ id: j.id, title: j.title, location: j.location })),
+  ['board-summary-v1'],
+  { revalidate: REVALIDATE }
+)
 
 export async function getAllBoards() {
   const rows = await Promise.all(BOARD_SOURCES.map(async b => ({ board: b.slug, company: b.name, ats: b.ats, jobs: (await getBoardJobs(b.slug)) ?? [] })))

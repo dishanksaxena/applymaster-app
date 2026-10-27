@@ -5,7 +5,7 @@ import { Crumbs, Ctas, JsonLd, Section } from '@/components/marketing/Landing'
 import { SITE_URL, breadcrumbs, faqPage } from '@/lib/seo/site'
 import { ROLES, roleBySlug, roleInsights } from '@/lib/role-insights'
 
-export const revalidate = 21600
+export const revalidate = 86400 // daily: job pages are crawled heavily, and roles rarely change faster
 export const dynamicParams = false
 export function generateStaticParams() {
   return ROLES.map(r => ({ role: r.slug }))
@@ -127,7 +127,7 @@ export default async function RolePage({ params }: { params: { role: string } })
           )}
           <p className="mt-4 text-[13px]" style={{ color: 'var(--text-muted)' }}>
             Share of the {d.read} newest postings that name each skill. Check your resume against a real posting with the{' '}
-            <Link href="/tools/ats-resume-checker" className="underline" style={{ color: 'var(--accent)' }}>
+            <Link prefetch={false} href="/tools/ats-resume-checker" className="underline" style={{ color: 'var(--accent)' }}>
               free ATS resume checker
             </Link>
             .
@@ -150,7 +150,7 @@ export default async function RolePage({ params }: { params: { role: string } })
         <ul className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {d.topCompanies.map(c => (
             <li key={c.board}>
-              <Link href={`/companies/${c.board}`} className="flex justify-between rounded-2xl px-4 py-3" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+              <Link prefetch={false} href={`/companies/${c.board}`} className="flex justify-between rounded-2xl px-4 py-3" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
                 <span className="font-medium" style={{ color: 'var(--text)' }}>
                   {c.company}
                 </span>
@@ -172,7 +172,7 @@ export default async function RolePage({ params }: { params: { role: string } })
         <ul className="divide-y rounded-2xl overflow-hidden" style={{ border: '1px solid var(--border)', background: 'var(--bg-card)' }}>
           {d.latest.map(j => (
             <li key={j.href} style={{ borderColor: 'var(--border)' }}>
-              <Link href={j.href} className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 px-5 py-3 hover:bg-[var(--bg-overlay)]">
+              <Link prefetch={false} href={j.href} className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 px-5 py-3 hover:bg-[var(--bg-overlay)]">
                 <span className="text-[15px] font-medium" style={{ color: 'var(--text)' }}>
                   {j.title} <span style={{ color: 'var(--text-muted)' }}>· {j.company}</span>
                 </span>
