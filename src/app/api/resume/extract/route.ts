@@ -294,7 +294,7 @@ export async function POST(request: NextRequest) {
       resume_name: file.name,
     };
     if (parsed.full_name) profileUpdate.full_name = parsed.full_name;
-    // Don't overwrite auth email — keep the email from login (dishank@applymaster.ai)
+    // Never overwrite the auth email with one parsed from the resume.
 
     const { error: profileError } = await adminSupabase
       .from('profiles')

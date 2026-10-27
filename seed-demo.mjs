@@ -68,7 +68,7 @@ if (found) {
       email: EMAIL,
       password: PASSWORD,
       email_confirm: true,
-      user_metadata: { full_name: 'Dishank Saxena' },
+      user_metadata: { full_name: 'Alex Morgan' },
     }),
   })
   userId = created.json?.id
@@ -91,7 +91,7 @@ console.log('3. profile')
 await rest(`profiles?id=eq.${userId}`, {
   method: 'PATCH',
   body: JSON.stringify({
-    full_name: 'Dishank Saxena',
+    full_name: 'Alex Morgan',
     email: EMAIL,
     // profiles carries no phone/location/linkedin columns — those live on
     // parsed_resumes, written by the upload path.
@@ -227,9 +227,9 @@ await insert(
   appliedApps.slice(0, 6).map((a, i) => ({
     user_id: userId,
     application_id: a.id,
-    resume_version_label: `Dishank Saxena — tailored v${i + 1}`,
+    resume_version_label: `Alex Morgan — tailored v${i + 1}`,
     cover_letter_text:
-      'Dear Hiring Manager,\n\nI have spent the last three years building systems where large language models sit directly in a user-facing path, which is the problem this role describes. At 3GP.AI I took observability ingestion to 40,000 events per second and cut p99 query latency from 1.8s to 240ms.\n\nI would welcome the chance to talk.\n\nDishank Saxena',
+      'Dear Hiring Manager,\n\nI have spent the last three years building systems where large language models sit directly in a user-facing path, which is the problem this role describes. At 3GP.AI I took observability ingestion to 40,000 events per second and cut p99 query latency from 1.8s to 240ms.\n\nI would welcome the chance to talk.\n\nAlex Morgan',
     screening_answers: [
       { question: 'Will you now or in the future require sponsorship?', answer: 'No', source: 'preferences' },
       { question: 'What is your current country of residence?', answer: 'India', source: 'profile' },
@@ -247,8 +247,8 @@ await insert(
 // ── 8. Cover letters ──────────────────────────────────────────────────
 console.log('8. cover letters')
 await insert('cover_letters', [
-  { user_id: userId, job_id: savedJobs?.[0]?.id ?? null, title: 'Stripe — Staff Software Engineer', content: 'Dear Hiring Manager,\n\nI have spent eight years building systems that hold up under real traffic, most recently taking an observability platform to 40,000 events per second across 200+ customer environments. The payments reliability work described in this role is the same shape of problem.\n\nAt 3GP.AI I led a monolith-to-services migration with zero downtime, and cut p99 query latency from 1.8s to 240ms by restructuring the time-series schema. I care about the boring parts — idempotency, backpressure, what happens on the third retry.\n\nI would welcome the chance to talk.\n\nDishank Saxena', tone: 'professional' },
-  { user_id: userId, job_id: savedJobs?.[1]?.id ?? null, title: 'Anthropic — Senior Backend Engineer', content: 'Dear Hiring Manager,\n\nI build products where a language model is load-bearing rather than decorative. ApplyMaster parses resumes, scores them against postings and drafts outreach — and most of the engineering has been about the guardrails: never inventing a credential, never answering a voluntary EEO question, never claiming a submission that did not happen.\n\nThat instinct for where a model should not be trusted is what I would bring.\n\nDishank Saxena', tone: 'confident' },
+  { user_id: userId, job_id: savedJobs?.[0]?.id ?? null, title: 'Stripe — Staff Software Engineer', content: 'Dear Hiring Manager,\n\nI have spent eight years building systems that hold up under real traffic, most recently taking an observability platform to 40,000 events per second across 200+ customer environments. The payments reliability work described in this role is the same shape of problem.\n\nAt 3GP.AI I led a monolith-to-services migration with zero downtime, and cut p99 query latency from 1.8s to 240ms by restructuring the time-series schema. I care about the boring parts — idempotency, backpressure, what happens on the third retry.\n\nI would welcome the chance to talk.\n\nAlex Morgan', tone: 'professional' },
+  { user_id: userId, job_id: savedJobs?.[1]?.id ?? null, title: 'Anthropic — Senior Backend Engineer', content: 'Dear Hiring Manager,\n\nI build products where a language model is load-bearing rather than decorative. ApplyMaster parses resumes, scores them against postings and drafts outreach — and most of the engineering has been about the guardrails: never inventing a credential, never answering a voluntary EEO question, never claiming a submission that did not happen.\n\nThat instinct for where a model should not be trusted is what I would bring.\n\nAlex Morgan', tone: 'confident' },
 ])
 
 // ── 9. Referral requests, across the lifecycle ────────────────────────

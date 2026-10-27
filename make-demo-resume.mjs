@@ -37,11 +37,11 @@ const html = `<!doctype html>
 </style></head>
 <body>
 
-  <h1>Dishank Saxena</h1>
+  <h1>Alex Morgan</h1>
   <div class="role">Senior Full-Stack Engineer &nbsp;·&nbsp; AI Systems &amp; Applied Machine Learning</div>
   <div class="contact">
-    dishanksaxenapro@gmail.com &nbsp;·&nbsp; +91 98765 43210 &nbsp;·&nbsp; Bengaluru, India &nbsp;·&nbsp;
-    linkedin.com/in/dishanksaxena &nbsp;·&nbsp; github.com/dishanksaxena
+    alex.morgan@example.com &nbsp;·&nbsp; +91 98765 43210 &nbsp;·&nbsp; Bengaluru, India &nbsp;·&nbsp;
+    linkedin.com/in/alexmorgan &nbsp;·&nbsp; github.com/alexmorgan
   </div>
 
   <h2>Summary</h2>
@@ -133,6 +133,6 @@ const html = `<!doctype html>
 const browser = await chromium.launch()
 const page = await browser.newPage()
 await page.setContent(html, { waitUntil: 'networkidle' })
-await page.pdf({ path: 'Dishank-Saxena-Resume.pdf', format: 'A4', printBackground: true })
+await page.pdf({ path: 'Alex-Morgan-Resume.pdf', format: 'A4', printBackground: true })
 await browser.close()
-console.log('wrote Dishank-Saxena-Resume.pdf')
+console.log('wrote Alex-Morgan-Resume.pdf')

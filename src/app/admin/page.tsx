@@ -247,11 +247,11 @@ export default async function AdminPage() {
                         {p.email ? (
                           <a
                             href={`mailto:${p.email}?subject=${encodeURIComponent('Trouble signing in to ApplyMaster?')}&body=${encodeURIComponent(
-                              `Hi,\n\nI noticed you had trouble getting into ApplyMaster (“${p.lastError}”). Happy to help — ${
+                              `Hi,\n\nWe noticed you had trouble getting into ApplyMaster (“${p.lastError}”). Happy to help — ${
                                 p.hasAccount
                                   ? 'if you originally signed up with Google, choose “Continue with Google” rather than entering a password.'
-                                  : 'reply here and I will get you set up.'
-                              }\n\nDishank\nApplyMaster`
+                                  : 'reply here and we will get you set up.'
+                              }\n\nThe ApplyMaster team`
                             )}`}
                             className="px-2.5 py-1 rounded-md text-[11.5px] font-semibold"
                             style={{ background: 'var(--accent-dim)', color: 'var(--accent)' }}

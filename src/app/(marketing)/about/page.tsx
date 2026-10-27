@@ -5,7 +5,7 @@ import { Checks, Crumbs, JsonLd, Section } from '@/components/marketing/Landing'
 
 const title = 'About ApplyMaster'
 const description =
-  'ApplyMaster helps job seekers apply faster without giving up control: it fills applications on employers’ sites, you submit them, and it keeps a receipt. Built by Dishank Saxena at 3GP.AI.'
+  'ApplyMaster helps job seekers apply faster without giving up control: it fills applications on employers’ sites, you submit them, and it keeps a receipt. A product of 3GP.AI.'
 
 export const metadata: Metadata = {
   title: { absolute: `${title} | ApplyMaster` },
@@ -35,7 +35,6 @@ export default function AboutPage() {
               url: SITE_URL,
               logo: `${SITE_URL}/logo.png`,
               email: 'support@applymaster.ai',
-              founder: { '@type': 'Person', name: 'Dishank Saxena' },
               parentOrganization: { '@type': 'Organization', name: '3GP.AI', url: 'https://3gp.ai' },
               sameAs: [STORE_URL],
             },
@@ -74,10 +73,10 @@ export default function AboutPage() {
         />
       </Section>
 
-      <Section kicker="Who we are" title="Built by Dishank Saxena at 3GP.AI">
+      <Section kicker="Who we are" title="A product of 3GP.AI">
         <div className="space-y-4 text-[16px] leading-relaxed max-w-3xl" style={{ color: 'var(--text-secondary)' }}>
           <p>
-            ApplyMaster is built by Dishank Saxena and is a product of{' '}
+            ApplyMaster is built and run by the team at{' '}
             <a href="https://3gp.ai" className="underline" style={{ color: 'var(--accent)' }}>
               3GP.AI
             </a>
