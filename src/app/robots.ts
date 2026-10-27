@@ -63,8 +63,8 @@ export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
       { userAgent: '*', allow: '/', disallow: PRIVATE },
-      // AI assistants may read and cite the site, but not crawl the 17,000 job pages: those are for search engines' job listings.
-      { userAgent: AI_CRAWLERS, allow: '/', disallow: [...PRIVATE, '/companies/'] },
+      // AI assistants may read and cite every public page, job listings included.
+      { userAgent: AI_CRAWLERS, allow: '/', disallow: PRIVATE },
       { userAgent: NO_VALUE_BOTS, disallow: '/' },
     ],
     sitemap: [`${SITE_URL}/sitemap.xml`, `${SITE_URL}/sitemap-jobs.xml`],
