@@ -5,6 +5,7 @@ import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-mo
 import { createClient } from '@/lib/supabase-browser'
 import { useRouter } from 'next/navigation'
 import ResumeAnalysisOverlay from '@/components/ResumeAnalysisOverlay'
+import Toaster, { toast } from '@/components/Toast'
 
 function Particles() {
   const [particles] = useState(() =>
@@ -502,7 +503,7 @@ export default function OnboardingPage() {
         max_salary: maxSalary,
         remote_preference: remotePreference,
         employment_type: workType,
-      })
+      }, { onConflict: 'user_id' })
     } catch (err) { console.error('saveStep2:', err) }
     goTo(2)
   }
@@ -521,7 +522,7 @@ export default function OnboardingPage() {
         country_preference: selectedCountry,
         city_preferences: selectedCities,
         ethnicity: ethnicity || null,
-      })
+      }, { onConflict: 'user_id' })
     } catch (err) { console.error('saveStep3:', err) }
     goTo(3)
   }
@@ -574,32 +575,18 @@ export default function OnboardingPage() {
         return
       }
 
-      // Save all onboarding answers to profile table
-      console.log('[onboarding] Saving onboarding answers to profile...')
-      const profileUpdate: Record<string, unknown> = {
-        onboarding_complete: true,
-      }
-
-      // Save selected preferences to profile
-      if (selectedRoles.length > 0) profileUpdate.interested_roles = selectedRoles
-      if (minSalary > 0) profileUpdate.min_salary = minSalary
-      if (maxSalary > 0) profileUpdate.max_salary = maxSalary
-      if (experienceLevel) profileUpdate.experience_level = experienceLevel
-      if (remotePreference) profileUpdate.remote_preference = remotePreference
-      if (workType) profileUpdate.employment_type = workType
-      if (selectedIndustries.length > 0) profileUpdate.industries = selectedIndustries
-      if (selectedSkills.length > 0) profileUpdate.key_skills = selectedSkills
-      if (workAuth) profileUpdate.work_authorization = workAuth
-      if (employmentStatus) profileUpdate.current_employment_status = employmentStatus
-      if (desiredJobTitle) profileUpdate.desired_job_title = desiredJobTitle
-      if (availableStartDate) profileUpdate.available_start_date = availableStartDate
-      if (selectedCountry) profileUpdate.country_preference = selectedCountry
-      if (selectedCities.length > 0) profileUpdate.city_preferences = selectedCities
-      if (companySize) profileUpdate.company_size_preference = companySize
-      if (interviewStyle) profileUpdate.interview_style = interviewStyle
-
-      await supabase.from('profiles').update(profileUpdate).eq('id', user.id)
-      console.log('[onboarding] Profile updated with onboarding answers')
+      /* The answers live in job_preferences, saved step by step above. Only the
+         completion flag goes on the profile. This used to also write sixteen
+         preference columns the profiles table does not have; PostgREST
+         rejected the whole update, the flag never became true, and every new
+         account bounced between the dashboard and onboarding forever. */
+      const { error: saveError } = await supabase.from('profiles').update({ onboarding_complete: true }).eq('id', user.id)
+      if (saveError) throw new Error(`Could not save your setup (${saveError.message})`)
+      // Make sure the last step's answers are on record too, whatever path got here.
+      await supabase.from('job_preferences').upsert(
+        { user_id: user.id, key_skills: selectedSkills, company_size_preference: companySize, interview_strength: interviewStyle, updated_at: new Date().toISOString() },
+        { onConflict: 'user_id' }
+      )
 
       // If a resume was uploaded, wait for it to finish and let overlay handle redirect
       if (uploadPromiseRef.current) {
@@ -618,25 +605,19 @@ export default function OnboardingPage() {
         return
       }
 
-      // No resume uploaded — just redirect after brief delay
-      console.log('[onboarding] No resume uploaded — redirecting to dashboard in 300ms')
-      setTimeout(() => {
-        router.push('/dashboard')
-        router.refresh()
-      }, 300)
+      // The flag is saved (the update above awaited the database), so go straight in.
+      router.push('/dashboard')
+      router.refresh()
     } catch (err) {
       console.error('[onboarding] Error completing onboarding:', err)
+      toast.error(err instanceof Error ? err.message : 'Could not finish setup. Please try again.')
       setCompleting(false)
     }
   }
 
   const finishOnboarding = () => {
-    console.log('[onboarding] finishOnboarding — redirecting to dashboard in 500ms')
-    // Wait for database to commit before redirecting
-    setTimeout(() => {
-      router.push('/dashboard')
-      router.refresh()
-    }, 500)
+    router.push('/dashboard')
+    router.refresh()
   }
 
   const stepLabels = ['Resume', 'Preferences', 'Details', 'Skills', 'Plan']
@@ -645,6 +626,8 @@ export default function OnboardingPage() {
 
   return (
     <div className="min-h-screen bg-[var(--bg)] flex items-center justify-center relative overflow-hidden py-10 px-4">
+      {/* The dashboard shell (and its Toaster) is not around this page, so errors need their own. */}
+      <Toaster />
       {/* Full-screen overlay — shown when completing if resume was uploaded */}
       <ResumeAnalysisOverlay
         isVisible={completing && resumeFile !== null}
