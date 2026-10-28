@@ -34,14 +34,12 @@ const CITIES_BY_COUNTRY: Record<string, string[]> = {
   'Sweden': ['Stockholm', 'Gothenburg', 'Malmö'],
 }
 
-function SectionCard({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
+function SectionCard({ title, children }: { title: string; icon?: React.ReactNode; children: React.ReactNode }) {
   return (
     <motion.div variants={fadeInUp}>
-      <PremiumCard accent="pink" glowEffect={false}>
+      <PremiumCard accent="none" hover={false}>
         <div className="p-6">
-          <h3 className="text-[14px] font-bold mb-4 flex items-center gap-2 text-ink">
-            {icon} {title}
-          </h3>
+          <h3 className="font-display text-[1.1rem] mb-4" style={{ color: 'var(--text)' }}>{title}</h3>
           {children}
         </div>
       </PremiumCard>
@@ -49,16 +47,18 @@ function SectionCard({ title, icon, children }: { title: string; icon: React.Rea
   )
 }
 
+const LABEL_CLS = 'text-[11.5px] font-semibold tracking-wide text-[var(--text-muted)]'
+
 function EditField({ label, value, onChange, type = 'text', multiline }: any) {
   return (
-    <div className="space-y-1">
-      <label className="text-[11px] font-bold text-[var(--accent)] uppercase">{label}</label>
+    <div className="space-y-1.5">
+      <label className={LABEL_CLS}>{label}</label>
       {multiline ? (
         <textarea value={value} onChange={e => onChange(e.target.value)} rows={3}
-          className="w-full px-3 py-2 rounded-lg bg-[var(--bg-overlay)] border border-[var(--border)] text-ink text-[12px] focus:border-[rgb(var(--accent-rgb)/0.3)] outline-none resize-none" />
+          className="w-full px-3 py-2.5 rounded-lg bg-[var(--bg-overlay)] border border-[var(--border)] text-[var(--text)] text-[13px] focus:border-[rgb(var(--accent-rgb)/0.3)] outline-none resize-none" />
       ) : (
         <input type={type} value={value} onChange={e => onChange(e.target.value)}
-          className="w-full px-3 py-2 rounded-lg bg-[var(--bg-overlay)] border border-[var(--border)] text-ink text-[12px] focus:border-[rgb(var(--accent-rgb)/0.3)] outline-none" />
+          className="w-full px-3 py-2.5 rounded-lg bg-[var(--bg-overlay)] border border-[var(--border)] text-[var(--text)] text-[13px] focus:border-[rgb(var(--accent-rgb)/0.3)] outline-none" />
       )}
     </div>
   )
@@ -66,11 +66,11 @@ function EditField({ label, value, onChange, type = 'text', multiline }: any) {
 
 function SelectField({ label, value, onChange, options }: any) {
   return (
-    <div className="space-y-1">
-      <label className="text-[11px] font-bold text-[var(--accent)] uppercase">{label}</label>
+    <div className="space-y-1.5">
+      <label className={LABEL_CLS}>{label}</label>
       <select value={value} onChange={e => onChange(e.target.value)}
-        className="w-full px-3 py-2 rounded-lg border border-[var(--border)] text-ink text-[12px] focus:border-[rgb(var(--accent-rgb)/0.3)] outline-none"
-        style={{ background: 'var(--bg-card)' }}>
+        className="w-full px-3 py-2.5 rounded-lg border border-[var(--border)] text-[13px] focus:border-[rgb(var(--accent-rgb)/0.3)] outline-none"
+        style={{ background: 'var(--bg-card)', color: 'var(--text)' }}>
         {options.map((opt: string) => <option key={opt} value={opt} style={{ background: 'var(--bg-card)', color: 'var(--text)' }}>{opt}</option>)}
       </select>
     </div>
@@ -80,8 +80,8 @@ function SelectField({ label, value, onChange, options }: any) {
 function ChipSelector({ label, selected, options, onChange, max }: any) {
   return (
     <div>
-      <label className="text-[11px] font-bold text-[var(--accent)] uppercase mb-2 block">{label}</label>
-      <div className="grid grid-cols-2 gap-2">
+      <label className={`${LABEL_CLS} mb-2 block`}>{label}</label>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
         {options.map((opt: string) => (
           <button key={opt} onClick={() => {
             if (selected.includes(opt)) onChange(selected.filter((s: string) => s !== opt))
@@ -258,18 +258,18 @@ export default function ProfilePage() {
 
   return (
     <motion.div initial="hidden" animate="show" variants={staggerContainer} className="space-y-6 max-w-[1000px] mx-auto pb-10">
-      <SectionCard title="Contact Information" icon={<span>👤</span>}>
+      <SectionCard title="Contact Information">
         <div className="grid sm:grid-cols-2 gap-4">
           <EditField label="Full Name" value={name} onChange={setName} />
           <EditField label="Email" value={email} onChange={setEmail} type="email" />
         </div>
       </SectionCard>
 
-      <SectionCard title="Professional Summary" icon={<span>📝</span>}>
+      <SectionCard title="Professional Summary">
         <EditField label="Professional Summary" value={summary} onChange={setSummary} multiline />
       </SectionCard>
 
-      <SectionCard title="Work Experience" icon={<span>💼</span>}>
+      <SectionCard title="Work Experience">
         <div className="space-y-4">
           {workExperience.map((exp, i) => (
             <div key={i} className="p-4 rounded-lg bg-[var(--bg-overlay)] border border-[var(--border)]">
@@ -289,7 +289,7 @@ export default function ProfilePage() {
         </div>
       </SectionCard>
 
-      <SectionCard title="Education" icon={<span>🎓</span>}>
+      <SectionCard title="Education">
         <div className="space-y-4">
           {education.map((edu, i) => (
             <div key={i} className="p-4 rounded-lg bg-[var(--bg-overlay)] border border-[var(--border)]">
@@ -308,7 +308,7 @@ export default function ProfilePage() {
         </div>
       </SectionCard>
 
-      <SectionCard title="Certifications" icon={<span>🏆</span>}>
+      <SectionCard title="Certifications">
         <div className="space-y-2">
           {certifications.map((cert, i) => (
             <div key={i} className="flex gap-2">
@@ -325,11 +325,11 @@ export default function ProfilePage() {
         </div>
       </SectionCard>
 
-      <SectionCard title="Career Preferences" icon={<span>🎯</span>}>
+      <SectionCard title="Career Preferences">
         <div className="space-y-4">
           <ChipSelector label="Target Roles (up to 5)" selected={selectedRoles} options={ROLES} onChange={setSelectedRoles} max={5} />
           <div className="space-y-2">
-            <label className="text-[11px] font-bold text-[var(--accent)] uppercase">Annual Salary Range</label>
+            <label className="text-[11.5px] font-semibold tracking-wide text-[var(--text-muted)]">Annual Salary Range</label>
             <div className="flex gap-4">
               <div className="flex-1 space-y-1">
                 <label className="text-[10px] text-[var(--text-muted)]">Min: ${(minSalary/1000).toFixed(0)}k</label>
@@ -351,7 +351,7 @@ export default function ProfilePage() {
         </div>
       </SectionCard>
 
-      <SectionCard title="Career Details" icon={<span>📋</span>}>
+      <SectionCard title="Career Details">
         <div className="space-y-4">
           <div className="grid sm:grid-cols-2 gap-4">
             <SelectField label="Employment Status" value={employmentStatus} onChange={setEmploymentStatus} options={EMPLOYMENT} />
@@ -360,7 +360,7 @@ export default function ProfilePage() {
             <SelectField label="Available Start Date" value={availableStartDate} onChange={setAvailableStartDate} options={START_DATES} />
           </div>
           <div className="space-y-2">
-            <label className="text-[11px] font-bold text-[var(--accent)] uppercase block">Willing to Relocate?</label>
+            <label className="text-[11.5px] font-semibold tracking-wide text-[var(--text-muted)] block">Willing to Relocate?</label>
             <div className="flex gap-2">
               <button onClick={() => setWillingToRelocate(true)}
                 className={`flex-1 px-3 py-2 rounded-lg font-medium transition-all ${willingToRelocate ? 'bg-[rgb(var(--accent-rgb)/0.2)] text-[var(--accent)] border border-[var(--accent)]' : 'bg-[var(--bg-overlay)] text-[var(--text-muted)] border border-transparent'}`}>
@@ -375,12 +375,11 @@ export default function ProfilePage() {
           <div className="grid sm:grid-cols-2 gap-4">
             <SelectField label="Country Preference" value={selectedCountry} onChange={(c: string) => { setSelectedCountry(c); setSelectedCities([]) }} options={Object.keys(CITIES_BY_COUNTRY)} />
             {selectedCountry && <ChipSelector label={`Cities (up to 3)`} selected={selectedCities} options={citiesForCountry} onChange={setSelectedCities} max={3} />}
-            <SelectField label="Ethnicity" value={ethnicity} onChange={setEthnicity} options={ETHNICITIES} />
           </div>
         </div>
       </SectionCard>
 
-      <SectionCard title="Industries & Skills" icon={<span>⭐</span>}>
+      <SectionCard title="Industries & Skills">
         <div className="space-y-4">
           <ChipSelector label="Industry Preferences (up to 5)" selected={selectedIndustries} options={INDUSTRIES} onChange={setSelectedIndustries} max={5} />
           <ChipSelector label="Key Skills (up to 8)" selected={selectedSkills} options={SKILLS} onChange={setSelectedSkills} max={8} />
