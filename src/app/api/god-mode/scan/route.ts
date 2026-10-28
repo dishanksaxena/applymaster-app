@@ -118,7 +118,7 @@ export async function POST(req: NextRequest) {
         .from('jobs').select('id').eq('external_id', externalId).maybeSingle()
 
       if (!existing) {
-        await supabase.from('jobs').insert({
+        const { error } = await supabase.from('jobs').insert({
           external_id: externalId,
           source: job.source,
           title: job.title,
@@ -127,7 +127,8 @@ export async function POST(req: NextRequest) {
           remote_type: job.remote ? 'remote' : null,
           url: job.url,
         })
-        saved++
+        if (error) console.error('god-mode/scan: jobs insert failed', error.message)
+        else saved++
       }
     }
 

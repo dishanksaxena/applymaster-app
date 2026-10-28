@@ -37,17 +37,9 @@ function GlowCard({ children, className = '' }: { children: React.ReactNode; cla
 
   return (
     <div className={`relative group ${className}`} onMouseMove={handleMouseMove}>
-      <div className="absolute -inset-[1px] rounded-[28px] overflow-hidden">
-        <motion.div className="absolute inset-0" animate={{ rotate: 360 }} transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
-          style={{ background: 'conic-gradient(from 0deg, transparent 0%, rgb(var(--accent-rgb) / 0.4) 10%, transparent 20%, rgb(var(--purple-rgb) / 0.3) 30%, transparent 40%, rgb(var(--blue-rgb) / 0.3) 50%, transparent 60%, rgb(var(--accent-rgb) / 0.4) 70%, transparent 80%, rgba(253,203,94,0.2) 90%, transparent 100%)' }} />
-      </div>
-      <div className="relative rounded-[27px] overflow-hidden" style={{ background: 'linear-gradient(170deg, var(--bg-card) 0%, var(--bg) 50%, var(--bg) 100%)' }}>
+      <div className="relative rounded-[24px] overflow-hidden" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', boxShadow: '0 18px 50px -24px rgb(var(--accent-rgb) / 0.25)' }}>
         <motion.div className="absolute w-[400px] h-[400px] rounded-full pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500"
           style={{ left: spotlightX, top: spotlightY, x: '-50%', y: '-50%', background: 'radial-gradient(circle, rgb(var(--accent-rgb) / calc(0.06 * var(--tint-scale))) 0%, transparent 60%)' }} />
-        <motion.div className="absolute top-0 left-0 right-0 h-[1px]"
-          animate={{ backgroundPosition: ['200% 0', '-200% 0'] }}
-          transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
-          style={{ backgroundImage: 'linear-gradient(90deg, transparent, rgb(var(--accent-rgb) / 0.5), rgb(var(--purple-rgb) / 0.5), transparent)', backgroundSize: '200% 100%' }} />
         <div className="relative z-10">{children}</div>
       </div>
     </div>
@@ -63,7 +55,7 @@ function MagneticButton({ children, onClick, disabled = false, variant = 'primar
   }
   return (
     <motion.button ref={ref} style={{ x, y }} onClick={onClick} disabled={disabled} onMouseMove={handleMouseMove} onMouseLeave={() => { x.set(0); y.set(0) }} whileTap={{ scale: 0.95 }}
-      className={`relative overflow-hidden font-bold text-[13px] tracking-wide transition-all disabled:opacity-40 disabled:pointer-events-none ${className}`}>
+      className={`relative overflow-hidden rounded-xl font-bold text-[13px] tracking-wide transition-all disabled:opacity-40 disabled:pointer-events-none ${className}`}>
       {variant === 'primary' ? (
         <>
           <motion.div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, var(--accent), var(--accent-solid), var(--accent-solid))' }} />
@@ -455,16 +447,19 @@ export default function OnboardingPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
       // Mark all as not primary
-      await supabase.from('resumes').update({ is_primary: false }).eq('user_id', user.id)
+      const { error: clearError } = await supabase.from('resumes').update({ is_primary: false }).eq('user_id', user.id)
+      if (clearError) throw new Error(clearError.message)
       // Mark selected as primary
-      await supabase.from('resumes').update({ is_primary: true }).eq('id', resumeId)
+      const { error: setError } = await supabase.from('resumes').update({ is_primary: true }).eq('id', resumeId)
+      if (setError) throw new Error(setError.message)
       const resumeData = resumes.find(r => r.id === resumeId)
       if (resumeData) {
-        await supabase.from('profiles').update({ resume_url: resumeData.file_url, resume_name: resumeData.name }).eq('id', user.id)
+        const { error: profileError } = await supabase.from('profiles').update({ resume_url: resumeData.file_url, resume_name: resumeData.name }).eq('id', user.id)
+        if (profileError) throw new Error(profileError.message)
       }
       setPrimaryResume(resumeId)
       loadResumes()
-    } catch (err) { console.error('Error setting primary resume:', err) }
+    } catch (err) { toast.error(err instanceof Error ? `Could not set that resume as primary ()` : 'Could not set that resume as primary.') }
   }
 
   const deleteResume = async (resumeId: string) => {
@@ -533,7 +528,7 @@ export default function OnboardingPage() {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
-      await supabase.from('job_preferences').upsert({
+      const { error } = await supabase.from('job_preferences').upsert({
         user_id: user.id,
         target_roles: selectedRoles.length > 0 ? selectedRoles : ['Software Engineer'],
         experience_level: experienceLevel,
@@ -553,9 +548,10 @@ export default function OnboardingPage() {
         key_skills: selectedSkills,
         company_size_preference: companySize,
         interview_strength: interviewStyle,
-      })
+      }, { onConflict: 'user_id' })
+      if (error) throw new Error(error.message)
     } catch (err) {
-      console.error('Error:', err)
+      toast.error(err instanceof Error ? `Could not save your preferences ()` : 'Could not save your preferences. Please try again.')
     }
     setSaving(false); goTo(5)
   }
@@ -684,7 +680,7 @@ export default function OnboardingPage() {
 
         <motion.div initial={{ opacity: 0, y: 30, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ duration: 0.8, delay: 0.4 }} className="relative">
           <GlowCard>
-            <div className="p-8 sm:p-10 max-h-[720px] overflow-y-auto">
+            <div className="p-6 sm:p-10">
               <AnimatePresence custom={direction} mode="wait">
 
                 {/* STEP 0: RESUME */}
@@ -692,7 +688,7 @@ export default function OnboardingPage() {
                   <motion.div key="step-0" custom={direction} variants={slideVariants} initial="enter" animate="center" exit="exit" className="space-y-6">
                     <div>
                       <h2 className="font-display text-[1.6rem] mb-2">Upload Your Resume</h2>
-                      <p className="text-[13px] text-[var(--text-muted)]">We'll analyze your experience to find better matches (up to 5 resumes)</p>
+                      <p className="text-[13px] text-[var(--text-muted)]">We read it to pre-fill the next steps and match you to roles. PDF, DOCX or TXT.</p>
                     </div>
 
                     {/* Resume List */}
@@ -751,7 +747,7 @@ export default function OnboardingPage() {
                       </div>
                     )}
                     <div className="flex gap-3 pt-4">
-                      <MagneticButton onClick={() => goTo(1)} className="flex-1 h-11">Skip</MagneticButton>
+                      <MagneticButton onClick={() => goTo(1)} variant="secondary" className="flex-1 h-11">Skip for now</MagneticButton>
                       <MagneticButton onClick={handleResumeUpload} disabled={uploading} className="flex-1 h-11" variant="primary">
                         {uploading ? 'Uploading...' : 'Continue'}
                       </MagneticButton>
@@ -778,7 +774,7 @@ export default function OnboardingPage() {
                           </button>
                         ))}
                       </div>
-                      {selectedRoles.length === 0 && <p className="text-[11px] text-[var(--red)] mt-2">❌ Required</p>}
+                      {selectedRoles.length === 0 && <p className="text-[11px] text-[var(--text-faint)] mt-2">Required</p>}
                     </div>
 
                     {/* Experience Level */}
@@ -856,45 +852,45 @@ export default function OnboardingPage() {
 
                     {/* Employment Status */}
                     <div>
-                      <label className="block text-[12px] font-bold text-[var(--accent)] mb-2">EMPLOYMENT STATUS *</label>
+                      <label className="block text-[11.5px] font-semibold tracking-wide text-[var(--text-muted)] mb-2">EMPLOYMENT STATUS *</label>
                       <select value={employmentStatus} onChange={e => setEmploymentStatus(e.target.value)}
                         className="w-full px-4 py-2.5 rounded-lg border border-[var(--border)] text-ink text-[13px] focus:border-[rgb(var(--accent-rgb)/0.3)] focus:outline-none transition-all cursor-pointer"
                         style={{ background: 'var(--bg-card)' }}>
-                        {EMPLOYMENT.map(e => <option key={e} value={e} style={{ background: 'var(--bg-card)', color: 'white' }}>{e}</option>)}
+                        {EMPLOYMENT.map(e => <option key={e} value={e} style={{ background: 'var(--bg-card)', color: 'var(--text)' }}>{e}</option>)}
                       </select>
                     </div>
 
                     {/* Work Authorization */}
                     <div>
-                      <label className="block text-[12px] font-bold text-[var(--accent)] mb-2">WORK AUTHORIZATION *</label>
+                      <label className="block text-[11.5px] font-semibold tracking-wide text-[var(--text-muted)] mb-2">WORK AUTHORIZATION *</label>
                       <select value={workAuth} onChange={e => setWorkAuth(e.target.value)}
                         className="w-full px-4 py-2.5 rounded-lg border border-[var(--border)] text-ink text-[13px] focus:border-[rgb(var(--accent-rgb)/0.3)] focus:outline-none transition-all cursor-pointer"
                         style={{ background: 'var(--bg-card)' }}>
-                        {WORK_AUTH.map(auth => <option key={auth} value={auth} style={{ background: 'var(--bg-card)', color: 'white' }}>{auth}</option>)}
+                        {WORK_AUTH.map(auth => <option key={auth} value={auth} style={{ background: 'var(--bg-card)', color: 'var(--text)' }}>{auth}</option>)}
                       </select>
                     </div>
 
                     {/* Desired Job Title */}
                     <div>
-                      <label className="block text-[12px] font-bold text-[var(--accent)] mb-2">DESIRED JOB TITLE *</label>
+                      <label className="block text-[11.5px] font-semibold tracking-wide text-[var(--text-muted)] mb-2">DESIRED JOB TITLE *</label>
                       <input type="text" value={desiredJobTitle} onChange={e => setDesiredJobTitle(e.target.value)} placeholder="e.g., Senior Software Engineer"
                         className="w-full px-4 py-2.5 rounded-lg bg-[var(--bg-overlay)] border border-[var(--border)] text-ink placeholder-[var(--text-faint)] text-[13px] focus:border-[rgb(var(--accent-rgb)/0.3)] focus:outline-none transition-all" />
-                      {desiredJobTitle.trim().length === 0 && <p className="text-[11px] text-[var(--red)] mt-1">❌ Required</p>}
+                      {desiredJobTitle.trim().length === 0 && <p className="text-[11px] text-[var(--text-faint)] mt-1">Required</p>}
                     </div>
 
                     {/* Start Date */}
                     <div>
-                      <label className="block text-[12px] font-bold text-[var(--accent)] mb-2">WHEN CAN YOU START? *</label>
+                      <label className="block text-[11.5px] font-semibold tracking-wide text-[var(--text-muted)] mb-2">WHEN CAN YOU START? *</label>
                       <select value={availableStartDate} onChange={e => setAvailableStartDate(e.target.value)}
                         className="w-full px-4 py-2.5 rounded-lg border border-[var(--border)] text-ink text-[13px] focus:border-[rgb(var(--accent-rgb)/0.3)] focus:outline-none transition-all cursor-pointer"
                         style={{ background: 'var(--bg-card)' }}>
-                        {START_DATES.map(date => <option key={date} value={date} style={{ background: 'var(--bg-card)', color: 'white' }}>{date}</option>)}
+                        {START_DATES.map(date => <option key={date} value={date} style={{ background: 'var(--bg-card)', color: 'var(--text)' }}>{date}</option>)}
                       </select>
                     </div>
 
                     {/* Willing to Relocate */}
                     <div>
-                      <label className="block text-[12px] font-bold text-[var(--accent)] mb-2">WILLING TO RELOCATE? *</label>
+                      <label className="block text-[11.5px] font-semibold tracking-wide text-[var(--text-muted)] mb-2">WILLING TO RELOCATE? *</label>
                       <div className="flex gap-2">
                         <button onClick={() => setWillingToRelocate(true)}
                           className={`flex-1 px-4 py-2.5 rounded-lg border font-medium transition-all ${willingToRelocate ? 'bg-gradient-to-r from-[var(--accent)] to-[var(--accent-solid)] text-ink border-[var(--accent)]' : 'bg-[var(--bg-overlay)] text-[var(--text-muted)] border-[var(--border)] hover:bg-[var(--bg-overlay)]'}`}>
@@ -909,20 +905,20 @@ export default function OnboardingPage() {
 
                     {/* Country Preference */}
                     <div>
-                      <label className="block text-[12px] font-bold text-[var(--accent)] mb-2">PREFERRED COUNTRY *</label>
+                      <label className="block text-[11.5px] font-semibold tracking-wide text-[var(--text-muted)] mb-2">PREFERRED COUNTRY *</label>
                       <select value={selectedCountry} onChange={e => { setSelectedCountry(e.target.value); setSelectedCities([]) }}
                         className="w-full px-4 py-2.5 rounded-lg border border-[var(--border)] text-[13px] focus:border-[rgb(var(--accent-rgb)/0.3)] focus:outline-none transition-all cursor-pointer"
-                        style={{ background: 'var(--bg-card)', color: selectedCountry ? 'white' : 'var(--text-faint)' }}>
+                        style={{ background: 'var(--bg-card)', color: selectedCountry ? 'var(--text)' : 'var(--text-faint)' }}>
                         <option value="" style={{ background: 'var(--bg-card)', color: 'var(--text-faint)' }}>Select a country...</option>
-                        {Object.keys(CITIES_BY_COUNTRY).map(c => <option key={c} value={c} style={{ background: 'var(--bg-card)', color: 'white' }}>{c}</option>)}
+                        {Object.keys(CITIES_BY_COUNTRY).map(c => <option key={c} value={c} style={{ background: 'var(--bg-card)', color: 'var(--text)' }}>{c}</option>)}
                       </select>
-                      {!selectedCountry && <p className="text-[11px] text-[var(--red)] mt-1">❌ Required</p>}
+                      {!selectedCountry && <p className="text-[11px] text-[var(--text-faint)] mt-1">Required</p>}
                     </div>
 
                     {/* Top 3 Cities — only shown once country is selected */}
                     {selectedCountry && (
                       <div>
-                        <label className="block text-[12px] font-bold text-[var(--accent)] mb-2">TOP CITY PREFERENCES (up to 3) *</label>
+                        <label className="block text-[11.5px] font-semibold tracking-wide text-[var(--text-muted)] mb-2">TOP CITY PREFERENCES (up to 3) *</label>
                         <div className="grid grid-cols-2 gap-2 max-h-[220px] overflow-y-auto pr-2">
                           {CITIES_BY_COUNTRY[selectedCountry].map(city => (
                             <button key={city} onClick={() => toggleChip(selectedCities, setSelectedCities, city, 3)}
@@ -931,25 +927,14 @@ export default function OnboardingPage() {
                             </button>
                           ))}
                         </div>
-                        {selectedCities.length === 0 && <p className="text-[11px] text-[var(--red)] mt-2">❌ Select at least 1 city</p>}
+                        {selectedCities.length === 0 && <p className="text-[11px] text-[var(--text-faint)] mt-2">Choose at least one city</p>}
                         {selectedCities.length > 0 && <p className="text-[11px] text-[var(--green)] mt-2">✓ {selectedCities.join(', ')}</p>}
                       </div>
                     )}
-
-                    {/* Ethnicity */}
-                    <div>
-                      <label className="block text-[12px] font-bold text-[var(--text-muted)] mb-2">ETHNICITY (Optional)</label>
-                      <select value={ethnicity} onChange={e => setEthnicity(e.target.value)}
-                        className="w-full px-4 py-2.5 rounded-lg border border-[var(--border)] text-ink text-[13px] focus:border-[rgb(var(--accent-rgb)/0.3)] focus:outline-none transition-all cursor-pointer"
-                        style={{ background: 'var(--bg-card)' }}>
-                        {ETHNICITIES.map(e => <option key={e} value={e} style={{ background: 'var(--bg-card)', color: 'white' }}>{e}</option>)}
-                      </select>
-                    </div>
-
                     <div className="flex gap-3 pt-4">
                       <MagneticButton onClick={() => goTo(1)} variant="secondary" className="flex-1 h-11">Back</MagneticButton>
                       <MagneticButton onClick={saveStep3} disabled={!canProceedStep3} className="flex-1 h-11" variant="primary">
-                        Next {!canProceedStep3 && '(Complete fields)'}
+                        Next
                       </MagneticButton>
                     </div>
                   </motion.div>
@@ -965,7 +950,7 @@ export default function OnboardingPage() {
 
                     {/* Industries */}
                     <div>
-                      <label className="block text-[12px] font-bold text-[var(--accent)] mb-2">INDUSTRY PREFERENCES (Select up to 5) *</label>
+                      <label className="block text-[11.5px] font-semibold tracking-wide text-[var(--text-muted)] mb-2">INDUSTRY PREFERENCES (Select up to 5) *</label>
                       <div className="grid grid-cols-2 gap-2 max-h-[240px] overflow-y-auto pr-2">
                         {INDUSTRIES.map(ind => (
                           <button key={ind} onClick={() => toggleChip(selectedIndustries, setSelectedIndustries, ind, 5)}
@@ -974,12 +959,12 @@ export default function OnboardingPage() {
                           </button>
                         ))}
                       </div>
-                      {selectedIndustries.length === 0 && <p className="text-[11px] text-[var(--red)] mt-2">❌ Select at least 1</p>}
+                      {selectedIndustries.length === 0 && <p className="text-[11px] text-[var(--text-faint)] mt-2">Choose at least one</p>}
                     </div>
 
                     {/* Skills */}
                     <div>
-                      <label className="block text-[12px] font-bold text-[var(--accent)] mb-2">KEY SKILLS (Select up to 8) *</label>
+                      <label className="block text-[11.5px] font-semibold tracking-wide text-[var(--text-muted)] mb-2">KEY SKILLS (Select up to 8) *</label>
                       <div className="grid grid-cols-2 gap-2">
                         {SKILLS.map(skill => (
                           <button key={skill} onClick={() => toggleChip(selectedSkills, setSelectedSkills, skill, 8)}
@@ -988,12 +973,12 @@ export default function OnboardingPage() {
                           </button>
                         ))}
                       </div>
-                      {selectedSkills.length === 0 && <p className="text-[11px] text-[var(--red)] mt-2">❌ Select at least 1</p>}
+                      {selectedSkills.length === 0 && <p className="text-[11px] text-[var(--text-faint)] mt-2">Choose at least one</p>}
                     </div>
 
                     {/* Company Size */}
                     <div>
-                      <label className="block text-[12px] font-bold text-[var(--accent)] mb-2">PREFERRED COMPANY SIZE *</label>
+                      <label className="block text-[11.5px] font-semibold tracking-wide text-[var(--text-muted)] mb-2">PREFERRED COMPANY SIZE *</label>
                       <div className="grid grid-cols-2 gap-2">
                         {COMPANY_SIZES.map(size => (
                           <button key={size} onClick={() => setCompanySize(size)}
@@ -1006,7 +991,7 @@ export default function OnboardingPage() {
 
                     {/* Interview Style */}
                     <div>
-                      <label className="block text-[12px] font-bold text-[var(--accent)] mb-2">INTERVIEW STRENGTH *</label>
+                      <label className="block text-[11.5px] font-semibold tracking-wide text-[var(--text-muted)] mb-2">INTERVIEW STRENGTH *</label>
                       <div className="grid grid-cols-2 gap-2">
                         {INTERVIEW_STYLES.map(style => (
                           <button key={style} onClick={() => setInterviewStyle(style)}
@@ -1040,8 +1025,8 @@ export default function OnboardingPage() {
                           className={`p-4 rounded-xl border-2 transition-all text-left ${selectedPlan === plan.name ? 'border-[var(--accent)] bg-[rgb(var(--accent-rgb)/0.1)]' : 'border-[var(--border)] bg-[var(--bg-overlay)] hover:border-[rgb(var(--accent-rgb)/0.3)]'}`}>
                           <div className="flex justify-between items-start mb-3">
                             <div>
-                              <h3 className="font-bold text-[var(--text-on-accent)]">{plan.label}</h3>
-                              <p className="text-[13px] font-bold text-[var(--accent)]">{plan.price}<span className="text-[11px] text-[var(--text-faint)]">{plan.period}</span></p>
+                              <h3 className="font-bold text-[var(--text)]">{plan.label}</h3>
+                              <p className="text-[13px] font-bold text-[var(--accent)]">{plan.price} <span className="text-[11px] font-medium text-[var(--text-faint)]">{plan.period}</span></p>
                             </div>
                             {selectedPlan === plan.name && <div className="w-5 h-5 rounded-full bg-[var(--accent)]" />}
                           </div>
@@ -1057,7 +1042,7 @@ export default function OnboardingPage() {
                     <div className="flex gap-3 pt-4">
                       <MagneticButton onClick={() => goTo(3)} variant="secondary" className="flex-1 h-11">Back</MagneticButton>
                       <MagneticButton onClick={handleComplete} disabled={completing} className="flex-1 h-11" variant="primary">
-                        {completing ? 'Processing...' : '🚀 Let\'s Go!'}
+                        {completing ? 'Finishing…' : 'Finish setup'}
                       </MagneticButton>
                     </div>
                   </motion.div>

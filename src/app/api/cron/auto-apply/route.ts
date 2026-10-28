@@ -216,7 +216,7 @@ async function run(req: NextRequest) {
         if (appErr) throw new Error(`applications insert: ${appErr.message}`)
 
         const top = picks.slice(0, 3).map(({ job }) => `${job.company} — ${job.title}`).join('; ')
-        await db.from('apply_log').insert({
+        const { error: logErr } = await db.from('apply_log').insert({
           user_id: p.user_id,
           action: `${apps.length} new match${apps.length === 1 ? '' : 'es'} queued for you`,
           details:
@@ -224,6 +224,7 @@ async function run(req: NextRequest) {
               ? `${warm.length} at ${warm.length === 1 ? 'a company' : 'companies'} where you know someone — ask for a referral first. `
               : '') + `Top: ${top}`,
         })
+        if (logErr) console.error('cron/auto-apply: apply_log insert failed', logErr.message)
         queuedTotal += apps.length
       }
 

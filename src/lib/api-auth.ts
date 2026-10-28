@@ -38,7 +38,8 @@ export async function authenticate(req: Request): Promise<Caller | null> {
     if (!found?.user) return null
     // "Last used" on the connections list; a write every ten minutes is plenty.
     if (!data.last_used_at || Date.parse(data.last_used_at) < Date.now() - 600_000) {
-      await admin.from('extension_tokens').update({ last_used_at: new Date().toISOString() }).eq('id', data.id)
+      const { error } = await admin.from('extension_tokens').update({ last_used_at: new Date().toISOString() }).eq('id', data.id)
+      if (error) console.error('api-auth: last_used_at update failed', error.message)
     }
     return { db: admin, user: { id: found.user.id, email: found.user.email ?? null }, via: 'extension' }
   }

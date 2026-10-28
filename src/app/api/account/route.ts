@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
-import { createAdminClient } from '@/lib/supabase-admin'
+import { createAdminClient, isMissingTable } from '@/lib/supabase-admin'
 import { recordEvent } from '@/lib/track-server'
 
 /**
@@ -46,11 +46,17 @@ export async function DELETE(req: NextRequest) {
     await admin.storage.from('contact-photos').remove(files.map(f => `${user.id}/${f.name}`))
   }
 
-  // 2. Rows that do not cascade. Missing tables are fine.
-  await admin.from('app_events').delete().eq('user_id', user.id)
-  await admin.from('app_events').delete().eq('email', email)
-  await admin.from('support_messages').delete().eq('user_id', user.id)
-  await admin.from('support_messages').delete().eq('email', email)
+  // 2. Rows that do not cascade. Missing tables are fine; any other failure
+  //    is logged, and the account is still deleted.
+  const cleanups = await Promise.all([
+    admin.from('app_events').delete().eq('user_id', user.id),
+    admin.from('app_events').delete().eq('email', email),
+    admin.from('support_messages').delete().eq('user_id', user.id),
+    admin.from('support_messages').delete().eq('email', email),
+  ])
+  for (const r of cleanups) {
+    if (r.error && !isMissingTable(r.error)) console.error('account delete: cleanup failed', r.error.message)
+  }
 
   // 3. The account, and with it every table that references it.
   const { error } = await admin.auth.admin.deleteUser(user.id)

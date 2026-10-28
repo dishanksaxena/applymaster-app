@@ -161,8 +161,9 @@ export async function POST(req: NextRequest) {
       const have = new Set(current.map(s => s.toLowerCase()))
       const add = incoming.filter(s => !have.has(s.toLowerCase())).slice(0, 100)
       if (add.length) {
-        await supabase.from('job_preferences').update({ key_skills: [...current, ...add] }).eq('id', prefs.id)
-        skillsAdded = add.length
+        const { error: skillsErr } = await supabase.from('job_preferences').update({ key_skills: [...current, ...add] }).eq('id', prefs.id)
+        if (skillsErr) console.error('network/import: key_skills update failed', skillsErr.message)
+        else skillsAdded = add.length
       }
     }
   }

@@ -55,7 +55,11 @@ export default function ApplicationSourceChart({ applications, height = 280 }: A
     )
   }
 
-  const maxCount = Math.max(...chartData.map(d => d.count))
+  // Whole-number ticks that never repeat, however small the counts are.
+  const maxCount = Math.max(...chartData.map(d => d.count), 1)
+  const tickStep = Math.max(1, Math.ceil(maxCount / 4))
+  const tickTop = Math.ceil(maxCount / tickStep) * tickStep
+  const ticks = Array.from({ length: tickTop / tickStep + 1 }, (_, i) => i * tickStep)
   const padding = { top: 20, right: 20, bottom: 40, left: 50 }
   const chartHeight = height - padding.top - padding.bottom
   const chartWidth = 300 - padding.left - padding.right
@@ -88,9 +92,8 @@ export default function ApplicationSourceChart({ applications, height = 280 }: A
         />
 
         {/* Y-axis grid lines and labels */}
-        {[0, 0.25, 0.5, 0.75, 1].map((ratio, i) => {
-          const y = padding.top + (1 - ratio) * chartHeight
-          const value = Math.round(ratio * maxCount)
+        {ticks.map((value, i) => {
+          const y = padding.top + (1 - value / tickTop) * chartHeight
           return (
             <g key={`grid-${i}`}>
               <line
@@ -118,7 +121,7 @@ export default function ApplicationSourceChart({ applications, height = 280 }: A
 
         {/* Bars */}
         {chartData.map((item, idx) => {
-          const barHeight = (item.count / maxCount) * chartHeight
+          const barHeight = (item.count / tickTop) * chartHeight
           const x = padding.left + idx * barWidth + (barWidth - (barWidth - barGap)) / 2
           const y = padding.top + (chartHeight - barHeight)
 

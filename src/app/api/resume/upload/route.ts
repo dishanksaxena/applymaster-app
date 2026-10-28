@@ -229,25 +229,27 @@ export async function POST(req: NextRequest) {
       return Response.json({ error: 'Failed to save resume' }, { status: 500 })
     }
 
-    // Save parsed resume in structured table (ignore errors — optional table)
-    try {
-      await adminSupabase.from('parsed_resumes').upsert({
-        resume_id: resumeRecord.id,
-        user_id: user.id,
-        full_name: parsed.full_name || null,
-        email: parsed.email || null,
-        phone: parsed.phone || null,
-        location: parsed.location || null,
-        summary: parsed.summary || null,
-        skills: parsed.skills || [],
-        experience: parsed.experience || [],
-        education: parsed.education || [],
-        certifications: parsed.certifications || [],
-        languages: parsed.languages || [],
-        raw_text: rawText,
-      })
-    } catch (e) {
-      console.warn('parsed_resumes upsert failed (non-critical):', e)
+    // Save parsed resume in structured table. Matching, optimizing and God Mode
+    // all read from it, so a failure here is reported rather than ignored.
+    const { error: parsedError } = await adminSupabase.from('parsed_resumes').upsert({
+      resume_id: resumeRecord.id,
+      user_id: user.id,
+      full_name: parsed.full_name || null,
+      email: parsed.email || null,
+      phone: parsed.phone || null,
+      location: parsed.location || null,
+      summary: parsed.summary || null,
+      skills: parsed.skills || [],
+      experience: parsed.experience || [],
+      education: parsed.education || [],
+      certifications: parsed.certifications || [],
+      languages: parsed.languages || [],
+      raw_text: rawText,
+    }, { onConflict: 'resume_id' })
+
+    if (parsedError) {
+      console.error('resume/upload: parsed_resumes upsert failed', parsedError.message)
+      return Response.json({ error: 'Could not save your parsed resume. Please try again.' }, { status: 500 })
     }
 
     // Update all previous resumes as non-primary

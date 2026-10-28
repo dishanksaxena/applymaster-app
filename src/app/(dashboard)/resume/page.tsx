@@ -325,8 +325,9 @@ export default function ResumePage() {
   const setPrimary = async (id: string) => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
-    await supabase.from('resumes').update({ is_primary: false }).eq('user_id', user.id)
-    await supabase.from('resumes').update({ is_primary: true }).eq('id', id)
+    const { error: clearError } = await supabase.from('resumes').update({ is_primary: false }).eq('user_id', user.id)
+    const { error: setError } = clearError ? { error: clearError } : await supabase.from('resumes').update({ is_primary: true }).eq('id', id)
+    if (setError) toast.error(`Could not set that resume as primary ()`)
     await loadResumes()
   }
 
@@ -478,16 +479,6 @@ export default function ResumePage() {
         <div>
           <div className="flex items-center gap-3 mb-1">
             <h2 className="font-display text-[1.6rem]">Resume Optimizer</h2>
-            <span
-              className="text-[10px] font-bold px-2.5 py-1 rounded-full tracking-wider"
-              style={{
-                background: 'linear-gradient(135deg, rgb(var(--accent-rgb) / calc(0.12 * var(--tint-scale))), rgb(var(--accent-rgb) / calc(0.08 * var(--tint-scale))))',
-                border: '1px solid rgb(var(--accent-rgb) / calc(0.2 * var(--tint-scale)))',
-                color: 'var(--accent)',
-              }}
-            >
-              AI-POWERED
-            </span>
           </div>
           <p className="text-[14px] text-[var(--text-secondary)]">
             Upload, analyze, and optimize your resume for ATS compatibility and job-specific tailoring.
@@ -653,7 +644,7 @@ export default function ResumePage() {
                                   border: '2px solid var(--border)',
                                 }}
                               >
-                                <span className="text-[10px] font-bold text-[var(--text-faint)]">N/A</span>
+                                <span className="text-[9px] font-semibold text-[var(--text-faint)] leading-tight text-center">Not<br />scored</span>
                               </div>
                             )}
                           </div>
@@ -882,17 +873,6 @@ export default function ResumePage() {
                     </svg>
                     Optimize for Job
                   </h3>
-                  <div
-                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold tracking-wider"
-                    style={{
-                      background: 'linear-gradient(135deg, rgba(108,92,231,0.08), rgb(var(--purple-rgb) / calc(0.05 * var(--tint-scale))))',
-                      border: '1px solid rgba(108,92,231,0.15)',
-                      color: 'var(--purple)',
-                    }}
-                  >
-                    <BrainIcon size={12} />
-                    CLAUDE AI
-                  </div>
                 </div>
 
                 <div className="p-6 pt-4 space-y-4">
@@ -1220,7 +1200,6 @@ export default function ResumePage() {
                     ),
                     title: 'Mirror Keywords',
                     desc: 'Match exact phrases from the job description in your resume',
-                    pro: true,
                   },
                   {
                     icon: (
@@ -1230,7 +1209,6 @@ export default function ResumePage() {
                     ),
                     title: 'Quantify Impact',
                     desc: 'Replace vague claims with measurable achievements',
-                    pro: true,
                   },
                   {
                     icon: (
@@ -1240,7 +1218,6 @@ export default function ResumePage() {
                     ),
                     title: 'Strong Action Verbs',
                     desc: 'Start each bullet with: Led, Architected, Shipped, Drove',
-                    pro: true,
                   },
                 ].map((tip, i) => (
                   <div
@@ -1259,20 +1236,8 @@ export default function ResumePage() {
                         {tip.icon}
                       </div>
                       <div>
-                        <div className="flex items-center gap-2 mb-0.5">
+                        <div className="mb-0.5">
                           <span className="text-[12px] font-bold text-ink/90">{tip.title}</span>
-                          {tip.pro && (
-                            <span
-                              className="text-[8px] font-bold px-1.5 py-0.5 rounded tracking-wider"
-                              style={{
-                                background: 'linear-gradient(135deg, rgb(var(--accent-rgb) / calc(0.15 * var(--tint-scale))), rgb(var(--accent-rgb) / calc(0.1 * var(--tint-scale))))',
-                                color: 'var(--accent)',
-                                border: '1px solid rgb(var(--accent-rgb) / calc(0.2 * var(--tint-scale)))',
-                              }}
-                            >
-                              PRO
-                            </span>
-                          )}
                         </div>
                         <span className="text-[11px] text-[var(--text-muted)] leading-relaxed">{tip.desc}</span>
                       </div>

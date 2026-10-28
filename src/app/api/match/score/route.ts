@@ -78,7 +78,7 @@ Provide a detailed match analysis. Return ONLY valid JSON (no markdown):
 
     // Save to job_matches table if we have a job_id
     if (job_id && resumeRecordId) {
-      await supabase.from('job_matches').upsert({
+      const { error } = await supabase.from('job_matches').upsert({
         user_id: user.id,
         job_id,
         resume_id: resumeRecordId,
@@ -89,7 +89,11 @@ Provide a detailed match analysis. Return ONLY valid JSON (no markdown):
         match_reasons: matchData.match_reasons || [],
         missing_skills: matchData.missing_skills || [],
         tailored_summary: matchData.tailored_summary,
-      })
+      }, { onConflict: 'user_id,job_id' })
+      if (error) {
+        console.error('match/score: job_matches upsert failed', error.message)
+        return Response.json({ error: 'Could not save your match score. Please try again.' }, { status: 500 })
+      }
     }
 
     return Response.json(matchData)

@@ -929,7 +929,7 @@ export default function NetworkPage() {
                       </div>
                       <div className="flex -space-x-2">
                         {people.slice(0, 5).map(pp => (
-                          <span key={pp.id} style={{ boxShadow: '0 0 0 2px var(--bg-card)', borderRadius: '9999px' }}>
+                          <span key={pp.id} className="inline-flex rounded-full" style={{ boxShadow: '0 0 0 2px var(--bg-card)', background: 'var(--bg-card)' }}>
                             <Avatar name={pp.name} id={pp.id} size={26} photo={photoOf(pp)} />
                           </span>
                         ))}

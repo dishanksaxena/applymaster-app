@@ -211,7 +211,8 @@ export default function AutoApplyPage() {
   const approveApp = async (appId: string) => {
     if (!supabase) return
     setReviewLoading(appId)
-    await supabase.from('applications').update({ status: 'applied', applied_at: new Date().toISOString() }).eq('id', appId)
+    const { error } = await supabase.from('applications').update({ status: 'applied', applied_at: new Date().toISOString() }).eq('id', appId)
+    if (error) { toast.error(`Could not mark it applied ()`); setReviewLoading(null); return }
     setApplications((prev: any[]) => prev.map((a: any) => a.id === appId ? { ...a, status: 'applied', applied_at: new Date().toISOString() } : a))
     setReviewLoading(null)
   }
@@ -219,7 +220,8 @@ export default function AutoApplyPage() {
   const dismissApp = async (appId: string) => {
     if (!supabase) return
     setReviewLoading(appId)
-    await supabase.from('applications').update({ status: 'rejected' }).eq('id', appId)
+    const { error } = await supabase.from('applications').update({ status: 'rejected' }).eq('id', appId)
+    if (error) { toast.error(`Could not dismiss it ()`); setReviewLoading(null); return }
     setApplications((prev: any[]) => prev.map((a: any) => a.id === appId ? { ...a, status: 'rejected' } : a))
     setReviewLoading(null)
   }
@@ -281,7 +283,7 @@ export default function AutoApplyPage() {
             </div>
             <div>
               <h1 className="font-display text-[clamp(1.7rem,3vw,2.2rem)]">Auto-Apply Engine</h1>
-              <p className="text-[14px] text-[var(--text-secondary)] mt-1">Let AI handle applications while you prepare for interviews</p>
+              <p className="text-[14px] text-[var(--text-secondary)] mt-1">Finds and queues your best matches every morning; you review and send</p>
             </div>
           </div>
           {mode !== 'off' && (

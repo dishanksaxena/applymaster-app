@@ -166,6 +166,7 @@ const animationStyles = `
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null)
+  const [applyMode, setApplyMode] = useState<'off' | 'copilot' | 'autopilot'>('off')
   const [loading, setLoading] = useState(true)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
@@ -232,6 +233,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       isLast: i === segments.length - 1,
     }))
   }, [pathname])
+
+  // The header pill shows the real auto-apply state; re-read on each route change so it follows edits made on /auto-apply.
+  useEffect(() => {
+    ;(async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      const { data } = await supabase.from('job_preferences').select('auto_apply_mode').eq('user_id', user.id).maybeSingle()
+      setApplyMode((data?.auto_apply_mode as 'off' | 'copilot' | 'autopilot') || 'off')
+    })()
+  }, [pathname, supabase])
 
   const planLabel = profile?.plan?.toUpperCase() || 'FREE'
   const isPremiumPlan = planLabel === 'PRO' || planLabel === 'ELITE'
@@ -496,24 +507,28 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
               <div className="w-px h-6 mx-1 hidden sm:block" style={{ background: 'var(--border)' }} />
 
-              <div
+              <Link
+                href="/auto-apply"
                 className="flex items-center gap-2 px-3 py-1.5 rounded-lg"
                 style={{
-                  background: 'var(--green-dim)',
+                  background: applyMode === 'off' ? 'var(--bg-overlay)' : 'var(--green-dim)',
                   border: '1px solid var(--border)',
                 }}
+                title="Auto-apply settings"
               >
                 <span className="relative flex h-2 w-2">
-                  <span
-                    className="absolute inline-flex h-full w-full rounded-full opacity-60 animate-ping motion-reduce:hidden"
-                    style={{ background: 'var(--green)' }}
-                  />
-                  <span className="relative inline-flex rounded-full h-2 w-2" style={{ background: 'var(--green)' }} />
+                  {applyMode !== 'off' && (
+                    <span
+                      className="absolute inline-flex h-full w-full rounded-full opacity-60 animate-ping motion-reduce:hidden"
+                      style={{ background: 'var(--green)' }}
+                    />
+                  )}
+                  <span className="relative inline-flex rounded-full h-2 w-2" style={{ background: applyMode === 'off' ? 'var(--text-faint)' : 'var(--green)' }} />
                 </span>
-                <span className="text-[11px] font-semibold hidden sm:inline" style={{ color: 'var(--green)' }}>
-                  Engine Active
+                <span className="text-[11px] font-semibold hidden sm:inline" style={{ color: applyMode === 'off' ? 'var(--text-muted)' : 'var(--green)' }}>
+                  {applyMode === 'autopilot' ? 'Autopilot on' : applyMode === 'copilot' ? 'Copilot on' : 'Auto-apply off'}
                 </span>
-              </div>
+              </Link>
             </div>
           </header>
 

@@ -95,7 +95,8 @@ export default function CoverLettersPage() {
 
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this cover letter?')) return
-    await supabase.from('cover_letters').delete().eq('id', id)
+    const { error } = await supabase.from('cover_letters').delete().eq('id', id)
+    if (error) return toast.error(`Could not delete it ()`)
     setCoverLetters(coverLetters.filter(l => l.id !== id))
   }
 

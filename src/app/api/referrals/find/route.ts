@@ -175,13 +175,17 @@ Return only the message body: no subject line, no signature.`,
          conflict target the row cannot match returns nothing, which left the
          caller with no id and no way to mark the ask as sent. So: upsert only
          when there is a job to deduplicate against. */
-      const { data: saved } = job_id
+      const { data: saved, error: saveErr } = job_id
         ? await supabase
             .from('referral_requests')
             .upsert(row, { onConflict: 'user_id,connection_id,job_id' })
             .select('id, status')
             .maybeSingle()
         : await supabase.from('referral_requests').insert(row).select('id, status').maybeSingle()
+      if (saveErr) {
+        console.error('referrals/find: referral_requests save failed', saveErr.message)
+        return Response.json({ error: 'Could not save your referral request. Please try again.' }, { status: 500 })
+      }
 
       paths.push({
         id: saved?.id ?? null,

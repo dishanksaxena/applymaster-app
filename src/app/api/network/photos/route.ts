@@ -207,7 +207,8 @@ export async function POST(req: NextRequest) {
           // A silhouette on a public page is a real answer: look again in a week. A 999
           // may have been LinkedIn slowing us down, so date it for a look tomorrow.
           const checked = got === 'none' ? now : new Date(Date.now() - RECHECK_MS + 86_400_000).toISOString()
-          await supabase.from('network_connections').update({ photo_checked_at: checked }).eq('id', r.id).eq('user_id', user.id)
+          const { error: checkedErr } = await supabase.from('network_connections').update({ photo_checked_at: checked }).eq('id', r.id).eq('user_id', user.id)
+          if (checkedErr) console.error('network/photos: photo_checked_at update failed', checkedErr.message)
           results.set(r.id, { photo: null, checked: true })
           continue
         }
@@ -215,7 +216,8 @@ export async function POST(req: NextRequest) {
         const up = await admin.storage.from(BUCKET).upload(path, got.bytes, { contentType: got.type, upsert: true })
         if (up.error) continue
         const photo = admin.storage.from(BUCKET).getPublicUrl(path).data.publicUrl
-        await supabase.from('network_connections').update({ photo_url: photo, photo_checked_at: now }).eq('id', r.id).eq('user_id', user.id)
+        const { error: photoErr } = await supabase.from('network_connections').update({ photo_url: photo, photo_checked_at: now }).eq('id', r.id).eq('user_id', user.id)
+        if (photoErr) console.error('network/photos: photo_url update failed', photoErr.message)
         results.set(r.id, { photo, checked: true })
         sources[source] += 1
       }

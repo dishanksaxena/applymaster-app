@@ -100,8 +100,8 @@ export default function SuccessDonutChart({ applications, height = 280 }: Succes
     <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg)] p-6">
       <h3 className="text-[14px] font-bold text-ink mb-4">Success Breakdown</h3>
 
-      <div className="flex items-center gap-6">
-        <svg width={320} height={height} viewBox={`0 0 320 ${height}`} className="flex-shrink-0">
+      <div className="flex flex-wrap items-center gap-6">
+        <svg viewBox={`0 0 320 `} className="w-full max-w-[260px] h-auto flex-shrink-0">
           {/* Donut slices */}
           {paths.map((p, i) => (
             <path
@@ -160,7 +160,7 @@ export default function SuccessDonutChart({ applications, height = 280 }: Succes
         </svg>
 
         {/* Legend */}
-        <div className="space-y-3">
+        <div className="space-y-3 min-w-0">
           {slices.map((slice, i) => (
             <div key={i} className="flex items-center gap-2">
               <div

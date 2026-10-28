@@ -134,7 +134,8 @@ export async function POST(req: NextRequest) {
     if (!res.ok) console.error('support email failed:', res.error)
 
     if (emailed && saved?.id) {
-      await admin.from('support_messages').update({ emailed: true }).eq('id', saved.id)
+      const { error: flagErr } = await admin.from('support_messages').update({ emailed: true }).eq('id', saved.id)
+      if (flagErr) console.error('support: emailed flag update failed', flagErr.message)
     }
   }
 

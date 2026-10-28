@@ -71,7 +71,7 @@ function SelectField({ label, value, onChange, options }: any) {
       <select value={value} onChange={e => onChange(e.target.value)}
         className="w-full px-3 py-2 rounded-lg border border-[var(--border)] text-ink text-[12px] focus:border-[rgb(var(--accent-rgb)/0.3)] outline-none"
         style={{ background: 'var(--bg-card)' }}>
-        {options.map((opt: string) => <option key={opt} value={opt} style={{ background: 'var(--bg-card)', color: 'white' }}>{opt}</option>)}
+        {options.map((opt: string) => <option key={opt} value={opt} style={{ background: 'var(--bg-card)', color: 'var(--text)' }}>{opt}</option>)}
       </select>
     </div>
   )
@@ -240,7 +240,7 @@ export default function ProfilePage() {
         key_skills: selectedSkills,
         company_size_preference: companySize,
         interview_strength: interviewStyle,
-      })
+      }, { onConflict: 'user_id' })
 
       if (prefsError) {
         console.error('❌ Job preferences update error:', prefsError)

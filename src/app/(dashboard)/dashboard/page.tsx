@@ -212,10 +212,10 @@ function StatCard({
           </span>
         </div>
         <div className="font-display leading-none text-[2.4rem]" style={{ color: 'var(--text)' }}>
-          <AnimatedNumber value={value} suffix={suffix} />
+          {Number.isNaN(value) ? <span style={{ color: 'var(--text-faint)' }}>—</span> : <AnimatedNumber value={value} suffix={suffix} />}
         </div>
         <div className="mt-2 mb-1">
-          <Delta value={delta} t={t} />
+          {Number.isNaN(delta) ? <span className="text-[11.5px]" style={{ color: 'var(--text-muted)' }}>Appears once applications are scored</span> : <Delta value={delta} t={t} />}
         </div>
       </div>
       {/* The chart runs to the card edge: it is the ground the number stands on. */}
@@ -256,7 +256,7 @@ function ActivityFeed({
               Nothing yet
             </p>
             <p className="text-[12px] leading-relaxed" style={{ color: 'var(--text-muted)' }}>
-              Upload a resume and this fills up as we search, tailor and apply.
+              Auto-apply runs and applications you send with the extension show up here.
             </p>
           </div>
         ) : (
@@ -330,6 +330,8 @@ export default function DashboardPage() {
   const [rows, setRows] = useState<AppRow[]>([])
   const [hasResume, setHasResume] = useState(false)
   const [activity, setActivity] = useState<{ action: string; details: string | null; created_at: string }[]>([])
+  const [autoApplyOn, setAutoApplyOn] = useState(false)
+  const [hasPracticed, setHasPracticed] = useState(false)
   const [userName, setUserName] = useState('')
   const [greeting, setGreeting] = useState('Good morning')
   const [mounted, setMounted] = useState(false)
@@ -348,7 +350,7 @@ export default function DashboardPage() {
       } = await supabase.auth.getUser()
       if (!user) return
 
-      const [{ data: profile }, { data: apps }, { data: resumes }, { data: logs }] = await Promise.all([
+      const [{ data: profile }, { data: apps }, { data: resumes }, { data: logs }, { data: prefs }, { count: practiced }] = await Promise.all([
         supabase.from('profiles').select('full_name').eq('id', user.id).maybeSingle(),
         supabase.from('applications').select('status, match_score, created_at, applied_at').eq('user_id', user.id),
         supabase.from('resumes').select('id').eq('user_id', user.id).limit(1),
@@ -358,12 +360,16 @@ export default function DashboardPage() {
           .eq('user_id', user.id)
           .order('created_at', { ascending: false })
           .limit(20),
+        supabase.from('job_preferences').select('auto_apply_mode').eq('user_id', user.id).maybeSingle(),
+        supabase.from('interview_sessions').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
       ])
 
       if (profile?.full_name) setUserName(profile.full_name.split(' ')[0])
       if (apps) setRows(apps as AppRow[])
       if (resumes?.length) setHasResume(true)
       if (logs) setActivity(logs)
+      setAutoApplyOn(!!prefs?.auto_apply_mode && prefs.auto_apply_mode !== 'off')
+      setHasPracticed((practiced ?? 0) > 0)
     })()
   }, [supabase])
 
@@ -402,7 +408,7 @@ export default function DashboardPage() {
 
     const avgScore = scored.length
       ? Math.round(scored.reduce((a, r) => a + (r.match_score as number), 0) / scored.length)
-      : 0
+      : NaN
 
     return {
       applied: {
@@ -423,7 +429,7 @@ export default function DashboardPage() {
       score: {
         value: avgScore,
         series: scoreSeries,
-        delta: scoreSeries[WEEKS - 1] - scoreSeries[WEEKS - 2],
+        delta: scored.length ? scoreSeries[WEEKS - 1] - scoreSeries[WEEKS - 2] : NaN,
       },
     }
   }, [rows])
@@ -440,17 +446,17 @@ export default function DashboardPage() {
   const journeySteps = [
     { step: 1, label: 'Upload resume', desc: 'Get your ATS score', href: '/resume', done: hasResume, t: 'accent' as Tone },
     { step: 2, label: 'Search jobs', desc: 'Find matching roles', href: '/jobs', done: rows.length > 0, t: 'blue' as Tone },
-    { step: 3, label: 'Turn on auto-apply', desc: 'Apply on autopilot', href: '/auto-apply', done: metrics.applied.value > 0, t: 'purple' as Tone },
-    { step: 4, label: 'Practise interviews', desc: 'Rehearse with the coach', href: '/interview-coach', done: metrics.interviews.value > 0, t: 'green' as Tone },
+    { step: 3, label: 'Turn on auto-apply', desc: 'Queue matches every morning', href: '/auto-apply', done: autoApplyOn, t: 'purple' as Tone },
+    { step: 4, label: 'Practise interviews', desc: 'Rehearse with the coach', href: '/interview-coach', done: hasPracticed, t: 'green' as Tone },
   ]
   const doneCount = journeySteps.filter(s => s.done).length
   const journeyComplete = doneCount === journeySteps.length
 
   const quickActions = [
-    { label: 'Search jobs', desc: 'Across every connected board', href: '/jobs', t: 'blue' as Tone, icon: <path d="M11 18a7 7 0 100-14 7 7 0 000 14zM21 21l-4.35-4.35" /> },
+    { label: 'Search jobs', desc: 'Employer boards, Adzuna and RemoteOK', href: '/jobs', t: 'blue' as Tone, icon: <path d="M11 18a7 7 0 100-14 7 7 0 000 14zM21 21l-4.35-4.35" /> },
     { label: 'Optimize resume', desc: 'ATS score and fixes', href: '/resume', t: 'green' as Tone, icon: <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zM14 2v6h6" /> },
     { label: 'Find a referral', desc: 'Warm paths in your network', href: '/network', t: 'accent' as Tone, icon: <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" /> },
-    { label: 'Auto-apply', desc: 'Queue and submit for you', href: '/auto-apply', t: 'yellow' as Tone, icon: <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" /> },
+    { label: 'Auto-apply', desc: 'The best matches, queued every morning', href: '/auto-apply', t: 'yellow' as Tone, icon: <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" /> },
   ]
 
   if (!mounted) return <div className="p-8" />

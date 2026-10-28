@@ -160,7 +160,8 @@ async function submitToPortal(job: ScannedJob, firstName: string, lastName: stri
 }
 
 async function log(supabase: any, userId: string, action: string, details: string) {
-  await supabase.from('apply_log').insert({ user_id: userId, action, details, portal: 'system' })
+  const { error } = await supabase.from('apply_log').insert({ user_id: userId, action, details, portal: 'system' })
+  if (error) console.error('auto-apply/test: apply_log insert failed', error.message)
 }
 
 // ── Main Handler ──────────────────────────────────────────────────
@@ -172,11 +173,15 @@ export async function POST(req: NextRequest) {
   try {
     let { data: prefs } = await supabase.from('job_preferences').select('*').eq('user_id', user.id).maybeSingle()
     if (!prefs) {
-      const { data } = await supabase.from('job_preferences').insert([{
+      const { data, error: prefsErr } = await supabase.from('job_preferences').insert([{
         user_id: user.id, match_threshold: 75, daily_apply_limit: 10,
         auto_apply_mode: 'copilot', target_roles: ['Software Engineer'],
         remote_preference: 'any', experience_level: 'mid',
       }]).select().maybeSingle()
+      if (prefsErr || !data) {
+        console.error('auto-apply/test: job_preferences insert failed', prefsErr?.message)
+        return NextResponse.json({ error: 'Could not set up your job preferences. Please try again.' }, { status: 500 })
+      }
       prefs = data
     }
 
@@ -352,16 +357,17 @@ Return JSON array only: ["keyword1", "keyword2", ...]`
       const { data: existingJob } = await supabase.from('jobs').select('id').eq('external_id', externalId).maybeSingle()
       let jobDbId = existingJob?.id
       if (!jobDbId) {
-        const { data: ins } = await supabase.from('jobs').insert([{
+        const { data: ins, error: jobErr } = await supabase.from('jobs').insert([{
           external_id: externalId, source: job.source, title: job.title,
           company: job.company, location: job.location, url: job.url,
         }]).select('id').single()
+        if (jobErr) console.error('auto-apply/test: jobs insert failed', jobErr.message)
         jobDbId = ins?.id
       }
       if (!jobDbId) continue
 
       const status = (autopilot && portalSubmitted) ? 'applied' : 'queued'
-      await supabase.from('applications').insert([{
+      const { error: appErr } = await supabase.from('applications').insert([{
         user_id: user.id, job_id: jobDbId, status,
         match_score: score,
         applied_at: status === 'applied' ? new Date().toISOString() : null,
@@ -373,6 +379,11 @@ Return JSON array only: ["keyword1", "keyword2", ...]`
         portal_submitted: portalSubmitted,
         portal_submission_id: portalSubmissionId,
       }])
+      if (appErr) {
+        console.error('auto-apply/test: applications insert failed', appErr.message)
+        await log(supabase, user.id, 'error', `⚠️ Could not save application for ${job.title} at ${job.company}: ${appErr.message}`)
+        return NextResponse.json({ error: 'Could not save your application. Please try again.', processed: applied }, { status: 500 })
+      }
 
       applied++
     }

@@ -318,7 +318,11 @@ export async function recordSubmission(db: SupabaseClient, userId: string, r: Su
   }
 
   const now = new Date().toISOString()
-  await db.from('applications').update({ status: 'applied', applied_at: now, updated_at: now }).eq('id', applicationId).eq('user_id', userId)
+  const { error: appliedErr } = await db.from('applications').update({ status: 'applied', applied_at: now, updated_at: now }).eq('id', applicationId).eq('user_id', userId)
+  if (appliedErr) {
+    console.error('apply-packet: applications update failed', appliedErr.message)
+    throw new Error(appliedErr.message || 'Could not mark it as applied in your tracker')
+  }
 
   const receipt = {
     user_id: userId,

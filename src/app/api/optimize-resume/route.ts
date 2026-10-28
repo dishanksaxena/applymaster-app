@@ -74,7 +74,7 @@ Return ONLY valid JSON (no markdown):
 
     // Save optimized version
     if (resumeRecordId && job_id) {
-      await supabase.from('optimized_resumes').insert({
+      const { error } = await supabase.from('optimized_resumes').insert({
         user_id: user.id,
         resume_id: resumeRecordId,
         job_id,
@@ -83,6 +83,10 @@ Return ONLY valid JSON (no markdown):
         ats_score: result.ats_score,
         changes_made: result.key_changes || [],
       })
+      if (error) {
+        console.error('optimize-resume: optimized_resumes insert failed', error.message)
+        return Response.json({ error: 'Could not save your optimized resume. Please try again.' }, { status: 500 })
+      }
     }
 
     return Response.json(result)

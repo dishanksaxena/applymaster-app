@@ -140,21 +140,23 @@ Return ONLY valid JSON:
       const text = msg.content[0].type === 'text' ? msg.content[0].text : '{}'
       const feedback = tryParseModelJson<any>(text, { score: 70, verdict: 'good' }, msg.stop_reason)
 
-      // Save answer and feedback to session (non-fatal)
+      // Save answer and feedback to session
       if (session_id) {
-        try {
-          const { data: session } = await supabase
-            .from('interview_sessions')
-            .select('answers, feedback')
-            .eq('id', session_id)
-            .eq('user_id', user.id)
-            .maybeSingle()
-          if (session) {
-            const answers = [...(session.answers || []), { question, answer, timestamp: new Date().toISOString() }]
-            const feedbackArr = [...(session.feedback || []), feedback]
-            await supabase.from('interview_sessions').update({ answers, feedback: feedbackArr }).eq('id', session_id)
+        const { data: session } = await supabase
+          .from('interview_sessions')
+          .select('answers, feedback')
+          .eq('id', session_id)
+          .eq('user_id', user.id)
+          .maybeSingle()
+        if (session) {
+          const answers = [...(session.answers || []), { question, answer, timestamp: new Date().toISOString() }]
+          const feedbackArr = [...(session.feedback || []), feedback]
+          const { error: saveErr } = await supabase.from('interview_sessions').update({ answers, feedback: feedbackArr }).eq('id', session_id)
+          if (saveErr) {
+            console.error('interview/prep: interview_sessions update failed', saveErr.message)
+            return Response.json({ error: 'We scored your answer but could not save it to your session. Please try again.' }, { status: 500 })
           }
-        } catch { /* non-fatal */ }
+        }
       }
 
       return Response.json(feedback)

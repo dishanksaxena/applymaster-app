@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import { recordEvent } from '@/lib/track-server'
+import { searchDirect } from '@/lib/direct-search'
 
 const ADZUNA_APP_ID = process.env.ADZUNA_APP_ID
 const ADZUNA_APP_KEY = process.env.ADZUNA_APP_KEY
@@ -129,6 +130,8 @@ export async function POST(req: NextRequest) {
 
     const searches: Promise<unknown[]>[] = [
       searchAdzuna(query, location || '', country, page, maxDaysOld, remote),
+      // Employers' own boards first: the extension can fill these forms.
+      page === 1 ? searchDirect({ query, country, city: location || '', remote, maxDaysOld }) : Promise.resolve([]),
     ]
 
     // Add RemoteOK for remote searches
@@ -172,7 +175,7 @@ export async function POST(req: NextRequest) {
       jobs: deduped,
       total: deduped.length,
       page,
-      sources: ['Adzuna', 'RemoteOK'],
+      sources: ['Employer boards', 'Adzuna', 'RemoteOK'],
     })
   } catch (err) {
     console.error('Job search error:', err)

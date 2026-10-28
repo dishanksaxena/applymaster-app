@@ -37,7 +37,11 @@ export default function TrendLineChart({ applications, height = 280 }: TrendLine
     }))
   }, [applications])
 
-  const maxCount = Math.max(...chartData.map(d => d.count), 5)
+  // Whole-number ticks that never repeat, however small the counts are.
+  const maxCount = Math.max(...chartData.map(d => d.count), 4)
+  const tickStep = Math.max(1, Math.ceil(maxCount / 4))
+  const tickTop = Math.ceil(maxCount / tickStep) * tickStep
+  const ticks = Array.from({ length: tickTop / tickStep + 1 }, (_, i) => i * tickStep)
   const padding = { top: 20, right: 20, bottom: 40, left: 50 }
   const chartHeight = height - padding.top - padding.bottom
   const chartWidth = 320 - padding.left - padding.right
@@ -47,7 +51,7 @@ export default function TrendLineChart({ applications, height = 280 }: TrendLine
   const points = chartData
     .map((d, i) => {
       const x = padding.left + i * pointSpacing
-      const y = padding.top + (1 - d.count / maxCount) * chartHeight
+      const y = padding.top + (1 - d.count / tickTop) * chartHeight
       return `${x},${y}`
     })
     .join(' ')
@@ -78,9 +82,8 @@ export default function TrendLineChart({ applications, height = 280 }: TrendLine
         />
 
         {/* Y-axis grid lines and labels */}
-        {[0, 0.25, 0.5, 0.75, 1].map((ratio, i) => {
-          const y = padding.top + (1 - ratio) * chartHeight
-          const value = Math.round(ratio * maxCount)
+        {ticks.map((value, i) => {
+          const y = padding.top + (1 - value / tickTop) * chartHeight
           return (
             <g key={`grid-${i}`}>
               <line
@@ -133,7 +136,7 @@ export default function TrendLineChart({ applications, height = 280 }: TrendLine
         {/* Data points (circles) */}
         {chartData.map((d, i) => {
           const x = padding.left + i * pointSpacing
-          const y = padding.top + (1 - d.count / maxCount) * chartHeight
+          const y = padding.top + (1 - d.count / tickTop) * chartHeight
           return (
             <g key={`point-${i}`}>
               <circle

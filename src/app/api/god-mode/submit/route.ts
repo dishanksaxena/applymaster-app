@@ -340,12 +340,25 @@ Write a professional cover letter. Return only the letter text, no subject line.
       portal_submitted: submitted,
     }
 
+    // If the portal already accepted it, "try again" would apply twice.
+    const saveFailed = submitted
+      ? 'Your application was sent, but we could not save it to your tracker. Please refresh before trying again.'
+      : 'Could not save your application. Please try again.'
+
     let applicationId = existingApp?.id ?? null
     if (existingApp) {
-      await supabase.from('applications').update(appData).eq('id', existingApp.id)
+      const { error: updateErr } = await supabase.from('applications').update(appData).eq('id', existingApp.id)
+      if (updateErr) {
+        console.error('god-mode/submit: application update failed', updateErr.message)
+        return Response.json({ error: saveFailed }, { status: 500 })
+      }
     } else {
-      const { data: inserted } = await supabase
+      const { data: inserted, error: insertErr } = await supabase
         .from('applications').insert(appData).select('id').maybeSingle()
+      if (insertErr) {
+        console.error('god-mode/submit: application insert failed', insertErr.message)
+        return Response.json({ error: saveFailed }, { status: 500 })
+      }
       applicationId = inserted?.id ?? null
     }
 
@@ -354,7 +367,7 @@ Write a professional cover letter. Return only the letter text, no subject line.
        reality. Best-effort — a receipt failure must never fail the apply. */
     if (applicationId) {
       try {
-        await supabase.from('application_receipts').insert({
+        const { error: receiptErr } = await supabase.from('application_receipts').insert({
           user_id: user.id,
           application_id: applicationId,
           resume_id: tailored_resume_id || primaryResume?.id || null,
@@ -367,13 +380,14 @@ Write a professional cover letter. Return only the letter text, no subject line.
           status: submitted ? 'submitted' : (submissionError ? 'failed' : 'needs_review'),
           failure_reason: submissionError || null,
         })
+        if (receiptErr) console.error('Receipt write failed (non-fatal):', receiptErr.message)
       } catch (receiptErr) {
         console.error('Receipt write failed (non-fatal):', receiptErr)
       }
     }
 
     // Log the activity
-    await supabase.from('apply_log').insert({
+    const { error: logErr } = await supabase.from('apply_log').insert({
       user_id: user.id,
       job_id: job_id || null,
       action: submitted ? 'submitted' : 'marked_applied',
@@ -385,6 +399,7 @@ Write a professional cover letter. Return only the letter text, no subject line.
           ? `Portal submission failed: ${submissionError}. Marked as applied.`
           : `No portal API detected. Marked as applied.`,
     })
+    if (logErr) console.error('god-mode/submit: apply_log insert failed', logErr.message)
 
     return Response.json({
       success: true,

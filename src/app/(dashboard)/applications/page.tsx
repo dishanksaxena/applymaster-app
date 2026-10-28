@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase-browser'
 import type { Application } from '@/lib/database.types'
 import Link from 'next/link'
 import { withAlpha } from '@/lib/tone'
+import { toast } from '@/components/Toast'
 
 // ─── Status Configuration ───────────────────────────────────────────────────
 const statuses = ['saved', 'queued', 'applied', 'screening', 'interview', 'offer', 'rejected'] as const
@@ -235,12 +236,14 @@ export default function ApplicationsPage() {
   }
 
   const updateStatus = async (appId: string, newStatus: string) => {
-    await supabase.from('applications').update({ status: newStatus, position: 0 }).eq('id', appId)
+    const { error } = await supabase.from('applications').update({ status: newStatus, position: 0 }).eq('id', appId)
+    if (error) toast.error(`Could not move that application ()`)
     await loadApplications()
   }
 
   const updatePosition = async (appId: string, newPosition: number) => {
-    await supabase.from('applications').update({ position: newPosition }).eq('id', appId)
+    const { error } = await supabase.from('applications').update({ position: newPosition }).eq('id', appId)
+    if (error) toast.error(`Could not reorder ()`)
     await loadApplications()
   }
 

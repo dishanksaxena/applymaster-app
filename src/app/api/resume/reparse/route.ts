@@ -99,7 +99,7 @@ export async function POST(req: NextRequest) {
     const rawText: string = parsed.raw_text || ''
 
     // Upsert into parsed_resumes
-    await adminSupabase.from('parsed_resumes').upsert({
+    const { error: parsedErr } = await adminSupabase.from('parsed_resumes').upsert({
       resume_id: resume.id,
       user_id: user.id,
       full_name: parsed.full_name || null,
@@ -114,9 +114,17 @@ export async function POST(req: NextRequest) {
       languages: parsed.languages || [],
       raw_text: rawText || null,
     }, { onConflict: 'resume_id' })
+    if (parsedErr) {
+      console.error('resume/reparse: parsed_resumes upsert failed', parsedErr.message)
+      return Response.json({ error: 'Could not save your parsed resume. Please try again.' }, { status: 500 })
+    }
 
     // Update resumes.parsed_data
-    await adminSupabase.from('resumes').update({ parsed_data: parsed }).eq('id', resume.id)
+    const { error: resumeUpdateErr } = await adminSupabase.from('resumes').update({ parsed_data: parsed }).eq('id', resume.id)
+    if (resumeUpdateErr) {
+      console.error('resume/reparse: resumes.parsed_data update failed', resumeUpdateErr.message)
+      return Response.json({ error: 'Could not save your parsed resume. Please try again.' }, { status: 500 })
+    }
 
     // Update profile
     const profileUpdate: Record<string, unknown> = {
@@ -132,7 +140,11 @@ export async function POST(req: NextRequest) {
     }
     if (parsed.full_name) profileUpdate.full_name = parsed.full_name
 
-    await adminSupabase.from('profiles').update(profileUpdate).eq('id', user.id)
+    const { error: profileErr } = await adminSupabase.from('profiles').update(profileUpdate).eq('id', user.id)
+    if (profileErr) {
+      console.error('resume/reparse: profiles update failed', profileErr.message)
+      return Response.json({ error: 'Your resume was parsed, but we could not update your profile from it. Please try again.' }, { status: 500 })
+    }
 
     return Response.json({
       success: true,

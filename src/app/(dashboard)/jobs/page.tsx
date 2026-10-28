@@ -22,7 +22,7 @@ const JobsGlobe = dynamic(() => import('@/components/JobsGlobe'), {
   ),
 })
 
-interface Job { id: string; title: string; company: string; location: string; remote_type: string | null; salary_min: number | null; salary_max: number | null; source: string; url: string; posted_at?: string; salary_currency?: string }
+interface Job { id: string; title: string; company: string; location: string; remote_type: string | null; salary_min: number | null; salary_max: number | null; source: string; url: string; posted_at?: string; salary_currency?: string; direct?: boolean }
 
 const COUNTRIES = [
   { code: 'US', name: 'United States' },
@@ -400,13 +400,13 @@ export default function JobsPage() {
       }}>
         <div className="absolute top-[-50%] right-[-10%] w-[300px] h-[300px] rounded-full opacity-[0.07]" style={{ background: 'radial-gradient(circle, var(--blue), transparent 70%)' }} />
         <div className="relative z-10">
-          <div className="flex items-start justify-between gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
             <div>
               <h1 className="font-display text-[clamp(1.7rem,3vw,2.2rem)] mb-2 text-[var(--text)]">Job Search</h1>
-              <p className="text-[14px] text-[var(--text-secondary)]">Search across 50+ job portals with AI-powered matching</p>
+              <p className="text-[14px] text-[var(--text-secondary)]">Live postings from employers' own boards, Adzuna and RemoteOK</p>
             </div>
             {/* View Toggle */}
-            <div className="flex items-center gap-1 p-1 rounded-xl flex-shrink-0" style={{ background: 'var(--bg-overlay)', border: '1px solid var(--border)' }}>
+            <div className="flex items-center gap-1 p-1 rounded-xl flex-shrink-0 self-start" style={{ background: 'var(--bg-overlay)', border: '1px solid var(--border)' }}>
               <motion.button whileTap={{ scale: 0.95 }} onClick={() => setViewMode('list')}
                 className="flex items-center gap-2 px-4 py-2 rounded-lg text-[12px] font-semibold transition-all"
                 style={viewMode === 'list'
@@ -449,7 +449,7 @@ export default function JobsPage() {
           </div>
 
           {/* Row 1: Country + City */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <select value={country} onChange={e => setCountry(e.target.value)} className={selectCls}>
               {COUNTRIES.map(c => <option key={c.code} value={c.code}>{c.name}</option>)}
             </select>
@@ -466,7 +466,7 @@ export default function JobsPage() {
           </div>
 
           {/* Row 2: Work Type + Date Posted + Salary */}
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <select value={remote} onChange={e => setRemote(e.target.value)} className={selectCls}>
               <option value="any">Any Work Type</option>
               <option value="remote">Remote</option>
@@ -550,7 +550,10 @@ export default function JobsPage() {
                                 {job.remote_type}
                               </span>
                             )}
-                            <span className="text-[11px] font-bold px-2.5 py-1 rounded-lg" style={{ background: 'rgb(var(--blue-rgb) / calc(0.08 * var(--tint-scale)))', color: 'var(--blue)' }}>{job.source}</span>
+                            <span className="text-[11px] font-bold px-2.5 py-1 rounded-lg" style={{ background: job.direct ? 'rgb(var(--green-rgb) / calc(0.1 * var(--tint-scale)))' : 'rgb(var(--blue-rgb) / calc(0.08 * var(--tint-scale)))', color: job.direct ? 'var(--green)' : 'var(--blue)' }}>{job.direct ? `Employer site · ` : job.source}</span>
+                            {job.direct && (
+                              <span className="text-[11px] text-[var(--text-muted)]">Extension fills this form</span>
+                            )}
                             {job.posted_at && (
                               <span className="text-[11px] text-[var(--text-muted)]">{formatPosted(job.posted_at)}</span>
                             )}
