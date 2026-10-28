@@ -139,3 +139,9 @@ export async function searchDirect(opts: {
   hits.sort((a, b) => b.score - a.score || new Date(b.posted_at).getTime() - new Date(a.posted_at).getTime())
   return hits.slice(0, opts.limit ?? 25).map(({ score: _s, ...j }) => j)
 }
+
+/** Build today's index ahead of the first search; the daily cron calls this right after it has read the boards. */
+export async function warmDirectIndex(): Promise<number> {
+  memo = null
+  return (await loadIndex()).length
+}

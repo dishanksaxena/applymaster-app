@@ -550,7 +550,7 @@ export default function JobsPage() {
                                 {job.remote_type}
                               </span>
                             )}
-                            <span className="text-[11px] font-bold px-2.5 py-1 rounded-lg" style={{ background: job.direct ? 'rgb(var(--green-rgb) / calc(0.1 * var(--tint-scale)))' : 'rgb(var(--blue-rgb) / calc(0.08 * var(--tint-scale)))', color: job.direct ? 'var(--green)' : 'var(--blue)' }}>{job.direct ? `Employer site · ` : job.source}</span>
+                            <span className="text-[11px] font-bold px-2.5 py-1 rounded-lg" style={{ background: job.direct ? 'rgb(var(--green-rgb) / calc(0.1 * var(--tint-scale)))' : 'rgb(var(--blue-rgb) / calc(0.08 * var(--tint-scale)))', color: job.direct ? 'var(--green)' : 'var(--blue)' }}>{job.direct ? `Employer site · ${job.source}` : job.source}</span>
                             {job.direct && (
                               <span className="text-[11px] text-[var(--text-muted)]">Extension fills this form</span>
                             )}
