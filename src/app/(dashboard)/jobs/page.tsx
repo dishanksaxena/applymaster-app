@@ -68,6 +68,8 @@ const DATE_OPTIONS = [
 export default function JobsPage() {
   const [jobs, setJobs] = useState<Job[]>([])
   const [loading, setLoading] = useState(false)
+  // The query behind the results on screen; empty until the first search finishes.
+  const [searched, setSearched] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
   const [savedJobs, setSavedJobs] = useState<Set<string>>(new Set())
   const [appliedJobs, setAppliedJobs] = useState<Set<string>>(new Set())
@@ -185,7 +187,12 @@ export default function JobsPage() {
           maxDaysOld: daysOld || 30,
         })
       })
-      const data = await response.json()
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok) {
+        toast.error(data.error || 'Search failed. Please try again.')
+        setLoading(false)
+        return
+      }
       let results = data.jobs || []
 
       // Client-side date filter
@@ -209,6 +216,7 @@ export default function JobsPage() {
       }
 
       setJobs(results)
+      setSearched(searchTerm.trim())
     } catch { toast.error('Failed to search') }
     setLoading(false)
   }
@@ -382,6 +390,7 @@ export default function JobsPage() {
       return `$${Math.round(n / 1000)}K`
     }
     if (!job.salary_max || job.salary_max === 0) return `${fmt(job.salary_min)}+`
+    if (job.salary_max === job.salary_min) return fmt(job.salary_min)
     return `${fmt(job.salary_min)} – ${fmt(job.salary_max)}`
   }
 
@@ -515,8 +524,22 @@ export default function JobsPage() {
             <motion.div animate={{ y: [0, -8, 0] }} transition={{ duration: 3, repeat: Infinity }} className="inline-block mb-4">
               <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text-faint)" strokeWidth="1.5"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
             </motion.div>
-            <p className="text-[15px] font-semibold text-[var(--text-muted)]">Search for your dream job</p>
-            <p className="text-[12px] text-[var(--text-faint)] mt-1">Supports US, India, UK, Canada and more</p>
+            {searched ? (
+              <>
+                <p className="text-[15px] font-semibold text-[var(--text-muted)]">No jobs found for “{searched}”</p>
+                <p className="text-[12px] text-[var(--text-faint)] mt-1">Try fewer words, a broader location, or Any Work Type.</p>
+              </>
+            ) : (
+              <>
+                <p className="text-[15px] font-semibold text-[var(--text-muted)]">Search for your dream job</p>
+                <p className="text-[12px] text-[var(--text-faint)] mt-1">Supports US, India, UK, Canada and more</p>
+              </>
+            )}
+          </motion.div>
+        ) : viewMode === 'list' && loading && jobs.length === 0 ? (
+          <motion.div variants={fadeInUp} className="text-center py-16" role="status">
+            <p className="text-[15px] font-semibold text-[var(--text-muted)]">Searching employer boards, Adzuna and RemoteOK…</p>
+            <p className="text-[12px] text-[var(--text-faint)] mt-1">This usually takes a few seconds.</p>
           </motion.div>
         ) : viewMode === 'list' ? (
           <motion.div variants={staggerContainer} initial="hidden" animate="show" className="space-y-3">

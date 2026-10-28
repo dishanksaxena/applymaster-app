@@ -157,8 +157,9 @@ export async function POST(req: NextRequest) {
       return true
     })
 
-    // Sort by date
+    // Employers' own postings first (the extension can fill those forms), then newest first.
     deduped.sort((a, b) => {
+      if (Boolean(a.direct) !== Boolean(b.direct)) return a.direct ? -1 : 1
       const da = new Date(a.posted_at as string).getTime() || 0
       const db = new Date(b.posted_at as string).getTime() || 0
       return db - da
