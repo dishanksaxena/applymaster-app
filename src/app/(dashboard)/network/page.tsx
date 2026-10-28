@@ -872,7 +872,7 @@ export default function NetworkPage() {
           {/* The graph is the point of this page: a fan of paths converging on
               you says "these are your routes in" faster than any list. Every
               node is a real row; the right column only fills from a real search. */}
-          {connections.length > 0 && (
+          {(connections.length > 0 || !loading) && (
             <PremiumCard accent="none" hover={false}>
               <div className="px-2 pt-2 pb-4">
                 <NetworkGraph
@@ -895,6 +895,15 @@ export default function NetworkPage() {
                     if (c) setDrafting(c)
                   }}
                 />
+                {connections.length === 0 && (
+                  <p className="text-center text-[12.5px] px-4 pb-2" style={{ color: 'var(--text-muted)' }}>
+                    Your routes in appear here once you have contacts.{' '}
+                    <button type="button" onClick={() => setImportOpen(true)} className="font-semibold underline" style={{ color: 'var(--accent)' }}>
+                      Import your LinkedIn connections
+                    </button>{' '}
+                    to start.
+                  </p>
+                )}
               </div>
             </PremiumCard>
           )}

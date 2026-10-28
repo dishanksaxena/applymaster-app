@@ -79,8 +79,14 @@ export default function NetworkGraph({
 
   /* Six is where the fan stops reading as a fan. The rest are counted, not
      drawn, which is more honest than cramming them in unreadably. */
-  const left = connections.slice(0, 6)
-  const overflow = connections.length - left.length
+  /* With no contacts yet the graph still plays, using empty slots: no names, no
+     companies, nothing that could be mistaken for real data. It shows what the
+     page does before the first import. */
+  const empty = connections.length === 0
+  const left: GraphPerson[] = empty
+    ? Array.from({ length: 4 }, (_, i) => ({ id: `slot-${i}`, name: '', title: null, company: null }))
+    : connections.slice(0, 6)
+  const overflow = empty ? 0 : connections.length - left.length
   const right = hits?.slice(0, 6) ?? []
 
   const h = Math.max(MIN_H, Math.max(left.length, right.length) * (CARD_H + 20) + 90)
@@ -222,7 +228,33 @@ export default function NetworkGraph({
       />
 
       {/* Contacts */}
-      {leftCards.map((c, i) => (
+      {empty &&
+        leftCards.map((c, i) => (
+          <motion.div
+            key={c.id}
+            aria-hidden="true"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.15 + i * 0.07, ease: [0.16, 1, 0.3, 1] }}
+            className="absolute z-10 rounded-xl p-3 flex items-center gap-3"
+            style={{
+              left: c.x,
+              top: c.y,
+              width: CARD_W,
+              height: CARD_H,
+              background: 'transparent',
+              boxShadow: `inset 0 0 0 1.5px ${toneA(c.t, 0.28)}`,
+              borderStyle: 'dashed',
+            }}
+          >
+            <span className="w-9 h-9 rounded-full shrink-0" style={{ background: toneSurface(c.t, 0.14) }} />
+            <span className="flex-1 space-y-2">
+              <span className="block h-2 rounded-full" style={{ width: '70%', background: toneSurface(c.t, 0.16) }} />
+              <span className="block h-2 rounded-full" style={{ width: '45%', background: toneSurface(c.t, 0.1) }} />
+            </span>
+          </motion.div>
+        ))}
+      {!empty && leftCards.map((c, i) => (
         <motion.button
           key={c.id}
           type="button"
