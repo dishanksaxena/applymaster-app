@@ -65,7 +65,7 @@ function MagneticButton({ children, onClick, disabled = false, variant = 'primar
       ) : (
         <div className="absolute inset-0" style={{ background: 'var(--bg-overlay)', border: '1px solid var(--border)' }} />
       )}
-      <span className={`relative z-10 flex items-center justify-center gap-2 ${variant === 'primary' ? 'text-ink' : 'text-[var(--text-muted)]'}`}>{children}</span>
+      <span className={`relative z-10 flex items-center justify-center gap-2 ${variant === 'primary' ? 'text-[var(--text-on-accent)]' : 'text-[var(--text-muted)]'}`}>{children}</span>
     </motion.button>
   )
 }
@@ -208,6 +208,18 @@ export default function OnboardingPage() {
   }, [])
 
   const goTo = (next: number) => { setDirection(next > step ? 1 : -1); setStep(next) }
+  // Set once someone presses Next with something missing; the hints below turn red and the page jumps to the first one.
+  const [attempted, setAttempted] = useState<number | null>(null)
+  const showErr = attempted === step
+  const blockWith = (id: string) => {
+    setAttempted(step)
+    requestAnimationFrame(() => {
+      const el = document.getElementById(id)
+      if (!el) return
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      if (el.matches('input,select')) (el as HTMLElement).focus({ preventScroll: true })
+    })
+  }
 
   const toggleChip = (arr: string[], setArr: (v: string[]) => void, val: string, max?: number) => {
     if (arr.includes(val)) setArr(arr.filter(x => x !== val))
@@ -774,7 +786,7 @@ export default function OnboardingPage() {
                           </button>
                         ))}
                       </div>
-                      {selectedRoles.length === 0 && <p className="text-[11px] text-[var(--text-faint)] mt-2">Required</p>}
+                      {selectedRoles.length === 0 && <p id="ob-err-roles" className={`text-[11px] mt-2 ${showErr ? 'text-[var(--red)] font-medium' : 'text-[var(--text-faint)]'}`}>Choose at least one role</p>}
                     </div>
 
                     {/* Experience Level */}
@@ -783,7 +795,7 @@ export default function OnboardingPage() {
                       <div className="grid grid-cols-3 gap-2">
                         {['entry', 'mid', 'senior', 'lead', 'executive'].map(level => (
                           <button key={level} onClick={() => setExperienceLevel(level)}
-                            className={`px-3 py-2 rounded-lg text-[12px] font-medium transition-all ${experienceLevel === level ? 'bg-gradient-to-r from-[var(--accent)] to-[var(--accent-solid)] text-ink' : 'bg-[var(--bg-overlay)] text-[var(--text-muted)] hover:bg-[var(--bg-overlay)]'}`}>
+                            className={`px-3 py-2 rounded-lg text-[12px] font-medium transition-all ${experienceLevel === level ? 'bg-gradient-to-r from-[var(--accent)] to-[var(--accent-solid)] text-[var(--text-on-accent)]' : 'bg-[var(--bg-overlay)] text-[var(--text-muted)] hover:bg-[var(--bg-overlay)]'}`}>
                             {level.charAt(0).toUpperCase() + level.slice(1)}
                           </button>
                         ))}
@@ -813,7 +825,7 @@ export default function OnboardingPage() {
                       <div className="grid grid-cols-2 gap-2">
                         {['remote', 'hybrid', 'onsite', 'any'].map(pref => (
                           <button key={pref} onClick={() => setRemotePreference(pref)}
-                            className={`px-3 py-2 rounded-lg text-[12px] font-medium transition-all ${remotePreference === pref ? 'bg-gradient-to-r from-[var(--accent)] to-[var(--accent-solid)] text-ink' : 'bg-[var(--bg-overlay)] text-[var(--text-muted)] hover:bg-[var(--bg-overlay)]'}`}>
+                            className={`px-3 py-2 rounded-lg text-[12px] font-medium transition-all ${remotePreference === pref ? 'bg-gradient-to-r from-[var(--accent)] to-[var(--accent-solid)] text-[var(--text-on-accent)]' : 'bg-[var(--bg-overlay)] text-[var(--text-muted)] hover:bg-[var(--bg-overlay)]'}`}>
                             {pref.charAt(0).toUpperCase() + pref.slice(1)}
                           </button>
                         ))}
@@ -826,7 +838,7 @@ export default function OnboardingPage() {
                       <div className="grid grid-cols-2 gap-2">
                         {JOB_TYPES.map(type => (
                           <button key={type} onClick={() => setWorkType(type)}
-                            className={`px-3 py-2 rounded-lg text-[12px] font-medium transition-all ${workType === type ? 'bg-gradient-to-r from-[var(--accent)] to-[var(--accent-solid)] text-ink' : 'bg-[var(--bg-overlay)] text-[var(--text-muted)] hover:bg-[var(--bg-overlay)]'}`}>
+                            className={`px-3 py-2 rounded-lg text-[12px] font-medium transition-all ${workType === type ? 'bg-gradient-to-r from-[var(--accent)] to-[var(--accent-solid)] text-[var(--text-on-accent)]' : 'bg-[var(--bg-overlay)] text-[var(--text-muted)] hover:bg-[var(--bg-overlay)]'}`}>
                             {type}
                           </button>
                         ))}
@@ -835,8 +847,8 @@ export default function OnboardingPage() {
 
                     <div className="flex gap-3 pt-4">
                       <MagneticButton onClick={() => goTo(0)} variant="secondary" className="flex-1 h-11">Back</MagneticButton>
-                      <MagneticButton onClick={saveStep2} disabled={!canProceedStep2} className="flex-1 h-11" variant="primary">
-                        Next {!canProceedStep2 && '(Select roles & salary)'}
+                      <MagneticButton onClick={() => (canProceedStep2 ? saveStep2() : blockWith('ob-err-roles'))} className="flex-1 h-11" variant="primary">
+                        Next
                       </MagneticButton>
                     </div>
                   </motion.div>
@@ -873,9 +885,9 @@ export default function OnboardingPage() {
                     {/* Desired Job Title */}
                     <div>
                       <label className="block text-[11.5px] font-semibold tracking-wide text-[var(--text-muted)] mb-2">DESIRED JOB TITLE *</label>
-                      <input type="text" value={desiredJobTitle} onChange={e => setDesiredJobTitle(e.target.value)} placeholder="e.g., Senior Software Engineer"
+                      <input type="text" value={desiredJobTitle} onChange={e => setDesiredJobTitle(e.target.value)} id="ob-title" style={showErr && !desiredJobTitle.trim() ? { borderColor: 'var(--red)' } : undefined} placeholder="e.g., Senior Software Engineer"
                         className="w-full px-4 py-2.5 rounded-lg bg-[var(--bg-overlay)] border border-[var(--border)] text-ink placeholder-[var(--text-faint)] text-[13px] focus:border-[rgb(var(--accent-rgb)/0.3)] focus:outline-none transition-all" />
-                      {desiredJobTitle.trim().length === 0 && <p className="text-[11px] text-[var(--text-faint)] mt-1">Required</p>}
+                      {desiredJobTitle.trim().length === 0 && <p className={`text-[11px] mt-1 ${showErr ? 'text-[var(--red)] font-medium' : 'text-[var(--text-faint)]'}`}>Enter the job title you want</p>}
                     </div>
 
                     {/* Start Date */}
@@ -893,11 +905,11 @@ export default function OnboardingPage() {
                       <label className="block text-[11.5px] font-semibold tracking-wide text-[var(--text-muted)] mb-2">WILLING TO RELOCATE? *</label>
                       <div className="flex gap-2">
                         <button onClick={() => setWillingToRelocate(true)}
-                          className={`flex-1 px-4 py-2.5 rounded-lg border font-medium transition-all ${willingToRelocate ? 'bg-gradient-to-r from-[var(--accent)] to-[var(--accent-solid)] text-ink border-[var(--accent)]' : 'bg-[var(--bg-overlay)] text-[var(--text-muted)] border-[var(--border)] hover:bg-[var(--bg-overlay)]'}`}>
+                          className={`flex-1 px-4 py-2.5 rounded-lg border font-medium transition-all ${willingToRelocate ? 'bg-gradient-to-r from-[var(--accent)] to-[var(--accent-solid)] text-[var(--text-on-accent)] border-[var(--accent)]' : 'bg-[var(--bg-overlay)] text-[var(--text-muted)] border-[var(--border)] hover:bg-[var(--bg-overlay)]'}`}>
                           Yes
                         </button>
                         <button onClick={() => setWillingToRelocate(false)}
-                          className={`flex-1 px-4 py-2.5 rounded-lg border font-medium transition-all ${!willingToRelocate ? 'bg-gradient-to-r from-[var(--accent)] to-[var(--accent-solid)] text-ink border-[var(--accent)]' : 'bg-[var(--bg-overlay)] text-[var(--text-muted)] border-[var(--border)] hover:bg-[var(--bg-overlay)]'}`}>
+                          className={`flex-1 px-4 py-2.5 rounded-lg border font-medium transition-all ${!willingToRelocate ? 'bg-gradient-to-r from-[var(--accent)] to-[var(--accent-solid)] text-[var(--text-on-accent)] border-[var(--accent)]' : 'bg-[var(--bg-overlay)] text-[var(--text-muted)] border-[var(--border)] hover:bg-[var(--bg-overlay)]'}`}>
                           No
                         </button>
                       </div>
@@ -906,13 +918,13 @@ export default function OnboardingPage() {
                     {/* Country Preference */}
                     <div>
                       <label className="block text-[11.5px] font-semibold tracking-wide text-[var(--text-muted)] mb-2">PREFERRED COUNTRY *</label>
-                      <select value={selectedCountry} onChange={e => { setSelectedCountry(e.target.value); setSelectedCities([]) }}
+                      <select id="ob-country" value={selectedCountry} onChange={e => { setSelectedCountry(e.target.value); setSelectedCities([]) }}
                         className="w-full px-4 py-2.5 rounded-lg border border-[var(--border)] text-[13px] focus:border-[rgb(var(--accent-rgb)/0.3)] focus:outline-none transition-all cursor-pointer"
-                        style={{ background: 'var(--bg-card)', color: selectedCountry ? 'var(--text)' : 'var(--text-faint)' }}>
+                        style={{ background: 'var(--bg-card)', color: selectedCountry ? 'var(--text)' : 'var(--text-faint)', borderColor: showErr && !selectedCountry ? 'var(--red)' : undefined }}>
                         <option value="" style={{ background: 'var(--bg-card)', color: 'var(--text-faint)' }}>Select a country...</option>
                         {Object.keys(CITIES_BY_COUNTRY).map(c => <option key={c} value={c} style={{ background: 'var(--bg-card)', color: 'var(--text)' }}>{c}</option>)}
                       </select>
-                      {!selectedCountry && <p className="text-[11px] text-[var(--text-faint)] mt-1">Required</p>}
+                      {!selectedCountry && <p className={`text-[11px] mt-1 ${showErr ? 'text-[var(--red)] font-medium' : 'text-[var(--text-faint)]'}`}>Choose a country</p>}
                     </div>
 
                     {/* Top 3 Cities — only shown once country is selected */}
@@ -927,13 +939,13 @@ export default function OnboardingPage() {
                             </button>
                           ))}
                         </div>
-                        {selectedCities.length === 0 && <p className="text-[11px] text-[var(--text-faint)] mt-2">Choose at least one city</p>}
+                        {selectedCities.length === 0 && <p id="ob-err-cities" className={`text-[11px] mt-2 ${showErr ? 'text-[var(--red)] font-medium' : 'text-[var(--text-faint)]'}`}>Choose at least one city</p>}
                         {selectedCities.length > 0 && <p className="text-[11px] text-[var(--green)] mt-2">✓ {selectedCities.join(', ')}</p>}
                       </div>
                     )}
                     <div className="flex gap-3 pt-4">
                       <MagneticButton onClick={() => goTo(1)} variant="secondary" className="flex-1 h-11">Back</MagneticButton>
-                      <MagneticButton onClick={saveStep3} disabled={!canProceedStep3} className="flex-1 h-11" variant="primary">
+                      <MagneticButton onClick={() => (canProceedStep3 ? saveStep3() : blockWith(!desiredJobTitle.trim() ? 'ob-title' : !selectedCountry ? 'ob-country' : 'ob-err-cities'))} className="flex-1 h-11" variant="primary">
                         Next
                       </MagneticButton>
                     </div>
@@ -959,7 +971,7 @@ export default function OnboardingPage() {
                           </button>
                         ))}
                       </div>
-                      {selectedIndustries.length === 0 && <p className="text-[11px] text-[var(--text-faint)] mt-2">Choose at least one</p>}
+                      {selectedIndustries.length === 0 && <p id="ob-err-industries" className={`text-[11px] mt-2 ${showErr ? 'text-[var(--red)] font-medium' : 'text-[var(--text-faint)]'}`}>Choose at least one industry</p>}
                     </div>
 
                     {/* Skills */}
@@ -973,7 +985,7 @@ export default function OnboardingPage() {
                           </button>
                         ))}
                       </div>
-                      {selectedSkills.length === 0 && <p className="text-[11px] text-[var(--text-faint)] mt-2">Choose at least one</p>}
+                      {selectedSkills.length === 0 && <p id="ob-err-skills" className={`text-[11px] mt-2 ${showErr ? 'text-[var(--red)] font-medium' : 'text-[var(--text-faint)]'}`}>Choose at least one skill</p>}
                     </div>
 
                     {/* Company Size */}
@@ -982,7 +994,7 @@ export default function OnboardingPage() {
                       <div className="grid grid-cols-2 gap-2">
                         {COMPANY_SIZES.map(size => (
                           <button key={size} onClick={() => setCompanySize(size)}
-                            className={`px-3 py-2 rounded-lg text-[12px] font-medium transition-all ${companySize === size ? 'bg-gradient-to-r from-[var(--accent)] to-[var(--accent-solid)] text-ink' : 'bg-[var(--bg-overlay)] text-[var(--text-muted)] hover:bg-[var(--bg-overlay)]'}`}>
+                            className={`px-3 py-2 rounded-lg text-[12px] font-medium transition-all ${companySize === size ? 'bg-gradient-to-r from-[var(--accent)] to-[var(--accent-solid)] text-[var(--text-on-accent)]' : 'bg-[var(--bg-overlay)] text-[var(--text-muted)] hover:bg-[var(--bg-overlay)]'}`}>
                             {size}
                           </button>
                         ))}
@@ -995,7 +1007,7 @@ export default function OnboardingPage() {
                       <div className="grid grid-cols-2 gap-2">
                         {INTERVIEW_STYLES.map(style => (
                           <button key={style} onClick={() => setInterviewStyle(style)}
-                            className={`px-3 py-2 rounded-lg text-[12px] font-medium transition-all ${interviewStyle === style ? 'bg-gradient-to-r from-[var(--accent)] to-[var(--accent-solid)] text-ink' : 'bg-[var(--bg-overlay)] text-[var(--text-muted)] hover:bg-[var(--bg-overlay)]'}`}>
+                            className={`px-3 py-2 rounded-lg text-[12px] font-medium transition-all ${interviewStyle === style ? 'bg-gradient-to-r from-[var(--accent)] to-[var(--accent-solid)] text-[var(--text-on-accent)]' : 'bg-[var(--bg-overlay)] text-[var(--text-muted)] hover:bg-[var(--bg-overlay)]'}`}>
                             {style}
                           </button>
                         ))}
@@ -1004,7 +1016,7 @@ export default function OnboardingPage() {
 
                     <div className="flex gap-3 pt-4">
                       <MagneticButton onClick={() => goTo(2)} variant="secondary" className="flex-1 h-11">Back</MagneticButton>
-                      <MagneticButton onClick={handleSavePreferences} disabled={saving || !canProceedStep4} className="flex-1 h-11" variant="primary">
+                      <MagneticButton onClick={() => (canProceedStep4 ? handleSavePreferences() : blockWith(selectedIndustries.length === 0 ? 'ob-err-industries' : 'ob-err-skills'))} disabled={saving} className="flex-1 h-11" variant="primary">
                         {saving ? 'Saving...' : 'Next'}
                       </MagneticButton>
                     </div>
