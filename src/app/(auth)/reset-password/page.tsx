@@ -6,8 +6,11 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { track } from '@/lib/track'
 import AuthError from '@/components/auth/AuthError'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
+import AuthShell, { AUTH_INPUT, DrawnCheck } from '../AuthShell'
 
 export default function ResetPasswordPage() {
+  const reduced = useReducedMotion()
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [loading, setLoading] = useState(false)
@@ -50,25 +53,27 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[var(--bg)] relative overflow-hidden">
-      <div className="absolute top-[-30%] right-[-20%] w-[600px] h-[600px] rounded-full opacity-[0.06]" style={{ background: 'radial-gradient(circle, var(--accent), transparent 70%)' }} />
-      <div className="absolute bottom-[-30%] left-[-20%] w-[600px] h-[600px] rounded-full opacity-[0.04]" style={{ background: 'radial-gradient(circle, var(--purple), transparent 70%)' }} />
-
-      <div className="relative z-10 w-full max-w-md px-6">
-        <Link href="/" className="flex items-center justify-center gap-3 mb-10">
-          <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[var(--accent)] to-[var(--accent-solid)] flex items-center justify-center text-[var(--text-on-accent)] font-black text-sm">AM</div>
-          <span className="text-xl font-extrabold tracking-tight text-ink">Apply<span className="text-[var(--accent)]">Master</span></span>
-        </Link>
-
-        <div className="p-8 rounded-2xl bg-[var(--bg-card)] border border-[var(--bg-overlay)] shadow-[0_40px_100px_rgba(0,0,0,0.5)]">
+    <AuthShell>
+          <style>{`
+            .am-reset-input:focus { border-color: var(--purple) !important; box-shadow: 0 0 0 3px rgb(var(--purple-rgb) / 0.18), 0 10px 30px -18px rgb(var(--purple-rgb) / 0.4) !important; }
+            .am-reset-submit { transition: transform .2s cubic-bezier(.16,1,.3,1), box-shadow .3s ease; box-shadow: 0 6px 18px -8px rgb(var(--purple-rgb) / .55); }
+            .am-reset-submit:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 14px 34px -10px rgb(var(--purple-rgb) / .55), 0 0 0 1px rgb(var(--purple-rgb) / .2); }
+          `}</style>
+          <AnimatePresence mode="wait" initial={false}>
           {!done ? (
-            <>
-              <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5 mx-auto" style={{ background: 'rgb(var(--purple-rgb) / calc(0.1 * var(--tint-scale)))' }}>
+            <motion.div
+              key="form"
+              initial={reduced ? false : { opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={reduced ? undefined : { opacity: 0, scale: 0.98, filter: 'blur(4px)' }}
+              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5 mx-auto" style={{ background: 'rgb(var(--purple-rgb) / calc(0.1 * var(--tint-scale)))', boxShadow: '0 10px 28px -14px rgb(var(--purple-rgb) / 0.45)' }}>
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" strokeWidth="1.8">
                   <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
                 </svg>
               </div>
-              <h1 className="text-2xl font-black tracking-tight mb-2 text-ink text-center">Set New Password</h1>
+              <h1 className="font-display text-[2rem] tracking-tight mb-2 text-center" style={{ color: 'var(--text)' }}>Set New Password</h1>
               <p className="text-[14px] text-[var(--text-muted)] mb-8 text-center">Choose a strong password for your account</p>
 
               {error && (
@@ -87,7 +92,7 @@ export default function ResetPasswordPage() {
                       onChange={e => setPassword(e.target.value)}
                       required
                       minLength={8}
-                      className="w-full px-4 py-3 pr-12 rounded-xl bg-[var(--bg-input)] border border-[var(--bg-overlay)] text-ink text-[14px] placeholder-[var(--text-faint)] focus:outline-none focus:border-[rgb(var(--purple-rgb)/0.3)] transition-all"
+                      className={`${AUTH_INPUT} am-reset-input pr-12`}
                       placeholder="Minimum 8 characters"
                     />
                     <button type="button" onClick={() => setShow(s => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-faint)] hover:text-ink transition-colors">
@@ -106,7 +111,7 @@ export default function ResetPasswordPage() {
                     value={confirm}
                     onChange={e => setConfirm(e.target.value)}
                     required
-                    className="w-full px-4 py-3 rounded-xl bg-[var(--bg-input)] border border-[var(--bg-overlay)] text-ink text-[14px] placeholder-[var(--text-faint)] focus:outline-none focus:border-[rgb(var(--purple-rgb)/0.3)] transition-all"
+                    className={`${AUTH_INPUT} am-reset-input`}
                     placeholder="Re-enter password"
                   />
                 </div>
@@ -127,25 +132,35 @@ export default function ResetPasswordPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[var(--purple)] to-[var(--purple)] text-[var(--text-on-accent)] font-bold text-[14px] hover:shadow-[0_8px_30px_rgb(var(--purple-rgb) / 0.3)] hover:translate-y-[-1px] transition-all disabled:opacity-50"
+                  aria-busy={loading || undefined}
+                  className="am-reset-submit am-press w-full py-3.5 rounded-xl bg-gradient-to-r from-[var(--purple)] to-[var(--purple)] text-[var(--text-on-accent)] font-bold text-[14px] disabled:opacity-50"
                 >
                   {loading ? 'Updating...' : 'Update Password'}
                 </button>
               </form>
-            </>
+            </motion.div>
           ) : (
-            <div className="text-center py-4">
-              <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-5" style={{ background: 'rgb(var(--green-rgb) / calc(0.1 * var(--tint-scale)))' }}>
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2">
-                  <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
-                </svg>
-              </div>
-              <h2 className="text-xl font-black text-ink mb-2">Password Updated!</h2>
+            <motion.div
+              key="done"
+              className="text-center py-4"
+              initial={reduced ? false : { opacity: 0, scale: 0.94 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <motion.div
+                initial={reduced ? false : { scale: 0.6 }}
+                animate={{ scale: 1 }}
+                transition={{ type: 'spring', stiffness: 260, damping: 18 }}
+                className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-5"
+                style={{ background: 'rgb(var(--green-rgb) / calc(0.1 * var(--tint-scale)))', boxShadow: '0 12px 32px -14px rgb(var(--green-rgb) / 0.5)' }}
+              >
+                <DrawnCheck />
+              </motion.div>
+              <h2 className="font-display text-[1.6rem] mb-2" style={{ color: 'var(--text)' }}>Password Updated!</h2>
               <p className="text-[14px] text-[var(--text-muted)]">Redirecting you to the dashboard...</p>
-            </div>
+            </motion.div>
           )}
-        </div>
-      </div>
-    </div>
+          </AnimatePresence>
+    </AuthShell>
   )
 }

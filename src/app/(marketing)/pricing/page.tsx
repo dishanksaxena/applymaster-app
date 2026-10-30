@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import Reveal from '@/components/motion/Reveal';
+import PricingPlans from './PricingPlans';
 
 export const metadata: Metadata = {
   title: { absolute: 'Pricing | ApplyMaster - AI Job Application Tool Plans' },
@@ -215,12 +217,13 @@ export default function PricingPage() {
       <main className="">
         {/* Hero */}
         <section className="relative overflow-hidden py-16 sm:py-14">
-          <div className="absolute inset-0 bg-gradient-to-b from-[var(--accent-dim)] to-transparent" />
+          <div aria-hidden="true" className="am-aura am-aura-live absolute inset-[-30%]" />
           <div className="relative mx-auto max-w-7xl px-6 lg:px-8 text-center">
-            <h1 className="font-display text-[clamp(2.4rem,5vw,3.6rem)]">
+            {/* CSS-only entrance: the hero and plan cards must stay visible even if a script fails to load. */}
+            <h1 className="am-rise font-display text-[clamp(2.6rem,5.6vw,4.2rem)]" style={{ textWrap: 'balance' }}>
               Simple, Transparent Pricing
             </h1>
-            <p className="mt-6 max-w-2xl mx-auto text-lg text-[var(--text-secondary)] leading-relaxed">
+            <p className="am-rise mt-6 max-w-2xl mx-auto text-lg text-[var(--text-secondary)] leading-relaxed" style={{ animationDelay: '120ms' }}>
               Start free, upgrade when your job search heats up. No hidden fees,
               no surprise charges, and a 14-day money-back guarantee on every paid plan.
             </p>
@@ -228,117 +231,91 @@ export default function PricingPage() {
         </section>
 
         {/* Pricing Cards */}
-        <section className="py-4 pb-20">
+        <section className="py-4 pb-20 pt-6">
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-              {tiers.map((tier) => (
-                <div
-                  key={tier.name}
-                  className={`rounded-2xl border p-8 flex flex-col ${
-                    tier.highlight
-                      ? 'border-[var(--accent)] bg-[var(--accent-dim)] ring-2 ring-purple-500/50 relative'
-                      : 'border-[var(--border)] bg-[var(--bg-card)]'
-                  }`}
-                >
-                  {tier.highlight && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-[var(--accent-solid)] px-4 py-1 text-xs font-semibold">
-                      Most Popular
-                    </div>
-                  )}
-                  <h3 className="text-xl font-bold mb-2">{tier.name}</h3>
-                  <div className="flex items-baseline gap-1 mb-2">
-                    <span className="text-4xl font-extrabold">{tier.price}</span>
-                    <span className="text-[var(--text-muted)] text-sm">{tier.period}</span>
-                  </div>
-                  <p className="text-sm text-[var(--text-muted)] mb-6">{tier.description}</p>
-
-                  <Link
-                    href="/signup"
-                    className={`block rounded-full py-3 text-center text-sm font-semibold transition-colors mb-8 ${
-                      tier.highlight
-                        ? 'bg-[var(--accent-solid)] text-[var(--text-on-accent)] hover:bg-[var(--accent-solid)]'
-                        : 'border border-[var(--border-hover)] text-[var(--text-secondary)] hover:border-[var(--accent)] hover:text-ink'
-                    }`}
-                  >
-                    {tier.cta}
-                  </Link>
-
-                  <ul className="space-y-3 flex-1">
-                    {tier.features.map((f) => (
-                      <li key={f} className="flex items-start gap-3 text-sm text-[var(--text-secondary)]">
-                        <span className="mt-0.5 h-5 w-5 shrink-0 rounded-full bg-[var(--green-dim)] flex items-center justify-center text-xs text-[var(--green)]">&#10003;</span>
-                        {f}
-                      </li>
-                    ))}
-                    {tier.limitations.map((l) => (
-                      <li key={l} className="flex items-start gap-3 text-sm text-[var(--text-faint)]">
-                        <span className="mt-0.5 h-5 w-5 shrink-0 rounded-full bg-[var(--bg-card-hover)] flex items-center justify-center text-xs text-[var(--text-faint)]">&times;</span>
-                        {l}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
+            <PricingPlans tiers={tiers} />
           </div>
         </section>
 
         {/* Comparison Table */}
         <section className="py-14 bg-[var(--bg-card)]">
           <div className="mx-auto max-w-5xl px-6 lg:px-8">
-            <h2 className="font-display text-[clamp(1.8rem,3.6vw,2.5rem)] text-center mb-10">
-              Feature Comparison
-            </h2>
-            <div className="overflow-x-auto">
+            <Reveal>
+              <h2 className="font-display text-[clamp(1.8rem,3.6vw,2.5rem)] text-center mb-10">
+                Feature Comparison
+              </h2>
+            </Reveal>
+            <Reveal delay={0.1} effect="scale">
+            <div
+              className="overflow-x-auto rounded-2xl"
+              style={{ background: 'var(--card-face)', boxShadow: 'var(--card-lift), 0 0 0 1px var(--card-ring), inset 0 1px 0 0 var(--card-edge-top)' }}
+            >
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-[var(--border)]">
-                    <th className="text-left py-4 pr-4 font-semibold text-[var(--text-secondary)]">Feature</th>
+                    <th className="text-left py-4 pl-5 pr-4 font-semibold text-[var(--text-secondary)]">Feature</th>
                     <th className="py-4 px-4 font-semibold text-[var(--text-secondary)] text-center">Free</th>
-                    <th className="py-4 px-4 font-semibold text-[var(--accent)] text-center">Pro</th>
-                    <th className="py-4 px-4 font-semibold text-[var(--text-secondary)] text-center">Lifetime</th>
+                    <th className="py-4 px-4 font-semibold text-[var(--accent)] text-center" style={{ background: 'var(--accent-dim)' }}>Pro</th>
+                    <th className="py-4 px-4 pr-5 font-semibold text-[var(--text-secondary)] text-center">Lifetime</th>
                   </tr>
                 </thead>
                 <tbody>
                   {comparisonFeatures.map((row) => (
-                    <tr key={row.feature} className="border-b border-[var(--border)]">
-                      <td className="py-3 pr-4 text-[var(--text-secondary)]">{row.feature}</td>
+                    <tr key={row.feature} className="border-b border-[var(--border)] last:border-b-0 transition-colors duration-200 hover:bg-[var(--bg-card-hover)]">
+                      <td className="py-3 pl-5 pr-4 text-[var(--text-secondary)]">{row.feature}</td>
                       <td className="py-3 px-4 text-center text-[var(--text-muted)]">{row.free}</td>
-                      <td className="py-3 px-4 text-center text-ink font-medium">{row.pro}</td>
-                      <td className="py-3 px-4 text-center text-[var(--text-secondary)]">{row.lifetime}</td>
+                      <td className="py-3 px-4 text-center text-ink font-medium" style={{ background: 'var(--accent-dim)' }}>{row.pro}</td>
+                      <td className="py-3 px-4 pr-5 text-center text-[var(--text-secondary)]">{row.lifetime}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
+            </Reveal>
           </div>
         </section>
 
         {/* Money-back guarantee */}
         <section className="py-14">
           <div className="mx-auto max-w-4xl px-6 lg:px-8 text-center">
-            <div className="rounded-2xl border border-[var(--border)] bg-[var(--green-dim)] p-12">
-              <h2 className="text-2xl font-bold mb-4">14-Day Money-Back Guarantee</h2>
-              <p className="text-[var(--text-muted)] max-w-xl mx-auto leading-relaxed">
+            <Reveal effect="scale">
+            <div
+              className="relative overflow-hidden rounded-2xl p-12"
+              style={{
+                background: 'var(--green-dim)',
+                boxShadow: '0 0 0 1px rgb(var(--green-rgb) / calc(0.18 * var(--tint-scale))), 0 24px 60px -30px rgb(var(--green-rgb) / 0.35)',
+              }}
+            >
+              <div aria-hidden="true" className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(60% 100% at 50% 0%, rgb(var(--green-rgb) / calc(0.14 * var(--tint-scale))), transparent 70%)' }} />
+              <h2 className="relative font-display text-[2rem] mb-4">14-Day Money-Back Guarantee</h2>
+              <p className="relative text-[var(--text-muted)] max-w-xl mx-auto leading-relaxed">
                 Try ApplyMaster Pro or Lifetime risk-free. If it does not transform your job
                 search within 14 days, we will refund your payment in full — no questions asked.
               </p>
             </div>
+            </Reveal>
           </div>
         </section>
 
         {/* FAQ */}
         <section className="py-14 bg-[var(--bg-card)]">
           <div className="mx-auto max-w-3xl px-6 lg:px-8">
-            <h2 className="font-display text-[clamp(1.8rem,3.6vw,2.5rem)] text-center mb-10">
-              Pricing FAQ
-            </h2>
-            <div className="space-y-8">
-              {faqs.map((item) => (
-                <div key={item.q}>
-                  <h3 className="font-semibold text-ink mb-2">{item.q}</h3>
-                  <p className="text-sm text-[var(--text-muted)] leading-relaxed">{item.a}</p>
-                </div>
+            <Reveal>
+              <h2 className="font-display text-[clamp(1.8rem,3.6vw,2.5rem)] text-center mb-10">
+                Pricing FAQ
+              </h2>
+            </Reveal>
+            <div className="space-y-3">
+              {faqs.map((item, i) => (
+                <Reveal key={item.q} delay={Math.min(i * 0.06, 0.3)}>
+                  <div
+                    className="rounded-xl px-5 py-4 transition-colors duration-200 hover:bg-[var(--bg-card-hover)]"
+                    style={{ boxShadow: '0 0 0 1px var(--card-ring)' }}
+                  >
+                    <h3 className="font-semibold text-ink mb-2">{item.q}</h3>
+                    <p className="text-sm text-[var(--text-muted)] leading-relaxed">{item.a}</p>
+                  </div>
+                </Reveal>
               ))}
             </div>
           </div>
@@ -359,7 +336,7 @@ export default function PricingPage() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="rounded-full border border-[var(--border)] px-5 py-2 text-sm text-[var(--text-secondary)] hover:border-[var(--accent)] hover:text-ink transition-colors"
+                  className="am-press rounded-full border border-[var(--border)] px-5 py-2 text-sm text-[var(--text-secondary)] hover:border-[var(--accent)] hover:text-ink hover:shadow-[var(--shadow-sm)] hover:-translate-y-0.5 transition-all"
                 >
                   {link.label}
                 </Link>
@@ -369,20 +346,28 @@ export default function PricingPage() {
         </section>
 
         {/* CTA */}
-        <section className="py-16 bg-gradient-to-b from-transparent to-[var(--accent-dim)]">
-          <div className="mx-auto max-w-3xl px-6 text-center">
-            <h2 className="font-display text-[clamp(1.8rem,3.6vw,2.5rem)] mb-5">
-              Start Your Smarter Job Search Today
-            </h2>
-            <p className="text-[var(--text-muted)] mb-10 text-lg">
-              No credit card required. Get 10 free applications every month.
-            </p>
-            <Link
-              href="/signup"
-              className="rounded-full bg-[var(--accent-solid)] px-10 py-4 text-base font-semibold text-[var(--text-on-accent)] shadow-lg hover:bg-[var(--accent-solid)] transition-colors"
-            >
-              Sign Up Free
-            </Link>
+        <section className="relative overflow-hidden py-16 bg-gradient-to-b from-transparent to-[var(--accent-dim)]">
+          <div aria-hidden="true" className="am-aura absolute inset-x-[-20%] bottom-[-60%] top-[20%]" />
+          <div className="relative mx-auto max-w-3xl px-6 text-center">
+            <Reveal effect="blur">
+              <h2 className="font-display text-[clamp(1.8rem,3.6vw,2.5rem)] mb-5">
+                Start Your Smarter Job Search Today
+              </h2>
+            </Reveal>
+            <Reveal delay={0.1}>
+              <p className="text-[var(--text-muted)] mb-10 text-lg">
+                No credit card required. Get 10 free applications every month.
+              </p>
+            </Reveal>
+            <Reveal delay={0.18} effect="scale">
+              <Link
+                href="/signup"
+                className="am-press inline-block rounded-full bg-[var(--accent-solid)] px-10 py-4 text-base font-semibold text-[var(--text-on-accent)] hover:bg-[var(--accent-solid)] hover:-translate-y-0.5 transition-all"
+                style={{ boxShadow: 'var(--shadow-accent), var(--pill-glow)' }}
+              >
+                Sign Up Free
+              </Link>
+            </Reveal>
           </div>
         </section>
       </main>

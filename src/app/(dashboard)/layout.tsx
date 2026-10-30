@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { createClient } from '@/lib/supabase-browser'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
@@ -8,7 +9,11 @@ import type { Profile } from '@/lib/database.types'
 import ThemeToggle from '@/components/ThemeToggle'
 import CommandPalette from '@/components/CommandPalette'
 import Toaster from '@/components/Toast'
+import PageTransition from '@/components/motion/PageTransition'
+import { toneA } from '@/lib/tone'
 import { track } from '@/lib/track'
+
+const NAV_SPRING = { type: 'spring', stiffness: 380, damping: 32 } as const
 
 /* ─── SVG Icon Components ─── */
 const icons = {
@@ -174,6 +179,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
+  const reduced = useReducedMotion()
 
   /* Once per browser per day: the signal that tells returning users from
      one-time visitors. The server attaches the account from the session. */
@@ -264,9 +270,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         {/* ─── Sidebar ─── */}
         <aside
-          className={`fixed lg:sticky top-0 left-0 z-40 h-screen flex flex-col transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${sidebarOpen ? 'w-[260px]' : 'w-[72px]'} ${mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
-          style={{ background: 'var(--bg-sidebar)', borderRight: '1px solid var(--sidebar-border)' }}
+          className={`am-glass fixed lg:sticky top-0 left-0 z-40 h-screen flex flex-col overflow-hidden ${sidebarOpen ? 'w-[260px]' : 'w-[72px]'} ${mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
+          style={{
+            borderRight: '1px solid var(--sidebar-border)',
+            borderTop: 'none', borderBottom: 'none', borderLeft: 'none',
+            transition: 'width .45s cubic-bezier(.2,.8,.2,1), transform .3s cubic-bezier(.4,0,.2,1)',
+          }}
         >
+          {/* Faint atmosphere behind the logo */}
+          <div aria-hidden="true" className={`am-aura absolute -top-24 -left-20 w-[320px] h-[260px] ${reduced ? '' : 'am-aura-live'}`} style={{ opacity: 0.5 }} />
+
           {/* Logo */}
           <Link href="/dashboard" className="flex items-center gap-3 px-5 h-[64px] shrink-0 relative hover:opacity-80 transition-opacity duration-200" style={{ borderBottom: '1px solid var(--sidebar-divider)' }}>
             <div className="relative w-8 h-8 shrink-0">
@@ -282,20 +295,39 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <span className="text-[10px] font-black" style={{ color: 'var(--accent)' }}>AM</span>
               </div>
             </div>
-            {sidebarOpen && (
-              <span className="text-[15px] font-extrabold tracking-tight" style={{ color: 'var(--text)', animation: 'fade-in 0.2s ease' }}>
-                Apply<span className="bg-gradient-to-r from-[var(--accent)] to-[var(--accent-solid)] bg-clip-text text-transparent">Master</span>
-              </span>
-            )}
+            <AnimatePresence initial={false}>
+              {sidebarOpen && (
+                <motion.span
+                  key="wordmark"
+                  initial={reduced ? false : { opacity: 0, x: -6 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={reduced ? undefined : { opacity: 0, x: -6 }}
+                  transition={{ duration: 0.2 }}
+                  className="text-[15px] font-extrabold tracking-tight whitespace-nowrap"
+                  style={{ color: 'var(--text)' }}
+                >
+                  Apply<span className="bg-gradient-to-r from-[var(--accent)] to-[var(--accent-solid)] bg-clip-text text-transparent">Master</span>
+                </motion.span>
+              )}
+            </AnimatePresence>
           </Link>
 
           {/* Navigation */}
-          <nav className="flex-1 py-4 px-3 space-y-0.5 overflow-y-auto">
-            {sidebarOpen && (
-              <div className="px-3 pb-2 pt-1">
-                <span className="text-[10px] font-semibold tracking-[0.08em] uppercase" style={{ color: 'var(--text-faint)' }}>Navigation</span>
-              </div>
-            )}
+          <nav className="flex-1 py-4 px-3 space-y-0.5 overflow-y-auto overflow-x-hidden relative">
+            <AnimatePresence initial={false}>
+              {sidebarOpen && (
+                <motion.div
+                  key="nav-label"
+                  initial={reduced ? false : { opacity: 0, x: -6 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={reduced ? undefined : { opacity: 0, x: -6 }}
+                  transition={{ duration: 0.2 }}
+                  className="px-3 pb-2 pt-1"
+                >
+                  <span className="text-[10px] font-semibold tracking-[0.08em] uppercase" style={{ color: 'var(--text-faint)' }}>Navigation</span>
+                </motion.div>
+              )}
+            </AnimatePresence>
             {navItems.map(item => {
               const active = pathname === item.href || pathname.startsWith(item.href + '/')
               return (
@@ -303,21 +335,35 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   key={item.href}
                   href={item.href}
                   onClick={() => setMobileSidebarOpen(false)}
-                  className="group relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all duration-200"
-                  style={active ? {
-                    background: 'var(--sidebar-active-bg)',
-                    color: 'var(--sidebar-active-text)',
-                    boxShadow: 'var(--shadow-sm)',
-                  } : {
-                    color: 'var(--sidebar-text)',
+                  className="am-press group relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium"
+                  style={{
+                    color: active ? 'var(--sidebar-active-text)' : 'var(--sidebar-text)',
+                    transition: 'color .2s ease, transform .18s cubic-bezier(.16,1,.3,1)',
                   }}
                 >
-                  {/* Active indicator dot */}
+                  {/* Active pill: slides between items on navigation */}
                   {active && (
-                    <div
+                    <motion.span
+                      layoutId={reduced ? undefined : 'am-nav-active'}
+                      transition={NAV_SPRING}
+                      className="absolute inset-0 rounded-xl"
+                      style={{
+                        background: 'var(--sidebar-active-bg)',
+                        boxShadow: 'var(--pill-glow)',
+                        border: '1px solid var(--border-accent)',
+                      }}
+                    />
+                  )}
+
+                  {/* Active indicator bar */}
+                  {active && (
+                    <motion.span
+                      layoutId={reduced ? undefined : 'am-nav-bar'}
+                      transition={NAV_SPRING}
                       className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full"
                       style={{
                         background: 'linear-gradient(180deg, var(--accent), var(--accent-solid))',
+                        boxShadow: '0 0 10px var(--accent-glow)',
                       }}
                     />
                   )}
@@ -330,19 +376,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   )}
 
                   {/* Icon */}
-                  <span className={`relative shrink-0 transition-all duration-200 ${active ? '' : 'group-hover:text-[var(--text)]'}`}>
+                  <span className={`relative shrink-0 transition-all duration-200 group-hover:scale-[1.08] ${active ? '' : 'group-hover:text-[var(--text)]'}`}>
                     {item.icon}
                   </span>
 
-                  {sidebarOpen && (
-                    <span className={`relative transition-all duration-200 ${active ? '' : 'group-hover:text-[var(--text)] group-hover:translate-x-0.5'}`}>
-                      {item.label}
-                    </span>
-                  )}
-
-                  {active && (
-                    <div className="absolute inset-0 rounded-xl pointer-events-none" style={{ border: '1px solid var(--border-accent)' }} />
-                  )}
+                  <AnimatePresence initial={false}>
+                    {sidebarOpen && (
+                      <motion.span
+                        key="label"
+                        initial={reduced ? false : { opacity: 0, x: -6 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={reduced ? undefined : { opacity: 0, x: -6 }}
+                        transition={{ duration: 0.2 }}
+                        className={`relative whitespace-nowrap transition-all duration-200 ${active ? '' : 'group-hover:text-[var(--text)] group-hover:translate-x-0.5'}`}
+                      >
+                        {item.label}
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
                 </Link>
               )
             })}
@@ -436,11 +487,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
           {/* Topbar */}
           <header
-            className="sticky top-0 z-20 h-[64px] flex items-center justify-between px-4 lg:px-6"
+            className="am-glass sticky top-0 z-20 h-[64px] flex items-center justify-between px-4 lg:px-6"
             style={{
-              background: 'var(--bg-topbar)',
-              backdropFilter: 'blur(20px) saturate(180%)',
-              WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+              borderTop: 'none', borderLeft: 'none', borderRight: 'none',
               borderBottom: '1px solid var(--border)',
             }}
           >
@@ -479,16 +528,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <button
                 onClick={() => window.dispatchEvent(new Event('applymaster:open-command-palette'))}
                 aria-label="Open command palette"
-                className="hidden md:flex items-center gap-2 h-8 px-3 rounded-lg text-[12px] transition-all duration-200 group"
+                className="am-press hidden md:flex items-center gap-2 h-8 px-3 rounded-lg text-[12px] transition-all duration-200 group hover:border-[var(--border-accent)] hover:shadow-[var(--shadow-sm)]"
                 style={{
                   border: '1px solid var(--border)',
                   background: 'var(--bg-overlay)',
                   color: 'var(--text-muted)',
                 }}
               >
-                <span className="transition-colors">{icons.search}</span>
+                <span className="transition-colors group-hover:text-[var(--accent)]">{icons.search}</span>
                 <span className="font-medium">Search...</span>
-                <kbd className="ml-2 h-5 px-1.5 rounded text-[10px] font-semibold flex items-center" style={{ background: 'var(--bg-overlay)', border: '1px solid var(--border)', color: 'var(--text-faint)' }}>
+                <kbd className="ml-2 h-5 px-1.5 rounded text-[10px] font-semibold flex items-center transition-all duration-200 group-hover:-translate-y-px group-hover:shadow-[var(--shadow-sm)]" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', color: 'var(--text-faint)' }}>
                   <span className="text-[9px] mr-0.5">&#8984;</span>K
                 </kbd>
               </button>
@@ -509,10 +558,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
               <Link
                 href="/auto-apply"
-                className="flex items-center gap-2 px-3 py-1.5 rounded-lg"
+                className="am-press flex items-center gap-2 px-3 py-1.5 rounded-lg"
                 style={{
                   background: applyMode === 'off' ? 'var(--bg-overlay)' : 'var(--green-dim)',
-                  border: '1px solid var(--border)',
+                  border: `1px solid ${applyMode === 'off' ? 'var(--border)' : toneA('green', 0.25)}`,
+                  boxShadow: applyMode === 'off' ? 'none' : `0 0 0 1px ${toneA('green', 0.25)}, 0 4px 14px -6px ${toneA('green', 0.5)}`,
                 }}
                 title="Auto-apply settings"
               >
@@ -533,8 +583,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </header>
 
           {/* Page content */}
-          <main className="flex-1 p-4 lg:p-8" style={{ animation: 'fade-in 0.3s ease' }}>
-            {children}
+          <main className="flex-1 p-4 lg:p-8">
+            <PageTransition>{children}</PageTransition>
           </main>
         </div>
       </div>

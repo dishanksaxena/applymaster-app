@@ -1,13 +1,37 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { motion, useReducedMotion } from 'framer-motion'
+import Reveal from '@/components/motion/Reveal'
 
 interface SuccessDonutChartProps {
   applications: any[]
   height?: number
 }
 
+const EASE = [0.16, 1, 0.3, 1] as const
+
+function CountUp({ value, duration = 1100 }: { value: number; duration?: number }) {
+  const reduced = useReducedMotion()
+  const [n, setN] = useState(reduced ? value : 0)
+  useEffect(() => {
+    if (reduced) { setN(value); return }
+    const start = performance.now()
+    let raf = 0
+    const tick = (now: number) => {
+      const p = Math.min((now - start) / duration, 1)
+      setN(Math.round(value * (1 - Math.pow(1 - p, 3))))
+      if (p < 1) raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [value, duration, reduced])
+  return <>{n}</>
+}
+
 export default function SuccessDonutChart({ applications, height = 280 }: SuccessDonutChartProps) {
+  const reduced = useReducedMotion()
+
   const chartData = useMemo(() => {
     const total = applications.length
     if (total === 0) return null
@@ -42,141 +66,129 @@ export default function SuccessDonutChart({ applications, height = 280 }: Succes
   const centerY = height / 2
   const radius = 60
   const donutWidth = 14
+  const ringR = radius - donutWidth / 2
 
-  // Calculate angles for each slice
   const total = chartData.interviewed + chartData.applied + chartData.saved + chartData.rejected
-  let currentAngle = -Math.PI / 2
 
   const slices = [
-    { label: 'Interview/Offer', value: chartData.interviewed, color: 'var(--accent)', percentage: Math.round((chartData.interviewed / total) * 100) },
-    { label: 'Applied', value: chartData.applied, color: 'var(--blue)', percentage: Math.round((chartData.applied / total) * 100) },
-    { label: 'Saved', value: chartData.saved, color: 'var(--purple)', percentage: Math.round((chartData.saved / total) * 100) },
-    { label: 'Rejected', value: chartData.rejected, color: 'var(--red)', percentage: Math.round((chartData.rejected / total) * 100) },
+    { label: 'Interview/Offer', value: chartData.interviewed, color: 'var(--accent)', rgb: '--accent-rgb', percentage: Math.round((chartData.interviewed / total) * 100) },
+    { label: 'Applied', value: chartData.applied, color: 'var(--blue)', rgb: '--blue-rgb', percentage: Math.round((chartData.applied / total) * 100) },
+    { label: 'Saved', value: chartData.saved, color: 'var(--purple)', rgb: '--purple-rgb', percentage: Math.round((chartData.saved / total) * 100) },
+    { label: 'Rejected', value: chartData.rejected, color: 'var(--red)', rgb: '--red-rgb', percentage: Math.round((chartData.rejected / total) * 100) },
   ].filter(s => s.value > 0)
 
-  const paths = slices.map((slice, idx) => {
-    const sliceAngle = (slice.value / total) * (2 * Math.PI)
-    const endAngle = currentAngle + sliceAngle
-
-    // Calculate path for donut slice
-    const x1 = centerX + Math.cos(currentAngle) * radius
-    const y1 = centerY + Math.sin(currentAngle) * radius
-    const x2 = centerX + Math.cos(endAngle) * radius
-    const y2 = centerY + Math.sin(endAngle) * radius
-
-    const x3 = centerX + Math.cos(endAngle) * (radius - donutWidth)
-    const y3 = centerY + Math.sin(endAngle) * (radius - donutWidth)
-    const x4 = centerX + Math.cos(currentAngle) * (radius - donutWidth)
-    const y4 = centerY + Math.sin(currentAngle) * (radius - donutWidth)
-
-    const largeArc = sliceAngle > Math.PI ? 1 : 0
-    const path = `
-      M ${x1} ${y1}
-      A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2}
-      L ${x3} ${y3}
-      A ${radius - donutWidth} ${radius - donutWidth} 0 ${largeArc} 0 ${x4} ${y4}
-      Z
-    `
-
-    const labelAngle = currentAngle + sliceAngle / 2
-    const labelRadius = radius - donutWidth / 2 - 15
-    const labelX = centerX + Math.cos(labelAngle) * labelRadius
-    const labelY = centerY + Math.sin(labelAngle) * labelRadius
-
-    currentAngle = endAngle
-
+  // Each segment is a stroked arc on the same circle; pathOffset places it
+  // where the previous one ended, pathLength is its share of the ring.
+  let cursor = 0
+  const segments = slices.map(slice => {
+    const frac = slice.value / total
+    const start = cursor
+    cursor += frac
+    const labelAngle = -Math.PI / 2 + (start + frac / 2) * 2 * Math.PI
+    const labelRadius = ringR
     return {
-      path,
-      color: slice.color,
-      labelX,
-      labelY,
-      percentage: slice.percentage,
-      label: slice.label,
-      value: slice.value,
+      ...slice,
+      frac,
+      start,
+      labelX: centerX + Math.cos(labelAngle) * labelRadius,
+      labelY: centerY + Math.sin(labelAngle) * labelRadius,
     }
   })
 
+  const segDur = reduced ? 0 : 0.7
+  const totalDraw = segDur * segments.length
+
   return (
-    <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg)] p-6">
-      <h3 className="text-[14px] font-bold text-ink mb-4">Success Breakdown</h3>
+    <Reveal effect="scale" amount={0.12}>
+      <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg)] p-6">
+        <h3 className="text-[14px] font-bold text-ink mb-4">Success Breakdown</h3>
 
-      <div className="flex flex-wrap items-center gap-6">
-        <svg viewBox={`0 0 320 ${height}`} className="w-full max-w-[260px] h-auto flex-shrink-0">
-          {/* Donut slices */}
-          {paths.map((p, i) => (
-            <path
-              key={`slice-${i}`}
-              d={p.path}
-              fill={p.color}
-              opacity="0.85"
-              style={{
-                transition: 'opacity 0.3s ease',
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
-              onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.85')}
+        <div className="flex flex-wrap items-center gap-6">
+          <svg viewBox={`0 0 320 ${height}`} className="w-full max-w-[260px] h-auto flex-shrink-0 overflow-visible">
+            {/* Faint glow behind the ring */}
+            <circle
+              cx={centerX}
+              cy={centerY}
+              r={ringR}
+              fill="none"
+              stroke="rgb(var(--accent-rgb) / 0.18)"
+              strokeWidth={donutWidth + 10}
+              style={{ filter: 'blur(10px)' }}
             />
-          ))}
+            {/* Track */}
+            <circle cx={centerX} cy={centerY} r={ringR} fill="none" stroke="var(--bg-overlay)" strokeWidth={donutWidth} />
 
-          {/* Center circle (for donut hole) */}
-          <circle cx={centerX} cy={centerY} r={radius - donutWidth} fill="var(--bg)" />
+            {/* Segments draw in sequence, clockwise from the top */}
+            <g transform={`rotate(-90 ${centerX} ${centerY})`}>
+              {segments.map((s, i) => (
+                <motion.circle
+                  key={`slice-${i}`}
+                  cx={centerX}
+                  cy={centerY}
+                  r={ringR}
+                  fill="none"
+                  stroke={s.color}
+                  strokeWidth={donutWidth}
+                  strokeLinecap="butt"
+                  initial={{ pathLength: reduced ? s.frac : 0, pathOffset: s.start, opacity: 0.85 }}
+                  animate={{ pathLength: s.frac, pathOffset: s.start, opacity: 0.85 }}
+                  whileHover={{ opacity: 1 }}
+                  transition={{ duration: segDur, delay: i * segDur, ease: EASE }}
+                  style={{ filter: `drop-shadow(0 0 6px rgb(var(${s.rgb}) / 0.45))` }}
+                />
+              ))}
+            </g>
 
-          {/* Center text - interview rate */}
-          <text
-            x={centerX}
-            y={centerY - 8}
-            fontSize="24"
-            fontWeight="bold"
-            fill="var(--blue)"
-            textAnchor="middle"
-            dominantBaseline="middle"
-          >
-            {chartData.interviewRate}%
-          </text>
-          <text
-            x={centerX}
-            y={centerY + 12}
-            fontSize="11"
-            fill="var(--text-faint)"
-            textAnchor="middle"
-          >
-            Interview Rate
-          </text>
-
-          {/* Labels on slices */}
-          {paths.map((p, i) => (
-            <text
-              key={`label-${i}`}
-              x={p.labelX}
-              y={p.labelY}
-              fontSize="11"
-              fontWeight="bold"
-              fill="white"
-              textAnchor="middle"
-              dominantBaseline="middle"
-            >
-              {p.percentage}%
+            {/* Center text - interview rate */}
+            <text x={centerX} y={centerY - 8} fontSize="24" fontWeight="bold" fill="var(--blue)" textAnchor="middle" dominantBaseline="middle">
+              <CountUp value={chartData.interviewRate} />%
             </text>
-          ))}
-        </svg>
+            <text x={centerX} y={centerY + 12} fontSize="11" fill="var(--text-faint)" textAnchor="middle">
+              Interview Rate
+            </text>
 
-        {/* Legend */}
-        <div className="space-y-3 min-w-0">
-          {slices.map((slice, i) => (
-            <div key={i} className="flex items-center gap-2">
-              <div
-                className="w-3 h-3 rounded-full flex-shrink-0"
-                style={{ backgroundColor: slice.color }}
-              />
-              <div className="flex-1 min-w-0">
-                <p className="text-[12px] font-semibold text-ink truncate">{slice.label}</p>
-                <p className="text-[11px] text-[var(--text-faint)]">
-                  {slice.value} ({slice.percentage}%)
-                </p>
+            {/* Labels on slices */}
+            {segments.filter(s => s.percentage >= 12).map((s, i) => (
+              <motion.text
+                key={`label-${i}`}
+                x={s.labelX}
+                y={s.labelY}
+                fontSize="9"
+                fontWeight="bold"
+                fill="white"
+                style={{ paintOrder: 'stroke', stroke: 'rgb(0 0 0 / 0.25)', strokeWidth: 2 }}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                initial={{ opacity: reduced ? 1 : 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.3, delay: totalDraw }}
+              >
+                {s.percentage}%
+              </motion.text>
+            ))}
+          </svg>
+
+          {/* Legend */}
+          <div className="space-y-3 min-w-0">
+            {slices.map((slice, i) => (
+              <div key={i} className="group flex items-center gap-2">
+                <div
+                  className="w-3 h-3 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: slice.color, boxShadow: `0 0 0 0 rgb(var(${slice.rgb}) / 0.4)`, transition: 'box-shadow 0.3s ease' }}
+                  onMouseEnter={e => { e.currentTarget.style.boxShadow = `0 0 0 4px rgb(var(${slice.rgb}) / 0.22), 0 0 10px rgb(var(${slice.rgb}) / 0.5)` }}
+                  onMouseLeave={e => { e.currentTarget.style.boxShadow = `0 0 0 0 rgb(var(${slice.rgb}) / 0.4)` }}
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="text-[12px] font-semibold text-ink truncate">{slice.label}</p>
+                  <p className="text-[11px] text-[var(--text-faint)]">
+                    {slice.value} ({slice.percentage}%)
+                  </p>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
-    </div>
+    </Reveal>
   )
 }

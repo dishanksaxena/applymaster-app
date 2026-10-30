@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useRef, useCallback, useEffect } from 'react'
-import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion'
+import { motion, AnimatePresence, useMotionValue, useReducedMotion } from 'framer-motion'
+import { toneA } from '@/lib/tone'
 import { createClient } from '@/lib/supabase-browser'
 import { useRouter } from 'next/navigation'
 import ResumeAnalysisOverlay from '@/components/ResumeAnalysisOverlay'
@@ -27,19 +28,23 @@ function Particles() {
 }
 
 function GlowCard({ children, className = '' }: { children: React.ReactNode; className?: string }) {
-  const mouseX = useMotionValue(0), mouseY = useMotionValue(0)
-  const spotlightX = useTransform(mouseX, v => `${v}px`), spotlightY = useTransform(mouseY, v => `${v}px`)
+  const ref = useRef<HTMLDivElement>(null)
 
-  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect()
-    mouseX.set(e.clientX - rect.left); mouseY.set(e.clientY - rect.top)
-  }, [mouseX, mouseY])
+  // Written straight to the element: a pointer move never re-renders React.
+  const handlePointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    const el = ref.current
+    if (!el) return
+    const r = el.getBoundingClientRect()
+    el.style.setProperty('--mx', `${e.clientX - r.left}px`)
+    el.style.setProperty('--my', `${e.clientY - r.top}px`)
+  }, [])
 
   return (
-    <div className={`relative group ${className}`} onMouseMove={handleMouseMove}>
-      <div className="relative rounded-[24px] overflow-hidden" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', boxShadow: '0 18px 50px -24px rgb(var(--accent-rgb) / 0.25)' }}>
-        <motion.div className="absolute w-[400px] h-[400px] rounded-full pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-          style={{ left: spotlightX, top: spotlightY, x: '-50%', y: '-50%', background: 'radial-gradient(circle, rgb(var(--accent-rgb) / calc(0.06 * var(--tint-scale))) 0%, transparent 60%)' }} />
+    <div className={`relative ${className}`}>
+      <div ref={ref} onPointerMove={handlePointerMove} className="am-spot-host relative rounded-[24px] overflow-hidden"
+        style={{ background: 'var(--card-face)', border: '1px solid var(--border)', boxShadow: 'var(--card-lift), inset 0 1px 0 0 var(--card-edge-top), 0 18px 50px -24px rgb(var(--accent-rgb) / 0.25)' }}>
+        <span aria-hidden="true" className="am-spot" />
+        <span aria-hidden="true" className="am-spot-ring" />
         <div className="relative z-10">{children}</div>
       </div>
     </div>
@@ -55,7 +60,7 @@ function MagneticButton({ children, onClick, disabled = false, variant = 'primar
   }
   return (
     <motion.button ref={ref} style={{ x, y }} onClick={onClick} disabled={disabled} onMouseMove={handleMouseMove} onMouseLeave={() => { x.set(0); y.set(0) }} whileTap={{ scale: 0.95 }}
-      className={`relative overflow-hidden rounded-xl font-bold text-[13px] tracking-wide transition-all disabled:opacity-40 disabled:pointer-events-none ${className}`}>
+      className={`am-press relative overflow-hidden rounded-xl font-bold text-[13px] tracking-wide transition-all disabled:opacity-40 disabled:pointer-events-none ${variant === 'primary' ? 'shadow-[0_6px_18px_-10px_rgb(var(--accent-rgb)/0.5)] hover:shadow-[0_12px_30px_-10px_rgb(var(--accent-rgb)/0.6)]' : 'hover:shadow-[var(--shadow-sm)]'} ${className}`}>
       {variant === 'primary' ? (
         <>
           <motion.div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, var(--accent), var(--accent-solid), var(--accent-solid))' }} />
@@ -111,7 +116,20 @@ const slideVariants = {
   exit: (dir: number) => ({ x: dir > 0 ? -80 : 80, opacity: 0, scale: 0.96, filter: 'blur(6px)', transition: { duration: 0.4 } }),
 }
 
+/* Multi-select chips share one look: a tactile press and, when chosen, a lit ring. */
+const CHIP_BASE = 'am-press px-3 py-2 rounded-lg text-[12px] font-medium transition-all'
+const CHIP_ON = 'bg-[rgb(var(--accent-rgb)/0.15)] text-[var(--accent)] border border-[rgb(var(--accent-rgb)/0.3)]'
+const CHIP_OFF = 'bg-[var(--bg-overlay)] text-[var(--text-muted)] hover:bg-[var(--bg-overlay)]'
+const chipCls = (on: boolean, extra = '') => `${CHIP_BASE} ${on ? CHIP_ON : CHIP_OFF} ${extra}`
+const chipStyle = (on: boolean) => (on ? { boxShadow: `0 0 0 1px ${toneA('accent', 0.35)}, 0 4px 12px -6px ${toneA('accent', 0.5)}` } : undefined)
+/* Single-select buttons: solid fill when chosen. */
+const SEG_BASE = 'am-press px-3 py-2 rounded-lg text-[12px] font-medium transition-all'
+const SEG_ON = 'bg-gradient-to-r from-[var(--accent)] to-[var(--accent-solid)] text-[var(--text-on-accent)] shadow-[0_6px_16px_-8px_rgb(var(--accent-rgb)/0.6)]'
+const segCls = (on: boolean) => `${SEG_BASE} ${on ? SEG_ON : CHIP_OFF}`
+
 export default function OnboardingPage() {
+  const reduced = useReducedMotion()
+  const [finished, setFinished] = useState(false)
   const [step, setStep] = useState(0)
   const [direction, setDirection] = useState(1)
   const [uploading, setUploading] = useState(false)
@@ -613,7 +631,10 @@ export default function OnboardingPage() {
         return
       }
 
-      // The flag is saved (the update above awaited the database), so go straight in.
+      // The flag is saved (the update above awaited the database), so go straight in,
+      // after a beat of confirmation so the finish does not feel like a cut.
+      setFinished(true)
+      await new Promise(r => setTimeout(r, reduced ? 350 : 700))
       router.push('/dashboard')
       router.refresh()
     } catch (err) {
@@ -659,6 +680,28 @@ export default function OnboardingPage() {
 
       <Particles />
       <div className="absolute inset-0 opacity-[0.02]" style={{ backgroundImage: 'linear-gradient(var(--bg-overlay) 1px, transparent 1px), linear-gradient(90deg, var(--bg-overlay) 1px, transparent 1px)', backgroundSize: '80px 80px' }} />
+      <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+        <div className={`am-aura absolute inset-[-10%] ${reduced ? '' : 'am-aura-live'}`} />
+      </div>
+
+      {/* Finish confirmation: a drawn check in a lit ring, then straight into the dashboard. */}
+      <AnimatePresence>
+        {finished && (
+          <motion.div key="finished" className="fixed inset-0 z-50 flex items-center justify-center" role="status" aria-label="Setup complete"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.25 }}
+            style={{ background: 'var(--bg-scrim)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}>
+            <motion.div className="relative w-24 h-24 rounded-full flex items-center justify-center"
+              initial={reduced ? false : { scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: 'spring', stiffness: 260, damping: 18 }}
+              style={{ background: 'var(--bg-card)', boxShadow: 'var(--pill-glow), 0 0 60px -10px rgb(var(--accent-rgb) / 0.55)', border: `1px solid ${toneA('accent', 0.4)}` }}>
+              <span className="absolute inset-[-14px] rounded-full am-glow-pulse" style={{ background: 'radial-gradient(circle, rgb(var(--accent-rgb) / 0.35), transparent 70%)', animation: reduced ? 'none' : 'am-glow-pulse 1.4s ease-in-out infinite' }} />
+              <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" className="relative">
+                <motion.path d="M4.5 12.5l4.5 4.5L19.5 6.5" initial={{ pathLength: reduced ? 1 : 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.45, delay: 0.15, ease: [0.16, 1, 0.3, 1] }} />
+              </svg>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div className="relative z-10 w-full max-w-[650px]">
         <motion.div className="flex items-center justify-center gap-3 mb-10" initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.2 }}>
@@ -668,16 +711,54 @@ export default function OnboardingPage() {
           <span className="text-[18px] font-black tracking-tight text-ink">ApplyMaster</span>
         </motion.div>
 
-        <motion.div className="flex items-center justify-center mb-10 gap-1" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.3 }}>
-          {stepLabels.map((label, i) => (
-            <div key={label} className="flex items-center gap-1">
-              <div className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold" style={i < step ? { background: 'linear-gradient(135deg, var(--accent), var(--accent-solid))' } : i === step ? { background: 'rgb(var(--accent-rgb) / calc(0.2 * var(--tint-scale)))', border: '1px solid rgb(var(--accent-rgb) / 0.4)', color: 'var(--accent)' } : { background: 'var(--bg-overlay)', color: 'var(--text-faint)' }}>
-                {i < step ? '✓' : i + 1}
+        {/* Progression rail: one track, one glowing fill, five nodes on top. The plan
+            step is index 5 internally, so it maps to the last node. */}
+        {(() => {
+          const current = Math.min(step, stepLabels.length - 1)
+          const last = stepLabels.length - 1
+          return (
+            <motion.div className="mb-10 mx-auto w-full max-w-[420px] px-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.3 }}
+              role="progressbar" aria-valuemin={1} aria-valuemax={stepLabels.length} aria-valuenow={current + 1} aria-valuetext={stepLabels[current]}>
+              <div className="relative h-8">
+                <div className="absolute left-4 right-4 top-1/2 -translate-y-1/2 h-[3px] rounded-full" style={{ background: 'var(--bg-overlay)' }} />
+                <motion.div
+                  className="absolute left-4 top-1/2 -translate-y-1/2 h-[3px] rounded-full"
+                  style={{ background: 'linear-gradient(90deg, var(--accent), var(--accent-solid))', boxShadow: 'var(--pill-glow)', maxWidth: 'calc(100% - 2rem)' }}
+                  initial={false}
+                  animate={{ width: `calc((100% - 2rem) * ${current / last})` }}
+                  transition={reduced ? { duration: 0 } : { type: 'spring', stiffness: 120, damping: 20 }}
+                />
+                <div className="absolute inset-0 flex items-center justify-between">
+                  {stepLabels.map((label, i) => {
+                    const done = i < current, active = i === current
+                    return (
+                      <div key={label} className="relative w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold" title={label}
+                        style={done
+                          ? { background: 'linear-gradient(135deg, var(--accent), var(--accent-solid))', color: 'var(--text-on-accent)', boxShadow: '0 4px 12px -6px rgb(var(--accent-rgb) / 0.6)' }
+                          : active
+                          ? { background: 'var(--bg-card)', border: '2px solid var(--accent)', color: 'var(--accent)', boxShadow: 'var(--pill-glow)' }
+                          : { background: 'var(--bg-overlay)', color: 'var(--text-faint)', border: '1px solid var(--border)' }}>
+                        {active && !reduced && (
+                          <span aria-hidden="true" className="absolute inset-[-6px] rounded-full" style={{ background: 'radial-gradient(circle, rgb(var(--accent-rgb) / 0.35), transparent 70%)', animation: 'am-glow-pulse 1.8s ease-in-out infinite' }} />
+                        )}
+                        {done ? (
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="relative">
+                            <motion.path d="M5 12.5l4.5 4.5L19 7" initial={{ pathLength: reduced ? 1 : 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }} />
+                          </svg>
+                        ) : <span className="relative">{i + 1}</span>}
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
-              {i < 4 && <div className="w-6 h-px" style={{ background: i < step ? 'linear-gradient(90deg, var(--accent), var(--accent-solid))' : 'var(--bg-overlay)' }} />}
-            </div>
-          ))}
-        </motion.div>
+              <div className="mt-2 flex justify-between">
+                {stepLabels.map((label, i) => (
+                  <span key={label} className="w-8 text-center text-[10px] font-semibold tracking-wide" style={{ color: i === current ? 'var(--accent)' : i < current ? 'var(--text-secondary)' : 'var(--text-faint)' }}>{label}</span>
+                ))}
+              </div>
+            </motion.div>
+          )
+        })()}
 
         {/* Small floating badge while resume processes in background (steps 1-4) */}
         {resumeProcessing && !completing && (
@@ -781,7 +862,7 @@ export default function OnboardingPage() {
                       <div className="grid grid-cols-2 gap-2">
                         {ROLES.map(role => (
                           <button key={role} onClick={() => toggleChip(selectedRoles, setSelectedRoles, role, 5)}
-                            className={`px-3 py-2 rounded-lg text-[12px] font-medium transition-all ${selectedRoles.includes(role) ? 'bg-[rgb(var(--accent-rgb)/0.15)] text-[var(--accent)] border border-[rgb(var(--accent-rgb)/0.3)]' : 'bg-[var(--bg-overlay)] text-[var(--text-muted)] hover:bg-[var(--bg-overlay)]'}`}>
+                            className={chipCls(selectedRoles.includes(role))} style={chipStyle(selectedRoles.includes(role))}>
                             {role}
                           </button>
                         ))}
@@ -795,7 +876,7 @@ export default function OnboardingPage() {
                       <div className="grid grid-cols-3 gap-2">
                         {['entry', 'mid', 'senior', 'lead', 'executive'].map(level => (
                           <button key={level} onClick={() => setExperienceLevel(level)}
-                            className={`px-3 py-2 rounded-lg text-[12px] font-medium transition-all ${experienceLevel === level ? 'bg-gradient-to-r from-[var(--accent)] to-[var(--accent-solid)] text-[var(--text-on-accent)]' : 'bg-[var(--bg-overlay)] text-[var(--text-muted)] hover:bg-[var(--bg-overlay)]'}`}>
+                            className={segCls(experienceLevel === level)}>
                             {level.charAt(0).toUpperCase() + level.slice(1)}
                           </button>
                         ))}
@@ -825,7 +906,7 @@ export default function OnboardingPage() {
                       <div className="grid grid-cols-2 gap-2">
                         {['remote', 'hybrid', 'onsite', 'any'].map(pref => (
                           <button key={pref} onClick={() => setRemotePreference(pref)}
-                            className={`px-3 py-2 rounded-lg text-[12px] font-medium transition-all ${remotePreference === pref ? 'bg-gradient-to-r from-[var(--accent)] to-[var(--accent-solid)] text-[var(--text-on-accent)]' : 'bg-[var(--bg-overlay)] text-[var(--text-muted)] hover:bg-[var(--bg-overlay)]'}`}>
+                            className={segCls(remotePreference === pref)}>
                             {pref.charAt(0).toUpperCase() + pref.slice(1)}
                           </button>
                         ))}
@@ -838,7 +919,7 @@ export default function OnboardingPage() {
                       <div className="grid grid-cols-2 gap-2">
                         {JOB_TYPES.map(type => (
                           <button key={type} onClick={() => setWorkType(type)}
-                            className={`px-3 py-2 rounded-lg text-[12px] font-medium transition-all ${workType === type ? 'bg-gradient-to-r from-[var(--accent)] to-[var(--accent-solid)] text-[var(--text-on-accent)]' : 'bg-[var(--bg-overlay)] text-[var(--text-muted)] hover:bg-[var(--bg-overlay)]'}`}>
+                            className={segCls(workType === type)}>
                             {type}
                           </button>
                         ))}
@@ -905,11 +986,11 @@ export default function OnboardingPage() {
                       <label className="block text-[11.5px] font-semibold tracking-wide text-[var(--text-muted)] mb-2">WILLING TO RELOCATE? *</label>
                       <div className="flex gap-2">
                         <button onClick={() => setWillingToRelocate(true)}
-                          className={`flex-1 px-4 py-2.5 rounded-lg border font-medium transition-all ${willingToRelocate ? 'bg-gradient-to-r from-[var(--accent)] to-[var(--accent-solid)] text-[var(--text-on-accent)] border-[var(--accent)]' : 'bg-[var(--bg-overlay)] text-[var(--text-muted)] border-[var(--border)] hover:bg-[var(--bg-overlay)]'}`}>
+                          className={`am-press flex-1 px-4 py-2.5 rounded-lg border font-medium transition-all ${willingToRelocate ? 'bg-gradient-to-r from-[var(--accent)] to-[var(--accent-solid)] text-[var(--text-on-accent)] border-[var(--accent)] shadow-[0_6px_16px_-8px_rgb(var(--accent-rgb)/0.6)]' : 'bg-[var(--bg-overlay)] text-[var(--text-muted)] border-[var(--border)] hover:bg-[var(--bg-overlay)]'}`}>
                           Yes
                         </button>
                         <button onClick={() => setWillingToRelocate(false)}
-                          className={`flex-1 px-4 py-2.5 rounded-lg border font-medium transition-all ${!willingToRelocate ? 'bg-gradient-to-r from-[var(--accent)] to-[var(--accent-solid)] text-[var(--text-on-accent)] border-[var(--accent)]' : 'bg-[var(--bg-overlay)] text-[var(--text-muted)] border-[var(--border)] hover:bg-[var(--bg-overlay)]'}`}>
+                          className={`am-press flex-1 px-4 py-2.5 rounded-lg border font-medium transition-all ${!willingToRelocate ? 'bg-gradient-to-r from-[var(--accent)] to-[var(--accent-solid)] text-[var(--text-on-accent)] border-[var(--accent)] shadow-[0_6px_16px_-8px_rgb(var(--accent-rgb)/0.6)]' : 'bg-[var(--bg-overlay)] text-[var(--text-muted)] border-[var(--border)] hover:bg-[var(--bg-overlay)]'}`}>
                           No
                         </button>
                       </div>
@@ -934,7 +1015,7 @@ export default function OnboardingPage() {
                         <div className="grid grid-cols-2 gap-2 max-h-[220px] overflow-y-auto pr-2">
                           {CITIES_BY_COUNTRY[selectedCountry].map(city => (
                             <button key={city} onClick={() => toggleChip(selectedCities, setSelectedCities, city, 3)}
-                              className={`px-3 py-2 rounded-lg text-[12px] font-medium transition-all text-left ${selectedCities.includes(city) ? 'bg-[rgb(var(--accent-rgb)/0.15)] text-[var(--accent)] border border-[rgb(var(--accent-rgb)/0.3)]' : 'bg-[var(--bg-overlay)] text-[var(--text-muted)] hover:bg-[var(--bg-overlay)]'}`}>
+                              className={chipCls(selectedCities.includes(city), 'text-left')} style={chipStyle(selectedCities.includes(city))}>
                               {city}
                             </button>
                           ))}
@@ -966,7 +1047,7 @@ export default function OnboardingPage() {
                       <div className="grid grid-cols-2 gap-2 max-h-[240px] overflow-y-auto pr-2">
                         {INDUSTRIES.map(ind => (
                           <button key={ind} onClick={() => toggleChip(selectedIndustries, setSelectedIndustries, ind, 5)}
-                            className={`px-3 py-2 rounded-lg text-[12px] font-medium transition-all text-left ${selectedIndustries.includes(ind) ? 'bg-[rgb(var(--accent-rgb)/0.15)] text-[var(--accent)] border border-[rgb(var(--accent-rgb)/0.3)]' : 'bg-[var(--bg-overlay)] text-[var(--text-muted)] hover:bg-[var(--bg-overlay)]'}`}>
+                            className={chipCls(selectedIndustries.includes(ind), 'text-left')} style={chipStyle(selectedIndustries.includes(ind))}>
                             {ind}
                           </button>
                         ))}
@@ -980,7 +1061,7 @@ export default function OnboardingPage() {
                       <div className="grid grid-cols-2 gap-2">
                         {SKILLS.map(skill => (
                           <button key={skill} onClick={() => toggleChip(selectedSkills, setSelectedSkills, skill, 8)}
-                            className={`px-3 py-2 rounded-lg text-[12px] font-medium transition-all ${selectedSkills.includes(skill) ? 'bg-[rgb(var(--accent-rgb)/0.15)] text-[var(--accent)] border border-[rgb(var(--accent-rgb)/0.3)]' : 'bg-[var(--bg-overlay)] text-[var(--text-muted)] hover:bg-[var(--bg-overlay)]'}`}>
+                            className={chipCls(selectedSkills.includes(skill))} style={chipStyle(selectedSkills.includes(skill))}>
                             {skill}
                           </button>
                         ))}
@@ -994,7 +1075,7 @@ export default function OnboardingPage() {
                       <div className="grid grid-cols-2 gap-2">
                         {COMPANY_SIZES.map(size => (
                           <button key={size} onClick={() => setCompanySize(size)}
-                            className={`px-3 py-2 rounded-lg text-[12px] font-medium transition-all ${companySize === size ? 'bg-gradient-to-r from-[var(--accent)] to-[var(--accent-solid)] text-[var(--text-on-accent)]' : 'bg-[var(--bg-overlay)] text-[var(--text-muted)] hover:bg-[var(--bg-overlay)]'}`}>
+                            className={segCls(companySize === size)}>
                             {size}
                           </button>
                         ))}
@@ -1007,7 +1088,7 @@ export default function OnboardingPage() {
                       <div className="grid grid-cols-2 gap-2">
                         {INTERVIEW_STYLES.map(style => (
                           <button key={style} onClick={() => setInterviewStyle(style)}
-                            className={`px-3 py-2 rounded-lg text-[12px] font-medium transition-all ${interviewStyle === style ? 'bg-gradient-to-r from-[var(--accent)] to-[var(--accent-solid)] text-[var(--text-on-accent)]' : 'bg-[var(--bg-overlay)] text-[var(--text-muted)] hover:bg-[var(--bg-overlay)]'}`}>
+                            className={segCls(interviewStyle === style)}>
                             {style}
                           </button>
                         ))}
@@ -1033,8 +1114,9 @@ export default function OnboardingPage() {
 
                     <div className="grid gap-4">
                       {plans.map(plan => (
-                        <motion.button key={plan.name} onClick={() => setSelectedPlan(plan.name)} whileHover={{ scale: 1.02 }}
-                          className={`p-4 rounded-xl border-2 transition-all text-left ${selectedPlan === plan.name ? 'border-[var(--accent)] bg-[rgb(var(--accent-rgb)/0.1)]' : 'border-[var(--border)] bg-[var(--bg-overlay)] hover:border-[rgb(var(--accent-rgb)/0.3)]'}`}>
+                        <motion.button key={plan.name} onClick={() => setSelectedPlan(plan.name)} whileHover={reduced ? undefined : { scale: 1.02 }} whileTap={reduced ? undefined : { scale: 0.985 }}
+                          className={`p-4 rounded-xl border-2 transition-all text-left ${selectedPlan === plan.name ? 'border-[var(--accent)] bg-[rgb(var(--accent-rgb)/0.1)]' : 'border-[var(--border)] bg-[var(--bg-overlay)] hover:border-[rgb(var(--accent-rgb)/0.3)]'}`}
+                          style={selectedPlan === plan.name ? { boxShadow: 'var(--pill-glow)' } : undefined}>
                           <div className="flex justify-between items-start mb-3">
                             <div>
                               <h3 className="font-bold text-[var(--text)]">{plan.label}</h3>

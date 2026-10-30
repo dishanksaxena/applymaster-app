@@ -89,8 +89,10 @@ export default function Toaster() {
               transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
               className="pointer-events-auto flex items-start gap-2.5 max-w-[380px] px-3.5 py-3 rounded-xl"
               style={{
-                background: 'var(--card-face)',
-                boxShadow: `var(--card-lift), inset 0 0 0 1px ${toneA(c, 0.25)}`,
+                background: 'var(--glass-bg)',
+                backdropFilter: 'blur(22px) saturate(1.7)',
+                WebkitBackdropFilter: 'blur(22px) saturate(1.7)',
+                boxShadow: `var(--card-lift-hover), inset 0 1px 0 0 var(--glass-highlight), inset 0 0 0 1px ${toneA(c, 0.28)}, 0 10px 30px -14px ${toneA(c, 0.35)}`,
               }}
             >
               <span

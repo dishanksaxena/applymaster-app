@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import {
   applyTheme,
   getStoredTheme,
@@ -28,6 +29,8 @@ const ICONS: Record<Theme, JSX.Element> = {
 export default function ThemeToggle({ className = '' }: { className?: string }) {
   const [theme, setTheme] = useState<Theme>('system')
   const [mounted, setMounted] = useState(false)
+  const [hover, setHover] = useState(false)
+  const reduced = useReducedMotion()
 
   useEffect(() => {
     setTheme(getStoredTheme())
@@ -54,39 +57,41 @@ export default function ThemeToggle({ className = '' }: { className?: string }) 
   const shown: Theme = mounted ? theme : 'system'
 
   return (
-    <button
+    <motion.button
       type="button"
       onClick={cycle}
       aria-label={THEME_LABEL[shown]}
       title={THEME_LABEL[shown]}
-      className={`inline-grid place-items-center w-9 h-9 rounded-md border transition-colors ${className}`}
+      whileTap={reduced ? undefined : { scale: 0.92 }}
+      onHoverStart={() => setHover(true)}
+      onHoverEnd={() => setHover(false)}
+      className={`relative inline-grid place-items-center w-9 h-9 rounded-md border overflow-hidden transition-colors ${className}`}
       style={{
-        borderColor: 'var(--border)',
-        color: 'var(--text-secondary)',
-        background: 'transparent',
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.background = 'var(--bg-overlay)'
-        e.currentTarget.style.color = 'var(--text)'
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.background = 'transparent'
-        e.currentTarget.style.color = 'var(--text-secondary)'
+        borderColor: hover ? 'var(--border-hover)' : 'var(--border)',
+        color: hover ? 'var(--text)' : 'var(--text-secondary)',
+        background: hover ? 'var(--bg-overlay)' : 'transparent',
       }}
     >
-      <svg
-        width="17"
-        height="17"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden="true"
-      >
-        {ICONS[shown]}
-      </svg>
-    </button>
+      <AnimatePresence mode="popLayout" initial={false}>
+        <motion.svg
+          key={shown}
+          width="17"
+          height="17"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+          initial={reduced ? false : { rotate: -70, scale: 0.5, opacity: 0 }}
+          animate={{ rotate: 0, scale: 1, opacity: 1 }}
+          exit={reduced ? undefined : { rotate: 70, scale: 0.5, opacity: 0 }}
+          transition={{ type: 'spring', stiffness: 380, damping: 26 }}
+        >
+          {ICONS[shown]}
+        </motion.svg>
+      </AnimatePresence>
+    </motion.button>
   )
 }
