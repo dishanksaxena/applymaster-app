@@ -131,7 +131,7 @@ export async function searchDirect(opts: {
       posted_at: new Date(published || updated).toISOString(),
       job_type: 'fulltime',
       country: opts.country,
-      remote_type: where.remote ? 'Remote' : null,
+      remote_type: where.remote ? 'remote' : null, // lowercase: jobs.remote_type has a check constraint
       category: null,
       score: words.length + (t.startsWith(words[0]) ? 0.5 : 0),
     })

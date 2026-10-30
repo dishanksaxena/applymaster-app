@@ -317,8 +317,8 @@ export default function JobsPage() {
         jobId = existingJobs[0].id
         await supabase.from('jobs').update(jobData).eq('id', jobId)
       } else {
-        const { data: newJob } = await supabase.from('jobs').insert([jobData]).select()
-        if (!newJob || newJob.length === 0) throw new Error('Failed to save job record')
+        const { data: newJob, error: insertError } = await supabase.from('jobs').insert([jobData]).select()
+        if (insertError || !newJob || newJob.length === 0) throw new Error(`Could not save this job (${insertError?.message ?? 'no row returned'})`)
         jobId = newJob[0].id
       }
 
