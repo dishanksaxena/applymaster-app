@@ -67,16 +67,24 @@ export default function PremiumButton({
     ? { background: 'var(--bg-overlay)', color: 'var(--text-faint)', boxShadow: 'none' }
     : { background: style.bg, color: style.text, boxShadow: loading ? 'none' : style.shadow }
 
+  const hoverShadow =
+    variant === 'primary' ? '0 10px 26px -8px rgb(var(--accent-rgb) / 0.55)'
+    : variant === 'danger' ? '0 10px 26px -8px rgb(var(--red-rgb) / 0.5)'
+    : variant === 'success' ? '0 10px 26px -8px rgb(var(--green-rgb) / 0.5)'
+    : variant === 'secondary' ? 'var(--shadow-md)'
+    : 'none'
+
   return (
     <motion.button
-      whileHover={{ scale: inactive ? 1 : 1.02 }}
-      whileTap={{ scale: inactive ? 1 : 0.98 }}
+      whileHover={inactive ? undefined : { scale: 1.02, y: -1, boxShadow: hoverShadow }}
+      whileTap={inactive ? undefined : { scale: 0.97, y: 0 }}
+      transition={{ type: 'spring', stiffness: 420, damping: 28 }}
       onClick={onClick}
       disabled={inactive}
       aria-busy={loading || undefined}
       className={`
         relative inline-flex items-center justify-center gap-2
-        rounded-xl font-bold transition-all duration-300
+        rounded-xl font-bold transition-colors duration-300
         ${inactive ? 'cursor-not-allowed' : 'cursor-pointer'}
         ${fullWidth ? 'w-full' : ''}
         ${className}

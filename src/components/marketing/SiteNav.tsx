@@ -42,12 +42,13 @@ export default function SiteNav({ anchors = false }: { anchors?: boolean }) {
 
   return (
     <nav
-      className="fixed top-0 left-0 right-0 z-50 transition-colors duration-300"
+      className="fixed top-0 left-0 right-0 z-50 transition-[background-color,border-color,box-shadow] duration-300"
       style={{
-        background: scrolled ? 'var(--bg-topbar)' : 'transparent',
-        backdropFilter: scrolled ? 'blur(14px) saturate(1.6)' : 'none',
-        WebkitBackdropFilter: scrolled ? 'blur(14px) saturate(1.6)' : 'none',
-        borderBottom: `1px solid ${scrolled ? 'var(--border)' : 'transparent'}`,
+        background: scrolled ? 'var(--glass-bg)' : 'transparent',
+        backdropFilter: scrolled ? 'blur(22px) saturate(1.7)' : 'none',
+        WebkitBackdropFilter: scrolled ? 'blur(22px) saturate(1.7)' : 'none',
+        borderBottom: `1px solid ${scrolled ? 'var(--glass-border)' : 'transparent'}`,
+        boxShadow: scrolled ? 'inset 0 1px 0 0 var(--glass-highlight), var(--shadow-sm)' : 'none',
       }}
     >
       <div className="max-w-[1240px] mx-auto px-6 lg:px-8 flex items-center justify-between h-[72px]">
@@ -68,7 +69,7 @@ export default function SiteNav({ anchors = false }: { anchors?: boolean }) {
             <Link prefetch={false}
               key={label}
               href={href}
-              className="px-3 py-2 rounded-lg text-[13.5px] font-medium transition-colors hover:opacity-70"
+              className="px-3 py-2 rounded-lg text-[13.5px] font-medium transition-colors hover:bg-[var(--bg-overlay)] hover:text-[var(--text)]"
               style={{ color: 'var(--text-secondary)' }}
             >
               {label}
@@ -81,8 +82,8 @@ export default function SiteNav({ anchors = false }: { anchors?: boolean }) {
           {signedIn ? (
             <Link prefetch={false}
               href="/dashboard"
-              className="inline-flex items-center px-5 py-2.5 rounded-full text-[13px] font-semibold"
-              style={{ background: 'var(--accent-solid)', color: 'var(--text-on-accent)' }}
+              className="am-press inline-flex items-center px-5 py-2.5 rounded-full text-[13px] font-semibold hover:-translate-y-0.5 hover:shadow-[0_10px_26px_-8px_rgb(var(--accent-rgb)/0.55)]"
+              style={{ background: 'var(--accent-solid)', color: 'var(--text-on-accent)', boxShadow: 'var(--shadow-accent)' }}
             >
               Dashboard
             </Link>
@@ -97,8 +98,8 @@ export default function SiteNav({ anchors = false }: { anchors?: boolean }) {
               </Link>
               <Link prefetch={false}
                 href="/signup"
-                className="hidden lg:inline-flex items-center px-5 py-2.5 rounded-full text-[13px] font-semibold"
-                style={{ background: 'var(--accent-solid)', color: 'var(--text-on-accent)' }}
+                className="am-press hidden lg:inline-flex items-center px-5 py-2.5 rounded-full text-[13px] font-semibold hover:-translate-y-0.5 hover:shadow-[0_10px_26px_-8px_rgb(var(--accent-rgb)/0.55)]"
+                style={{ background: 'var(--accent-solid)', color: 'var(--text-on-accent)', boxShadow: 'var(--shadow-accent)' }}
               >
                 Start free
               </Link>

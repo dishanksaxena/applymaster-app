@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useId, useMemo } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { createClient } from '@/lib/supabase-browser'
 import Link from 'next/link'
 import { PremiumCard } from '@/components/premium'
@@ -89,6 +89,7 @@ function AnimatedNumber({ value, suffix = '' }: { value: number; suffix?: string
 function TrendArea({ data, t, height = 56 }: { data: number[]; t: Tone; height?: number }) {
   const uid = useId().replace(/:/g, '')
   const gradId = `trend-${uid}`
+  const reduced = useReducedMotion()
 
   const max = Math.max(...data)
   const min = Math.min(...data)
@@ -125,20 +126,52 @@ function TrendArea({ data, t, height = 56 }: { data: number[]; t: Tone; height?:
           <stop offset="100%" style={{ stopColor: tone(t), stopOpacity: 0 }} />
         </linearGradient>
       </defs>
-      <polygon points={`0,${h} ${line} ${w},${h}`} fill={`url(#${gradId})`} />
-      <motion.polyline
+      {/* The line is revealed by a left-to-right clip wipe rather than a
+          pathLength draw: pathLength sets a dash array, and a non-scaling
+          stroke inside a stretched viewBox renders that dash array as
+          visible gaps along the whole line. */}
+      <defs>
+        <clipPath id={`${gradId}-wipe`}>
+          <motion.rect
+            x="0"
+            y="-2"
+            height={h + 4}
+            initial={{ width: reduced ? w + 2 : 0 }}
+            animate={{ width: w + 2 }}
+            transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+          />
+        </clipPath>
+      </defs>
+      <g clipPath={`url(#${gradId}-wipe)`}>
+        <polygon points={`0,${h} ${line} ${w},${h}`} fill={`url(#${gradId})`} />
+        <polyline
+          fill="none"
+          style={{ stroke: tone(t) }}
+          strokeWidth="1.75"
+          vectorEffect="non-scaling-stroke"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          points={line}
+        />
+      </g>
+      {/* Glowing halo on the live endpoint. Drawn as a non-scaling stroke so
+          the stretched viewBox cannot squash it into an oval. */}
+      {/* Zero-length round-capped strokes: the cap is a true circle in screen
+          pixels whatever the viewBox stretch, where a <circle> would squash. */}
+      <path
+        d={`M${last.x} ${last.y}h0.001`}
         fill="none"
-        style={{ stroke: tone(t) }}
-        strokeWidth="1.75"
-        vectorEffect="non-scaling-stroke"
+        strokeWidth="12"
         strokeLinecap="round"
-        strokeLinejoin="round"
-        initial={{ pathLength: 0 }}
-        animate={{ pathLength: 1 }}
-        transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-        points={line}
+        vectorEffect="non-scaling-stroke"
+        style={{
+          stroke: toneA(t, 0.22),
+          transformBox: 'fill-box',
+          transformOrigin: 'center',
+          animation: reduced ? 'none' : 'am-glow-pulse 2.4s ease-in-out infinite',
+        }}
       />
-      <circle cx={last.x} cy={last.y} r="2.4" style={{ fill: tone(t) }} vectorEffect="non-scaling-stroke" />
+      <path d={`M${last.x} ${last.y}h0.001`} fill="none" strokeWidth="5.5" strokeLinecap="round" vectorEffect="non-scaling-stroke" style={{ stroke: tone(t) }} />
     </svg>
   )
 }
@@ -179,6 +212,8 @@ function StatCard({
   delta,
   icon,
   index,
+  primary = false,
+  className = '',
 }: {
   label: string
   value: number
@@ -188,6 +223,9 @@ function StatCard({
   delta: number
   icon: React.ReactNode
   index: number
+  /** The headline metric: wider, taller type, tone wash across the face. */
+  primary?: boolean
+  className?: string
 }) {
   return (
     <PremiumCard
@@ -195,12 +233,20 @@ function StatCard({
       glowEffect
       hover={false}
       animationDelay={index * 0.06}
+      className={className}
     >
-      <div className="pt-4 px-4">
+      {primary && (
+        <span
+          aria-hidden="true"
+          className="absolute inset-0 pointer-events-none"
+          style={{ background: `linear-gradient(135deg, ${toneSurface(t, 0.18)}, transparent 60%)` }}
+        />
+      )}
+      <div className={`relative ${primary ? 'pt-5 px-5' : 'pt-4 px-4'}`}>
         <div className="flex items-center gap-2 mb-3">
           <span
-            className="grid place-items-center w-7 h-7 rounded-lg shrink-0"
-            style={{ background: toneSurface(t, 0.13), color: tone(t) }}
+            className={`grid place-items-center rounded-lg shrink-0 ${primary ? 'w-8 h-8' : 'w-7 h-7'}`}
+            style={{ background: toneSurface(t, 0.13), color: tone(t), boxShadow: primary ? `0 6px 16px -8px ${toneA(t, 0.6)}` : undefined }}
           >
             {icon}
           </span>
@@ -211,16 +257,37 @@ function StatCard({
             {label}
           </span>
         </div>
-        <div className="font-display leading-none text-[2.4rem]" style={{ color: 'var(--text)' }}>
+        <div className={`font-display leading-none ${primary ? 'text-[3.2rem]' : 'text-[2.4rem]'}`} style={{ color: 'var(--text)' }}>
           {Number.isNaN(value) ? <span style={{ color: 'var(--text-faint)' }}>—</span> : <AnimatedNumber value={value} suffix={suffix} />}
         </div>
-        <div className="mt-2 mb-1">
+        <div className={`mt-2 mb-1 ${primary ? 'scale-[1.08] origin-left' : ''}`}>
           {Number.isNaN(delta) ? <span className="text-[11.5px]" style={{ color: 'var(--text-muted)' }}>Appears once applications are scored</span> : <Delta value={delta} t={t} />}
         </div>
       </div>
       {/* The chart runs to the card edge: it is the ground the number stands on. */}
-      <TrendArea data={series} t={t} />
+      <TrendArea data={series} t={t} height={primary ? 72 : 56} />
     </PremiumCard>
+  )
+}
+
+/** Check mark that pops in when a step is complete. */
+function DoneCheck() {
+  const reduced = useReducedMotion()
+  return (
+    <motion.svg
+      width="13"
+      height="13"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="3.5"
+      aria-hidden="true"
+      initial={reduced ? false : { scale: 0, rotate: -30 }}
+      animate={{ scale: 1, rotate: 0 }}
+      transition={{ type: 'spring', stiffness: 420, damping: 18, delay: 0.25 }}
+    >
+      <path d="M20 6L9 17l-5-5" />
+    </motion.svg>
   )
 }
 
@@ -464,8 +531,11 @@ export default function DashboardPage() {
   return (
     <motion.div variants={staggerContainer} initial="hidden" animate="show" className="space-y-5 max-w-[1360px] mx-auto">
       {/* Greeting: one line, no wasted band */}
-      <motion.div variants={fadeInUp} className="flex flex-wrap items-end justify-between gap-4 pt-1">
-        <div>
+      <motion.div variants={fadeInUp} className="relative flex flex-wrap items-end justify-between gap-4 pt-1">
+        <div aria-hidden="true" className="absolute inset-x-0 -top-16 bottom-[-40px] overflow-hidden pointer-events-none">
+          <div className="am-aura am-aura-live absolute -top-10 -left-16 w-[420px] h-[220px]" style={{ opacity: 0.55 }} />
+        </div>
+        <div className="relative">
           <h1 className="font-display text-[clamp(1.75rem,2.6vw,2.15rem)] leading-tight" style={{ color: 'var(--text)' }}>
             {greeting}
             {userName ? `, ${userName}` : ''}
@@ -478,7 +548,7 @@ export default function DashboardPage() {
         </div>
         <Link
           href="/jobs"
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-semibold transition-transform hover:-translate-y-0.5"
+          className="am-press relative inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-semibold hover:-translate-y-0.5 hover:shadow-[var(--shadow-accent)]"
           style={{
             background: 'var(--accent-solid)',
             color: 'var(--text-on-accent)',
@@ -493,11 +563,11 @@ export default function DashboardPage() {
       </motion.div>
 
       {/* Metrics */}
-      <motion.div variants={staggerContainer} className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard index={0} label="Applications sent" value={metrics.applied.value} t="accent" series={metrics.applied.series} delta={metrics.applied.delta} icon={ICONS.send} />
+      <motion.div variants={staggerContainer} className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+        <StatCard index={0} primary className="col-span-2" label="Applications sent" value={metrics.applied.value} t="accent" series={metrics.applied.series} delta={metrics.applied.delta} icon={ICONS.send} />
         <StatCard index={1} label="Interviews" value={metrics.interviews.value} t="green" series={metrics.interviews.series} delta={metrics.interviews.delta} icon={ICONS.mic} />
         <StatCard index={2} label="Offers" value={metrics.offers.value} t="purple" series={metrics.offers.series} delta={metrics.offers.delta} icon={ICONS.trophy} />
-        <StatCard index={3} label="Avg match score" value={metrics.score.value} suffix="%" t="yellow" series={metrics.score.series} delta={metrics.score.delta} icon={ICONS.chart} />
+        <StatCard index={3} className="col-span-2 lg:col-span-1" label="Avg match score" value={metrics.score.value} suffix="%" t="yellow" series={metrics.score.series} delta={metrics.score.delta} icon={ICONS.chart} />
       </motion.div>
 
       {/* Needs attention: real, actionable, from the user's own rows */}
@@ -569,11 +639,13 @@ export default function DashboardPage() {
                   <Link
                     key={step.step}
                     href={step.href}
-                    className="group relative p-4 rounded-xl transition-all duration-200 hover:-translate-y-0.5"
+                    className="am-press group relative p-4 rounded-xl hover:-translate-y-0.5"
                     style={{
                       background: step.done ? toneSurface(step.t, 0.09) : 'var(--bg-overlay)',
                       boxShadow: `inset 0 0 0 1px ${step.done ? toneA(step.t, 0.22) : 'var(--card-ring)'}`,
                     }}
+                    onMouseEnter={e => { e.currentTarget.style.boxShadow = `inset 0 0 0 1px ${step.done ? toneA(step.t, 0.45) : 'var(--card-ring-hover)'}, var(--shadow-sm)` }}
+                    onMouseLeave={e => { e.currentTarget.style.boxShadow = `inset 0 0 0 1px ${step.done ? toneA(step.t, 0.22) : 'var(--card-ring)'}` }}
                   >
                     <span
                       className="grid place-items-center w-7 h-7 rounded-full text-[11.5px] font-bold mb-2.5"
@@ -583,13 +655,7 @@ export default function DashboardPage() {
                         boxShadow: step.done ? 'none' : 'inset 0 0 0 1px var(--card-ring)',
                       }}
                     >
-                      {step.done ? (
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" aria-hidden="true">
-                          <path d="M20 6L9 17l-5-5" />
-                        </svg>
-                      ) : (
-                        step.step
-                      )}
+                      {step.done ? <DoneCheck /> : step.step}
                     </span>
                     <div className="text-[12.5px] font-semibold" style={{ color: 'var(--text)' }}>
                       {step.label}
@@ -621,11 +687,13 @@ export default function DashboardPage() {
                   <Link
                     key={a.label}
                     href={a.href}
-                    className="group flex items-start gap-3 p-4 rounded-xl transition-all duration-200 hover:-translate-y-0.5"
+                    className="am-press group flex items-start gap-3 p-4 rounded-xl hover:-translate-y-0.5"
                     style={{
                       background: toneSurface(a.t, 0.06),
                       boxShadow: `inset 0 0 0 1px ${toneA(a.t, 0.14)}`,
                     }}
+                    onMouseEnter={e => { e.currentTarget.style.boxShadow = `inset 0 0 0 1px ${toneA(a.t, 0.4)}, 0 10px 24px -14px ${toneA(a.t, 0.45)}` }}
+                    onMouseLeave={e => { e.currentTarget.style.boxShadow = `inset 0 0 0 1px ${toneA(a.t, 0.14)}` }}
                   >
                     <span
                       className="grid place-items-center w-9 h-9 rounded-lg shrink-0"
