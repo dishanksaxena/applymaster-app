@@ -88,14 +88,23 @@ const pageStyles = `
 }
 `
 
+/* ─── Pointer spotlight ─── */
+/** Writes the pointer position for the .am-spot layers; no re-render per move. */
+function trackSpot(e: React.PointerEvent<HTMLElement>) {
+  const el = e.currentTarget as HTMLElement
+  const r = el.getBoundingClientRect()
+  el.style.setProperty('--mx', `${e.clientX - r.left}px`)
+  el.style.setProperty('--my', `${e.clientY - r.top}px`)
+}
+
 /* ─── SVG Components ─── */
-const CloudUploadIcon = ({ animated }: { animated?: boolean }) => (
+const CloudUploadIcon = ({ animated, mono }: { animated?: boolean; mono?: boolean }) => (
   <svg
-    width="48" height="48" viewBox="0 0 48 48" fill="none"
+    width="40" height="40" viewBox="0 0 48 48" fill="none"
     style={animated ? { animation: 'cloud-bounce 2.5s ease-in-out infinite' } : {}}
   >
-    <path d="M14 32a8 8 0 01-.5-16A10 10 0 0134 18a6 6 0 012 11.5" stroke="url(#cloud-grad)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-    <path d="M24 22v14M20 26l4-4 4 4" stroke="url(#arrow-grad)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+    <path d="M14 32a8 8 0 01-.5-16A10 10 0 0134 18a6 6 0 012 11.5" stroke={mono ? 'var(--text-on-accent)' : 'url(#cloud-grad)'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+    <path d="M24 22v14M20 26l4-4 4 4" stroke={mono ? 'var(--text-on-accent)' : 'url(#arrow-grad)'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
       style={animated ? { animation: 'arrow-pulse 1.5s ease-in-out infinite' } : {}}
     />
     <defs>
@@ -485,9 +494,12 @@ export default function ResumePage() {
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-[1fr_340px] gap-6">
+        {/* min-w-0 on the columns: grid items default to min-width auto, so one
+            wide child (a long filename, an unwrappable row) pushes the whole
+            page past the viewport on phones. */}
+        <div className="grid lg:grid-cols-[1fr_340px] gap-6 min-w-0">
           {/* ═══ Main Content ═══ */}
-          <div className="space-y-6">
+          <div className="space-y-6 min-w-0">
 
             {/* ─── Upload / Resume List Section ─── */}
             <div
@@ -528,13 +540,21 @@ export default function ResumePage() {
                     animation: isDragOver ? 'drop-glow 1.5s ease-in-out infinite' : undefined,
                   }}
                 >
-                  {/* Animated dashed border */}
+                  {/* Dashed border: the old data-URI stroke was a hardcoded dark hex,
+                      invisible on the light theme. Two token-coloured layers crossfade:
+                      neutral at rest, accent on hover or drag. */}
                   <div
                     className="absolute inset-0 rounded-2xl pointer-events-none transition-opacity duration-500"
-                    style={{
-                      opacity: isDragOver ? 1 : 0.4,
-                      background: `url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='16' ry='16' stroke='${isDragOver ? '%23fd79a8' : '%23333344'}' stroke-width='2' stroke-dasharray='8%2c 8' stroke-dashoffset='0' stroke-linecap='round'/%3e%3c/svg%3e")`,
-                    }}
+                    style={{ border: '2px dashed var(--border-hover)', opacity: isDragOver ? 0 : 1 }}
+                  />
+                  <div
+                    className={`absolute inset-0 rounded-2xl pointer-events-none transition-opacity duration-500 ${isDragOver ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+                    style={{ border: '2px dashed var(--accent)' }}
+                  />
+                  {/* Soft aura that breathes in on hover/drag */}
+                  <div
+                    aria-hidden="true"
+                    className={`am-aura absolute -inset-[30%] pointer-events-none transition-opacity duration-500 ${isDragOver ? 'opacity-100' : 'opacity-0 group-hover:opacity-70'}`}
                   />
                   {/* Hover glow overlay */}
                   <div
@@ -547,8 +567,14 @@ export default function ResumePage() {
                   <input ref={fileRef} type="file" accept=".pdf,.docx" className="hidden" onChange={handleFileInput} />
 
                   <div className="relative flex flex-col items-center text-center">
-                    <div className="mb-4">
-                      <CloudUploadIcon animated />
+                    <div
+                      className="mb-4 grid place-items-center w-[72px] h-[72px] rounded-2xl transition-transform duration-300 group-hover:scale-105"
+                      style={{
+                        background: 'linear-gradient(135deg, var(--accent-solid), var(--accent))',
+                        boxShadow: '0 10px 28px -10px rgb(var(--accent-rgb) / 0.55), inset 0 1px 0 0 rgba(255,255,255,0.25)',
+                      }}
+                    >
+                      <CloudUploadIcon animated mono />
                     </div>
                     <div className="text-[14px] font-semibold text-ink/90 mb-1">
                       {isDragOver ? 'Drop your resume here' : 'Drag & drop your resume'}
@@ -613,14 +639,18 @@ export default function ResumePage() {
                             ? 'linear-gradient(135deg, rgb(var(--accent-rgb) / calc(0.06 * var(--tint-scale))), rgb(var(--accent-rgb) / calc(0.03 * var(--tint-scale))))'
                             : 'var(--bg-overlay)',
                           border: `1px solid ${selectedResume?.id === r.id ? 'rgb(var(--accent-rgb) / calc(0.2 * var(--tint-scale)))' : 'var(--border)'}`,
-                          boxShadow: selectedResume?.id === r.id ? '0 4px 24px rgb(var(--accent-rgb) / calc(0.08 * var(--tint-scale)))' : 'none',
+                          boxShadow: selectedResume?.id === r.id
+                            ? '0 4px 24px rgb(var(--accent-rgb) / calc(0.08 * var(--tint-scale))), 0 0 0 1px rgb(var(--accent-rgb) / 0.18)'
+                            : r.is_primary
+                              ? '0 0 0 1px rgb(var(--accent-rgb) / 0.16), 0 6px 20px -8px rgb(var(--accent-rgb) / 0.25)'
+                              : 'none',
                           transform: 'translateY(0)',
                         }}
                         onMouseEnter={e => {
                           if (selectedResume?.id !== r.id) {
                             e.currentTarget.style.transform = 'translateY(-2px)'
-                            e.currentTarget.style.boxShadow = '0 8px 30px rgba(0,0,0,0.3)'
-                            e.currentTarget.style.borderColor = 'var(--border)'
+                            e.currentTarget.style.boxShadow = 'var(--shadow-lg)'
+                            e.currentTarget.style.borderColor = 'var(--border-hover)'
                           }
                         }}
                         onMouseLeave={e => {
@@ -1169,15 +1199,18 @@ export default function ResumePage() {
           </div>
 
           {/* ═══ Tips Sidebar ═══ */}
-          <div className="space-y-4 h-fit lg:sticky lg:top-[80px]">
+          <div className="space-y-4 h-fit min-w-0 lg:sticky lg:top-[80px]">
             {/* Pro Tips Card */}
             <div
-              className="rounded-2xl overflow-hidden"
+              onPointerMove={trackSpot}
+              className="am-spot-host relative rounded-2xl overflow-hidden"
               style={{
                 background: 'linear-gradient(135deg, var(--bg-card), var(--bg-card))',
                 border: '1px solid rgb(var(--accent-rgb) / calc(0.1 * var(--tint-scale)))',
               }}
             >
+              <span aria-hidden="true" className="am-spot" />
+              <span aria-hidden="true" className="am-spot-ring" />
               <div
                 className="px-5 py-3 flex items-center gap-2"
                 style={{
@@ -1188,13 +1221,13 @@ export default function ResumePage() {
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" />
                 </svg>
-                <span className="text-[13px] font-bold text-[var(--accent)]">Pro Tips</span>
+                <span className="font-display text-[15px] text-[var(--accent)]">Pro Tips</span>
               </div>
               <div className="p-4 space-y-1">
                 {[
                   {
                     icon: (
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                         <circle cx="11" cy="11" r="7" /><path d="M21 21l-4.35-4.35" /><line x1="11" y1="8" x2="11" y2="14" /><line x1="8" y1="11" x2="14" y2="11" />
                       </svg>
                     ),
@@ -1203,7 +1236,7 @@ export default function ResumePage() {
                   },
                   {
                     icon: (
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                         <line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" />
                       </svg>
                     ),
@@ -1212,7 +1245,7 @@ export default function ResumePage() {
                   },
                   {
                     icon: (
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                         <polygon points="13,2 3,14 12,14 11,22 21,10 12,10" />
                       </svg>
                     ),
@@ -1230,8 +1263,13 @@ export default function ResumePage() {
                   >
                     <div className="flex items-start gap-3">
                       <div
-                        className="shrink-0 mt-0.5"
-                        style={{ animation: `tip-icon-float 3s ease-in-out ${i * 0.5}s infinite` }}
+                        className="shrink-0 mt-0.5 grid place-items-center w-8 h-8 rounded-lg"
+                        style={{
+                          animation: `tip-icon-float 3s ease-in-out ${i * 0.5}s infinite`,
+                          background: 'linear-gradient(135deg, var(--accent-solid), var(--accent))',
+                          color: 'var(--text-on-accent)',
+                          boxShadow: '0 4px 12px -4px rgb(var(--accent-rgb) / 0.5)',
+                        }}
                       >
                         {tip.icon}
                       </div>
@@ -1249,12 +1287,15 @@ export default function ResumePage() {
 
             {/* Basic Tips Card */}
             <div
-              className="rounded-2xl overflow-hidden"
+              onPointerMove={trackSpot}
+              className="am-spot-host relative rounded-2xl overflow-hidden"
               style={{
                 background: 'linear-gradient(135deg, var(--bg-card), var(--bg-card))',
                 border: '1px solid var(--border)',
               }}
             >
+              <span aria-hidden="true" className="am-spot" style={{ background: 'radial-gradient(360px circle at var(--mx, 50%) var(--my, 50%), rgb(var(--green-rgb) / calc(0.07 * var(--tint-scale))), transparent 62%)' }} />
+              <span aria-hidden="true" className="am-spot-ring" style={{ background: 'radial-gradient(220px circle at var(--mx, 50%) var(--my, 50%), rgb(var(--green-rgb) / 0.6), transparent 70%)' }} />
               <div
                 className="px-5 py-3 flex items-center gap-2"
                 style={{
@@ -1264,13 +1305,13 @@ export default function ResumePage() {
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="12" r="10" /><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3" /><line x1="12" y1="17" x2="12.01" y2="17" />
                 </svg>
-                <span className="text-[13px] font-bold text-[var(--text-secondary)]">Basics</span>
+                <span className="font-display text-[15px] text-[var(--text-secondary)]">Basics</span>
               </div>
               <div className="p-4 space-y-1">
                 {[
                   {
                     icon: (
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                         <rect x="3" y="3" width="18" height="18" rx="2" /><line x1="3" y1="9" x2="21" y2="9" /><line x1="9" y1="21" x2="9" y2="9" />
                       </svg>
                     ),
@@ -1279,7 +1320,7 @@ export default function ResumePage() {
                   },
                   {
                     icon: (
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" /><polyline points="14,2 14,8 20,8" />
                       </svg>
                     ),
@@ -1288,7 +1329,7 @@ export default function ResumePage() {
                   },
                   {
                     icon: (
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M4 19.5A2.5 2.5 0 016.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" />
                       </svg>
                     ),
@@ -1306,8 +1347,13 @@ export default function ResumePage() {
                   >
                     <div className="flex items-start gap-3">
                       <div
-                        className="shrink-0 mt-0.5"
-                        style={{ animation: `tip-icon-float 3s ease-in-out ${(i + 3) * 0.5}s infinite` }}
+                        className="shrink-0 mt-0.5 grid place-items-center w-7 h-7 rounded-lg"
+                        style={{
+                          animation: `tip-icon-float 3s ease-in-out ${(i + 3) * 0.5}s infinite`,
+                          background: 'var(--green)',
+                          color: 'var(--bg)',
+                          boxShadow: '0 4px 12px -4px rgb(var(--green-rgb) / 0.5)',
+                        }}
                       >
                         {tip.icon}
                       </div>

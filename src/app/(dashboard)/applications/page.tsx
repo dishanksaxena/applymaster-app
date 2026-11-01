@@ -130,6 +130,15 @@ function MatchRing({ score, color, size = 40 }: { score: number; color: string; 
   )
 }
 
+// ─── Pointer spotlight ──────────────────────────────────────────────────────
+/** Writes the pointer position for the .am-spot layers; no re-render per move. */
+function trackSpot(e: React.PointerEvent<HTMLElement>) {
+  const el = e.currentTarget as HTMLElement
+  const r = el.getBoundingClientRect()
+  el.style.setProperty('--mx', `${e.clientX - r.left}px`)
+  el.style.setProperty('--my', `${e.clientY - r.top}px`)
+}
+
 // ─── Days Ago Helper ────────────────────────────────────────────────────────
 function daysAgo(dateStr: string | null): string {
   if (!dateStr) return ''
@@ -502,7 +511,8 @@ export default function ApplicationsPage() {
           </p>
           <Link
             href="/jobs"
-            className="px-6 py-2.5 rounded-xl text-[13px] font-bold text-[var(--text-on-accent)] bg-gradient-to-r from-[var(--accent)] to-[var(--accent)] hover:from-[var(--accent)] hover:to-[var(--accent)] transition-all shadow-lg shadow-pink-500/20 hover:shadow-pink-500/40 hover:scale-105 active:scale-95"
+            className="am-press px-6 py-2.5 rounded-xl text-[13px] font-bold text-[var(--text-on-accent)] transition-all hover:scale-105 active:scale-95 hover:shadow-[0_10px_28px_-8px_rgb(var(--accent-rgb)/0.55)]"
+            style={{ background: 'var(--accent-solid)', boxShadow: 'var(--shadow-accent)' }}
           >
             Browse Jobs
           </Link>
@@ -512,18 +522,21 @@ export default function ApplicationsPage() {
           {/* ─── Stats Summary ─────────────────────────────────────── */}
           <div className="grid grid-cols-3 gap-4">
             {[
-              { label: 'Total Applications', value: stats.total, suffix: '', color: '#4c9aff' },
+              { label: 'Total Applications', value: stats.total, suffix: '', color: 'var(--blue)' },
               { label: 'Interview Rate', value: stats.interviewRate, suffix: '%', color: 'var(--accent)' },
               { label: 'Avg Response Time', value: stats.avgResponseDays, suffix: ' days', color: 'var(--purple)' },
             ].map((stat, i) => (
               <div
                 key={stat.label}
-                className="relative overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5"
-                style={{ animation: `floatUp 0.5s ease ${i * 0.1}s both` }}
+                className="relative overflow-hidden rounded-2xl border border-[var(--border)] p-5"
+                style={{
+                  animation: `floatUp 0.5s ease ${i * 0.1}s both`,
+                  background: `linear-gradient(160deg, ${withAlpha(stat.color, 0.1, true)}, transparent 55%), var(--bg-card)`,
+                }}
               >
                 <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r opacity-60" style={{ backgroundImage: `linear-gradient(to right, transparent, ${stat.color}, transparent)` }} />
                 <div className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2">{stat.label}</div>
-                <div className="font-display text-[1.9rem] text-[var(--text)]">
+                <div className="font-display text-[1.9rem]" style={{ color: stat.color }}>
                   <AnimatedNumber value={stat.value} delay={i * 150} />{stat.suffix}
                 </div>
               </div>
@@ -551,10 +564,14 @@ export default function ApplicationsPage() {
                     <div className="flex flex-col items-center gap-2 pipeline-node cursor-default">
                       <div
                         className="relative flex items-center justify-center w-12 h-12 rounded-full border-2 transition-all duration-500"
+                        // Stages holding applications get the solid tone; passed-through
+                        // and future stages stay tinted or muted outlines.
                         style={{
-                          borderColor: isActive ? config.color : 'var(--bg-overlay)',
-                          background: isActive ? `${withAlpha(config.color, 0.11, true)}` : 'var(--bg-overlay)',
-                          boxShadow: isActive ? `0 0 20px ${withAlpha(config.color, 0.14, true)}, 0 0 40px ${withAlpha(config.color, 0.09, true)}` : 'none',
+                          borderColor: count > 0 ? config.color : isActive ? config.color : 'var(--bg-overlay)',
+                          background: count > 0 ? config.color : isActive ? `${withAlpha(config.color, 0.11, true)}` : 'var(--bg-overlay)',
+                          boxShadow: count > 0
+                            ? `0 6px 18px -4px ${withAlpha(config.color, 0.55)}, 0 0 36px ${withAlpha(config.color, 0.14, true)}`
+                            : isActive ? `0 0 20px ${withAlpha(config.color, 0.14, true)}, 0 0 40px ${withAlpha(config.color, 0.09, true)}` : 'none',
                         }}
                       >
                         {isActive && (
@@ -567,7 +584,7 @@ export default function ApplicationsPage() {
                             }}
                           />
                         )}
-                        <span className="text-lg font-black" style={{ color: isActive ? config.color : 'var(--text-faint)' }}>
+                        <span className="text-lg font-black" style={{ color: count > 0 ? 'var(--bg)' : isActive ? config.color : 'var(--text-faint)' }}>
                           <AnimatedNumber value={count} delay={i * 100 + 400} />
                         </span>
                       </div>
@@ -724,11 +741,11 @@ export default function ApplicationsPage() {
                           opacity: dropTargetStatus && dropTargetStatus !== status ? 0.5 : 1,
                         }}
                       >
-                        <div className="absolute inset-0 opacity-[0.07]" style={{ background: `linear-gradient(180deg, ${config.color}, transparent)` }} />
+                        <div className="absolute inset-0" style={{ background: `linear-gradient(180deg, ${withAlpha(config.color, 0.12, true)}, transparent)`, boxShadow: `inset 0 0 0 1px ${withAlpha(config.color, 0.14, true)}`, borderRadius: 'inherit' }} />
                         <div className={`relative flex items-center ${compact ? 'gap-2 px-2.5 py-2.5' : 'gap-2.5 px-4 py-3'}`}>
                           <div
                             className="flex items-center justify-center w-7 h-7 rounded-lg"
-                            style={{ color: config.color, backgroundColor: config.bg }}
+                            style={{ color: 'var(--bg)', backgroundColor: config.color, boxShadow: `0 3px 10px -3px ${withAlpha(config.color, 0.6)}` }}
                           >
                             {config.icon}
                           </div>
@@ -770,7 +787,8 @@ export default function ApplicationsPage() {
                             draggable={!isSwappingCard}
                             onDragStart={(e) => handleDragStart(e, app.id, status, app.position || cardIndex)}
                             onDragEnd={handleDragEnd}
-                            className={`card-hover relative rounded-2xl border border-[var(--border)] ${compact ? 'p-3' : 'p-4'} cursor-grab active:cursor-grabbing group transition-all ${
+                            onPointerMove={trackSpot}
+                            className={`am-spot-host card-hover relative rounded-2xl border border-[var(--border)] ${compact ? 'p-3' : 'p-4'} cursor-grab active:cursor-grabbing group transition-all ${
                               draggedCardId === app.id ? 'opacity-50 scale-95' : 'opacity-100 scale-100'
                             }`}
                             style={{
@@ -789,6 +807,8 @@ export default function ApplicationsPage() {
                               el.style.boxShadow = 'none'
                             }}
                           >
+                            <span aria-hidden="true" className="am-spot" style={{ background: `radial-gradient(360px circle at var(--mx, 50%) var(--my, 50%), ${withAlpha(config.color, 0.09, true)}, transparent 62%)` }} />
+                            <span aria-hidden="true" className="am-spot-ring" style={{ background: `radial-gradient(220px circle at var(--mx, 50%) var(--my, 50%), ${withAlpha(config.color, 0.7)}, transparent 70%)` }} />
                             <div className={`flex items-start ${compact ? 'gap-2' : 'gap-3'}`}>
                               {/* Company Logo Placeholder: dropped when the column is narrow */}
                               <div

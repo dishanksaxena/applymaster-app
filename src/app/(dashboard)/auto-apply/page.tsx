@@ -382,10 +382,10 @@ export default function AutoApplyPage() {
                     <>
                       <button
                         onClick={() => approveApp(app.id)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-bold text-ink transition-all hover:scale-105 active:scale-95"
-                        style={{ background: 'linear-gradient(135deg, var(--green), var(--green))' }}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-bold transition-all hover:scale-105 active:scale-95"
+                        style={{ color: 'var(--bg)', background: 'linear-gradient(135deg, var(--green), var(--green))', boxShadow: '0 4px 12px -4px rgb(var(--green-rgb) / 0.5)' }}
                       >
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
                         Approve
                       </button>
                       <button
@@ -437,9 +437,17 @@ export default function AutoApplyPage() {
               {modes.map(m => (
                 <motion.button key={m.id} whileHover={{ y: -3, scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => selectMode(m.id)}
                   className="p-5 rounded-xl text-left transition-all duration-300"
-                  style={mode === m.id ? { background: `${withAlpha(m.color, 0.09, true)}`, border: `1px solid ${withAlpha(m.color, 0.18, true)}`, boxShadow: `0 0 20px ${withAlpha(m.color, 0.06, true)}` } : { background: 'var(--bg-overlay)', border: '1px solid var(--border)' }}>
+                  style={mode === m.id
+                    ? {
+                        background: `linear-gradient(160deg, ${withAlpha(m.color, 0.22, true)}, transparent 60%), var(--bg-card)`,
+                        border: '1px solid transparent',
+                        boxShadow: `0 0 0 1px ${withAlpha(m.color, 0.35, true)}, 0 6px 22px -6px ${withAlpha(m.color, 0.45)}`,
+                      }
+                    : { background: 'var(--bg-overlay)', border: '1px solid var(--border)' }}>
                   <div className="flex items-center justify-between mb-3">
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${withAlpha(m.color, 0.11, true)}`, color: m.color }}>{m.icon}</div>
+                    {/* Selected: solid tone tile. --bg flips with the theme, so the glyph
+                        reads dark-on-pastel in dark mode and light-on-deep in light mode. */}
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center transition-colors duration-300" style={mode === m.id ? { background: m.color, color: 'var(--bg)', boxShadow: `0 4px 12px -4px ${withAlpha(m.color, 0.6)}` } : { background: `${withAlpha(m.color, 0.11, true)}`, color: m.color }}>{m.icon}</div>
                     {mode === m.id && <div className="w-3 h-3 rounded-full" style={{ background: m.color, boxShadow: `0 0 8px ${m.color}` }} />}
                   </div>
                   <div className="text-[14px] font-bold" style={{ color: mode === m.id ? 'var(--text)' : 'var(--text-secondary)' }}>{m.label}</div>
@@ -554,29 +562,31 @@ export default function AutoApplyPage() {
           <motion.div variants={fadeUp} className="space-y-3">
             {/* Activate Engine Button */}
             {mode !== 'off' ? (
-              <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }} onClick={saveSettings} disabled={saving}
-                className="w-full py-4 rounded-xl font-bold text-[15px] text-ink disabled:opacity-30 transition-all flex items-center justify-center gap-3"
-                style={{ background: saved ? 'linear-gradient(135deg, var(--green), var(--green))' : mode === 'autopilot' ? 'linear-gradient(135deg, var(--green), var(--green))' : 'linear-gradient(135deg, var(--blue), var(--blue))' }}>
+              <motion.button whileHover={{ scale: 1.01, boxShadow: `0 10px 28px -8px ${withAlpha(mode === 'autopilot' || saved ? 'var(--green)' : 'var(--blue)', 0.55)}` }} whileTap={{ scale: 0.98 }} onClick={saveSettings} disabled={saving}
+                className="am-press w-full py-4 rounded-xl font-bold text-[15px] disabled:opacity-30 transition-all flex items-center justify-center gap-3"
+                // --bg as the label colour flips with the theme: light-on-deep in light
+                // mode, dark-on-pastel in dark mode. Hardcoded white failed in dark.
+                style={{ color: 'var(--bg)', background: saved ? 'linear-gradient(135deg, var(--green), var(--green))' : mode === 'autopilot' ? 'linear-gradient(135deg, var(--green), var(--green))' : 'linear-gradient(135deg, var(--blue), var(--blue))' }}>
                 {saving ? (
                   <>
-                    <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }} className="w-4 h-4 rounded-full border-2 border-[var(--border)] border-t-white" />
+                    <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }} className="w-4 h-4 rounded-full border-2 border-[var(--border)] border-t-current" />
                     Activating...
                   </>
                 ) : saved ? (
                   <>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
                     {mode === 'autopilot' ? 'Autopilot Engine Active!' : 'Copilot Mode Active!'}
                   </>
                 ) : (
                   <>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><polygon points="13,2 3,14 12,14 11,22 21,10 12,10"/></svg>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polygon points="13,2 3,14 12,14 11,22 21,10 12,10"/></svg>
                     {mode === 'autopilot' ? 'Activate Autopilot Engine' : 'Activate Copilot Mode'}
                   </>
                 )}
               </motion.button>
             ) : (
-              <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }} onClick={saveSettings} disabled={saving}
-                className="w-full py-4 rounded-xl font-bold text-[14px] text-ink disabled:opacity-30 transition-all"
+              <motion.button whileHover={{ scale: 1.01, boxShadow: 'var(--shadow-md)' }} whileTap={{ scale: 0.98 }} onClick={saveSettings} disabled={saving}
+                className="am-press w-full py-4 rounded-xl font-bold text-[14px] text-ink disabled:opacity-30 transition-all"
                 style={{ background: 'var(--bg-overlay)', border: '1px solid var(--border)' }}>
                 {saving ? 'Saving...' : saved ? '✓ Saved' : 'Save Settings (Engine Off)'}
               </motion.button>
@@ -586,12 +596,12 @@ export default function AutoApplyPage() {
             )}
 
             {/* Test Auto-Apply Button - Always Available */}
-            <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }} onClick={testAutoApply} disabled={testingAuto}
-              className="w-full py-3 rounded-xl font-bold text-[13px] text-ink disabled:opacity-50 transition-all flex items-center justify-center gap-2"
-              style={{ background: 'rgb(var(--blue-rgb) / calc(0.1 * var(--tint-scale)))', border: '1px solid rgb(var(--blue-rgb) / calc(0.2 * var(--tint-scale)))' }}>
+            <motion.button whileHover={{ scale: 1.01, boxShadow: '0 10px 28px -8px rgb(var(--accent-rgb) / 0.55)' }} whileTap={{ scale: 0.98 }} onClick={testAutoApply} disabled={testingAuto}
+              className="am-press w-full py-3 rounded-xl font-bold text-[13px] disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+              style={{ background: 'var(--accent-solid)', color: 'var(--text-on-accent)', boxShadow: 'var(--shadow-accent)' }}>
               {testingAuto ? (
                 <>
-                  <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }} className="w-3 h-3 rounded-full border-2 border-[var(--border)] border-t-[var(--blue)]" />
+                  <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }} className="w-3 h-3 rounded-full border-2 border-[rgba(255,255,255,0.35)] border-t-white" />
                   Searching &amp; matching jobs...
                 </>
               ) : (
@@ -752,14 +762,17 @@ export default function AutoApplyPage() {
           ].map((stat, i) => (
             <div
               key={stat.period}
-              className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-6"
-              style={{ animation: `floatUp 0.5s ease ${i * 0.1}s both` }}
+              className="rounded-2xl border border-[var(--border)] p-6"
+              style={{
+                animation: `floatUp 0.5s ease ${i * 0.1}s both`,
+                background: `linear-gradient(160deg, ${withAlpha(stat.color, 0.1, true)}, transparent 55%), var(--bg-card)`,
+              }}
             >
               <div className="text-[12px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-3">{stat.period}</div>
               <div className="space-y-4">
                 <div>
                   <div className="text-[13px] text-[var(--text-secondary)] mb-1">Applications</div>
-                  <div className="font-display text-[1.9rem] text-[var(--text)]">
+                  <div className="font-display text-[1.9rem]" style={{ color: stat.color }}>
                     <AnimatedNumber value={stat.apps} delay={i * 150} />
                   </div>
                 </div>

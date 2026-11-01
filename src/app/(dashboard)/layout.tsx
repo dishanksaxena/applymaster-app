@@ -284,8 +284,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             transition: 'width .45s cubic-bezier(.2,.8,.2,1), transform .3s cubic-bezier(.4,0,.2,1)',
           }}
         >
-          {/* Faint atmosphere behind the logo */}
-          <div aria-hidden="true" className={`am-aura absolute -top-24 -left-20 w-[320px] h-[260px] ${reduced ? '' : 'am-aura-live'}`} style={{ opacity: 0.5 }} />
+          {/* Faint atmosphere behind the logo: wide and soft so it reads as
+              light falling on the panel, never as a blob at the corner. */}
+          <div aria-hidden="true" className={`am-aura absolute -top-40 -left-40 w-[560px] h-[420px] ${reduced ? '' : 'am-aura-live'}`} style={{ opacity: 0.35 }} />
 
           {/* Logo */}
           <Link href="/dashboard" className="flex items-center gap-3 px-5 h-[64px] shrink-0 relative hover:opacity-80 transition-opacity duration-200" style={{ borderBottom: '1px solid var(--sidebar-divider)' }}>
@@ -334,7 +335,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   transition={{ duration: 0.2 }}
                   className="px-3 pb-2 pt-1"
                 >
-                  <span className="text-[10px] font-semibold tracking-[0.08em] uppercase" style={{ color: 'var(--text-faint)' }}>Navigation</span>
+                  <span className="text-[10px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'rgb(var(--accent-rgb) / 0.75)' }}>Navigation</span>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -386,7 +387,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   )}
 
                   {/* Icon */}
-                  <span className={`relative shrink-0 transition-all duration-200 group-hover:scale-[1.08] ${active ? '' : 'group-hover:text-[var(--text)]'}`}>
+                  <span
+                    className={`relative shrink-0 transition-all duration-200 group-hover:scale-[1.08] ${active ? '' : 'group-hover:text-[var(--text)]'}`}
+                    style={active ? { color: 'var(--accent)', filter: `drop-shadow(0 0 6px rgb(var(--accent-rgb) / 0.5))` } : undefined}
+                  >
                     {item.icon}
                   </span>
 
@@ -442,6 +446,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         animation: 'shimmer 3s linear infinite',
                         color: 'var(--badge-pro-text)',
                         border: '1px solid var(--border-accent)',
+                        boxShadow: '0 0 0 1px rgb(var(--accent-rgb) / 0.2), 0 0 10px rgb(var(--accent-rgb) / 0.25)',
                       } : {
                         background: 'var(--badge-free-bg)',
                         color: 'var(--badge-free-text)',
@@ -568,7 +573,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
               <Link
                 href="/auto-apply"
-                className="am-press flex items-center gap-2 px-3 py-1.5 rounded-lg"
+                className="am-press relative flex items-center gap-2 px-3 py-1.5 rounded-lg"
                 style={{
                   background: applyMode === 'off' ? 'var(--bg-overlay)' : 'var(--green-dim)',
                   border: `1px solid ${applyMode === 'off' ? 'var(--border)' : toneA('green', 0.25)}`,
@@ -576,6 +581,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 }}
                 title="Auto-apply settings"
               >
+                {/* Breathing halo when the engine is on; a separate layer so the
+                    pill's own text never pulses. */}
+                {applyMode !== 'off' && !reduced && (
+                  <span
+                    aria-hidden="true"
+                    className="absolute inset-0 rounded-lg pointer-events-none"
+                    style={{ boxShadow: `0 0 16px 2px ${toneA('green', 0.35)}`, animation: 'am-glow-pulse 3s ease-in-out infinite' }}
+                  />
+                )}
                 <span className="relative flex h-2 w-2">
                   {applyMode !== 'off' && (
                     <span

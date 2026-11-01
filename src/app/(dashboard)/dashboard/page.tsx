@@ -190,7 +190,7 @@ function Delta({ value, t }: { value: number; t: Tone }) {
     <span
       className="inline-flex items-center gap-1 px-2 py-[3px] rounded-full text-[11px] font-semibold"
       style={{
-        background: up ? toneSurface(t, 0.12) : 'var(--bg-overlay)',
+        background: up ? toneSurface(t, 0.18) : 'var(--bg-overlay)',
         color: up ? tone(t) : 'var(--text-muted)',
       }}
     >
@@ -235,18 +235,20 @@ function StatCard({
       animationDelay={index * 0.06}
       className={className}
     >
-      {primary && (
-        <span
-          aria-hidden="true"
-          className="absolute inset-0 pointer-events-none"
-          style={{ background: `linear-gradient(135deg, ${toneSurface(t, 0.18)}, transparent 60%)` }}
-        />
-      )}
+      {/* Every card wears its tone; the primary card simply wears more of it.
+          The number is the hero, so it carries the tone too. */}
+      <span
+        aria-hidden="true"
+        className="absolute inset-0 pointer-events-none"
+        style={{ background: `linear-gradient(160deg, ${toneSurface(t, primary ? 0.2 : 0.14)}, transparent 55%)` }}
+      />
       <div className={`relative ${primary ? 'pt-5 px-5' : 'pt-4 px-4'}`}>
         <div className="flex items-center gap-2 mb-3">
+          {/* var(--bg) for the glyph: near-white on light theme's deep tones,
+              near-black on dark theme's pastel tones — contrast holds in both. */}
           <span
             className={`grid place-items-center rounded-lg shrink-0 ${primary ? 'w-8 h-8' : 'w-7 h-7'}`}
-            style={{ background: toneSurface(t, 0.13), color: tone(t), boxShadow: primary ? `0 6px 16px -8px ${toneA(t, 0.6)}` : undefined }}
+            style={{ background: tone(t), color: 'var(--bg)', boxShadow: `0 6px 16px -8px ${toneA(t, 0.7)}` }}
           >
             {icon}
           </span>
@@ -257,7 +259,7 @@ function StatCard({
             {label}
           </span>
         </div>
-        <div className={`font-display leading-none ${primary ? 'text-[3.2rem]' : 'text-[2.4rem]'}`} style={{ color: 'var(--text)' }}>
+        <div className={`font-display leading-none ${primary ? 'text-[3.2rem]' : 'text-[2.4rem]'}`} style={{ color: tone(t) }}>
           {Number.isNaN(value) ? <span style={{ color: 'var(--text-faint)' }}>—</span> : <AnimatedNumber value={value} suffix={suffix} />}
         </div>
         <div className={`mt-2 mb-1 ${primary ? 'scale-[1.08] origin-left' : ''}`}>
@@ -533,12 +535,16 @@ export default function DashboardPage() {
       {/* Greeting: one line, no wasted band */}
       <motion.div variants={fadeInUp} className="relative flex flex-wrap items-end justify-between gap-4 pt-1">
         <div aria-hidden="true" className="absolute inset-x-0 -top-16 bottom-[-40px] overflow-hidden pointer-events-none">
-          <div className="am-aura am-aura-live absolute -top-10 -left-16 w-[420px] h-[220px]" style={{ opacity: 0.55 }} />
+          <div className="am-aura am-aura-live absolute -top-12 -left-20 w-[640px] h-[260px]" style={{ opacity: 0.7 }} />
         </div>
         <div className="relative">
           <h1 className="font-display text-[clamp(1.75rem,2.6vw,2.15rem)] leading-tight" style={{ color: 'var(--text)' }}>
             {greeting}
-            {userName ? `, ${userName}` : ''}
+            {userName ? (
+              <>
+                , <em className="font-display-italic" style={{ color: 'var(--accent)' }}>{userName}</em>
+              </>
+            ) : ''}
           </h1>
           <p className="text-[13px] mt-1" style={{ color: 'var(--text-muted)' }}>
             {metrics.applied.value === 0
@@ -548,9 +554,11 @@ export default function DashboardPage() {
         </div>
         <Link
           href="/jobs"
-          className="am-press relative inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-semibold hover:-translate-y-0.5 hover:shadow-[var(--shadow-accent)]"
+          className="am-press relative inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-semibold hover:-translate-y-0.5 hover:shadow-[0_12px_30px_-10px_rgb(var(--accent-rgb)/0.75)]"
           style={{
-            background: 'var(--accent-solid)',
+            /* Sheen over the solid fill: reads as a gradient while white text
+               stays on --accent-solid, the one fill tuned to carry it in both themes. */
+            background: 'linear-gradient(135deg, rgba(255,255,255,0.22), rgba(255,255,255,0) 55%), var(--accent-solid)',
             color: 'var(--text-on-accent)',
             boxShadow: '0 6px 18px -8px rgb(var(--accent-rgb) / 0.6)',
           }}
@@ -651,8 +659,8 @@ export default function DashboardPage() {
                       className="grid place-items-center w-7 h-7 rounded-full text-[11.5px] font-bold mb-2.5"
                       style={{
                         background: step.done ? tone(step.t) : 'var(--bg-card)',
-                        color: step.done ? '#fff' : 'var(--text-muted)',
-                        boxShadow: step.done ? 'none' : 'inset 0 0 0 1px var(--card-ring)',
+                        color: step.done ? 'var(--bg)' : 'var(--text-muted)',
+                        boxShadow: step.done ? `0 0 14px ${toneA(step.t, 0.45)}` : 'inset 0 0 0 1px var(--card-ring)',
                       }}
                     >
                       {step.done ? <DoneCheck /> : step.step}
@@ -697,7 +705,7 @@ export default function DashboardPage() {
                   >
                     <span
                       className="grid place-items-center w-9 h-9 rounded-lg shrink-0"
-                      style={{ background: toneSurface(a.t, 0.15), color: tone(a.t) }}
+                      style={{ background: tone(a.t), color: 'var(--bg)', boxShadow: `0 6px 14px -7px ${toneA(a.t, 0.7)}` }}
                     >
                       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" aria-hidden="true">
                         {a.icon}

@@ -408,6 +408,7 @@ export default function JobsPage() {
         border: '1px solid rgb(var(--accent-rgb) / calc(0.1 * var(--tint-scale)))',
       }}>
         <div className="absolute top-[-50%] right-[-10%] w-[300px] h-[300px] rounded-full opacity-[0.07]" style={{ background: 'radial-gradient(circle, var(--blue), transparent 70%)' }} />
+        <div aria-hidden="true" className="am-aura am-aura-live absolute -top-28 -left-24 w-[520px] h-[340px] pointer-events-none" style={{ opacity: 0.55 }} />
         <div className="relative z-10">
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
             <div>
@@ -490,7 +491,8 @@ export default function JobsPage() {
             </select>
           </div>
 
-            <PremiumButton variant="primary" size="lg" onClick={searchJobs} disabled={loading || !searchTerm} fullWidth loading={loading}>
+            <PremiumButton variant="primary" size="lg" onClick={searchJobs} disabled={loading || !searchTerm} fullWidth loading={loading}
+              className="am-press shadow-[0_12px_32px_-12px_rgb(var(--accent-rgb)/0.55)]">
               {loading ? 'Searching...' : 'Search Jobs'}
             </PremiumButton>
           </div>
@@ -521,9 +523,32 @@ export default function JobsPage() {
       <AnimatePresence>
         {viewMode === 'list' && jobs.length === 0 && !loading ? (
           <motion.div variants={fadeInUp} className="text-center py-16">
-            <motion.div animate={{ y: [0, -8, 0] }} transition={{ duration: 3, repeat: Infinity }} className="inline-block mb-4">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text-faint)" strokeWidth="1.5"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
-            </motion.div>
+            {/* Pulsing radar rings: the page breathes while it waits for a search.
+                Pure CSS, so the reduced-motion block neutralises them globally. */}
+            <div className="relative inline-block mb-4">
+              {/* Centered with margins, not translate: the pulse keyframes set
+                  transform and would cancel a translate-based centering. */}
+              {[92, 136, 180].map((size, ri) => (
+                <span
+                  key={size}
+                  aria-hidden="true"
+                  className="absolute rounded-full pointer-events-none"
+                  style={{
+                    width: size,
+                    height: size,
+                    left: '50%',
+                    top: '50%',
+                    marginLeft: -size / 2,
+                    marginTop: -size / 2,
+                    border: `1px solid rgb(var(--accent-rgb) / ${0.38 - ri * 0.12})`,
+                    animation: `am-glow-pulse 2.8s ease-in-out ${ri * 0.5}s infinite`,
+                  }}
+                />
+              ))}
+              <motion.div animate={{ y: [0, -8, 0] }} transition={{ duration: 3, repeat: Infinity }} className="relative inline-block">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.5"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+              </motion.div>
+            </div>
             {searched ? (
               <>
                 <p className="text-[15px] font-semibold text-[var(--text-muted)]">No jobs found for “{searched}”</p>
@@ -552,8 +577,10 @@ export default function JobsPage() {
                   <div className="p-5">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex gap-4 flex-1">
+                        {/* var(--bg) for the letter: readable on light theme's deep
+                            tones and on dark theme's pastels alike. */}
                         <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 text-[14px] font-bold"
-                          style={{ background: 'linear-gradient(135deg, rgb(var(--accent-rgb) / calc(0.1 * var(--tint-scale))), rgb(var(--purple-rgb) / calc(0.1 * var(--tint-scale))))', color: 'var(--accent)' }}>
+                          style={{ background: 'linear-gradient(135deg, var(--accent), var(--purple))', color: 'var(--bg)', boxShadow: '0 6px 16px -8px rgb(var(--accent-rgb) / 0.6)' }}>
                           {job.company[0]}
                         </div>
                         <div className="flex-1 min-w-0">
@@ -573,7 +600,7 @@ export default function JobsPage() {
                                 {job.remote_type}
                               </span>
                             )}
-                            <span className="text-[11px] font-bold px-2.5 py-1 rounded-lg" style={{ background: job.direct ? 'rgb(var(--green-rgb) / calc(0.1 * var(--tint-scale)))' : 'rgb(var(--blue-rgb) / calc(0.08 * var(--tint-scale)))', color: job.direct ? 'var(--green)' : 'var(--blue)' }}>{job.direct ? `Employer site · ${job.source}` : job.source}</span>
+                            <span className="text-[11px] font-bold px-2.5 py-1 rounded-lg" style={{ background: job.direct ? 'rgb(var(--green-rgb) / calc(0.1 * var(--tint-scale)))' : 'rgb(var(--blue-rgb) / calc(0.08 * var(--tint-scale)))', color: job.direct ? 'var(--green)' : 'var(--blue)', boxShadow: job.direct ? 'inset 0 0 0 1px rgb(var(--green-rgb) / 0.3)' : undefined }}>{job.direct ? `Employer site · ${job.source}` : job.source}</span>
                             {job.direct && (
                               <span className="text-[11px] text-[var(--text-muted)]">Extension fills this form</span>
                             )}
