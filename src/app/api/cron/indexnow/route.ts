@@ -17,8 +17,11 @@ const KEY = 'b240f9946492ca02bfb7aba2407dfe83'
 
 export async function GET(req: Request) {
   if (!isCronRequest(req)) return Response.json({ error: 'Unauthorized' }, { status: 401 })
-  // ?hours= widens the window for a manual catch-up run (max one week).
-  const hours = Math.min(168, Math.max(1, Number(new URL(req.url).searchParams.get('hours')) || 26))
+  // The boards come from the fetch cache, which refreshes daily and is usually filled by the
+  // previous run, so the data can be ~24h old when this reads it. A 26h window over day-old data
+  // found almost nothing; 50h covers the staleness plus a day. Some jobs go out on two consecutive
+  // days, which both APIs accept. ?hours= overrides for a manual catch-up (max one week).
+  const hours = Math.min(168, Math.max(1, Number(new URL(req.url).searchParams.get('hours')) || 50))
   const since = Date.now() - hours * 3600 * 1000
   const boards = await getAllBoards()
   // The boards are now in the fetch cache, so building the in-app search index is cheap; do it here
