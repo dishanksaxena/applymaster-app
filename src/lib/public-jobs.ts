@@ -379,11 +379,17 @@ export function parseLocation(name: string): Where {
   return out
 }
 
+/** Whether a job page renders JobPosting markup: only when its location can be stated honestly. */
+export function hasJobPostingSchema(location: string) {
+  const where = parseLocation(location)
+  return where.places.some(p => p.country) || (where.remote && where.countries.length > 0)
+}
+
 /** Google JobPosting structured data, or null when the location cannot be stated honestly. */
 export function jobPostingSchema(job: JobDetail, pageUrl: string) {
+  if (!hasJobPostingSchema(job.location)) return null
   const where = parseLocation(job.location)
   const physical = where.places.filter(p => p.country)
-  if (!physical.length && !(where.remote && where.countries.length)) return null
   let sameAs: string | undefined
   try {
     const host = new URL(job.url).hostname
