@@ -139,7 +139,7 @@ const navItems = [
   { label: 'Chrome Extension', href: '/extension', icon: icons.extension },
   { label: 'Referral Network', href: '/network', icon: icons.network },
   { label: 'Interview Coach', href: '/interview-coach', icon: icons.interviewCoach },
-  { label: 'Help & support', href: '/support', icon: icons.support },
+  { label: 'Help & support', href: '/help', icon: icons.support },
   { label: 'Settings', href: '/settings', icon: icons.settings },
 ]
 
@@ -250,6 +250,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     })()
   }, [pathname, supabase])
 
+  // The auto-apply page announces mode changes so the pill updates without a navigation.
+  useEffect(() => {
+    const onMode = (e: Event) => setApplyMode((e as CustomEvent).detail)
+    window.addEventListener('applymaster:apply-mode', onMode)
+    return () => window.removeEventListener('applymaster:apply-mode', onMode)
+  }, [])
+
   const planLabel = profile?.plan?.toUpperCase() || 'FREE'
   const isPremiumPlan = planLabel === 'PRO' || planLabel === 'ELITE'
 
@@ -283,8 +290,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           {/* Logo */}
           <Link href="/dashboard" className="flex items-center gap-3 px-5 h-[64px] shrink-0 relative hover:opacity-80 transition-opacity duration-200" style={{ borderBottom: '1px solid var(--sidebar-divider)' }}>
             <div className="relative w-8 h-8 shrink-0">
+              {/* rounded-lg is 20px in this project: on a 32px box that is a circle,
+                  and the 7px-cornered inner square poked through it. 8px nests the
+                  1px-inset 7px inner correctly. */}
               <div
-                className="absolute inset-0 rounded-lg"
+                className="absolute inset-0 rounded-[8px]"
                 style={{
                   background: 'linear-gradient(135deg, var(--accent), var(--accent-solid), var(--accent))',
                   backgroundSize: '200% 200%',

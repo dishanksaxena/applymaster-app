@@ -144,6 +144,28 @@ export default function AutoApplyPage() {
     }
   }, [applications])
 
+  /* Mode changes save the moment a card is pressed. The old flow kept the
+     click local until "Save Settings", so pressing Off looked done while the
+     engine stayed on autopilot. */
+  const selectMode = async (next: 'off' | 'copilot' | 'autopilot') => {
+    const prev = mode
+    setMode(next)
+    if (!supabase || next === prev) return
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    const { error } = await supabase.from('job_preferences').upsert(
+      { user_id: user.id, auto_apply_mode: next, updated_at: new Date().toISOString() },
+      { onConflict: 'user_id' }
+    )
+    if (error) {
+      setMode(prev)
+      toast.error('Could not change the mode: ' + error.message)
+    } else {
+      toast.success(next === 'off' ? 'Auto-apply is off' : next === 'copilot' ? 'Copilot is on — new matches queue for your review' : 'Autopilot is on')
+      window.dispatchEvent(new CustomEvent('applymaster:apply-mode', { detail: next }))
+    }
+  }
+
   const saveSettings = async () => {
     if (!supabase) return
     setSaving(true)
@@ -413,7 +435,7 @@ export default function AutoApplyPage() {
             <h3 className="text-[16px] font-bold mb-4">Operating Mode</h3>
             <div className="grid sm:grid-cols-3 gap-3">
               {modes.map(m => (
-                <motion.button key={m.id} whileHover={{ y: -3, scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => setMode(m.id)}
+                <motion.button key={m.id} whileHover={{ y: -3, scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => selectMode(m.id)}
                   className="p-5 rounded-xl text-left transition-all duration-300"
                   style={mode === m.id ? { background: `${withAlpha(m.color, 0.09, true)}`, border: `1px solid ${withAlpha(m.color, 0.18, true)}`, boxShadow: `0 0 20px ${withAlpha(m.color, 0.06, true)}` } : { background: 'var(--bg-overlay)', border: '1px solid var(--border)' }}>
                   <div className="flex items-center justify-between mb-3">
