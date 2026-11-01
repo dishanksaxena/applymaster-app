@@ -73,5 +73,10 @@ export async function GET(req: Request) {
     }
   }
 
+  console.log(
+    `[indexnow] window ${hours}h | indexnow ${indexnow.sent} sent (status ${indexnow.status ?? '-'}) | google ${
+      google.configured ? `${google.accepted ?? 0}/${google.sent ?? 0} accepted` : 'not configured'
+    }${google.firstError ? ` | first error: ${google.firstError}` : ''}`
+  )
   return Response.json({ ok: indexnow.ok, indexnow, google, indexed })
 }
