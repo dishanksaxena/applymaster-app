@@ -4,6 +4,9 @@ import { createAdminClient, isMissingTable } from './supabase-admin'
 import { createClient } from './supabase-server'
 import { isAdminEmail } from './supabase-admin'
 
+/** Written once per run by the IndexNow/Google cron; operational, so kept out of the event views. */
+export const CRON_EVENT = 'cron_indexnow'
+
 /**
  * Everything the owner's dashboard shows, gathered server-side.
  *
@@ -158,7 +161,7 @@ export async function loadAdminData() {
       .from('app_events')
       .select('*')
       .gte('created_at', new Date(since(30)).toISOString())
-      .not('event', 'in', '(page_view,job_search)')
+      .not('event', 'in', `(page_view,job_search,${CRON_EVENT})`)
       .order('created_at', { ascending: false })
       .limit(10000),
     admin.from('support_messages').select('*').order('created_at', { ascending: false }).limit(200),

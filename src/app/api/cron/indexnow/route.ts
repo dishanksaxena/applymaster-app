@@ -3,6 +3,8 @@ import { getAllBoards, hasJobPostingSchema, jobPath } from '@/lib/public-jobs'
 import { warmDirectIndex } from '@/lib/direct-search'
 import { SITE_URL } from '@/lib/seo/site'
 import { DAILY_QUOTA, isConfigured as googleConfigured, notify as notifyGoogle } from '@/lib/google-indexing'
+import { createAdminClient } from '@/lib/supabase-admin'
+import { CRON_EVENT } from '@/lib/admin-data'
 
 /**
  * Daily: tell IndexNow search engines (Bing, and through it ChatGPT search,
@@ -78,5 +80,11 @@ export async function GET(req: Request) {
       google.configured ? `${google.accepted ?? 0}/${google.sent ?? 0} accepted` : 'not configured'
     }${google.firstError ? ` | first error: ${google.firstError}` : ''}`
   )
+  // A durable record of each run, so it can be checked without access to the Vercel logs.
+  // Excluded from the admin event views.
+  const { error: logError } = await createAdminClient()
+    .from('app_events')
+    .insert({ event: CRON_EVENT, outcome: indexnow.ok ? 'success' : 'failure', path: '/api/cron/indexnow', meta: { hours, indexnow, google, indexed, eligible: googleJobs.length } })
+  if (logError) console.error('[indexnow] run record not saved:', logError.message)
   return Response.json({ ok: indexnow.ok, indexnow, google, indexed })
 }

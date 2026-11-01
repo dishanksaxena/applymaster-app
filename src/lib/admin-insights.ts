@@ -1,6 +1,6 @@
 import 'server-only'
 import { createAdminClient } from './supabase-admin'
-import { FAILURE_EVENTS, INTERNAL, listAuthUsers, type AuthUserRow, type EventRow, type SupportRow } from './admin-data'
+import { CRON_EVENT, FAILURE_EVENTS, INTERNAL, listAuthUsers, type AuthUserRow, type EventRow, type SupportRow } from './admin-data'
 
 /**
  * The owner's view of the product: who visits, who the customers are, what
@@ -39,7 +39,7 @@ async function events(db: Db, days: number, names?: string[]): Promise<EventRow[
   const since = new Date(Date.now() - days * DAY).toISOString()
   return all<EventRow>((from, to) => {
     let q = db.from('app_events').select('*').gte('created_at', since)
-    if (names) q = q.in('event', names)
+    q = names ? q.in('event', names) : q.neq('event', CRON_EVENT)
     return q.order('created_at', { ascending: false }).range(from, to)
   })
 }
