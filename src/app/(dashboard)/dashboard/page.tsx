@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useId, useMemo } from 'react'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
-import { createClient } from '@/lib/supabase-browser'
+import { createClient, currentUser } from '@/lib/supabase-browser'
 import Link from 'next/link'
 import { PremiumCard } from '@/components/premium'
 import { staggerContainer, fadeInUp } from '@/lib/animations'
@@ -414,9 +414,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     ;(async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
+      const user = await currentUser()
       if (!user) return
 
       const [{ data: profile }, { data: apps }, { data: resumes }, { data: logs }, { data: prefs }, { count: practiced }] = await Promise.all([

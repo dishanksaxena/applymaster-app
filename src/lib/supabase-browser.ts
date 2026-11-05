@@ -1,17 +1,20 @@
 import { createBrowserClient } from '@supabase/ssr'
 
-/**
- * Every caller used to get its own client, so a single dashboard load (layout
- * + page + CommandPalette, etc.) started several GoTrueClient instances all
- * racing for the same navigator.locks auth-token lock — the source of the
- * "Lock ... was released because an unexpected error happened" errors. One
- * client per browser tab, memoized, fixes that.
- */
-const client = createBrowserClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
-
 export function createClient() {
-  return client
+  return createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+}
+
+// getUser holds the auth lock for a network round trip and the lock can be stolen after 5s,
+// so on a slow connection a call can reject while the session is fine.
+export async function currentUser() {
+  const { auth } = createClient()
+  try {
+    return (await auth.getUser()).data.user
+  } catch (e) {
+    if (!(e as { isAcquireTimeout?: boolean }).isAcquireTimeout) throw e
+    return (await auth.getUser()).data.user
+  }
 }

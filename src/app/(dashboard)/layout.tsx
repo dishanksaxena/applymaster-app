@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
-import { createClient } from '@/lib/supabase-browser'
+import { createClient, currentUser } from '@/lib/supabase-browser'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import type { Profile } from '@/lib/database.types'
@@ -201,7 +201,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser()
+        const user = await currentUser()
         if (!user) {
           setLoading(false)
           return
@@ -243,7 +243,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   // The header pill shows the real auto-apply state; re-read on each route change so it follows edits made on /auto-apply.
   useEffect(() => {
     ;(async () => {
-      const { data: { user } } = await supabase.auth.getUser()
+      const user = await currentUser()
       if (!user) return
       const { data } = await supabase.from('job_preferences').select('auto_apply_mode').eq('user_id', user.id).maybeSingle()
       setApplyMode((data?.auto_apply_mode as 'off' | 'copilot' | 'autopilot') || 'off')
