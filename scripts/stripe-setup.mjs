@@ -38,8 +38,12 @@ const WEBHOOK_URL = `${SITE}/api/webhooks/stripe`
 const TAX_CODE = 'txcd_10103000'
 
 const PLANS = [
-  { plan: 'pro', name: 'ApplyMaster Pro', description: '100 applications a month, AI resume optimization and cover letters.', amount: 2900, recurring: { interval: 'month' }, lookup: 'applymaster_pro_monthly' },
-  { plan: 'elite', name: 'ApplyMaster Elite', description: 'Unlimited applications, the auto-apply engine and interview coaching.', amount: 5900, recurring: { interval: 'month' }, lookup: 'applymaster_elite_monthly' },
+  { plan: 'pro', name: 'ApplyMaster Pro', description: '150 applications a month, advanced AI resume optimization and cover letters.', amount: 2900, recurring: { interval: 'month' }, lookup: 'applymaster_pro_monthly' },
+  // $17/mo billed yearly, the rate shown on the homepage's Annual toggle.
+  { plan: 'pro', name: 'ApplyMaster Pro (annual)', description: 'ApplyMaster Pro, billed yearly at $17/mo equivalent.', amount: 20400, recurring: { interval: 'year' }, lookup: 'applymaster_pro_yearly' },
+  { plan: 'elite', name: 'ApplyMaster Elite', description: 'Unlimited applications, God Mode tailoring and the referral network.', amount: 5900, recurring: { interval: 'month' }, lookup: 'applymaster_elite_monthly' },
+  // $35/mo billed yearly, the rate shown on the homepage's Annual toggle.
+  { plan: 'elite', name: 'ApplyMaster Elite (annual)', description: 'ApplyMaster Elite, billed yearly at $35/mo equivalent.', amount: 42000, recurring: { interval: 'year' }, lookup: 'applymaster_elite_yearly' },
   { plan: 'lifetime', name: 'ApplyMaster Lifetime', description: 'Everything in Elite, paid once.', amount: 19900, recurring: null, lookup: 'applymaster_lifetime' },
   // Not a plan: a one-time top-up of 20 applications for Pro accounts.
   { plan: 'credits', name: 'ApplyMaster Application Credits', description: '20 extra applications for the Pro plan.', amount: 500, recurring: null, lookup: 'applymaster_credits_20' },
@@ -62,7 +66,7 @@ const existing = await stripe.prices.list({ lookup_keys: PLANS.map(p => p.lookup
 for (const p of PLANS) {
   const price = existing.data.find(x => x.lookup_key === p.lookup)
   if (price) {
-    console.log(`  plan ${p.plan.padEnd(8)} exists: ${price.id} ($${price.unit_amount / 100}${p.recurring ? '/month' : ' once'}), tax code ${price.product.tax_code}`)
+    console.log(`  plan ${p.plan.padEnd(8)} exists: ${price.id} ($${price.unit_amount / 100}${p.recurring ? `/${p.recurring.interval}` : ' once'}), tax code ${price.product.tax_code}`)
     continue
   }
   if (!APPLY) {
@@ -102,26 +106,33 @@ if (hook) {
   console.log(`  webhook created: ${created.id} -> ${created.url} (signing secret saved to ${ENV})`)
 } else console.log('  webhook missing')
 
-// 3. Customer Portal. Switching between Pro and Elite happens here too, prorated.
-const monthly = (await stripe.prices.list({ lookup_keys: ['applymaster_pro_monthly', 'applymaster_elite_monthly'], active: true })).data
+// 3. Customer Portal. Switching between Pro/Elite and monthly/yearly happens here too, prorated.
+const RECURRING_KEYS = ['applymaster_pro_monthly', 'applymaster_pro_yearly', 'applymaster_elite_monthly', 'applymaster_elite_yearly']
+const recurring = (await stripe.prices.list({ lookup_keys: RECURRING_KEYS, active: true })).data
 const portalFeatures = {
   subscription_cancel: { enabled: true, mode: 'at_period_end' },
   payment_method_update: { enabled: true },
   invoice_history: { enabled: true },
   customer_update: { enabled: true, allowed_updates: ['email', 'address'] },
   subscription_update: {
-    enabled: monthly.length === 2,
+    enabled: recurring.length === RECURRING_KEYS.length,
     default_allowed_updates: ['price'],
     proration_behavior: 'always_invoice',
-    products: monthly.map(p => ({ product: typeof p.product === 'string' ? p.product : p.product.id, prices: [p.id] })),
+    products: recurring.map(p => ({ product: typeof p.product === 'string' ? p.product : p.product.id, prices: [p.id] })),
   },
 }
 const configs = await stripe.billingPortal.configurations.list({ is_default: true, limit: 1 })
 const portal = configs.data[0]
 if (portal) {
-  const switching = portal.features.subscription_update.enabled
-  if (!switching && APPLY && monthly.length === 2) await stripe.billingPortal.configurations.update(portal.id, { features: portalFeatures })
-  console.log(`  customer portal configured: ${portal.id}${switching ? '' : APPLY ? ' (plan switching turned on)' : ' (plan switching off)'}`)
+  // Compare by price id, not just the enabled flag — the portal can be
+  // "enabled" from an earlier run while still listing the old, smaller
+  // price set, which silently hides yearly billing from existing customers.
+  const configuredIds = new Set((portal.features.subscription_update.products || []).flatMap(p => p.prices))
+  const wantedIds = new Set(recurring.map(p => p.id))
+  const inSync = portal.features.subscription_update.enabled && configuredIds.size === wantedIds.size && [...wantedIds].every(id => configuredIds.has(id))
+  const ready = recurring.length === RECURRING_KEYS.length
+  if (!inSync && APPLY && ready) await stripe.billingPortal.configurations.update(portal.id, { features: portalFeatures })
+  console.log(`  customer portal configured: ${portal.id}${inSync ? '' : APPLY && ready ? ' (price list synced)' : !ready ? ' (missing some recurring prices)' : ' (out of sync)'}`)
 } else if (APPLY) {
   const c = await stripe.billingPortal.configurations.create({
     business_profile: { privacy_policy_url: `${SITE}/privacy`, terms_of_service_url: `${SITE}/terms`, headline: 'Manage your ApplyMaster plan' },

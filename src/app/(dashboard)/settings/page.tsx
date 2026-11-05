@@ -181,15 +181,20 @@ export default function SettingsPage() {
     setBuyingCredits(false)
   }
 
+  /* Annual billing: $17/mo for Pro, $35/mo for Elite — the rates the
+     homepage's toggle advertises, now real Stripe prices (lookup keys
+     applymaster_{pro,elite}_yearly, set up by scripts/stripe-setup.mjs). */
+  const [billingInterval, setBillingInterval] = useState<'month' | 'year'>('month')
+
   /* Opens Stripe Checkout, or the billing portal to switch an existing
-     monthly plan. While checkout is not open to this account the server
+     plan or interval. While checkout is not open to this account the server
      records the interest and says so instead. */
   const handleCheckout = async (plan: string) => {
     try {
       const response = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan }),
+        body: JSON.stringify({ plan, interval: plan === 'lifetime' ? 'month' : billingInterval }),
       })
       const json = await response.json().catch(() => ({}))
       if (json.url) {
@@ -243,8 +248,8 @@ export default function SettingsPage() {
   )
 
   const plans = [
-    { name: 'pro', price: 29, period: '/mo', color: 'var(--accent-solid)', features: ['150 applications/month (10/day pace)', 'Advanced AI resume & cover letters', 'Unlimited AI mock interviews', 'Chrome extension', 'Priority support'], icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><polygon points="13,2 3,14 12,14 11,22 21,10 12,10"/></svg> },
-    { name: 'elite', price: 59, period: '/mo', color: 'var(--purple)', popular: true, features: ['Everything in Pro', 'Unlimited applications', 'God Mode: tailored resume per job', 'Referral network & ask drafts', 'Dedicated support'], icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> },
+    { name: 'pro', price: billingInterval === 'month' ? 29 : 17, period: '/mo', annualNote: billingInterval === 'year' ? 'billed $204/yr' : null, color: 'var(--accent-solid)', features: ['150 applications/month (10/day pace)', 'Advanced AI resume & cover letters', 'Unlimited AI mock interviews', 'Chrome extension', 'Priority support'], icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><polygon points="13,2 3,14 12,14 11,22 21,10 12,10"/></svg> },
+    { name: 'elite', price: billingInterval === 'month' ? 59 : 35, period: '/mo', annualNote: billingInterval === 'year' ? 'billed $420/yr' : null, color: 'var(--purple)', popular: true, features: ['Everything in Pro', 'Unlimited applications', 'God Mode: tailored resume per job', 'Referral network & ask drafts', 'Dedicated support'], icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> },
     { name: 'lifetime', price: 199, period: ' once', color: 'var(--green)', features: ['Everything in Elite', 'Pay once, never again', 'All future features', 'Early access', 'Priority support forever'], icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> },
   ]
 
@@ -335,6 +340,32 @@ export default function SettingsPage() {
             </motion.button>
           )}
         </div>
+        {!profile?.plan || profile.plan === 'free' || profile.plan === 'pro' || profile.plan === 'elite' ? (
+          <div className="flex items-center justify-center gap-1 p-1 mb-5 rounded-xl w-fit mx-auto" style={{ background: 'var(--bg-overlay)', border: '1px solid var(--border)' }}>
+            {(['month', 'year'] as const).map(iv => (
+              <button
+                key={iv}
+                onClick={() => setBillingInterval(iv)}
+                className="am-press px-4 py-1.5 rounded-lg text-[12px] font-bold transition-all flex items-center gap-1.5"
+                style={
+                  billingInterval === iv
+                    ? { background: 'var(--accent-solid)', color: 'var(--text-on-accent)' }
+                    : { color: 'var(--text-muted)' }
+                }
+              >
+                {iv === 'month' ? 'Monthly' : 'Annual'}
+                {iv === 'year' && (
+                  <span
+                    className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+                    style={{ background: billingInterval === 'year' ? 'rgba(255,255,255,0.22)' : 'var(--green-dim)', color: billingInterval === 'year' ? 'var(--text-on-accent)' : 'var(--green)' }}
+                  >
+                    Save 40%
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+        ) : null}
         {profile?.plan === 'pro' && (
           <div className="flex flex-wrap items-center justify-between gap-3 mb-5 px-4 py-3.5 rounded-xl" style={{ background: 'var(--bg-overlay)', border: '1px solid var(--border)' }}>
             <div>
@@ -367,10 +398,11 @@ export default function SettingsPage() {
               {plan.popular && <div className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] font-bold px-3 py-1 rounded-full text-[var(--text-on-accent)]" style={{ background: 'linear-gradient(135deg, var(--purple), var(--purple))' }}>POPULAR</div>}
               <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4" style={{ background: `${withAlpha(plan.color, 0.09, true)}`, color: plan.color }}>{plan.icon}</div>
               <div className="text-[13px] font-bold capitalize mb-1" style={{ color: plan.color }}>{plan.name}</div>
-              <div className="flex items-baseline gap-1 mb-4">
+              <div className="flex items-baseline gap-1 mb-0.5">
                 <span className="font-display text-[1.9rem]" style={{ color: 'var(--text)' }}>${plan.price}</span>
                 <span className="text-[12px]" style={{ color: 'var(--text-muted)' }}>{plan.period}</span>
               </div>
+              <div className="mb-4 h-4 text-[11px]" style={{ color: 'var(--text-faint)' }}>{'annualNote' in plan ? plan.annualNote : null}</div>
               <div className="space-y-2 mb-5">
                 {plan.features.map(f => (
                   <div key={f} className="flex items-center gap-2 text-[12px]" style={{ color: 'var(--text-secondary)' }}>

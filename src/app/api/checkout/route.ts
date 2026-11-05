@@ -1,7 +1,7 @@
 import type Stripe from 'stripe'
 import { createClient } from '@/lib/supabase-server'
 import { createAdminClient } from '@/lib/supabase-admin'
-import { canCheckout, PLANS, priceFor, stripe, stripeTestMode, type Plan } from '@/lib/stripe'
+import { canCheckout, PLANS, priceFor, stripe, stripeTestMode, type Plan, type Interval } from '@/lib/stripe'
 import { recordEvent } from '@/lib/track-server'
 
 /**
@@ -23,10 +23,13 @@ export async function POST(request: Request) {
   if (!user?.email) return Response.json({ error: 'Sign in to upgrade' }, { status: 401 })
 
   let plan: Plan
+  let interval: Interval = 'month'
   try {
     const body = await request.json()
     if (!PLANS.includes(body.plan)) return Response.json({ error: 'Unknown plan' }, { status: 400 })
     plan = body.plan
+    if (body.interval === 'year') interval = 'year'
+    else if (body.interval && body.interval !== 'month') return Response.json({ error: 'Unknown billing interval' }, { status: 400 })
   } catch {
     return Response.json({ error: 'Invalid request' }, { status: 400 })
   }
@@ -41,17 +44,17 @@ export async function POST(request: Request) {
 
   try {
     const origin = process.env.NEXT_PUBLIC_APP_URL || new URL(request.url).origin
-    const price = await priceFor(plan)
+    const price = await priceFor(plan, interval)
     // Someone who has paid before keeps their Stripe customer, so the portal shows everything.
     const { data: sub } = await createAdminClient()
       .from('subscriptions')
       .select('stripe_customer_id, stripe_subscription_id, status')
       .eq('user_id', user.id)
       .maybeSingle()
-    const meta = { user_id: user.id, plan }
+    const meta = { user_id: user.id, plan, interval }
 
-    // Already paying monthly and switching between Pro and Elite: change the
-    // running subscription (Stripe shows the prorated amount to confirm)
+    // Already paying monthly or yearly and switching plan or interval: change
+    // the running subscription (Stripe shows the prorated amount to confirm)
     // rather than starting a second one.
     if (plan !== 'lifetime' && sub?.stripe_customer_id && sub.stripe_subscription_id && sub.status !== 'canceled') {
       const running = await stripe().subscriptions.retrieve(sub.stripe_subscription_id)

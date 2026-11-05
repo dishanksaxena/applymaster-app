@@ -17,12 +17,17 @@ import { adminEmails } from '@/lib/supabase-admin'
 
 export type Plan = 'pro' | 'elite' | 'lifetime'
 export const PLANS: Plan[] = ['pro', 'elite', 'lifetime']
+export type Interval = 'month' | 'year'
 
-export const PRICE_LOOKUP: Record<Plan, string> = {
-  pro: 'applymaster_pro_monthly',
-  elite: 'applymaster_elite_monthly',
-  lifetime: 'applymaster_lifetime',
+/** Lifetime is one-time and has no interval; its map has only 'month' so priceFor's lookup is uniform. */
+export const PRICE_LOOKUP: Record<Plan, Record<Interval, string>> = {
+  pro: { month: 'applymaster_pro_monthly', year: 'applymaster_pro_yearly' },
+  elite: { month: 'applymaster_elite_monthly', year: 'applymaster_elite_yearly' },
+  lifetime: { month: 'applymaster_lifetime', year: 'applymaster_lifetime' },
 }
+const ALL_LOOKUP_KEYS: { key: string; plan: Plan }[] = (Object.entries(PRICE_LOOKUP) as [Plan, Record<Interval, string>][]).flatMap(
+  ([plan, byInterval]) => [...new Set(Object.values(byInterval))].map(key => ({ key, plan }))
+)
 
 let client: Stripe | null = null
 export function stripe(): Stripe {
@@ -60,19 +65,20 @@ export async function creditsPrice(): Promise<Stripe.Price> {
   return data[0]
 }
 
-const priceCache = new Map<Plan, Stripe.Price>()
-export async function priceFor(plan: Plan): Promise<Stripe.Price> {
-  const hit = priceCache.get(plan)
+const priceCache = new Map<string, Stripe.Price>()
+export async function priceFor(plan: Plan, interval: Interval = 'month'): Promise<Stripe.Price> {
+  const lookup = PRICE_LOOKUP[plan][plan === 'lifetime' ? 'month' : interval]
+  const hit = priceCache.get(lookup)
   if (hit) return hit
-  const { data } = await stripe().prices.list({ lookup_keys: [PRICE_LOOKUP[plan]], active: true, limit: 1 })
-  if (!data[0]) throw new Error(`No Stripe price for ${plan}. Run node scripts/stripe-setup.mjs --apply`)
-  priceCache.set(plan, data[0])
+  const { data } = await stripe().prices.list({ lookup_keys: [lookup], active: true, limit: 1 })
+  if (!data[0]) throw new Error(`No Stripe price for ${plan}/${interval}. Run node scripts/stripe-setup.mjs --apply`)
+  priceCache.set(lookup, data[0])
   return data[0]
 }
 
-/** The plan a price sells, from its lookup key (or the plan stamped on it). */
+/** The plan a price sells, from its lookup key (or the plan stamped on it) — either billing interval. */
 export function planForPrice(price: Stripe.Price | string | null | undefined): Plan | null {
   if (!price || typeof price === 'string') return null
-  const byKey = (Object.entries(PRICE_LOOKUP).find(([, k]) => k === price.lookup_key)?.[0] as Plan | undefined) ?? null
+  const byKey = ALL_LOOKUP_KEYS.find(k => k.key === price.lookup_key)?.plan ?? null
   return byKey ?? ((PLANS as string[]).includes(price.metadata?.plan ?? '') ? (price.metadata.plan as Plan) : null)
 }
