@@ -62,6 +62,13 @@ export const JOB_TITLES: string[] = [
   // Education, retail, hospitality
   'Teacher', 'Tutor', 'Instructional Designer', 'Professor', 'Teaching Assistant', 'Store Manager', 'Retail Associate',
   'Cashier', 'Barista', 'Restaurant Manager', 'Chef', 'Hotel Manager', 'Warehouse Associate', 'Delivery Driver',
+  // Trades, services, public sector
+  'Plumber', 'Carpenter', 'Welder', 'Automotive Technician', 'Mechanic', 'Truck Driver', 'Forklift Operator', 'Machine Operator',
+  'Security Guard', 'Custodian', 'Housekeeper', 'Landscaper', 'Painter', 'Roofer', 'Solar Installer', 'Line Cook', 'Server', 'Bartender',
+  'Sales Associate', 'Receptionist', 'Bank Teller', 'Insurance Agent', 'Real Estate Agent', 'Loan Officer', 'Flight Attendant', 'Pilot',
+  'Firefighter', 'Police Officer', 'Social Worker', 'Case Manager', 'Counselor', 'Caregiver', 'Home Health Aide', 'Personal Trainer',
+  'Hair Stylist', 'Esthetician', 'Librarian', 'Translator', 'Interpreter', 'Technical Writer', 'Journalist', 'Photographer',
+  'Data Entry Clerk', 'Call Center Representative', 'Dispatcher', 'Property Manager', 'Fleet Manager', 'Quality Inspector',
   // Early career
   'Software Engineering Intern', 'Data Science Intern', 'Product Management Intern', 'Marketing Intern', 'Graduate Engineer Trainee',
 ]

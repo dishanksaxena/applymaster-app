@@ -61,6 +61,9 @@ export default function Autocomplete({
   ariaLabel,
   icon,
   inputClassName,
+  inputStyle,
+  id: inputId,
+  disabled,
   resetKey,
 }: {
   value: string
@@ -77,6 +80,9 @@ export default function Autocomplete({
   ariaLabel: string
   icon?: React.ReactNode
   inputClassName?: string
+  inputStyle?: React.CSSProperties
+  id?: string
+  disabled?: boolean
   /** Change it to drop cached suggestions (e.g. the country changed). */
   resetKey?: string
 }) {
@@ -206,6 +212,9 @@ export default function Autocomplete({
         autoComplete="off"
         spellCheck={false}
         className={inputClassName}
+        style={inputStyle}
+        id={inputId}
+        disabled={disabled}
       />
       {showList && rect && createPortal(
         <ul
