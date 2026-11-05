@@ -107,6 +107,26 @@ async function cancelQuietly(subscription: string) {
   }
 }
 
+/** A paid credit pack. The grants table makes this idempotent: Stripe may retry, the balance moves once. */
+async function applyCredits(db: Db, session: Stripe.Checkout.Session) {
+  const userId = session.client_reference_id || session.metadata?.user_id || null
+  if (!userId) return { matched: false }
+  const credits = Math.max(0, parseInt(session.metadata?.credits || '0', 10) || 0)
+  if (!credits) return { matched: true, skipped: 'no credits in metadata' }
+
+  const { data: granted, error } = await db
+    .from('credit_grants')
+    .upsert({ session_id: session.id, user_id: userId, credits }, { onConflict: 'session_id', ignoreDuplicates: true })
+    .select('session_id')
+  if (error) throw new Error(`credit_grants: ${error.message}`)
+  if (!granted?.length) return { matched: true, skipped: 'already granted' }
+
+  const { error: rpcErr } = await db.rpc('grant_apply_credits', { p_user: userId, p_n: credits })
+  if (rpcErr) throw new Error(`grant_apply_credits: ${rpcErr.message}`)
+  await recordEvent('credits_purchased', { user_id: userId, meta: { credits, session: session.id } })
+  return { matched: true, credits }
+}
+
 async function applyCheckout(db: Db, session: Stripe.Checkout.Session, event: string) {
   const userId = session.client_reference_id || session.metadata?.user_id || null
   if (!userId) return { matched: false }
@@ -117,6 +137,9 @@ async function applyCheckout(db: Db, session: Stripe.Checkout.Session, event: st
     if (!subId) return { matched: true, skipped: 'no subscription' }
     return applySubscription(db, await stripe().subscriptions.retrieve(subId), event, userId)
   }
+
+  // A credit pack, not a plan.
+  if (session.metadata?.kind === 'credits') return applyCredits(db, session)
 
   // One-time: the plan comes from what was actually bought, not from the metadata.
   const items = await stripe().checkout.sessions.listLineItems(session.id, { limit: 5 })

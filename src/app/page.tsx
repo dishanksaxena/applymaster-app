@@ -392,13 +392,13 @@ export default function Home() {
 
   const plans = [
     { name: 'Free', price: 0, desc: 'Get started instantly', cta: 'Start Free', pop: false,
-      features: ['10 applications/month', 'Basic resume optimizer', 'Job search & tracking', 'Email support'] },
+      features: ['30 applications/month', 'Copilot & Autopilot auto-apply', 'Resume optimizer & ATS score', 'AI cover letters', 'Email support'] },
     { name: 'Pro', price: billing === 'mo' ? 29 : 17, desc: 'For serious job seekers', cta: 'Go Pro', pop: true,
-      features: ['100 applications/month', 'AI resume tailoring', 'Cover letter generator', 'All 50+ job portals', 'Chrome extension', 'Scam detection', 'Priority support'] },
+      features: ['150 applications/month', 'Advanced AI resume tailoring', 'Advanced AI cover letters', 'Unlimited mock interviews', 'Chrome extension', '$5 top-up for 20 more', 'Priority support'] },
     { name: 'Elite', price: billing === 'mo' ? 59 : 35, desc: 'Maximum firepower', cta: 'Go Elite', pop: false,
-      features: ['Unlimited applications', 'Everything in Pro', 'Live interview coach', 'A/B resume testing', 'Recruiter outreach', 'Referral emails', 'Autopilot mode', 'Dedicated support'] },
+      features: ['Unlimited applications', 'Everything in Pro', 'Tailored resume for every job', 'Per-job cover letters', 'Referral network', 'Dedicated support'] },
     { name: 'Lifetime', price: 199, desc: 'Pay once, use forever', cta: 'Get Lifetime', pop: false,
-      features: ['Everything in Elite', 'Lifetime access', 'All future features', 'Priority everything', 'Early access to new features', '1-on-1 onboarding'] },
+      features: ['Everything in Elite', 'Lifetime access', 'All future features', 'Early access to new features', 'Priority support forever'] },
   ]
 
   const portals = ['LinkedIn', 'Indeed', 'Glassdoor', 'ZipRecruiter', 'Greenhouse', 'Lever', 'Workday', 'Naukri', 'Instahyre', 'Dice', 'Wellfound', 'Monster', 'SEEK', 'Reed']

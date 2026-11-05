@@ -4,6 +4,7 @@ export interface Profile {
   full_name: string | null
   avatar_url: string | null
   plan: 'free' | 'pro' | 'elite' | 'lifetime'
+  apply_credits: number
   onboarding_complete: boolean
   created_at: string
   updated_at: string

@@ -36,7 +36,7 @@ const jsonLd = {
     {
       '@type': 'Product',
       name: 'ApplyMaster Free',
-      description: 'Get started with 10 applications per month at no cost.',
+      description: 'Get started with 30 applications per month at no cost.',
       offers: {
         '@type': 'Offer',
         price: '0',
@@ -52,7 +52,7 @@ const jsonLd = {
     {
       '@type': 'Product',
       name: 'ApplyMaster Pro',
-      description: 'Unlimited applications, full feature access, priority support.',
+      description: '150 applications a month with advanced AI resume optimization, cover letters, and the Chrome extension.',
       offers: {
         '@type': 'Offer',
         price: '29',
@@ -67,8 +67,24 @@ const jsonLd = {
     },
     {
       '@type': 'Product',
+      name: 'ApplyMaster Elite',
+      description: 'Unlimited applications with a tailored resume and cover letter for every job.',
+      offers: {
+        '@type': 'Offer',
+        price: '59',
+        priceCurrency: 'USD',
+        priceSpecification: {
+          '@type': 'UnitPriceSpecification',
+          price: '59',
+          priceCurrency: 'USD',
+          billingDuration: 'P1M',
+        },
+      },
+    },
+    {
+      '@type': 'Product',
       name: 'ApplyMaster Lifetime',
-      description: 'One-time payment for lifetime access to all features.',
+      description: 'One-time payment for lifetime access to everything in Elite.',
       offers: {
         '@type': 'Offer',
         price: '199',
@@ -92,37 +108,35 @@ const tiers = [
     cta: 'Start Free',
     highlight: false,
     features: [
-      '10 applications per month',
-      'Basic resume optimization',
-      'Basic cover letter generation',
-      '3 mock interviews per month',
-      'Job matching (5 recommendations/day)',
+      '30 applications per month',
+      'Copilot & Autopilot auto-apply',
+      'Resume optimization & ATS score',
+      'AI cover letters',
+      '3 AI mock interviews per month',
+      'Job matching & tracking',
       'Email support',
     ],
     limitations: [
-      'No Autopilot mode',
-      'No real-time interview coaching',
-      'Standard ATS scoring',
+      'Standard AI model',
+      'No Chrome extension',
+      'No tailored resume per job',
     ],
   },
   {
     name: 'Pro',
     price: '$29',
     period: '/month',
-    description: 'Unlimited applications and full access to every feature.',
+    description: '150 applications a month, with the advanced AI on everything.',
     cta: 'Go Pro',
     highlight: true,
     features: [
-      'Unlimited applications',
-      'Advanced resume optimization',
-      'Advanced cover letter generation',
-      'Unlimited mock interviews',
-      'Unlimited job recommendations',
-      'Copilot & Autopilot modes',
-      'Real-time interview coaching',
-      'Chrome extension access',
-      'Advanced ATS scoring',
-      'Application analytics dashboard',
+      '150 applications per month (10/day pace)',
+      'Advanced AI resume optimization',
+      'Advanced AI cover letters',
+      'Unlimited AI mock interviews',
+      'Copilot & Autopilot auto-apply',
+      'Chrome extension',
+      'Buy extra applications — $5 for 20',
       'Priority support',
     ],
     limitations: [],
@@ -136,11 +150,10 @@ const tiers = [
     highlight: false,
     features: [
       'Everything in Pro',
-      'Live interview coach',
-      'A/B resume testing',
-      'Recruiter outreach',
-      'Referral request emails',
-      'Autopilot mode',
+      'Unlimited applications — no monthly cap',
+      'God Mode: tailored resume & cover letter for every job',
+      'Referral network & warm-path finder',
+      'Referral request drafts & tracking',
       'Dedicated support',
     ],
     limitations: [],
@@ -149,34 +162,32 @@ const tiers = [
     name: 'Lifetime',
     price: '$199',
     period: 'one-time',
-    description: 'Everything in Pro, forever. Pay once, use forever.',
+    description: 'Everything in Elite, forever. Pay once, use forever.',
     cta: 'Get Lifetime Access',
     highlight: false,
     features: [
-      'Everything in Pro',
+      'Everything in Elite',
       'Lifetime access, no recurring fees',
       'All future feature updates included',
-      'Priority support forever',
       'Early access to new features',
+      'Priority support forever',
     ],
     limitations: [],
   },
 ];
 
 const comparisonFeatures = [
-  { feature: 'Monthly Applications', free: '10', pro: 'Unlimited', lifetime: 'Unlimited' },
-  { feature: 'Resume Optimization', free: 'Basic', pro: 'Advanced', lifetime: 'Advanced' },
-  { feature: 'Cover Letter Generation', free: 'Basic', pro: 'Advanced', lifetime: 'Advanced' },
-  { feature: 'Mock Interviews', free: '3/month', pro: 'Unlimited', lifetime: 'Unlimited' },
-  { feature: 'Job Recommendations', free: '5/day', pro: 'Unlimited', lifetime: 'Unlimited' },
-  { feature: 'Copilot Mode', free: 'Yes', pro: 'Yes', lifetime: 'Yes' },
-  { feature: 'Autopilot Mode', free: 'No', pro: 'Yes', lifetime: 'Yes' },
-  { feature: 'Real-Time Interview Coaching', free: 'No', pro: 'Yes', lifetime: 'Yes' },
-  { feature: 'Chrome Extension', free: 'No', pro: 'Yes', lifetime: 'Yes' },
-  { feature: 'Advanced ATS Scoring', free: 'No', pro: 'Yes', lifetime: 'Yes' },
-  { feature: 'Analytics Dashboard', free: 'Basic', pro: 'Full', lifetime: 'Full' },
-  { feature: 'Support', free: 'Email', pro: 'Priority', lifetime: 'Priority' },
-  { feature: 'Future Updates', free: 'Yes', pro: 'Yes', lifetime: 'Yes' },
+  { feature: 'Monthly applications', free: '30', pro: '150 (10/day pace)', elite: 'Unlimited', lifetime: 'Unlimited' },
+  { feature: 'Extra application credits', free: '—', pro: '$5 for 20', elite: 'Not needed', lifetime: 'Not needed' },
+  { feature: 'Copilot & Autopilot auto-apply', free: 'Yes', pro: 'Yes', elite: 'Yes', lifetime: 'Yes' },
+  { feature: 'Resume optimization', free: 'Standard AI', pro: 'Advanced AI', elite: 'Advanced AI', lifetime: 'Advanced AI' },
+  { feature: 'Cover letters', free: 'Standard AI', pro: 'Advanced AI', elite: 'Advanced AI', lifetime: 'Advanced AI' },
+  { feature: 'AI mock interviews', free: '3/month', pro: 'Unlimited', elite: 'Unlimited', lifetime: 'Unlimited' },
+  { feature: 'Chrome extension', free: 'No', pro: 'Yes', elite: 'Yes', lifetime: 'Yes' },
+  { feature: 'God Mode: tailored resume per job', free: 'No', pro: 'No', elite: 'Yes', lifetime: 'Yes' },
+  { feature: 'Referral network & ask drafts', free: 'No', pro: 'No', elite: 'Yes', lifetime: 'Yes' },
+  { feature: 'Support', free: 'Email', pro: 'Priority', elite: 'Dedicated', lifetime: 'Dedicated, forever' },
+  { feature: 'Future updates', free: 'Yes', pro: 'While subscribed', elite: 'While subscribed', lifetime: 'Included forever' },
 ];
 
 const faqs = [
@@ -197,12 +208,16 @@ const faqs = [
     a: 'Absolutely. You can upgrade from Free to Pro at any time, and any unused portion of your billing period will be prorated. You can also purchase the Lifetime plan while on Pro, and your remaining Pro subscription will be credited.',
   },
   {
+    q: 'What happens when I reach my application limit?',
+    a: 'Free includes 30 applications a month. Pro includes 150 a month at a pace of up to 10 a day — and if you need more, a $5 pack adds 20 extra applications that never expire. Elite and Lifetime have no monthly limit. Your usage meter in the app always shows where you stand before you hit anything.',
+  },
+  {
     q: 'Do you offer a refund?',
     a: 'We offer a 14-day money-back guarantee on both Pro and Lifetime plans. If you are not satisfied for any reason, contact our support team within 14 days of purchase for a full refund.',
   },
   {
     q: 'Is there a student or team discount?',
-    a: 'We offer a 50% discount for students with a valid .edu email address. For team pricing (career coaches, bootcamps, universities), please contact us at team@applymaster.ai.',
+    a: 'We offer a 50% discount for students with a valid .edu email address. For team pricing (career coaches, bootcamps, universities), please contact us at support@applymaster.ai.',
   },
 ];
 
@@ -256,6 +271,7 @@ export default function PricingPage() {
                     <th className="text-left py-4 pl-5 pr-4 font-semibold text-[var(--text-secondary)]">Feature</th>
                     <th className="py-4 px-4 font-semibold text-[var(--text-secondary)] text-center">Free</th>
                     <th className="py-4 px-4 font-semibold text-[var(--accent)] text-center" style={{ background: 'var(--accent-dim)' }}>Pro</th>
+                    <th className="py-4 px-4 font-semibold text-[var(--text-secondary)] text-center">Elite</th>
                     <th className="py-4 px-4 pr-5 font-semibold text-[var(--text-secondary)] text-center">Lifetime</th>
                   </tr>
                 </thead>
@@ -265,6 +281,7 @@ export default function PricingPage() {
                       <td className="py-3 pl-5 pr-4 text-[var(--text-secondary)]">{row.feature}</td>
                       <td className="py-3 px-4 text-center text-[var(--text-muted)]">{row.free}</td>
                       <td className="py-3 px-4 text-center text-ink font-medium" style={{ background: 'var(--accent-dim)' }}>{row.pro}</td>
+                      <td className="py-3 px-4 text-center text-[var(--text-secondary)]">{row.elite}</td>
                       <td className="py-3 px-4 pr-5 text-center text-[var(--text-secondary)]">{row.lifetime}</td>
                     </tr>
                   ))}

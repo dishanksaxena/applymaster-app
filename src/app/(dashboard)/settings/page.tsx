@@ -109,10 +109,17 @@ export default function SettingsPage() {
     const params = new URLSearchParams(window.location.search)
     const upgraded = params.get('upgraded')
     const cancelled = params.get('checkout') === 'cancelled'
-    if (!upgraded && !cancelled) return
+    const creditsPurchased = params.get('credits') === 'purchased'
+    if (!upgraded && !cancelled && !creditsPurchased) return
     window.history.replaceState(null, '', window.location.pathname)
     if (cancelled) {
       toast.info('Checkout cancelled. You were not charged.')
+      return
+    }
+    if (creditsPurchased) {
+      // The balance is added by the webhook; give it a beat, then refresh the meters.
+      toast.success('Payment received — your 20 extra applications will appear in a moment.')
+      setTimeout(() => window.dispatchEvent(new Event('applymaster:usage-changed')), 2500)
       return
     }
     const label = upgraded!.charAt(0).toUpperCase() + upgraded!.slice(1)
@@ -144,6 +151,34 @@ export default function SettingsPage() {
       toast.error('Billing is unavailable right now')
     }
     setBillingLoading(false)
+  }
+
+  /* Pro's credit balance and the $5 top-up of 20 applications. */
+  const [credits, setCredits] = useState<number | null>(null)
+  useEffect(() => {
+    if (profile?.plan !== 'pro') return
+    fetch('/api/usage')
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => {
+        if (d && typeof d.credits === 'number') setCredits(d.credits)
+      })
+      .catch(() => {})
+  }, [profile?.plan])
+  const [buyingCredits, setBuyingCredits] = useState(false)
+  const buyCredits = async () => {
+    setBuyingCredits(true)
+    try {
+      const res = await fetch('/api/credits/checkout', { method: 'POST' })
+      const json = await res.json().catch(() => ({}))
+      if (json.url) {
+        window.location.href = json.url
+        return
+      }
+      toast.error(json.error || 'Checkout is unavailable right now')
+    } catch {
+      toast.error('Checkout is unavailable right now')
+    }
+    setBuyingCredits(false)
   }
 
   /* Opens Stripe Checkout, or the billing portal to switch an existing
@@ -208,9 +243,9 @@ export default function SettingsPage() {
   )
 
   const plans = [
-    { name: 'pro', price: 29, period: '/mo', color: 'var(--accent-solid)', features: ['100 applications/month', 'AI resume optimization', 'Cover letter generation', 'Email support'], icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><polygon points="13,2 3,14 12,14 11,22 21,10 12,10"/></svg> },
-    { name: 'elite', price: 59, period: '/mo', color: 'var(--purple)', popular: true, features: ['Unlimited applications', 'Priority AI processing', 'Auto-apply engine', 'Interview coaching', 'Priority support'], icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> },
-    { name: 'lifetime', price: 199, period: ' once', color: 'var(--green)', features: ['Everything in Elite', 'Lifetime access', 'All future features', 'VIP support', 'Early access'], icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> },
+    { name: 'pro', price: 29, period: '/mo', color: 'var(--accent-solid)', features: ['150 applications/month (10/day pace)', 'Advanced AI resume & cover letters', 'Unlimited AI mock interviews', 'Chrome extension', 'Priority support'], icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><polygon points="13,2 3,14 12,14 11,22 21,10 12,10"/></svg> },
+    { name: 'elite', price: 59, period: '/mo', color: 'var(--purple)', popular: true, features: ['Everything in Pro', 'Unlimited applications', 'God Mode: tailored resume per job', 'Referral network & ask drafts', 'Dedicated support'], icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> },
+    { name: 'lifetime', price: 199, period: ' once', color: 'var(--green)', features: ['Everything in Elite', 'Pay once, never again', 'All future features', 'Early access', 'Priority support forever'], icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> },
   ]
 
   const rank = (p?: string) => ['free', 'pro', 'elite', 'lifetime'].indexOf(p || 'free')
@@ -300,6 +335,32 @@ export default function SettingsPage() {
             </motion.button>
           )}
         </div>
+        {profile?.plan === 'pro' && (
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-5 px-4 py-3.5 rounded-xl" style={{ background: 'var(--bg-overlay)', border: '1px solid var(--border)' }}>
+            <div>
+              <div className="text-[13px] font-bold" style={{ color: 'var(--text)' }}>
+                Application credits
+                {credits !== null && (
+                  <span className="ml-2 tabular-nums" style={{ color: 'var(--accent)' }}>
+                    {credits} left
+                  </span>
+                )}
+              </div>
+              <div className="text-[11.5px]" style={{ color: 'var(--text-muted)' }}>
+                20 extra applications for $5 when you reach the monthly 150. They never expire.
+              </div>
+            </div>
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={buyCredits}
+              disabled={buyingCredits}
+              className="px-4 py-2.5 rounded-xl text-[12px] font-bold shrink-0 text-[var(--text-on-accent)]"
+              style={{ background: 'linear-gradient(135deg, var(--accent), var(--accent-solid))' }}
+            >
+              {buyingCredits ? 'Opening…' : 'Buy 20 for $5'}
+            </motion.button>
+          </div>
+        )}
         <div className="grid sm:grid-cols-3 gap-4">
           {plans.map(plan => (
             <motion.div key={plan.name} whileHover={{ y: -4, scale: 1.02 }} className="relative p-5 rounded-2xl group" style={{ background: 'var(--bg-card)', border: `1px solid ${plan.popular ? `${withAlpha(plan.color, 0.18, true)}` : 'var(--border)'}`, boxShadow: 'var(--shadow-sm)' }}>

@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import { createAdminClient, isMissingTable } from '@/lib/supabase-admin'
+import { isPaidPlan } from '@/lib/plan-limits'
 import { hashToken, newExtensionToken } from '@/lib/api-auth'
 
 /**
@@ -25,6 +26,11 @@ const notReady = () =>
 export async function POST(req: NextRequest) {
   const user = await sessionUser()
   if (!user) return Response.json({ error: 'Sign in first' }, { status: 401 })
+  // The Chrome extension is part of Pro and above.
+  const { data: planRow } = await createAdminClient().from('profiles').select('plan').eq('id', user.id).maybeSingle()
+  if (!isPaidPlan(planRow?.plan)) {
+    return Response.json({ error: 'The Chrome extension is part of Pro. Upgrade to connect it.' }, { status: 403 })
+  }
   const body = await req.json().catch(() => ({}))
   const label = typeof body.label === 'string' && body.label.trim() ? body.label.trim().slice(0, 80) : 'Chrome'
 

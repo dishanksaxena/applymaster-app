@@ -49,6 +49,17 @@ export function canCheckout(email: string | null | undefined) {
   return testers.includes(email.toLowerCase())
 }
 
+/** The $5 pack of 20 extra applications, for Pro accounts that hit the monthly pool. */
+export const CREDITS_LOOKUP = 'applymaster_credits_20'
+let creditsPriceCache: Stripe.Price | null = null
+export async function creditsPrice(): Promise<Stripe.Price> {
+  if (creditsPriceCache) return creditsPriceCache
+  const { data } = await stripe().prices.list({ lookup_keys: [CREDITS_LOOKUP], active: true, limit: 1 })
+  if (!data[0]) throw new Error('No Stripe price for credits. Run node scripts/stripe-setup.mjs --apply')
+  creditsPriceCache = data[0]
+  return data[0]
+}
+
 const priceCache = new Map<Plan, Stripe.Price>()
 export async function priceFor(plan: Plan): Promise<Stripe.Price> {
   const hit = priceCache.get(plan)

@@ -41,6 +41,8 @@ const PLANS = [
   { plan: 'pro', name: 'ApplyMaster Pro', description: '100 applications a month, AI resume optimization and cover letters.', amount: 2900, recurring: { interval: 'month' }, lookup: 'applymaster_pro_monthly' },
   { plan: 'elite', name: 'ApplyMaster Elite', description: 'Unlimited applications, the auto-apply engine and interview coaching.', amount: 5900, recurring: { interval: 'month' }, lookup: 'applymaster_elite_monthly' },
   { plan: 'lifetime', name: 'ApplyMaster Lifetime', description: 'Everything in Elite, paid once.', amount: 19900, recurring: null, lookup: 'applymaster_lifetime' },
+  // Not a plan: a one-time top-up of 20 applications for Pro accounts.
+  { plan: 'credits', name: 'ApplyMaster Application Credits', description: '20 extra applications for the Pro plan.', amount: 500, recurring: null, lookup: 'applymaster_credits_20' },
 ]
 
 const EVENTS = [

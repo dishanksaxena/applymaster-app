@@ -1,5 +1,7 @@
 import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
+import { createAdminClient } from '@/lib/supabase-admin'
+import { ADVANCED_AI_MODEL, applicationAllowance, blockedMessage, hasGodMode } from '@/lib/plan-limits'
 import Anthropic from '@anthropic-ai/sdk'
 
 export const maxDuration = 60
@@ -210,6 +212,25 @@ export async function POST(req: NextRequest) {
       supabase.from('job_preferences').select('*').eq('user_id', user.id).maybeSingle(),
     ])
 
+    /* Plan limits, before anything is sent anywhere. Re-submitting an
+       existing tracker row (a retry) is not a new application and is never
+       blocked. 200 with a `blocked` field, not an error status: hitting a
+       limit is normal use, and 4xx here would flood the ops issue feed. */
+    const { data: priorApp } = job_id
+      ? await supabase.from('applications').select('id').eq('user_id', user.id).eq('job_id', job_id).maybeSingle()
+      : { data: null }
+    let spendCredit = false
+    if (!priorApp) {
+      const allowance = await applicationAllowance(supabase, user.id)
+      if (allowance.blocked) {
+        return Response.json({ blocked: allowance.blocked, message: blockedMessage(allowance) })
+      }
+      spendCredit = allowance.nextFromCredit
+    }
+
+    // The god_mode flag comes from the browser; the plan decides whether it counts.
+    const godModeOn = god_mode && hasGodMode(profile?.plan)
+
     let parsedResume: any = null
     const { data: primaryResume } = await supabase
       .from('resumes').select('id').eq('user_id', user.id).eq('is_primary', true).maybeSingle()
@@ -232,7 +253,7 @@ export async function POST(req: NextRequest) {
     let resumeText = parsedResume?.raw_text || ''
     let coverLetterText = ''
 
-    if (god_mode) {
+    if (godModeOn) {
       // If tailored resume exists, use it
       if (tailored_resume_id) {
         const { data: tailored } = await supabase
@@ -246,7 +267,7 @@ export async function POST(req: NextRequest) {
       // Generate cover letter for this specific job
       if (job_description) {
         const coverMsg = await anthropic.messages.create({
-          model: 'claude-haiku-4-5-20251001',
+          model: ADVANCED_AI_MODEL, // god mode is Elite-only, so always the stronger model
           max_tokens: 800,
           messages: [{
             role: 'user',
@@ -334,7 +355,7 @@ Write a professional cover letter. Return only the letter text, no subject line.
       status: submitted ? 'applied' : 'queued',
       applied_at: submitted ? new Date().toISOString() : null,
       cover_letter: coverLetterText || null,
-      god_mode_used: god_mode,
+      god_mode_used: godModeOn,
       portal_type: portal,
       portal_submission_id: submitResult?.applicationId || null,
       portal_submitted: submitted,
@@ -360,6 +381,11 @@ Write a professional cover letter. Return only the letter text, no subject line.
         return Response.json({ error: saveFailed }, { status: 500 })
       }
       applicationId = inserted?.id ?? null
+      // This application came out of a purchased credit pack, not the monthly pool.
+      if (spendCredit) {
+        const { error: creditErr } = await createAdminClient().rpc('consume_apply_credits', { p_user: user.id, p_n: 1 })
+        if (creditErr) console.error('god-mode/submit: credit consume failed', creditErr.message)
+      }
     }
 
     /* Receipt: a verifiable record of exactly what was sent. Written from the
@@ -371,7 +397,7 @@ Write a professional cover letter. Return only the letter text, no subject line.
           user_id: user.id,
           application_id: applicationId,
           resume_id: tailored_resume_id || primaryResume?.id || null,
-          resume_version_label: god_mode ? 'Tailored for this role' : 'Base resume',
+          resume_version_label: godModeOn ? 'Tailored for this role' : 'Base resume',
           cover_letter_text: coverLetterText || null,
           screening_answers: [],
           destination: portal || null,
@@ -394,7 +420,7 @@ Write a professional cover letter. Return only the letter text, no subject line.
       portal: portal,
       status: 'success',
       note: submitted
-        ? `Applied via ${portal} API${god_mode ? ' with God Mode (tailored resume + cover letter)' : ''}`
+        ? `Applied via ${portal} API${godModeOn ? ' with God Mode (tailored resume + cover letter)' : ''}`
         : submissionError
           ? `Portal submission failed: ${submissionError}. Marked as applied.`
           : `No portal API detected. Marked as applied.`,
@@ -405,7 +431,7 @@ Write a professional cover letter. Return only the letter text, no subject line.
       success: true,
       submitted,
       portal,
-      god_mode_used: god_mode,
+      god_mode_used: godModeOn,
       cover_letter_generated: !!coverLetterText,
       resume_tailored: !!tailored_resume_id,
       application_id: submitResult?.applicationId || null,

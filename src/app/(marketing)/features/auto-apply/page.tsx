@@ -36,7 +36,7 @@ const jsonLd = {
     '@type': 'Offer',
     price: '0',
     priceCurrency: 'USD',
-    description: 'Free tier with 10 applications per month',
+    description: 'Free tier with 30 applications per month',
   },
   operatingSystem: 'Web',
 };
@@ -264,7 +264,7 @@ export default function AutoApplyPage() {
                 },
                 {
                   q: 'How many applications can I send per day?',
-                  a: 'Free users can send up to 10 applications per month. Pro users have unlimited applications with smart rate-limiting to keep your accounts safe.',
+                  a: 'Free includes 30 applications a month. Pro includes 150 a month, paced at up to 10 a day to keep your accounts safe — and Elite is unlimited.',
                 },
               ].map((item) => (
                 <div key={item.q}>

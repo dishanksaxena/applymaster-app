@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase-admin'
+import { PLAN_LIMITS, type PlanName } from '@/lib/plan-limits'
 import { isCronRequest } from '@/lib/cron-auth'
 import {
   GREENHOUSE_BOARDS,
@@ -43,7 +44,6 @@ export const dynamic = 'force-dynamic'
  *   ?user=<uuid>    one person only
  */
 
-const MAX_PER_DAY = 25
 const MAX_PER_COMPANY = 3
 const COPILOT_MAX_PER_DAY = 10
 
@@ -114,6 +114,15 @@ async function run(req: NextRequest) {
   )
   if (!people.length) return NextResponse.json({ ok: true, people: 0, queued: 0 })
 
+  // Plans and credit balances, fetched once for everybody.
+  const { data: profRows } = await db.from('profiles').select('id, plan, apply_credits').in('id', people.map(p => p.user_id))
+  const billing = new Map(
+    ((profRows ?? []) as { id: string; plan: string | null; apply_credits: number | null }[]).map(r => [
+      r.id,
+      { plan: (r.plan && r.plan in PLAN_LIMITS ? r.plan : 'free') as PlanName, credits: Math.max(0, r.apply_credits ?? 0) },
+    ])
+  )
+
   // ── Shared pools: fetched once for everybody ──
   const [boards, remoteok] = await Promise.all([
     Promise.all(GREENHOUSE_BOARDS.map(b => fetchGreenhouseBoard(b))),
@@ -145,25 +154,34 @@ async function run(req: NextRequest) {
   for (const p of people) {
     try {
       // Copilot is for reviewing each match closely, so it queues fewer;
-      // Autopilot uses the person's full daily limit. (The two modes used to
-      // behave identically.)
-      const cap = p.auto_apply_mode === 'copilot' ? COPILOT_MAX_PER_DAY : MAX_PER_DAY
-      const limit = Math.min(cap, Math.max(1, p.daily_apply_limit || 10))
+      // Autopilot runs at the plan's pace. The person's own daily_apply_limit
+      // preference still caps both.
+      const { plan, credits } = billing.get(p.user_id) ?? { plan: 'free' as PlanName, credits: 0 }
+      const lim = PLAN_LIMITS[plan]
+      const modeCap = p.auto_apply_mode === 'copilot' ? COPILOT_MAX_PER_DAY : Number.POSITIVE_INFINITY
+      const prefCap = Math.max(1, p.daily_apply_limit || 10)
       const threshold = Math.min(90, Math.max(50, p.match_threshold || 70))
 
       // What they already have — never queue a posting twice.
       const { data: existing } = await db
         .from('applications')
-        .select('created_at, jobs(company, title, external_id)')
+        .select('created_at, status, jobs(company, title, external_id)')
         .eq('user_id', p.user_id)
-      type Existing = { created_at: string; jobs: { company: string | null; title: string | null; external_id: string | null } | null }
+      type Existing = { created_at: string; status: string | null; jobs: { company: string | null; title: string | null; external_id: string | null } | null }
       const rows = (existing ?? []) as unknown as Existing[]
       const have = new Set(rows.map(r => postingKey(r.jobs?.company || '', r.jobs?.title || '')))
       const haveIds = new Set(rows.map(r => r.jobs?.external_id).filter(Boolean) as string[])
-      const addedToday = rows.filter(r => new Date(r.created_at) >= dayStart).length
-      const room = Math.max(0, limit - addedToday)
+      const monthStart = new Date()
+      monthStart.setUTCDate(1)
+      monthStart.setUTCHours(0, 0, 0, 0)
+      const counted = rows.filter(r => r.status !== 'saved') // a saved job is a bookmark, not an application
+      const addedToday = counted.filter(r => new Date(r.created_at) >= dayStart).length
+      const usedMonth = counted.filter(r => new Date(r.created_at) >= monthStart).length
+      const monthlyRoom = lim.monthly === null ? Number.POSITIVE_INFINITY : lim.monthly + credits - usedMonth
+      const dailyRoom = Math.min(modeCap, prefCap, lim.daily ?? Number.POSITIVE_INFINITY) - addedToday
+      const room = Math.max(0, Math.min(dailyRoom, monthlyRoom))
       if (!room) {
-        summary.push({ user: p.user_id.slice(0, 8), skipped: 'daily limit reached' })
+        summary.push({ user: p.user_id.slice(0, 8), skipped: monthlyRoom <= 0 ? 'monthly limit reached' : 'daily limit reached' })
         continue
       }
 
@@ -226,6 +244,15 @@ async function run(req: NextRequest) {
         })
         if (logErr) console.error('cron/auto-apply: apply_log insert failed', logErr.message)
         queuedTotal += apps.length
+
+        // The portion past the monthly pool came out of purchased credits.
+        if (lim.monthly !== null) {
+          const over = Math.min(apps.length, Math.max(0, usedMonth + apps.length - lim.monthly))
+          if (over > 0) {
+            const { error: creditErr } = await db.rpc('consume_apply_credits', { p_user: p.user_id, p_n: over })
+            if (creditErr) console.error('cron/auto-apply: credit consume failed', creditErr.message)
+          }
+        }
       }
 
       summary.push({

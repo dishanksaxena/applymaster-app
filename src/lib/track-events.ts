@@ -49,6 +49,9 @@ export const TRACK_EVENTS = [
   'account_deleted',
   'network_imported',
 
+  // A paid credit pack landed (written by the Stripe webhook, once per session).
+  'credits_purchased',
+
   'support_opened',
   'support_submitted',
   'support_failed',

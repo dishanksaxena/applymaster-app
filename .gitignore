@@ -12,6 +12,7 @@ next-env.d.ts
 shoot.review.mjs
 .review-shots/
 verify.*.mjs
+verify.*.mts
 probe.mjs
 verify-resume.pdf
 .atstest/

@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
+import { aiModelFor } from '@/lib/plan-limits'
 import Anthropic from '@anthropic-ai/sdk'
 
 export const maxDuration = 60
@@ -57,8 +58,11 @@ Summary: ${parsedResume.summary?.slice(0, 300) || ''}
     }
     const toneText = toneInstructions[tone] || 'professional tone'
 
+    // Paid plans run the stronger model — the "Advanced AI cover letters" the pricing page sells.
+    const { data: planRow } = await supabase.from('profiles').select('plan').eq('id', user.id).maybeSingle()
+
     const msg = await anthropic.messages.create({
-      model: 'claude-haiku-4-5-20251001',
+      model: aiModelFor(planRow?.plan),
       max_tokens: 1024,
       messages: [
         {

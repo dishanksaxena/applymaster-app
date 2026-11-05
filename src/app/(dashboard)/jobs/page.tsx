@@ -354,7 +354,15 @@ export default function JobsPage() {
 
       const submitData = await submitRes.json()
 
+      // A plan limit, not a failure: the message says whether it resets
+      // tomorrow (daily pace) or needs credits/an upgrade (monthly pool).
+      if (submitData.blocked) {
+        toast.error(submitData.message || 'Application limit reached')
+        return
+      }
+
       setAppliedJobs(new Set(Array.from(appliedJobs).concat(job.id)))
+      window.dispatchEvent(new Event('applymaster:usage-changed'))
 
       if (submitData.submitted) {
         toast.success(`Applied to ${job.title} at ${job.company}.${godModeEnabled ? '\n\nTailored resume and cover letter were submitted.' : ''}`)

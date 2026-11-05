@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
+import { hasGodMode, ADVANCED_AI_MODEL } from '@/lib/plan-limits'
 import { loadParsedResume } from '@/lib/parsed-resume'
 import Anthropic from '@anthropic-ai/sdk'
 import { tryParseModelJson } from '@/lib/model-json'
@@ -13,6 +14,12 @@ export async function POST(req: NextRequest) {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
+
+    // Tailoring a resume to each job is part of Elite and Lifetime.
+    const { data: planRow } = await supabase.from('profiles').select('plan').eq('id', user.id).maybeSingle()
+    if (!hasGodMode(planRow?.plan)) {
+      return Response.json({ error: 'Tailored resumes for every application are part of Elite.' }, { status: 403 })
+    }
 
     const { job_title, company, job_description } = await req.json()
     if (!job_title || !job_description) {
@@ -32,7 +39,7 @@ export async function POST(req: NextRequest) {
     const resumeText = (typeof parsedResume.raw_text === 'string' && parsedResume.raw_text) || JSON.stringify(parsedResume, null, 2)
 
     const msg = await anthropic.messages.create({
-      model: 'claude-sonnet-5',
+      model: ADVANCED_AI_MODEL,
       max_tokens: 8000,
       messages: [{
         role: 'user',

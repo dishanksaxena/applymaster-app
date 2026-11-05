@@ -178,14 +178,14 @@ const jsonLd = {
           name: 'Free Plan',
           price: '0',
           priceCurrency: 'USD',
-          description: '10 applications/month, resume optimization, job search, application tracking',
+          description: '30 applications/month, resume optimization, auto-apply, application tracking',
         },
         {
           '@type': 'Offer',
           name: 'Pro Plan',
           price: '29',
           priceCurrency: 'USD',
-          description: 'Unlimited applications, AI auto-apply, interview coach, priority support',
+          description: '150 applications/month, advanced AI resume and cover letters, unlimited interview practice, priority support',
         },
       ],
       aggregateRating: {
@@ -205,7 +205,7 @@ const jsonLd = {
           name: 'Is ApplyMaster actually free?',
           acceptedAnswer: {
             '@type': 'Answer',
-            text: 'Yes. The Free plan gives you 10 applications/month, resume optimization, job search, and application tracking — forever. No credit card, no trial expiry. Upgrade only when you need more volume.',
+            text: 'Yes. The Free plan gives you 30 applications/month, resume optimization, job search, and application tracking — forever. No credit card, no trial expiry. Upgrade only when you need more volume.',
           },
         },
         {

@@ -64,6 +64,7 @@ export default function AutoApplyPage() {
   const [testResult, setTestResult] = useState<string | null>(null)
   const [isInitialized, setIsInitialized] = useState(false)
   // God Mode
+  const [godModeAllowed, setGodModeAllowed] = useState(true)
   const [godModeEnabled, setGodModeEnabled] = useState(false)
   const [godModeTailorResume, setGodModeTailorResume] = useState(true)
   const [godModeCoverLetter, setGodModeCoverLetter] = useState(true)
@@ -91,13 +92,17 @@ export default function AutoApplyPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
-      // Load preferences
+      // Load preferences. God Mode is part of Elite: the plan decides whether
+      // a stored god_mode_enabled still means anything.
+      const { data: prof } = await supabase.from('profiles').select('plan').eq('id', user.id).maybeSingle()
+      const elitePlan = prof?.plan === 'elite' || prof?.plan === 'lifetime'
+      setGodModeAllowed(elitePlan)
       const { data } = await supabase.from('job_preferences').select('*').eq('user_id', user.id).maybeSingle()
       if (data) {
         setMode(data.auto_apply_mode || 'off')
         setDailyLimit(data.daily_apply_limit || 10)
         setMatchThreshold(data.match_threshold || 80)
-        setGodModeEnabled(data.god_mode_enabled || false)
+        setGodModeEnabled((data.god_mode_enabled || false) && elitePlan)
         setGodModeTailorResume(data.god_mode_tailor_resume ?? true)
         setGodModeCoverLetter(data.god_mode_cover_letter ?? true)
         setGodModeScoreThreshold(data.god_mode_score_threshold || 'B')
@@ -660,6 +665,9 @@ export default function AutoApplyPage() {
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-[15px] font-black" style={{ color: 'var(--text)' }}>God Mode</span>
+                {!godModeAllowed && (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: 'rgb(var(--purple-rgb) / calc(0.15 * var(--tint-scale)))', color: 'var(--purple)' }}>ELITE</span>
+                )}
                 {godModeEnabled && (
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-full text-[var(--text-on-accent)]" style={{ background: 'linear-gradient(135deg, var(--accent-solid), var(--purple))' }}>ACTIVE</span>
                 )}
@@ -671,7 +679,13 @@ export default function AutoApplyPage() {
           </div>
           {/* Toggle */}
           <button
-            onClick={() => setGodModeEnabled(v => !v)}
+            onClick={() => {
+              if (!godModeAllowed) {
+                toast.error('God Mode is part of Elite — it tailors your resume and writes a cover letter for every job.')
+                return
+              }
+              setGodModeEnabled(v => !v)
+            }}
             className="relative w-12 h-6 rounded-full transition-all duration-300 flex-shrink-0"
             style={{ background: godModeEnabled ? 'linear-gradient(135deg, var(--accent-solid), var(--accent-solid))' : 'var(--bg-overlay)', border: '1px solid var(--border)' }}
           >

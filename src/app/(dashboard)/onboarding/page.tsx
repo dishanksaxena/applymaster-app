@@ -120,9 +120,9 @@ const JOB_TYPES = ['Full-time', 'Part-time', 'Contract', 'No preference']
 const INTERVIEW_STYLES = ['Behavioral', 'Technical/Coding', 'Case Studies', 'System Design', 'No preference']
 
 const plans = [
-  { name: 'free', label: 'Free', price: '$0', period: 'forever', features: ['10 applications/month', 'Basic job matching', 'Resume upload'] },
-  { name: 'pro', label: 'Pro', price: '$29', period: '/month', popular: true, features: ['100 applications/month', 'AI resume optimizer', 'Cover letter generation'] },
-  { name: 'elite', label: 'Elite', price: '$59', period: '/month', features: ['Unlimited applications', 'Auto-apply engine', 'AI interview coach'] },
+  { name: 'free', label: 'Free', price: '$0', period: 'forever', features: ['30 applications/month', 'Copilot & Autopilot', 'Resume optimization'] },
+  { name: 'pro', label: 'Pro', price: '$29', period: '/month', popular: true, features: ['150 applications/month', 'Advanced AI resume & letters', 'Chrome extension'] },
+  { name: 'elite', label: 'Elite', price: '$59', period: '/month', features: ['Unlimited applications', 'Tailored resume per job', 'Referral network'] },
 ]
 
 const slideVariants = {

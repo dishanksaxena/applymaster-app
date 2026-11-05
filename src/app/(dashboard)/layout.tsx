@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import type { Profile } from '@/lib/database.types'
 import ThemeToggle from '@/components/ThemeToggle'
+import UsageMeter from '@/components/UsageMeter'
 import CommandPalette from '@/components/CommandPalette'
 import Toaster from '@/components/Toast'
 import PageTransition from '@/components/motion/PageTransition'
@@ -412,6 +413,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               )
             })}
           </nav>
+
+          {/* Application allowance: nobody should discover a limit by hitting it. */}
+          {sidebarOpen && (
+            <div className="px-3 pb-2">
+              <UsageMeter />
+            </div>
+          )}
 
           {/* User Section */}
           <div className="p-3 relative" style={{ borderTop: '1px solid var(--sidebar-divider)' }}>

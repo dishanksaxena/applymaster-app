@@ -102,6 +102,10 @@ export default function InterviewCoachPage() {
     })
       .then(r => r.json())
       .then(data => {
+        if (data.blocked) {
+          setScoreError(data.message || 'Monthly AI interview limit reached — Pro includes unlimited interviews.')
+          return
+        }
         const qs: string[] = (data.questions || []).map((q: { question: string }) => q.question).filter(Boolean)
         if (qs.length > 0) {
           // Only swap questions if user is still on the first question and hasn't started typing

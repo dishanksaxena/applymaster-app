@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
+import { hasGodMode } from '@/lib/plan-limits'
 import Anthropic from '@anthropic-ai/sdk'
 import { fetchAllConnections, isMissingColumn, withoutSignals } from '@/lib/network-data'
 
@@ -92,6 +93,12 @@ export async function POST(req: NextRequest) {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return Response.json({ error: 'Not authenticated' }, { status: 401 })
+
+    // Warm referral paths and ask drafts are part of Elite and Lifetime.
+    const { data: planRow } = await supabase.from('profiles').select('plan').eq('id', user.id).maybeSingle()
+    if (!hasGodMode(planRow?.plan)) {
+      return Response.json({ error: 'Referral paths are part of Elite. Upgrade to see who can refer you.' }, { status: 403 })
+    }
 
     const { job_id, job_title, company, application_id, connection_id } = await req.json()
     if (!company) return Response.json({ error: 'company required' }, { status: 400 })

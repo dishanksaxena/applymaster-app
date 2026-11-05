@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
+import { aiModelFor } from '@/lib/plan-limits'
 import { loadParsedResume } from '@/lib/parsed-resume'
 import Anthropic from '@anthropic-ai/sdk'
 import { tryParseModelJson } from '@/lib/model-json'
@@ -36,8 +37,11 @@ export async function POST(req: NextRequest) {
     // Use structured data if raw text not available
     const resumeContent = rawText || JSON.stringify(parsedResume, null, 2)
 
+    // Paid plans run the stronger model — the "Advanced AI optimization" the pricing page sells.
+    const { data: planRow } = await supabase.from('profiles').select('plan').eq('id', user.id).maybeSingle()
+
     const msg = await anthropic.messages.create({
-      model: 'claude-haiku-4-5-20251001',
+      model: aiModelFor(planRow?.plan),
       max_tokens: 8000,
       messages: [
         {

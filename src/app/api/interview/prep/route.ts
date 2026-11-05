@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
+import { FREE_INTERVIEWS_PER_MONTH, isPaidPlan, monthStartUTC } from '@/lib/plan-limits'
 import Anthropic from '@anthropic-ai/sdk'
 import { tryParseModelJson } from '@/lib/model-json'
 
@@ -43,6 +44,22 @@ Background: ${parsed.summary?.slice(0, 200) || ''}
 
     // ACTION: Generate questions
     if (action === 'generate_questions') {
+      // Free includes 3 AI mock interviews a month; every paid plan is unlimited.
+      const { data: planRow } = await supabase.from('profiles').select('plan').eq('id', user.id).maybeSingle()
+      if (!isPaidPlan(planRow?.plan)) {
+        const { count } = await supabase
+          .from('interview_sessions')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .gte('created_at', monthStartUTC())
+        if ((count ?? 0) >= FREE_INTERVIEWS_PER_MONTH) {
+          return Response.json({
+            blocked: 'interviews',
+            message: `You've used your ${FREE_INTERVIEWS_PER_MONTH} AI mock interviews this month. Pro includes unlimited interviews — the practice questions below still work.`,
+          })
+        }
+      }
+
       const questionTypes = {
         behavioral: 'behavioral STAR-method questions about past experiences',
         technical: 'technical questions testing specific skills and problem-solving',

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
+import { createAdminClient } from '@/lib/supabase-admin'
+import { applicationAllowance, blockedMessage } from '@/lib/plan-limits'
 import Anthropic from '@anthropic-ai/sdk'
 import { tryParseModelJson } from '@/lib/model-json'
 
@@ -190,14 +192,17 @@ export async function POST(req: NextRequest) {
     const scoreThresholdMap: Record<string, number> = { A: 80, B: 65, C: 50 }
     const minScore = scoreThresholdMap[prefs.god_mode_score_threshold || 'B'] || 65
 
-    // Plan limits
-    const { data: profile } = await supabase.from('profiles').select('plan').eq('id', user.id).maybeSingle()
-    const isUnlimited = profile?.plan === 'lifetime' || profile?.plan === 'elite'
-    const today = new Date(); today.setHours(0, 0, 0, 0)
-    const { count: appsToday } = await supabase.from('applications').select('id', { count: 'exact', head: true }).eq('user_id', user.id).gte('created_at', today.toISOString())
-    const effectiveLimit = isUnlimited ? 999 : (prefs.daily_apply_limit || 10)
-    if (!isUnlimited && (appsToday || 0) >= effectiveLimit) {
-      return NextResponse.json({ message: 'Daily limit reached', processed: 0 })
+    // Plan limits: the shared monthly pools and daily pacing caps (src/lib/plan-limits),
+    // plus the person's own daily_apply_limit preference.
+    const allowance = await applicationAllowance(supabase, user.id)
+    const prefRoom = Math.max(1, prefs.daily_apply_limit || 10) - allowance.dailyUsed
+    const room = Math.max(0, Math.min(allowance.room, prefRoom))
+    if (!room) {
+      return NextResponse.json({
+        blocked: allowance.blocked ?? 'daily',
+        message: allowance.blocked ? blockedMessage(allowance) : 'Your daily application limit is reached. It resets at midnight UTC.',
+        processed: 0,
+      })
     }
 
     // Load candidate data
@@ -282,7 +287,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'Already applied to all matching jobs', processed: 0 })
     }
 
-    const maxToProcess = Math.min(newJobs.length, effectiveLimit - (appsToday || 0), 5)
+    const maxToProcess = Math.min(newJobs.length, room, 5)
     let applied = 0
 
     for (const job of newJobs.slice(0, maxToProcess)) {
@@ -386,6 +391,16 @@ Return JSON array only: ["keyword1", "keyword2", ...]`
       }
 
       applied++
+      if (applied >= room) break
+    }
+
+    // The portion past the monthly pool came out of purchased credits.
+    if (allowance.monthlyLimit !== null && applied > 0) {
+      const over = Math.min(applied, Math.max(0, allowance.monthlyUsed + applied - allowance.monthlyLimit))
+      if (over > 0) {
+        const { error: creditErr } = await createAdminClient().rpc('consume_apply_credits', { p_user: user.id, p_n: over })
+        if (creditErr) console.error('auto-apply/test: credit consume failed', creditErr.message)
+      }
     }
 
     const summary = autopilot
