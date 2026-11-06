@@ -260,7 +260,14 @@ export async function POST(req: NextRequest) {
     ].filter(Boolean).join('\n\n') : '')
 
     if (!resumeData) {
-      await log(supabase, user.id, 'error', '⚠️ No resume found. Re-upload your resume in the Resume section so it can be parsed.')
+      // Nothing can be applied for without a resume: stop here rather than scan,
+      // queue five jobs and report "Done" (a real person hit exactly that).
+      await log(supabase, user.id, 'error', '⚠️ Upload your resume first — auto-apply needs it to apply. Nothing was searched or queued.')
+      return NextResponse.json({
+        blocked: 'resume',
+        message: 'Upload your resume first — auto-apply needs it to apply.',
+        processed: 0,
+      })
     } else if (!resumeText) {
       await log(supabase, user.id, 'analyzing', `⚠️ Resume found (${primaryResume?.name || 'unknown'}) but no text could be extracted. Re-upload for best results.`)
     }

@@ -75,6 +75,8 @@ export default function AutoApplyPage() {
   const [mounted, setMounted] = useState(false)
   const [testingAuto, setTestingAuto] = useState(false)
   const [testResult, setTestResult] = useState<string | null>(null)
+  // null until known; false gates the run (auto-apply has nothing to send without a resume)
+  const [hasResume, setHasResume] = useState<boolean | null>(null)
   const [isInitialized, setIsInitialized] = useState(false)
   // God Mode
   const [godModeAllowed, setGodModeAllowed] = useState(true)
@@ -144,6 +146,8 @@ export default function AutoApplyPage() {
       const { data: prof } = await supabase.from('profiles').select('plan').eq('id', user.id).maybeSingle()
       const elitePlan = prof?.plan === 'elite' || prof?.plan === 'lifetime'
       setGodModeAllowed(elitePlan)
+      const { data: resumeRow } = await supabase.from('resumes').select('id').eq('user_id', user.id).eq('is_primary', true).maybeSingle()
+      setHasResume(!!resumeRow)
       const { data } = await supabase.from('job_preferences').select('*').eq('user_id', user.id).maybeSingle()
       if (data) {
         setMode(data.auto_apply_mode || 'off')
@@ -332,7 +336,11 @@ export default function AutoApplyPage() {
         headers: { 'Content-Type': 'application/json' }
       })
       const data = await response.json()
-      if (response.ok) {
+      if (response.ok && (data.blocked || (data.message && !data.processed))) {
+        // Stopped before searching: no resume, no target roles, or a limit reached.
+        setTestResult(`⚠️ ${data.message}`)
+        if (data.blocked === 'resume') setHasResume(false)
+      } else if (response.ok) {
         setTestResult(`✅ Done — ${data.processed} application(s) ${data.mode === 'autopilot' ? 'sent' : 'queued for review'}`)
         // Refresh applications so the review queue populates immediately
         await refreshApplications()
@@ -764,8 +772,18 @@ export default function AutoApplyPage() {
               <p className="text-center text-[11px] text-[var(--text-muted)]">Select your mode above, configure settings, then click Activate</p>
             )}
 
-            {/* Test Auto-Apply Button - Always Available */}
-            <motion.button whileHover={{ scale: 1.01, boxShadow: '0 10px 28px -8px rgb(var(--accent-rgb) / 0.55)' }} whileTap={{ scale: 0.98 }} onClick={testAutoApply} disabled={testingAuto}
+            {/* No resume, nothing to apply with: say so here, before the button. */}
+            {hasResume === false && (
+              <div className="flex items-center justify-between gap-3 p-4 rounded-xl" style={{ background: 'var(--yellow-dim)', border: '1px solid rgb(var(--yellow-rgb) / 0.35)' }}>
+                <div>
+                  <div className="text-[13px] font-bold" style={{ color: 'var(--yellow)' }}>Upload your resume first</div>
+                  <div className="text-[12px] text-[var(--text-muted)]">Auto-apply fills employer forms from your resume, so it has nothing to send until you add one.</div>
+                </div>
+                <a href="/resume" className="am-press shrink-0 px-4 py-2 rounded-lg text-[12px] font-bold" style={{ background: 'var(--accent-solid)', color: 'var(--text-on-accent)' }}>Upload resume</a>
+              </div>
+            )}
+            {/* Test Auto-Apply Button */}
+            <motion.button whileHover={{ scale: 1.01, boxShadow: '0 10px 28px -8px rgb(var(--accent-rgb) / 0.55)' }} whileTap={{ scale: 0.98 }} onClick={testAutoApply} disabled={testingAuto || hasResume === false}
               className="am-press w-full py-3 rounded-xl font-bold text-[13px] disabled:opacity-50 transition-all flex items-center justify-center gap-2"
               style={{ background: 'var(--accent-solid)', color: 'var(--text-on-accent)', boxShadow: 'var(--shadow-accent)' }}>
               {testingAuto ? (
@@ -782,7 +800,10 @@ export default function AutoApplyPage() {
             </motion.button>
             {testResult && (
               <div className="text-center text-[12px] font-medium py-2 px-4 rounded-lg"
-                style={{ background: testResult.startsWith('✅') ? 'rgb(var(--green-rgb) / calc(0.1 * var(--tint-scale)))' : 'rgba(255,100,100,0.1)', color: testResult.startsWith('✅') ? 'var(--green)' : 'var(--red)' }}>
+                style={{
+                  background: testResult.startsWith('✅') ? 'rgb(var(--green-rgb) / calc(0.1 * var(--tint-scale)))' : testResult.startsWith('⚠️') ? 'var(--yellow-dim)' : 'rgba(255,100,100,0.1)',
+                  color: testResult.startsWith('✅') ? 'var(--green)' : testResult.startsWith('⚠️') ? 'var(--yellow)' : 'var(--red)',
+                }}>
                 {testResult}
               </div>
             )}
