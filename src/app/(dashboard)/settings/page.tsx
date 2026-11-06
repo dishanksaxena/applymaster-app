@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { createClient } from '@/lib/supabase-browser'
+import { createClient, currentUser } from '@/lib/supabase-browser'
 import { useRouter } from 'next/navigation'
 import { applyTheme, getStoredTheme, type Theme } from '@/lib/theme'
 import { withAlpha } from '@/lib/tone'
@@ -64,7 +64,7 @@ export default function SettingsPage() {
 
   useEffect(() => {
     const load = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
+      const user = await currentUser()
       if (!user) return
       const { data } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle()
       if (data) {
@@ -78,7 +78,7 @@ export default function SettingsPage() {
 
   const saveName = async () => {
     setSaving(true)
-    const { data: { user } } = await supabase.auth.getUser()
+    const user = await currentUser()
     if (user) await supabase.from('profiles').update({ full_name: name }).eq('id', user.id)
     setSaving(false)
     setNameSaved(true)
@@ -127,7 +127,7 @@ export default function SettingsPage() {
     let stop = false
     const check = async () => {
       if (stop) return
-      const { data: { user } } = await supabase.auth.getUser()
+      const user = await currentUser()
       const { data } = user ? await supabase.from('profiles').select('plan').eq('id', user.id).maybeSingle() : { data: null }
       if (data?.plan === upgraded) {
         setProfile(p => (p ? { ...p, plan: data.plan } : p))

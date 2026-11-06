@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import { createAdminClient } from '@/lib/supabase-admin'
 import { applicationAllowance, blockedMessage } from '@/lib/plan-limits'
+import { GREENHOUSE_BOARDS, fetchGreenhouseBoard, fetchRemoteOK, adzunaForPerson, dbKeys, type FetchedJob } from '@/lib/job-fetch'
+import { scoreJob, type MatchPrefs } from '@/lib/job-match'
 import Anthropic from '@anthropic-ai/sdk'
 import { tryParseModelJson } from '@/lib/model-json'
 
@@ -20,38 +22,47 @@ const anthropic = new Anthropic()
  *
  * What remains was checked board by board: 31 live boards, ~6,300 roles.
  */
-const SCAN_TARGETS = {
-  greenhouse: [
-    'databricks', 'stripe', 'anthropic', 'datadog', 'cloudflare', 'brex',
-    'samsara', 'gitlab', 'scaleai', 'affirm', 'pinterest', 'coinbase',
-    'airbnb', 'lyft', 'flexport', 'figma', 'reddit', 'twilio', 'robinhood',
-    'instacart', 'asana', 'gusto', 'vercel', 'duolingo', 'chime', 'sofi',
-    'carta', 'mercury', 'discord', 'dropbox', 'airtable',
-  ],
-}
-
+/**
+ * The on-demand run draws from the same pool as the daily cron: every
+ * Greenhouse board we scan, RemoteOK, and Adzuna in the person's own
+ * country — then scoreJob decides, exactly as the cron does. It used to
+ * scan 31 US tech boards and nothing else, so a nurse in Bengaluru got
+ * nothing and a sales manager in London got Tokyo.
+ */
 interface ScannedJob {
   title: string; company: string; location: string; url: string
-  source: 'greenhouse' | 'lever' | 'ashby'
+  source: 'greenhouse' | 'lever' | 'ashby' | 'adzuna' | 'remoteok'
   board_token?: string; posting_id?: string; description?: string
+  /** The (source, external_id) the jobs table stores it under, so a search or saved copy is the same row. */
+  db_source: string; db_external_id: string
+  remote: boolean; match_score: number; match_reasons: string[]
 }
 
-async function scanGreenhouse(board: string, keywords: string[]): Promise<ScannedJob[]> {
-  try {
-    const res = await fetch(`https://boards-api.greenhouse.io/v1/boards/${board}/jobs?content=true`, { signal: AbortSignal.timeout(8000) })
-    if (!res.ok) return []
-    const data = await res.json()
-    return (data.jobs || [])
-      .filter((j: any) => keywords.some(kw => (j.title || '').toLowerCase().includes(kw.toLowerCase())))
-      .slice(0, 2)
-      .map((j: any) => ({
-        title: j.title, company: board.charAt(0).toUpperCase() + board.slice(1),
-        location: j.location?.name || 'Remote',
-        url: j.absolute_url || `https://boards.greenhouse.io/${board}/jobs/${j.id}`,
-        source: 'greenhouse' as const, board_token: board, posting_id: String(j.id),
-        description: (j.content || '').replace(/<[^>]+>/g, ' ').slice(0, 1500),
-      }))
-  } catch { return [] }
+async function gatherPool(prefs: MatchPrefs & { desired_job_title?: string | null }): Promise<FetchedJob[]> {
+  // Boards without posting bodies: 31 boards with content is tens of megabytes
+  // and ran past three minutes under load, against a 60s function limit.
+  // Bodies are fetched below, only for the handful we act on.
+  const [boards, remoteok, adzuna] = await Promise.all([
+    Promise.all(GREENHOUSE_BOARDS.map(b => fetchGreenhouseBoard(b))),
+    fetchRemoteOK(),
+    adzunaForPerson(prefs),
+  ])
+  return [...boards.flat(), ...remoteok, ...adzuna]
+}
+
+async function fillDescriptions(jobs: ScannedJob[]) {
+  await Promise.all(
+    jobs
+      .filter(j => j.source === 'greenhouse' && !j.description && j.board_token && j.posting_id)
+      .map(async j => {
+        try {
+          const r = await fetch(`https://boards-api.greenhouse.io/v1/boards/${j.board_token}/jobs/${j.posting_id}`, { signal: AbortSignal.timeout(8000) })
+          if (!r.ok) return
+          const d = await r.json()
+          j.description = String(d.content || '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').slice(0, 1500)
+        } catch { /* a posting without its body still queues; only the Claude read and the cover letter get thinner */ }
+      })
+  )
 }
 
 // ── Inline Claude job scoring (no HTTP call, no auth issues) ──
@@ -254,24 +265,38 @@ export async function POST(req: NextRequest) {
       await log(supabase, user.id, 'analyzing', `⚠️ Resume found (${primaryResume?.name || 'unknown'}) but no text could be extracted. Re-upload for best results.`)
     }
 
-    const keywords: string[] = prefs.target_roles?.length ? prefs.target_roles : ['Software Engineer']
-    await log(supabase, user.id, 'scanning', `🔍 Scanning Greenhouse, Lever & Ashby for "${keywords[0]}" roles...`)
+    const keywords: string[] = prefs.target_roles?.length ? prefs.target_roles : prefs.desired_job_title ? [prefs.desired_job_title] : []
+    if (!keywords.length) {
+      await log(supabase, user.id, 'error', '⚠️ No target roles set. Add the roles you want under "What to apply for".')
+      return NextResponse.json({ message: 'Add at least one target role first', processed: 0 })
+    }
+    const where = [prefs.city_preferences?.[0] || prefs.target_locations?.[0], prefs.country_preference].filter(Boolean).join(', ') || 'anywhere'
+    await log(supabase, user.id, 'scanning', `🔍 Searching employer boards, RemoteOK and Adzuna for ${keywords.slice(0, 3).map(k => `"${k}"`).join(', ')} in ${where}...`)
 
-    // Scan in parallel
-    // One source now, so cover much more of it: 4 boards was a fraction of
-    // what is reachable, and these fetch in parallel.
-    const ghRes = await Promise.all(
-      SCAN_TARGETS.greenhouse.map(b => scanGreenhouse(b, keywords))
-    )
-
-    const allJobs: ScannedJob[] = ghRes.flat()
+    const pool = await gatherPool(prefs)
+    const threshold = Math.min(90, Math.max(50, prefs.match_threshold || 70))
     const seen = new Set<string>()
-    const uniqueJobs = allJobs.filter(j => { if (seen.has(j.url)) return false; seen.add(j.url); return true })
+    const uniqueJobs: ScannedJob[] = []
+    for (const job of pool) {
+      if (seen.has(job.url)) continue
+      const m = scoreJob(job, prefs)
+      if (!m || m.score < threshold) continue
+      seen.add(job.url)
+      const keys = dbKeys(job)
+      uniqueJobs.push({
+        title: job.title, company: job.company, location: job.location, url: job.url,
+        source: job.source, board_token: job.board_token, posting_id: job.posting_id,
+        description: job.description || undefined,
+        db_source: keys.source, db_external_id: keys.external_id,
+        remote: job.remote, match_score: m.score, match_reasons: m.reasons,
+      })
+    }
+    uniqueJobs.sort((a, b) => b.match_score - a.match_score)
 
-    await log(supabase, user.id, 'scanning', `📋 Found ${uniqueJobs.length} matching jobs across Greenhouse/Lever/Ashby`)
+    await log(supabase, user.id, 'scanning', `📋 ${pool.length} postings checked, ${uniqueJobs.length} match your roles, location and level at ${threshold}%+`)
 
     if (!uniqueJobs.length) {
-      await log(supabase, user.id, 'scanning', `❌ No jobs matched "${keywords[0]}". Try adding more target roles in your profile.`)
+      await log(supabase, user.id, 'scanning', `❌ Nothing matched ${keywords.slice(0, 2).map(k => `"${k}"`).join(' or ')} in ${where} right now. Add more roles, widen the location, or lower the match threshold under Settings.`)
       return NextResponse.json({ message: 'No matching jobs found', processed: 0 })
     }
 
@@ -288,13 +313,15 @@ export async function POST(req: NextRequest) {
     }
 
     const maxToProcess = Math.min(newJobs.length, room, 5)
+    await fillDescriptions(newJobs.slice(0, maxToProcess))
     let applied = 0
 
     for (const job of newJobs.slice(0, maxToProcess)) {
       await log(supabase, user.id, 'analyzing', `🎯 Evaluating: ${job.title} at ${job.company}`)
 
-      // Score
-      let score = 65, grade = 'B', keywords_found: string[] = [], scoreReason = ''
+      // Score: the deterministic match is the floor; God Mode adds a Claude read of the fit.
+      let score = job.match_score, grade = job.match_score >= 80 ? 'A' : job.match_score >= 65 ? 'B' : 'C', keywords_found: string[] = [], scoreReason = job.match_reasons.join(', ')
+      await log(supabase, user.id, 'analyzing', `📍 ${job.location || 'Location not stated'} — ${scoreReason}`)
       if (godMode) {
         const result = await scoreJobWithClaude(job, resumeData, prefs)
         score = result.score; grade = result.grade; keywords_found = result.keywords; scoreReason = result.reason
@@ -358,13 +385,14 @@ Return JSON array only: ["keyword1", "keyword2", ...]`
       }
 
       // Upsert job + save application
-      const externalId = `${job.source}-${job.posting_id || encodeURIComponent(job.url)}`
+      const externalId = job.db_external_id
       const { data: existingJob } = await supabase.from('jobs').select('id').eq('external_id', externalId).maybeSingle()
       let jobDbId = existingJob?.id
       if (!jobDbId) {
         const { data: ins, error: jobErr } = await supabase.from('jobs').insert([{
-          external_id: externalId, source: job.source, title: job.title,
+          external_id: externalId, source: job.db_source, title: job.title,
           company: job.company, location: job.location, url: job.url,
+          remote_type: job.remote ? 'remote' : null,
         }]).select('id').single()
         if (jobErr) console.error('auto-apply/test: jobs insert failed', jobErr.message)
         jobDbId = ins?.id

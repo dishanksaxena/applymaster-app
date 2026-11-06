@@ -1,8 +1,12 @@
 'use client'
 
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { motion } from 'framer-motion'
-import { createClient } from '@/lib/supabase-browser'
+import { createClient, currentUser } from '@/lib/supabase-browser'
+import RolePicker from '@/components/RolePicker'
+import Autocomplete, { type Suggestion } from '@/components/Autocomplete'
+import { COUNTRY_OPTIONS } from '@/lib/constants/countries'
+import { isoCountry } from '@/lib/job-location'
 import ApplicationSourceChart from './ApplicationSourceChart'
 import TrendLineChart from './TrendLineChart'
 import SuccessDonutChart from './SuccessDonutChart'
@@ -12,6 +16,14 @@ import { toast } from '@/components/Toast'
 
 const container = { hidden: {}, show: { transition: { staggerChildren: 0.08 } } }
 const fadeUp = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] as const } } }
+
+/* "What to apply for" controls. */
+const T_LABEL = 'block text-[11.5px] font-semibold tracking-wide text-[var(--text-muted)] mb-2'
+const T_INPUT = 'w-full px-4 py-2.5 rounded-lg bg-[var(--bg-overlay)] border border-[var(--border)] text-[var(--text)] placeholder-[var(--text-faint)] text-[13px] focus:border-[rgb(var(--accent-rgb)/0.3)] focus:outline-none transition-all disabled:opacity-60'
+const T_CHIP = 'am-press inline-flex items-center gap-1.5 pl-3 pr-2 py-1.5 rounded-lg text-[12px] font-medium bg-[rgb(var(--accent-rgb)/0.15)] text-[var(--accent)] border border-[rgb(var(--accent-rgb)/0.3)]'
+const tSeg = (on: boolean) =>
+  `am-press px-3 py-2 rounded-lg text-[12px] font-medium transition-all ${on ? 'bg-gradient-to-r from-[var(--accent)] to-[var(--accent-solid)] text-[var(--text-on-accent)] shadow-[0_6px_16px_-8px_rgb(var(--accent-rgb)/0.6)]' : 'bg-[var(--bg-overlay)] text-[var(--text-muted)]'}`
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 
 // Animated number counter
 function AnimatedNumber({ value, delay = 0 }: { value: number; delay?: number }) {
@@ -50,7 +62,8 @@ function AnimatedNumber({ value, delay = 0 }: { value: number; delay?: number })
 export default function AutoApplyPage() {
   const [mode, setMode] = useState<'copilot' | 'autopilot' | 'off'>('off')
   const [dailyLimit, setDailyLimit] = useState(10)
-  const [matchThreshold, setMatchThreshold] = useState(80)
+  // 70, like the daily run: real postings outside software rarely score above the low 80s.
+  const [matchThreshold, setMatchThreshold] = useState(70)
   /* Live status of the sources we can actually reach, asked at runtime
      rather than asserted. The four that used to sit here — LinkedIn,
      Indeed, Glassdoor, ZipRecruiter — had no code behind them at all. */
@@ -69,6 +82,40 @@ export default function AutoApplyPage() {
   const [godModeTailorResume, setGodModeTailorResume] = useState(true)
   const [godModeCoverLetter, setGodModeCoverLetter] = useState(true)
   const [godModeScoreThreshold, setGodModeScoreThreshold] = useState<'A' | 'B' | 'C'>('B')
+  /* What to apply for: the same job_preferences onboarding and the profile
+     write, editable where the engine actually runs. Before this, the page
+     offered a mode and two sliders and nothing about which jobs. */
+  const [targetRoles, setTargetRoles] = useState<string[]>([])
+  const [countryPref, setCountryPref] = useState('')
+  const [cities, setCities] = useState<string[]>([])
+  const [cityQuery, setCityQuery] = useState('')
+  const [remotePref, setRemotePref] = useState('any')
+  const [experienceLevel, setExperienceLevel] = useState('mid')
+  const [willingToRelocate, setWillingToRelocate] = useState(false)
+  const [excludedCompanies, setExcludedCompanies] = useState<string[]>([])
+  const [excludeQuery, setExcludeQuery] = useState('')
+  const fetchCities = useCallback(async (q: string): Promise<Suggestion[]> => {
+    const code = isoCountry(countryPref) || 'US'
+    return (await (await fetch(`/api/suggest?type=city&country=${code}&q=${encodeURIComponent(q)}`)).json()).items ?? []
+  }, [countryPref])
+  const addCity = (raw: string) => {
+    const c = raw.trim()
+    setCityQuery('')
+    if (!c || cities.some(x => x.toLowerCase() === c.toLowerCase()) || cities.length >= 3) return
+    setCities([...cities, c])
+  }
+  const addExcluded = (raw: string) => {
+    const c = raw.trim()
+    setExcludeQuery('')
+    if (!c || excludedCompanies.some(x => x.toLowerCase() === c.toLowerCase())) return
+    setExcludedCompanies([...excludedCompanies, c])
+  }
+  const targetSummary = useMemo(() => {
+    const roles = targetRoles.length ? targetRoles.join(', ') : 'No roles chosen yet'
+    const where = cities.length ? `${cities.join(', ')}${countryPref ? ` (${countryPref})` : ''}` : countryPref || 'anywhere'
+    const setup = remotePref === 'any' ? 'any work setup' : remotePref === 'onsite' ? 'on-site' : remotePref
+    return `${roles} · ${where} · ${setup} · ${experienceLevel} level`
+  }, [targetRoles, cities, countryPref, remotePref, experienceLevel])
   const supabaseRef = useRef<any>(null)
 
   useEffect(() => {
@@ -89,7 +136,7 @@ export default function AutoApplyPage() {
     if (!mounted || isInitialized || !supabase) return
 
     const load = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
+      const user = await currentUser()
       if (!user) return
 
       // Load preferences. God Mode is part of Elite: the plan decides whether
@@ -106,6 +153,13 @@ export default function AutoApplyPage() {
         setGodModeTailorResume(data.god_mode_tailor_resume ?? true)
         setGodModeCoverLetter(data.god_mode_cover_letter ?? true)
         setGodModeScoreThreshold(data.god_mode_score_threshold || 'B')
+        setTargetRoles(Array.isArray(data.target_roles) ? data.target_roles : [])
+        setCountryPref(data.country_preference || '')
+        setCities(Array.isArray(data.city_preferences) && data.city_preferences.length ? data.city_preferences : Array.isArray(data.target_locations) ? data.target_locations.filter((l: string) => l && l.toLowerCase() !== 'remote') : [])
+        setRemotePref(data.remote_preference || 'any')
+        setExperienceLevel(data.experience_level || 'mid')
+        setWillingToRelocate(!!data.willing_to_relocate)
+        setExcludedCompanies(Array.isArray(data.excluded_companies) ? data.excluded_companies : [])
       }
 
       // Load activity logs
@@ -156,7 +210,7 @@ export default function AutoApplyPage() {
     const prev = mode
     setMode(next)
     if (!supabase || next === prev) return
-    const { data: { user } } = await supabase.auth.getUser()
+    const user = await currentUser()
     if (!user) return
     const { error } = await supabase.from('job_preferences').upsert(
       { user_id: user.id, auto_apply_mode: next, updated_at: new Date().toISOString() },
@@ -176,7 +230,7 @@ export default function AutoApplyPage() {
     setSaving(true)
     setSaved(false)
     try {
-      const { data: { user } } = await supabase.auth.getUser()
+      const user = await currentUser()
       if (!user) {
         toast.error('Not authenticated. Please log in first.')
         setSaving(false)
@@ -192,6 +246,14 @@ export default function AutoApplyPage() {
           auto_apply_mode: mode,
           daily_apply_limit: dailyLimit,
           match_threshold: matchThreshold,
+          target_roles: targetRoles,
+          country_preference: countryPref || null,
+          city_preferences: cities,
+          target_locations: cities,
+          remote_preference: remotePref,
+          experience_level: experienceLevel,
+          willing_to_relocate: willingToRelocate,
+          excluded_companies: excludedCompanies,
           updated_at: new Date().toISOString()
         },
         { onConflict: 'user_id' }
@@ -255,7 +317,7 @@ export default function AutoApplyPage() {
 
   const refreshApplications = async () => {
     if (!supabase) return
-    const { data: { user } } = await supabase.auth.getUser()
+    const user = await currentUser()
     if (!user) return
     const { data } = await supabase.from('applications').select('*, job:jobs(*)').eq('user_id', user.id)
     if (data) setApplications(data)
@@ -459,6 +521,108 @@ export default function AutoApplyPage() {
                   <div className="text-[11px] mt-1" style={{ color: mode === m.id ? 'var(--text-secondary)' : 'var(--text-faint)' }}>{m.desc}</div>
                 </motion.button>
               ))}
+            </div>
+          </motion.div>
+
+          {/* What to apply for */}
+          <motion.div variants={fadeUp} className="p-6 rounded-2xl" style={{ background: 'linear-gradient(135deg, var(--bg-card-gradient-start), var(--bg-card-gradient-end))', border: '1px solid var(--border)' }}>
+            <div className="flex items-baseline justify-between gap-3 mb-1">
+              <h3 className="text-[16px] font-bold">What to apply for</h3>
+              <span className="text-[11px]" style={{ color: 'var(--text-faint)' }}>Shared with your profile</span>
+            </div>
+            <p className="text-[12px] mb-5" style={{ color: 'var(--text-muted)' }}>{isInitialized ? targetSummary : 'Loading your targets…'}</p>
+            <div className="space-y-6">
+              <div>
+                <label className={T_LABEL}>ROLES (up to 5)</label>
+                <RolePicker value={targetRoles} onChange={setTargetRoles} />
+              </div>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label className={T_LABEL}>COUNTRY</label>
+                  <select value={countryPref} onChange={e => { setCountryPref(e.target.value); setCities([]) }} aria-label="Country to apply in"
+                    className="w-full px-4 py-2.5 rounded-lg border border-[var(--border)] text-[13px] focus:border-[rgb(var(--accent-rgb)/0.3)] focus:outline-none cursor-pointer"
+                    style={{ background: 'var(--bg-card)', color: countryPref ? 'var(--text)' : 'var(--text-faint)' }}>
+                    <option value="">Anywhere (remote and every country)</option>
+                    {COUNTRY_OPTIONS.map(c => <option key={c.code} value={c.name} style={{ background: 'var(--bg-card)', color: 'var(--text)' }}>{c.name}</option>)}
+                  </select>
+                  {countryPref && !COUNTRY_OPTIONS.find(c => c.name === countryPref)?.adzuna && (
+                    <p className="text-[11px] mt-1" style={{ color: 'var(--text-faint)' }}>Employer boards and remote roles only for this country.</p>
+                  )}
+                </div>
+                <div>
+                  <label className={T_LABEL}>CITIES (up to 3)</label>
+                  <Autocomplete
+                    value={cityQuery}
+                    onChange={setCityQuery}
+                    onSelect={item => addCity(item.value ?? item.label)}
+                    onSubmit={() => addCity(cityQuery)}
+                    fetchItems={fetchCities}
+                    resetKey={countryPref}
+                    ariaLabel="Add a city"
+                    placeholder={cities.length >= 3 ? '3 cities chosen' : countryPref ? `A city in ${countryPref}` : 'Pick a country first'}
+                    disabled={!countryPref || cities.length >= 3}
+                    inputClassName={T_INPUT}
+                  />
+                  {cities.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2" aria-label="Chosen cities">
+                      {cities.map(c => (
+                        <span key={c} className={T_CHIP}>
+                          {c}
+                          <button type="button" aria-label={`Remove ${c}`} onClick={() => setCities(cities.filter(x => x !== c))} className="w-4 h-4 rounded-full grid place-items-center hover:bg-[rgb(var(--accent-rgb)/0.2)]">×</button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label className={T_LABEL}>WORK SETUP</label>
+                  <div className="grid grid-cols-4 gap-2">
+                    {['remote', 'hybrid', 'onsite', 'any'].map(v => (
+                      <button key={v} type="button" onClick={() => setRemotePref(v)} className={tSeg(remotePref === v)}>{v === 'onsite' ? 'On-site' : cap(v)}</button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className={T_LABEL}>LEVEL</label>
+                  <div className="grid grid-cols-5 gap-2">
+                    {['entry', 'mid', 'senior', 'lead', 'executive'].map(v => (
+                      <button key={v} type="button" onClick={() => setExperienceLevel(v)} className={tSeg(experienceLevel === v)}>{v === 'executive' ? 'Exec' : cap(v)}</button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <label className="flex items-center gap-2.5 text-[13px] cursor-pointer" style={{ color: 'var(--text-secondary)' }}>
+                <input type="checkbox" checked={willingToRelocate} onChange={e => setWillingToRelocate(e.target.checked)} className="w-4 h-4 accent-[var(--accent)]" />
+                Open to relocating — on-site jobs in other countries count too
+              </label>
+              <div>
+                <label className={T_LABEL}>NEVER APPLY TO</label>
+                <div className="flex gap-2">
+                  <input value={excludeQuery} onChange={e => setExcludeQuery(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addExcluded(excludeQuery) } }}
+                    aria-label="Company to exclude" placeholder="Your current employer, places you have already applied…" className={T_INPUT} />
+                  <button type="button" onClick={() => addExcluded(excludeQuery)} disabled={!excludeQuery.trim()} className={`${tSeg(true)} px-4 disabled:opacity-40`}>Add</button>
+                </div>
+                {excludedCompanies.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {excludedCompanies.map(c => (
+                      <span key={c} className={T_CHIP}>
+                        {c}
+                        <button type="button" aria-label={`Remove ${c}`} onClick={() => setExcludedCompanies(excludedCompanies.filter(x => x !== c))} className="w-4 h-4 rounded-full grid place-items-center hover:bg-[rgb(var(--accent-rgb)/0.2)]">×</button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="flex items-center justify-between gap-3 pt-1">
+                <span className="text-[11px]" style={{ color: saved ? 'var(--green)' : 'var(--text-faint)' }}>{saved ? 'Saved — applies to the next run' : 'Changes apply to the next run'}</span>
+                <motion.button whileTap={{ scale: 0.97 }} onClick={saveSettings} disabled={saving}
+                  className="am-press px-5 py-2.5 rounded-xl text-[13px] font-bold text-[var(--text-on-accent)] disabled:opacity-50"
+                  style={{ background: 'var(--accent-solid)', boxShadow: 'var(--shadow-accent)' }}>
+                  {saving ? 'Saving…' : 'Save targets'}
+                </motion.button>
+              </div>
             </div>
           </motion.div>
 

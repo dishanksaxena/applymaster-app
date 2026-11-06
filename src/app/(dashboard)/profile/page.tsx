@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { createClient } from '@/lib/supabase-browser'
+import { createClient, currentUser } from '@/lib/supabase-browser'
 import { PremiumCard, PremiumButton } from '@/components/premium'
 import { fadeInUp, staggerContainer } from '@/lib/animations'
+import RolePicker from '@/components/RolePicker'
 
-const ROLES = ['Software Engineer', 'Product Manager', 'Data Scientist', 'Designer', 'DevOps Engineer', 'Full Stack Dev', 'Frontend Dev', 'Backend Dev', 'ML Engineer', 'Mobile Dev']
 const INDUSTRIES = ['Technology/IT', 'Finance', 'Healthcare', 'E-commerce', 'SaaS', 'Consulting', 'Manufacturing', 'Real Estate', 'Education', 'Media & Entertainment', 'Telecommunications', 'Automotive', 'Food & Beverage', 'Travel & Tourism', 'Logistics', 'Retail', 'Banking', 'Insurance', 'Government', 'Energy', 'Agriculture', 'Construction', 'Nonprofits', 'Legal Services', 'Recruiting', 'Marketing', 'Biotech/Pharma', 'Gaming', 'Fintech', 'Sustainability']
 const WORK_AUTH = ['Citizen', 'Permanent Resident', 'Work Visa (Can Work)', 'Need Sponsorship', 'No Restrictions']
 const EMPLOYMENT = ['Employed (Actively Looking)', 'Employed (Passive)', 'Unemployed', 'Student', 'Recently Laid Off', 'Self-Employed']
@@ -134,6 +134,14 @@ export default function ProfilePage() {
   // Skills & Industries
   const [selectedIndustries, setSelectedIndustries] = useState<string[]>([])
   const [selectedSkills, setSelectedSkills] = useState<string[]>([])
+  const [customSkill, setCustomSkill] = useState('')
+  const addCustomSkill = () => {
+    const s = customSkill.trim().replace(/\s+/g, ' ')
+    if (!s) return
+    setCustomSkill('')
+    if (selectedSkills.some(x => x.toLowerCase() === s.toLowerCase()) || selectedSkills.length >= 8) return
+    setSelectedSkills([...selectedSkills, s])
+  }
   const [companySize, setCompanySize] = useState('No preference')
   const [interviewStyle, setInterviewStyle] = useState('No preference')
 
@@ -142,7 +150,7 @@ export default function ProfilePage() {
   useEffect(() => {
     const load = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser()
+        const user = await currentUser()
         if (!user) {
           return
         }
@@ -194,7 +202,7 @@ export default function ProfilePage() {
   const saveProfile = async () => {
     setSaving(true)
     try {
-      const { data: { user } } = await supabase.auth.getUser()
+      const user = await currentUser()
       if (!user) {
         console.error('❌ No user found')
         return
@@ -235,6 +243,7 @@ export default function ProfilePage() {
         willing_to_relocate: willingToRelocate,
         country_preference: selectedCountry,
         city_preferences: selectedCities,
+        target_locations: selectedCities, // the matcher's name for the same list
         ethnicity,
         industries: selectedIndustries,
         key_skills: selectedSkills,
@@ -327,7 +336,10 @@ export default function ProfilePage() {
 
       <SectionCard title="Career Preferences">
         <div className="space-y-4">
-          <ChipSelector label="Target Roles (up to 5)" selected={selectedRoles} options={ROLES} onChange={setSelectedRoles} max={5} />
+          <div>
+            <label className={`${LABEL_CLS} mb-2 block`}>Target Roles (up to 5)</label>
+            <RolePicker value={selectedRoles} onChange={setSelectedRoles} />
+          </div>
           <div className="space-y-2">
             <label className="text-[11.5px] font-semibold tracking-wide text-[var(--text-muted)]">Annual Salary Range</label>
             <div className="flex gap-4">
@@ -382,7 +394,15 @@ export default function ProfilePage() {
       <SectionCard title="Industries & Skills">
         <div className="space-y-4">
           <ChipSelector label="Industry Preferences (up to 5)" selected={selectedIndustries} options={INDUSTRIES} onChange={setSelectedIndustries} max={5} />
-          <ChipSelector label="Key Skills (up to 8)" selected={selectedSkills} options={SKILLS} onChange={setSelectedSkills} max={8} />
+          <ChipSelector label="Key Skills (up to 8)" selected={selectedSkills} options={[...selectedSkills.filter(s => !SKILLS.includes(s)), ...SKILLS]} onChange={setSelectedSkills} max={8} />
+          {/* The chip list is mostly software; anyone else types theirs. */}
+          <div className="flex gap-2">
+            <input value={customSkill} onChange={e => setCustomSkill(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addCustomSkill() } }}
+              aria-label="Add your own skill" placeholder="Add your own — Patient care, Salesforce, Welding…"
+              className="flex-1 min-w-0 px-3 py-2.5 rounded-lg bg-[var(--bg-overlay)] border border-[var(--border)] text-[var(--text)] text-[13px] focus:border-[rgb(var(--accent-rgb)/0.3)] outline-none" />
+            <button type="button" onClick={addCustomSkill} disabled={!customSkill.trim() || selectedSkills.length >= 8}
+              className="px-4 py-2 rounded-lg text-[12px] font-medium bg-[rgb(var(--accent-rgb)/0.1)] text-[var(--accent)] hover:bg-[rgb(var(--accent-rgb)/0.2)] disabled:opacity-40">Add</button>
+          </div>
           <div className="grid sm:grid-cols-2 gap-4">
             <SelectField label="Company Size Preference" value={companySize} onChange={setCompanySize} options={COMPANY_SIZES} />
             <SelectField label="Interview Strength" value={interviewStyle} onChange={setInterviewStyle} options={INTERVIEW_STYLES} />

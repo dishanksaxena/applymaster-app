@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { createClient } from '@/lib/supabase-browser'
+import { createClient, currentUser } from '@/lib/supabase-browser'
 
 interface ActivityLog {
   id: string
@@ -29,7 +29,7 @@ export default function ActivityFeed() {
   useEffect(() => {
     const loadActivities = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser()
+        const user = await currentUser()
         if (!user) {
           setLoading(false)
           return

@@ -372,9 +372,8 @@ export default function Home() {
   useEffect(() => {
     const check = async () => {
       try {
-        const { createClient } = await import('@/lib/supabase-browser')
-        const { data: { user } } = await createClient().auth.getUser()
-        if (user) setIsLoggedIn(true)
+        const { currentUser } = await import('@/lib/supabase-browser')
+        if (await currentUser()) setIsLoggedIn(true)
       } catch { /* not signed in */ }
     }
     check()

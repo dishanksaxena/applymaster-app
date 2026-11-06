@@ -1,4 +1,5 @@
 import type { FetchedJob } from './job-fetch'
+import { isoCountry, parseLocation } from './job-location'
 
 /**
  * Deterministic job-to-person match score, 0–100, with the reasons.
@@ -13,6 +14,8 @@ export type MatchPrefs = {
   target_roles?: string[] | null
   desired_job_title?: string | null
   target_locations?: string[] | null
+  /** Onboarding and the profile save cities here; target_locations is the older name. Either counts. */
+  city_preferences?: string[] | null
   remote_preference?: string | null
   experience_level?: string | null
   min_salary?: number | null
@@ -39,6 +42,7 @@ const SYNONYMS: Record<string, string> = {
   ml: 'machine-learning', ai: 'machine-learning', 'artificial': 'machine-learning',
   pm: 'product-manager', mgr: 'manager', 'reliability': 'sre', devops: 'sre', infra: 'infrastructure',
   analytics: 'analyst', scientist: 'science', ui: 'design', ux: 'design', designer: 'design',
+  rn: 'registered-nurse', nursing: 'nurse',
 }
 
 function tokens(s: string): string[] {
@@ -50,6 +54,7 @@ function tokens(s: string): string[] {
     .replace(/machine learning/g, 'machine-learning')
     .replace(/product manager/g, 'product-manager')
     .replace(/site reliability/g, 'sre')
+    .replace(/registered nurse/g, 'registered-nurse')
     .split(/[^a-z0-9+#.-]+/)
     .map(t => t.replace(/^[.-]+|[.-]+$/g, ''))
     .filter(t => t && !STOP.has(t))
@@ -58,11 +63,15 @@ function tokens(s: string): string[] {
 
 type Level = 0 | 1 | 2 | 3 | 4 // entry, mid, senior, lead/staff, executive
 
-function titleLevel(title: string): Level | null {
+function titleLevel(title: string, roleText = ''): Level | null {
   const t = title.toLowerCase()
   if (/\b(intern|internship|junior|jr\.?|graduate|entry[- ]level|associate)\b/.test(t)) return 0
   if (/\b(vp|vice president|director|head of|chief|cto|ceo)\b/.test(t)) return 4
-  if (/\b(staff|principal|lead|distinguished|architect)\b/.test(t)) return 3
+  /* "Staff" is a rank in software and a job in nursing: "ICU Staff Nurse" is
+     mid-level, not a staff engineer. When the person's own roles use the
+     word, it is not a rank. */
+  const staffIsRank = !/\bstaff\b/.test(roleText)
+  if (/\b(principal|lead|distinguished|architect)\b/.test(t) || (staffIsRank && /\bstaff\b/.test(t))) return 3
   if (/\b(senior|sr\.?)\b/.test(t)) return 2
   return null // unmarked titles are usually mid-level, but say nothing
 }
@@ -103,6 +112,20 @@ export function scoreJob(job: FetchedJob, prefs: MatchPrefs): { score: number; r
     }
   }
   if (best < 0.5) return null
+
+  /* Country: a gate, not a score. Location only nudged the score, so a nurse
+     in Bengaluru was queued for on-site shifts in San Francisco and a sales
+     manager in London for Tokyo. A known on-site job in another country is
+     not a match (unless they will relocate), nor is a remote job restricted
+     to other countries. Locations the parser cannot place pass through. */
+  const home = isoCountry(prefs.country_preference)
+  const where = parseLocation(job.location || '')
+  const jobCountries = where.places.map(p => p.country).filter(Boolean)
+  if (home) {
+    const isRemote = where.remote || job.remote
+    if (!isRemote && jobCountries.length && !jobCountries.includes(home) && !prefs.willing_to_relocate) return null
+    if (isRemote && where.countries.length && !where.countries.includes(home)) return null
+  }
 
   const reasons: string[] = []
   let score = 10
@@ -171,7 +194,7 @@ export function scoreJob(job: FetchedJob, prefs: MatchPrefs): { score: number; r
   }
 
   // ── Seniority ──
-  const have = titleLevel(job.title)
+  const have = titleLevel(job.title, roleText)
   if (want !== null && have !== null) {
     const gap = Math.abs(want - have)
     if (gap === 0) {
@@ -183,7 +206,7 @@ export function scoreJob(job: FetchedJob, prefs: MatchPrefs): { score: number; r
 
   // ── Location ──
   const remotePref = (prefs.remote_preference || '').toLowerCase()
-  const locs = (prefs.target_locations || []).map(l => l.toLowerCase()).filter(l => l && l !== 'remote')
+  const locs = (prefs.target_locations?.length ? prefs.target_locations : prefs.city_preferences || []).map(l => l.toLowerCase()).filter(l => l && l !== 'remote')
   const jobLoc = job.location.toLowerCase()
   const locHit = locs.some(l => jobLoc.includes(l) || l.includes(jobLoc.split(',')[0].trim()))
   if (remotePref === 'remote') {
@@ -199,6 +222,11 @@ export function scoreJob(job: FetchedJob, prefs: MatchPrefs): { score: number; r
     } else if (job.remote) {
       score += 10
       reasons.push('remote')
+    } else if (home && jobCountries.includes(home)) {
+      /* Their country, another city. Neutral, not a penalty: with the
+         penalty, real nurse postings across India peaked at 65 and never
+         cleared a 70 threshold, while the city filter alone returned nothing. */
+      reasons.push(`in ${job.location}`)
     } else if (prefs.willing_to_relocate) score += 2
     else score -= 8
   }

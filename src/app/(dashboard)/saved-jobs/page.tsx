@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { createClient } from '@/lib/supabase-browser'
+import { createClient, currentUser } from '@/lib/supabase-browser'
 import Link from 'next/link'
 import { toast } from '@/components/Toast'
 
@@ -34,7 +34,7 @@ export default function SavedJobsPage() {
   useEffect(() => {
     const load = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser()
+        const user = await currentUser()
         if (!user) {
           setLoading(false)
           return
@@ -72,7 +72,7 @@ export default function SavedJobsPage() {
   }, [])
 
   const removeJob = async (jobId: string) => {
-    const { data: { user } } = await supabase.auth.getUser()
+    const user = await currentUser()
     if (!user) return
 
     await supabase
@@ -86,7 +86,7 @@ export default function SavedJobsPage() {
   }
 
   const applyToJob = async (job: SavedJob) => {
-    const { data: { user } } = await supabase.auth.getUser()
+    const user = await currentUser()
     if (!user) return
 
     try {

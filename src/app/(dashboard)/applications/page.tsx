@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import ReceiptDrawer from '@/components/ReceiptDrawer'
 import ApplyKit from '@/components/ApplyKit'
 import ReferralPathBadge from '@/components/ReferralPathBadge'
-import { createClient } from '@/lib/supabase-browser'
+import { createClient, currentUser } from '@/lib/supabase-browser'
 import type { Application } from '@/lib/database.types'
 import Link from 'next/link'
 import { withAlpha } from '@/lib/tone'
@@ -218,7 +218,7 @@ export default function ApplicationsPage() {
   }
 
   const loadApplications = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
+    const user = await currentUser()
     if (!user) return
 
     const { data } = await supabase

@@ -3,13 +3,12 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { motion, AnimatePresence, useMotionValue, useReducedMotion } from 'framer-motion'
 import { toneA } from '@/lib/tone'
-import { createClient } from '@/lib/supabase-browser'
+import { createClient, currentUser } from '@/lib/supabase-browser'
 import { useRouter } from 'next/navigation'
 import ResumeAnalysisOverlay from '@/components/ResumeAnalysisOverlay'
 import Toaster, { toast } from '@/components/Toast'
-import Autocomplete, { type Suggestion } from '@/components/Autocomplete'
-import { JOB_TITLES } from '@/lib/constants/job-titles'
-import { suggestScore } from '@/lib/suggest-score'
+import Autocomplete from '@/components/Autocomplete'
+import RolePicker, { fetchRoleItems, roleItemsFor } from '@/components/RolePicker'
 
 function Particles() {
   const [particles] = useState(() =>
@@ -78,19 +77,6 @@ function MagneticButton({ children, onClick, disabled = false, variant = 'primar
   )
 }
 
-/* Shortcuts under the role box, one or two per field. Anything else is typed:
-   the box suggests from JOB_TITLES and live postings, and a title that
-   matches nothing is still accepted as written. */
-const QUICK_ROLES = ['Software Engineer', 'Product Manager', 'Data Analyst', 'Account Executive', 'Marketing Manager', 'UX Designer', 'Registered Nurse', 'Accountant', 'Project Manager', 'Customer Success Manager', 'Electrician', 'Teacher']
-const MAX_ROLES = 5
-const roleItemsFor = (q: string): Suggestion[] =>
-  JOB_TITLES.map(t => ({ t, s: suggestScore(t, q) }))
-    .filter(x => x.s > 0)
-    .sort((a, b) => b.s - a.s || a.t.length - b.t.length)
-    .slice(0, 8)
-    .map(x => ({ label: x.t, group: 'Job titles' }))
-const fetchRoleItems = async (q: string): Promise<Suggestion[]> =>
-  (await (await fetch(`/api/suggest?type=role&q=${encodeURIComponent(q)}`)).json()).items ?? []
 const INDUSTRIES = ['Technology/IT', 'Finance', 'Healthcare', 'E-commerce', 'SaaS', 'Consulting', 'Manufacturing', 'Real Estate', 'Education', 'Media & Entertainment', 'Telecommunications', 'Automotive', 'Food & Beverage', 'Travel & Tourism', 'Logistics', 'Retail', 'Banking', 'Insurance', 'Government', 'Energy', 'Agriculture', 'Construction', 'Nonprofits', 'Legal Services', 'Recruiting', 'Marketing', 'Biotech/Pharma', 'Gaming', 'Fintech', 'Sustainability']
 const WORK_AUTH = ['Citizen', 'Permanent Resident', 'Work Visa (Can Work)', 'Need Sponsorship', 'No Restrictions']
 const EMPLOYMENT = ['Employed (Actively Looking)', 'Employed (Passive)', 'Unemployed', 'Student', 'Recently Laid Off', 'Self-Employed']
@@ -188,7 +174,7 @@ export default function OnboardingPage() {
   const [interviewStyle, setInterviewStyle] = useState('No preference')
 
   const [selectedPlan, setSelectedPlan] = useState('free')
-  const [roleQuery, setRoleQuery] = useState('')
+  const [customSkill, setCustomSkill] = useState('')
   const [loadedResumeName, setLoadedResumeName] = useState<string | null>(null)
 
   useEffect(() => {
@@ -196,7 +182,7 @@ export default function OnboardingPage() {
     // Load existing resume from profile and job preferences
     const loadSavedData = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser()
+        const user = await currentUser()
         if (!user) return
 
         // Check if onboarding is already complete
@@ -260,16 +246,17 @@ export default function OnboardingPage() {
     else if (!max || arr.length < max) setArr([...arr, val])
   }
 
-  const addRole = (raw: string) => {
-    const role = raw.trim().replace(/\s+/g, ' ')
-    if (!role) return
-    setRoleQuery('')
-    if (selectedRoles.some(r => r.toLowerCase() === role.toLowerCase())) return
-    if (selectedRoles.length >= MAX_ROLES) {
-      toast.error(`Up to ${MAX_ROLES} roles — remove one to add another`)
+  // Skills the chip list does not know — "Patient care", "Salesforce", "Welding".
+  const addCustomSkill = () => {
+    const s = customSkill.trim().replace(/\s+/g, ' ')
+    if (!s) return
+    setCustomSkill('')
+    if (selectedSkills.some(x => x.toLowerCase() === s.toLowerCase())) return
+    if (selectedSkills.length >= 8) {
+      toast.error('Up to 8 skills — remove one to add another')
       return
     }
-    setSelectedRoles([...selectedRoles, role])
+    setSelectedSkills([...selectedSkills, s])
   }
 
   /* After setup: the dashboard on the free plan, otherwise Stripe Checkout for
@@ -425,7 +412,7 @@ export default function OnboardingPage() {
     // Get user auth - need this for the API call
     let userId: string | null = null
     try {
-      const { data: { user } } = await supabase.auth.getUser()
+      const user = await currentUser()
       userId = user?.id || null
       console.log('[onboarding] Auth user:', userId)
     } catch (err) {
@@ -513,7 +500,7 @@ export default function OnboardingPage() {
 
   const loadResumes = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser()
+      const user = await currentUser()
       if (!user) return
       const { data } = await supabase.from('resumes').select('*').eq('user_id', user.id).order('created_at', { ascending: false })
       setResumes(data || [])
@@ -524,7 +511,7 @@ export default function OnboardingPage() {
 
   const setResumePrimary = async (resumeId: string) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser()
+      const user = await currentUser()
       if (!user) return
       // Mark all as not primary
       const { error: clearError } = await supabase.from('resumes').update({ is_primary: false }).eq('user_id', user.id)
@@ -544,7 +531,7 @@ export default function OnboardingPage() {
 
   const deleteResume = async (resumeId: string) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser()
+      const user = await currentUser()
       if (!user) return
       const resume = resumes.find(r => r.id === resumeId)
       if (!resume) return
@@ -567,8 +554,10 @@ export default function OnboardingPage() {
   const canProceedStep4 = selectedIndustries.length > 0 && selectedSkills.length > 0
 
   const saveStep2 = async () => {
+    // The next step asks for one desired title; the first role they chose is the obvious default.
+    if (!desiredJobTitle.trim() && selectedRoles[0]) setDesiredJobTitle(selectedRoles[0])
     try {
-      const { data: { user } } = await supabase.auth.getUser()
+      const user = await currentUser()
       if (!user) return
       await supabase.from('job_preferences').upsert({
         user_id: user.id,
@@ -585,7 +574,7 @@ export default function OnboardingPage() {
 
   const saveStep3 = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser()
+      const user = await currentUser()
       if (!user) return
       await supabase.from('job_preferences').upsert({
         user_id: user.id,
@@ -596,6 +585,7 @@ export default function OnboardingPage() {
         willing_to_relocate: willingToRelocate,
         country_preference: selectedCountry,
         city_preferences: selectedCities,
+        target_locations: selectedCities, // the matcher's name for the same list
         ethnicity: ethnicity || null,
       }, { onConflict: 'user_id' })
     } catch (err) { console.error('saveStep3:', err) }
@@ -606,7 +596,7 @@ export default function OnboardingPage() {
     if (!canProceedStep4) return
     setSaving(true)
     try {
-      const { data: { user } } = await supabase.auth.getUser()
+      const user = await currentUser()
       if (!user) return
       const { error } = await supabase.from('job_preferences').upsert({
         user_id: user.id,
@@ -624,6 +614,7 @@ export default function OnboardingPage() {
         willing_to_relocate: willingToRelocate,
         country_preference: selectedCountry,
         city_preferences: selectedCities,
+        target_locations: selectedCities, // the matcher's name for the same list
         ethnicity: ethnicity || null,
         key_skills: selectedSkills,
         company_size_preference: companySize,
@@ -644,7 +635,7 @@ export default function OnboardingPage() {
     setCompleting(true)
 
     try {
-      const { data: { user } } = await supabase.auth.getUser()
+      const user = await currentUser()
       if (!user) {
         console.error('[onboarding] No user in handleComplete')
         setCompleting(false)
@@ -906,49 +897,8 @@ export default function OnboardingPage() {
 
                     {/* Target Roles */}
                     <div>
-                      <label className="block text-[12px] font-bold text-[var(--accent)] mb-3">TARGET ROLES (up to {MAX_ROLES}) *</label>
-                      {selectedRoles.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mb-3" aria-label="Chosen roles">
-                          {selectedRoles.map(role => (
-                            <span key={role} className={`${CHIP_BASE} ${CHIP_ON} inline-flex items-center gap-1.5 pr-2`} style={chipStyle(true)}>
-                              {role}
-                              <button type="button" onClick={() => setSelectedRoles(selectedRoles.filter(r => r !== role))} aria-label={`Remove ${role}`}
-                                className="w-4 h-4 rounded-full grid place-items-center hover:bg-[rgb(var(--accent-rgb)/0.2)]">
-                                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12" /></svg>
-                              </button>
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                      <div className="flex gap-2">
-                        <div className="flex-1 min-w-0">
-                          <Autocomplete
-                            value={roleQuery}
-                            onChange={setRoleQuery}
-                            onSelect={item => addRole(item.label)}
-                            onSubmit={() => addRole(roleQuery)}
-                            fetchItems={fetchRoleItems}
-                            instant={roleItemsFor}
-                            ariaLabel="Add a target role"
-                            placeholder={selectedRoles.length >= MAX_ROLES ? `${MAX_ROLES} roles chosen` : 'Type any job title — sales, nursing, trades, anything'}
-                            disabled={selectedRoles.length >= MAX_ROLES}
-                            inputClassName="w-full px-4 py-2.5 rounded-lg bg-[var(--bg-overlay)] border border-[var(--border)] text-ink placeholder-[var(--text-faint)] text-[13px] focus:border-[rgb(var(--accent-rgb)/0.3)] focus:outline-none transition-all disabled:opacity-60"
-                          />
-                        </div>
-                        <button type="button" onClick={() => addRole(roleQuery)} disabled={!roleQuery.trim() || selectedRoles.length >= MAX_ROLES}
-                          className={`${SEG_BASE} ${SEG_ON} px-4 disabled:opacity-40`}>
-                          Add
-                        </button>
-                      </div>
-                      <div className="flex flex-wrap gap-2 mt-3">
-                        {QUICK_ROLES.filter(r => !selectedRoles.includes(r)).map(role => (
-                          <button key={role} type="button" onClick={() => addRole(role)} disabled={selectedRoles.length >= MAX_ROLES}
-                            className={`${chipCls(false)} disabled:opacity-40`}>
-                            + {role}
-                          </button>
-                        ))}
-                      </div>
-                      {selectedRoles.length === 0 && <p id="ob-err-roles" className={`text-[11px] mt-2 ${showErr ? 'text-[var(--red)] font-medium' : 'text-[var(--text-faint)]'}`}>Add at least one role — pick a shortcut or type your own</p>}
+                      <label className="block text-[12px] font-bold text-[var(--accent)] mb-3">TARGET ROLES (up to 5) *</label>
+                      <RolePicker value={selectedRoles} onChange={setSelectedRoles} errorId="ob-err-roles" showError={showErr} />
                     </div>
 
                     {/* Experience Level */}
@@ -1149,12 +1099,19 @@ export default function OnboardingPage() {
                     <div>
                       <label className="block text-[11.5px] font-semibold tracking-wide text-[var(--text-muted)] mb-2">KEY SKILLS (Select up to 8) *</label>
                       <div className="grid grid-cols-2 gap-2">
-                        {SKILLS.map(skill => (
+                        {[...selectedSkills.filter(s => !SKILLS.includes(s)), ...SKILLS].map(skill => (
                           <button key={skill} onClick={() => toggleChip(selectedSkills, setSelectedSkills, skill, 8)}
                             className={chipCls(selectedSkills.includes(skill))} style={chipStyle(selectedSkills.includes(skill))}>
                             {skill}
                           </button>
                         ))}
+                      </div>
+                      {/* The list above is mostly software. A nurse, a welder or a sales lead types theirs. */}
+                      <div className="flex gap-2 mt-3">
+                        <input value={customSkill} onChange={e => setCustomSkill(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addCustomSkill() } }}
+                          aria-label="Add your own skill" placeholder="Add your own — Patient care, Salesforce, Welding…"
+                          className="flex-1 min-w-0 px-4 py-2.5 rounded-lg bg-[var(--bg-overlay)] border border-[var(--border)] text-ink placeholder-[var(--text-faint)] text-[13px] focus:border-[rgb(var(--accent-rgb)/0.3)] focus:outline-none transition-all" />
+                        <button type="button" onClick={addCustomSkill} disabled={!customSkill.trim() || selectedSkills.length >= 8} className={`${SEG_BASE} ${SEG_ON} px-4 disabled:opacity-40`}>Add</button>
                       </div>
                       {selectedSkills.length === 0 && <p id="ob-err-skills" className={`text-[11px] mt-2 ${showErr ? 'text-[var(--red)] font-medium' : 'text-[var(--text-faint)]'}`}>Choose at least one skill</p>}
                     </div>

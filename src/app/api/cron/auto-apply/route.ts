@@ -6,8 +6,7 @@ import {
   GREENHOUSE_BOARDS,
   fetchGreenhouseBoard,
   fetchRemoteOK,
-  searchAdzuna,
-  countryCode,
+  adzunaForPerson,
   dbKeys,
   type FetchedJob,
 } from '@/lib/job-fetch'
@@ -102,7 +101,7 @@ async function run(req: NextRequest) {
   let q = db
     .from('job_preferences')
     .select(
-      'user_id, auto_apply_mode, match_threshold, daily_apply_limit, target_roles, desired_job_title, target_locations, remote_preference, min_salary, experience_level, excluded_companies, key_skills, country_preference, willing_to_relocate'
+      'user_id, auto_apply_mode, match_threshold, daily_apply_limit, target_roles, desired_job_title, target_locations, city_preferences, remote_preference, min_salary, experience_level, excluded_companies, key_skills, country_preference, willing_to_relocate'
     )
     .in('auto_apply_mode', ['copilot', 'autopilot'])
   if (onlyUser) q = q.eq('user_id', onlyUser)
@@ -135,12 +134,7 @@ async function run(req: NextRequest) {
   for (let i = 0; i < people.length; i += 4) {
     await Promise.all(
       people.slice(i, i + 4).map(async p => {
-        const role = (p.desired_job_title || p.target_roles?.[0] || '').trim()
-        const loc = (p.target_locations || []).find(l => l && l.toLowerCase() !== 'remote') || ''
-        adzunaFor.set(
-          p.user_id,
-          role ? await searchAdzuna(role, { country: countryCode(p.country_preference), location: loc, maxDaysOld: 14 }) : []
-        )
+        adzunaFor.set(p.user_id, await adzunaForPerson(p))
       })
     )
   }

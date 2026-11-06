@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase-browser'
+import { createClient, currentUser } from '@/lib/supabase-browser'
 
 /**
  * Global command palette (Cmd/Ctrl+K).
@@ -103,7 +103,7 @@ export default function CommandPalette() {
     const timer = setTimeout(async () => {
       try {
         const supabase = createClient()
-        const { data: auth } = await supabase.auth.getUser()
+        const auth = { user: await currentUser() }
         const out: Cmd[] = []
         const needle = q.toLowerCase()
 

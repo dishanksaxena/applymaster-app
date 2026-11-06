@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { createClient } from '@/lib/supabase-browser'
+import { createClient, currentUser } from '@/lib/supabase-browser'
 import { PremiumButton, PremiumCard } from '@/components/premium'
 import CoverLetterEditor from './CoverLetterEditor'
 import { staggerContainer, fadeInUp } from '@/lib/animations'
@@ -40,7 +40,7 @@ export default function CoverLettersPage() {
   // Load cover letters and saved jobs
   useEffect(() => {
     const load = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
+      const user = await currentUser()
       if (!user) return
 
       // Load cover letters
@@ -81,7 +81,7 @@ export default function CoverLettersPage() {
     setEditingLetter(null)
     setIsCreating(false)
     const load = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
+      const user = await currentUser()
       if (!user) return
       const { data: letters } = await supabase
         .from('cover_letters')

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase-browser'
+import { currentUser } from '@/lib/supabase-browser'
 import { track, getAnonId } from '@/lib/track'
 
 const TOPICS = [
@@ -34,9 +34,9 @@ export default function SupportForm() {
   useEffect(() => {
     track('support_opened', { meta: { topic: initialTopic, from_error: lastError || undefined } })
     // Signed-in people should not have to type their own address.
-    createClient()
-      .auth.getUser()
-      .then(({ data }) => {
+    currentUser()
+      .then(user => {
+        const data = { user }
         if (data.user?.email) setEmail(e => e || data.user!.email!)
         const n = data.user?.user_metadata?.full_name
         if (typeof n === 'string') setName(v => v || n)

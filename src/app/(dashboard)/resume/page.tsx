@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { createClient } from '@/lib/supabase-browser'
+import { createClient, currentUser } from '@/lib/supabase-browser'
 import { useRouter } from 'next/navigation'
 import { withAlpha } from '@/lib/tone'
 import { toast } from '@/components/Toast'
@@ -223,7 +223,7 @@ export default function ResumePage() {
   }, [])
 
   const loadResumes = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
+    const user = await currentUser()
     if (!user) return
     const { data } = await supabase.from('resumes').select('*').eq('user_id', user.id).order('created_at', { ascending: false })
     if (data) {
@@ -332,7 +332,7 @@ export default function ResumePage() {
   const handleDragLeave = (e: React.DragEvent) => { e.preventDefault(); setIsDragOver(false) }
 
   const setPrimary = async (id: string) => {
-    const { data: { user } } = await supabase.auth.getUser()
+    const user = await currentUser()
     if (!user) return
     const { error: clearError } = await supabase.from('resumes').update({ is_primary: false }).eq('user_id', user.id)
     const { error: setError } = clearError ? { error: clearError } : await supabase.from('resumes').update({ is_primary: true }).eq('id', id)

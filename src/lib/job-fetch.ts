@@ -7,6 +7,8 @@
  * had happened to search that week.
  */
 
+import { isoCountry } from './job-location'
+
 const ADZUNA_APP_ID = process.env.ADZUNA_APP_ID
 const ADZUNA_APP_KEY = process.env.ADZUNA_APP_KEY
 
@@ -111,23 +113,23 @@ export async function scanGreenhouse(board: string, keywords: string[]): Promise
 
 /* ── Adzuna ───────────────────────────────────────────────────────── */
 
+/** Every country Adzuna has an index for (November 2026). */
 const COUNTRY_CODE_MAP: Record<string, string> = {
-  US: 'us', IN: 'in', GB: 'gb', CA: 'ca', AU: 'au', DE: 'de', SG: 'sg', AE: 'ae',
+  US: 'us', GB: 'gb', IN: 'in', CA: 'ca', AU: 'au', DE: 'de', FR: 'fr', NL: 'nl', ES: 'es', IT: 'it',
+  SG: 'sg', CH: 'ch', AT: 'at', BE: 'be', PL: 'pl', NZ: 'nz', BR: 'br', MX: 'mx', ZA: 'za',
 }
 
-/** Country preference as users typed it -> Adzuna country code. */
+/**
+ * Country preference as users typed it -> Adzuna country code, or '' when
+ * Adzuna has no index for it. This used to fall back to 'US' for anything it
+ * did not recognise, which is how someone in the Netherlands or Japan was
+ * handed American postings.
+ */
 export function countryCode(pref?: string | null): string {
-  const p = (pref || '').trim().toLowerCase()
+  const p = (pref || '').trim()
   if (!p) return 'US'
-  if (COUNTRY_CODE_MAP[p.toUpperCase()]) return p.toUpperCase()
-  if (/india/.test(p)) return 'IN'
-  if (/united kingdom|\buk\b|britain|england/.test(p)) return 'GB'
-  if (/canada/.test(p)) return 'CA'
-  if (/australia/.test(p)) return 'AU'
-  if (/germany/.test(p)) return 'DE'
-  if (/singapore/.test(p)) return 'SG'
-  if (/emirates|uae|dubai/.test(p)) return 'AE'
-  return 'US'
+  const iso = isoCountry(p)
+  return iso && COUNTRY_CODE_MAP[iso] ? iso : ''
 }
 
 type AdzunaRaw = {
@@ -148,6 +150,7 @@ export async function searchAdzuna(
 ): Promise<FetchedJob[]> {
   if (!ADZUNA_APP_ID || !ADZUNA_APP_KEY) return []
   const country = opts.country || 'US'
+  if (!COUNTRY_CODE_MAP[country]) return [] // no index for this country; never substitute another
   const params = new URLSearchParams({
     app_id: ADZUNA_APP_ID,
     app_key: ADZUNA_APP_KEY,
@@ -163,7 +166,7 @@ export async function searchAdzuna(
 
   try {
     const res = await fetch(
-      `https://api.adzuna.com/v1/api/jobs/${COUNTRY_CODE_MAP[country] || 'us'}/search/${opts.page || 1}?${params}`,
+      `https://api.adzuna.com/v1/api/jobs/${COUNTRY_CODE_MAP[country]}/search/${opts.page || 1}?${params}`,
       { signal: AbortSignal.timeout(10_000) }
     )
     if (!res.ok) return []
@@ -187,6 +190,35 @@ export async function searchAdzuna(
   } catch {
     return []
   }
+}
+
+/**
+ * Adzuna postings for one person: their title and first target role, in
+ * their country. The city is tried first and dropped when it starves the
+ * search — "Registered Nurse" near Bangalore returned nothing for the last
+ * two weeks while India as a whole returned thirteen. Nothing at all when
+ * Adzuna has no index for the country.
+ */
+export async function adzunaForPerson(p: {
+  desired_job_title?: string | null
+  target_roles?: string[] | null
+  country_preference?: string | null
+  target_locations?: string[] | null
+  city_preferences?: string[] | null
+}): Promise<FetchedJob[]> {
+  const country = countryCode(p.country_preference)
+  if (!country) return []
+  const queries = [...new Set([p.desired_job_title, p.target_roles?.[0]].map(s => (s || '').trim()).filter(Boolean))].slice(0, 2)
+  if (!queries.length) return []
+  const cities = p.target_locations?.length ? p.target_locations : p.city_preferences || []
+  const loc = cities.find(l => l && l.toLowerCase() !== 'remote') || ''
+  const out = new Map<string, FetchedJob>()
+  for (const q of queries) {
+    let jobs = loc ? await searchAdzuna(q, { country, location: loc, maxDaysOld: 14 }) : []
+    if (jobs.length < 5) jobs = [...jobs, ...(await searchAdzuna(q, { country, maxDaysOld: 14 }))]
+    for (const j of jobs) if (!out.has(j.external_id)) out.set(j.external_id, j)
+  }
+  return [...out.values()]
 }
 
 /* ── RemoteOK ─────────────────────────────────────────────────────── */

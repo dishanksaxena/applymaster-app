@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import { recordEvent } from '@/lib/track-server'
 import { searchDirect } from '@/lib/direct-search'
+import { parseLocation } from '@/lib/job-location'
 
 const ADZUNA_APP_ID = process.env.ADZUNA_APP_ID
 const ADZUNA_APP_KEY = process.env.ADZUNA_APP_KEY
@@ -20,14 +21,17 @@ interface AdzunaJob {
   contract_time?: string
 }
 
+/** Every country Adzuna has an index for (November 2026). Others get employer boards and remote roles only. */
 const COUNTRY_CODE_MAP: Record<string, string> = {
-  US: 'us', IN: 'in', GB: 'gb', CA: 'ca', AU: 'au', DE: 'de', SG: 'sg', AE: 'ae',
+  US: 'us', GB: 'gb', IN: 'in', CA: 'ca', AU: 'au', DE: 'de', FR: 'fr', NL: 'nl', ES: 'es', IT: 'it',
+  SG: 'sg', CH: 'ch', AT: 'at', BE: 'be', PL: 'pl', NZ: 'nz', BR: 'br', MX: 'mx', ZA: 'za',
 }
 
 async function searchAdzuna(query: string, location: string, country: string, page = 1, maxDaysOld = 30, remote?: string) {
   if (!ADZUNA_APP_ID || !ADZUNA_APP_KEY) return []
 
-  const countryCode = COUNTRY_CODE_MAP[country] || 'us'
+  const countryCode = COUNTRY_CODE_MAP[country]
+  if (!countryCode) return [] // never substitute another country's postings
   const params = new URLSearchParams({
     app_id: ADZUNA_APP_ID,
     app_key: ADZUNA_APP_KEY,
@@ -150,12 +154,27 @@ export async function POST(req: NextRequest) {
 
     // Deduplicate
     const seen = new Set<string>()
-    const deduped = allJobs.filter(j => {
-      const key = `${String(j.title).toLowerCase()}-${String(j.company).toLowerCase()}`
-      if (seen.has(key)) return false
-      seen.add(key)
-      return true
-    })
+    const deduped = allJobs
+      .filter(j => {
+        const key = `${String(j.title).toLowerCase()}-${String(j.company).toLowerCase()}`
+        if (seen.has(key)) return false
+        seen.add(key)
+        return true
+      })
+      /* The country selector has to mean something. Adzuna is already
+         per-country, but employer boards and RemoteOK are global, so a
+         London search came back half "Remote - USA" and "Remote - Mexico".
+         Drop on-site jobs elsewhere and remote jobs restricted to other
+         countries; keep remote-anywhere and anything the parser cannot place. */
+      .filter(j => {
+        const loc = String(j.location || '')
+        const where = parseLocation(loc)
+        const isRemote = where.remote || j.country === 'REMOTE' || /remote/i.test(loc)
+        const countries = where.places.map(p => p.country).filter(Boolean)
+        if (!isRemote && countries.length && !countries.includes(country)) return false
+        if (isRemote && where.countries.length && !where.countries.includes(country)) return false
+        return true
+      })
 
     // Employers' own postings first (the extension can fill those forms), then newest first.
     deduped.sort((a, b) => {

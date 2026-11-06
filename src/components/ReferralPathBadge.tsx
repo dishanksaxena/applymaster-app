@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { createClient } from '@/lib/supabase-browser'
+import { createClient, currentUser } from '@/lib/supabase-browser'
 import { tone, toneA, toneSurface } from '@/lib/tone'
 import Link from 'next/link'
 
@@ -43,9 +43,7 @@ async function loadNetwork() {
   inflight = (async () => {
     try {
       const supabase = createClient()
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
+      const user = await currentUser()
       if (!user) return (cache = { at: Date.now(), rows: [] })
       /* Paged: Supabase returns at most 1,000 rows per request, and an
          imported LinkedIn network is usually larger — every badge past the

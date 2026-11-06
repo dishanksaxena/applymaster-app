@@ -29,9 +29,8 @@ export default function SiteNav({ anchors = false }: { anchors?: boolean }) {
   useEffect(() => {
     ;(async () => {
       try {
-        const { createClient } = await import('@/lib/supabase-browser')
-        const { data: { user } } = await createClient().auth.getUser()
-        if (user) setSignedIn(true)
+        const { currentUser } = await import('@/lib/supabase-browser')
+        if (await currentUser()) setSignedIn(true)
       } catch { /* signed out */ }
     })()
   }, [])

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { createClient } from '@/lib/supabase-browser'
+import { createClient, currentUser } from '@/lib/supabase-browser'
 import { PremiumCard, PremiumButton } from '@/components/premium'
 import { staggerContainer, fadeInUp } from '@/lib/animations'
 import dynamic from 'next/dynamic'
@@ -10,6 +10,8 @@ import { toast } from '@/components/Toast'
 import ReferralPathBadge from '@/components/ReferralPathBadge'
 import Autocomplete, { type Suggestion } from '@/components/Autocomplete'
 import { JOB_TITLES } from '@/lib/constants/job-titles'
+import { COUNTRY_OPTIONS } from '@/lib/constants/countries'
+import { isoCountry } from '@/lib/job-location'
 import { suggestScore } from '@/lib/suggest-score'
 
 const JobsGlobe = dynamic(() => import('@/components/JobsGlobe'), {
@@ -24,16 +26,7 @@ const JobsGlobe = dynamic(() => import('@/components/JobsGlobe'), {
 
 interface Job { id: string; title: string; company: string; location: string; remote_type: string | null; salary_min: number | null; salary_max: number | null; source: string; url: string; posted_at?: string; salary_currency?: string; direct?: boolean }
 
-const COUNTRIES = [
-  { code: 'US', name: 'United States' },
-  { code: 'IN', name: 'India' },
-  { code: 'GB', name: 'United Kingdom' },
-  { code: 'CA', name: 'Canada' },
-  { code: 'AU', name: 'Australia' },
-  { code: 'DE', name: 'Germany' },
-  { code: 'SG', name: 'Singapore' },
-  { code: 'AE', name: 'UAE' },
-]
+const COUNTRIES = COUNTRY_OPTIONS
 
 const SALARY_RANGES: Record<string, { label: string; min: number; max: number }[]> = {
   USD: [
@@ -77,6 +70,8 @@ export default function JobsPage() {
   const [godModeEnabled, setGodModeEnabled] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [country, setCountry] = useState('US')
+  // The form waits for the profile country; searching a beat earlier ran against the US default.
+  const [prefsReady, setPrefsReady] = useState(false)
   const [city, setCity] = useState('')
   const [remote, setRemote] = useState('any')
   const [salaryIdx, setSalaryIdx] = useState(0)
@@ -90,7 +85,7 @@ export default function JobsPage() {
   // Load saved and applied jobs from database
   useEffect(() => {
     const load = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
+      const user = await currentUser()
       if (!user) return
       // Join applications with jobs to get external_id for proper matching
       const { data } = await supabase
@@ -115,10 +110,17 @@ export default function JobsPage() {
         setAppliedJobs(applied)
       }
 
-      // Load God Mode setting
+      // God Mode, and the country they told us about: the selector used to
+      // open on United States for everyone, so someone in Bengaluru saw US
+      // postings until they noticed the dropdown.
       const { data: prefs } = await supabase
-        .from('job_preferences').select('god_mode_enabled').eq('user_id', user.id).maybeSingle()
+        .from('job_preferences').select('god_mode_enabled, country_preference, remote_preference').eq('user_id', user.id).maybeSingle()
       if (prefs?.god_mode_enabled) setGodModeEnabled(true)
+      // Country only. Presetting the remote filter too cut a Berlin search from
+      // 33 results to 3: Adzuna's remote tag is sparse outside the US.
+      const home = isoCountry(prefs?.country_preference)
+      if (home && COUNTRIES.some(c => c.code === home)) setCountry(home)
+      setPrefsReady(true)
     }
     load()
   }, [supabase])
@@ -222,7 +224,7 @@ export default function JobsPage() {
   }
 
   const saveJob = async (job: Job) => {
-    const { data: { user } } = await supabase.auth.getUser()
+    const user = await currentUser()
     if (!user) return toast.error('Please log in first')
     try {
       // Save job with proper upsert conflict handling
@@ -290,7 +292,7 @@ export default function JobsPage() {
   }
 
   const applyJob = async (job: Job) => {
-    const { data: { user } } = await supabase.auth.getUser()
+    const user = await currentUser()
     if (!user) return toast.error('Please log in first')
 
     setApplyingJobId(job.id)
@@ -468,7 +470,7 @@ export default function JobsPage() {
 
           {/* Row 1: Country + City */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <select value={country} onChange={e => setCountry(e.target.value)} className={selectCls}>
+            <select value={country} onChange={e => setCountry(e.target.value)} className={selectCls} disabled={!prefsReady} aria-label="Country">
               {COUNTRIES.map(c => <option key={c.code} value={c.code}>{c.name}</option>)}
             </select>
             <Autocomplete
@@ -499,7 +501,7 @@ export default function JobsPage() {
             </select>
           </div>
 
-            <PremiumButton variant="primary" size="lg" onClick={searchJobs} disabled={loading || !searchTerm} fullWidth loading={loading}
+            <PremiumButton variant="primary" size="lg" onClick={searchJobs} disabled={loading || !searchTerm || !prefsReady} fullWidth loading={loading}
               className="am-press shadow-[0_12px_32px_-12px_rgb(var(--accent-rgb)/0.55)]">
               {loading ? 'Searching...' : 'Search Jobs'}
             </PremiumButton>

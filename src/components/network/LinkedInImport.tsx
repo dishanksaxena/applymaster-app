@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { createClient } from '@/lib/supabase-browser'
+import { createClient, currentUser } from '@/lib/supabase-browser'
 import { readLinkedInArchive, signalsFor, type LinkedInArchive } from '@/lib/linkedin-import'
 import { claudeImportPrompt } from '@/lib/linkedin-claude-prompt'
 import { CompanyLogo } from '@/components/network/CompanyLogo'
@@ -425,9 +425,7 @@ export default function LinkedInImport({
       fetch('/api/network/connections').then(r => r.json()).catch(() => ({ connections: [] })),
       (async () => {
         const sb = createClient()
-        const {
-          data: { user },
-        } = await sb.auth.getUser()
+        const user = await currentUser()
         if (!user) return []
         const { data } = await sb
           .from('applications')

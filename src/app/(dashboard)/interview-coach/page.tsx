@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { withAlpha } from '@/lib/tone'
+import { createClient, currentUser } from '@/lib/supabase-browser'
 
 const interviewTypes = ['Behavioral', 'Technical', 'System Design', 'Case Study']
 
@@ -53,6 +54,17 @@ export default function InterviewCoachPage() {
   const [mode, setMode] = useState<'setup' | 'interview' | 'review'>('setup')
   const [company, setCompany] = useState('')
   const [role, setRole] = useState('')
+  // Start from the title they already told us they want, so the questions fit without retyping it.
+  useEffect(() => {
+    const supabase = createClient()
+    currentUser().then(user => {
+      if (!user) return
+      supabase.from('job_preferences').select('desired_job_title, target_roles').eq('user_id', user.id).maybeSingle().then(({ data }) => {
+        const title = data?.desired_job_title || data?.target_roles?.[0]
+        if (title) setRole(r => r || title)
+      })
+    }).catch(() => {})
+  }, [])
   const [jobDesc, setJobDesc] = useState('')
   const [currentQ, setCurrentQ] = useState(0)
   const [answer, setAnswer] = useState('')
@@ -75,49 +87,53 @@ export default function InterviewCoachPage() {
     return () => clearInterval(t)
   }, [timerActive, timer])
 
-  const startInterview = () => {
-    // Immediately show mock questions — no waiting
-    const instant = mockQuestions[type] || mockQuestions.Behavioral
-    setQuestions(instant)
+  const startInterview = async () => {
+    /* Questions for this role and company first; the canned set only when
+       the AI is slow or unavailable. It used to show the canned question
+       at once and swap it a few seconds in — every person, nurse or sales
+       manager, started on "tell me about a difficult team member" with the
+       timer already running. */
+    const fallback = mockQuestions[type] || mockQuestions.Behavioral
+    setQuestions([])
     setCurrentQ(0)
     setScores([])
     setFeedback(null)
     setAnswer('')
     setTimer(120)
-    setTimerActive(true)
+    setTimerActive(false)
     setMode('interview')
-
-    // Silently fetch AI-personalized questions in background
     setGeneratingQuestions(true)
-    fetch('/api/interview/prep', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action: 'generate_questions',
-        interview_type: interviewTypeMap[type] || 'behavioral',
-        job_title: role || 'Software Engineer',
-        company: company || undefined,
-        job_description: jobDesc || undefined,
-      }),
-    })
-      .then(r => r.json())
-      .then(data => {
-        if (data.blocked) {
-          setScoreError(data.message || 'Monthly AI interview limit reached — Pro includes unlimited interviews.')
-          return
-        }
-        const qs: string[] = (data.questions || []).map((q: { question: string }) => q.question).filter(Boolean)
-        if (qs.length > 0) {
-          // Only swap questions if user is still on the first question and hasn't started typing
-          setQuestions(prev => {
-            // Always update so later questions are AI-generated
-            return qs
-          })
-          setSessionId(data.session_id || null)
-        }
+    const ctrl = new AbortController()
+    const giveUp = setTimeout(() => ctrl.abort(), 20000)
+    try {
+      const r = await fetch('/api/interview/prep', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'generate_questions',
+          interview_type: interviewTypeMap[type] || 'behavioral',
+          job_title: role || 'the role you are preparing for',
+          company: company || undefined,
+          job_description: jobDesc || undefined,
+        }),
+        signal: ctrl.signal,
       })
-      .catch(() => { /* stay with mock questions */ })
-      .finally(() => setGeneratingQuestions(false))
+      const data = await r.json()
+      if (data.blocked) {
+        setScoreError(data.message || 'Monthly AI interview limit reached — Pro includes unlimited interviews.')
+        setQuestions(fallback)
+      } else {
+        const qs: string[] = (data.questions || []).map((q: { question: string }) => q.question).filter(Boolean)
+        setQuestions(qs.length > 0 ? qs : fallback)
+        setSessionId(data.session_id || null)
+      }
+    } catch {
+      setQuestions(fallback)
+    } finally {
+      clearTimeout(giveUp)
+      setGeneratingQuestions(false)
+      setTimerActive(true)
+    }
   }
 
   const submitAnswer = async () => {
@@ -299,7 +315,7 @@ export default function InterviewCoachPage() {
                   <span className="text-[14px] font-bold font-mono" style={{ color: timerColor }}>{Math.floor(timer / 60)}:{String(timer % 60).padStart(2, '0')}</span>
                 </div>
               </div>
-              <h2 className="text-xl font-bold leading-relaxed text-ink/90">{questions[currentQ]}</h2>
+              <h2 className="text-xl font-bold leading-relaxed text-ink/90">{questions[currentQ] ?? `Writing questions for ${role || 'your role'}…`}</h2>
             </div>
 
             {/* Answer */}

@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useMemo } from 'react'
 import { motion } from 'framer-motion'
-import { createClient } from '@/lib/supabase-browser'
+import { createClient, currentUser } from '@/lib/supabase-browser'
 import { PremiumButton, PremiumInput, PremiumCard } from '@/components/premium'
 import CoverLetterPreview from './CoverLetterPreview'
 import { staggerContainer, fadeInUp } from '@/lib/animations'
@@ -52,7 +52,7 @@ export default function CoverLetterEditor({ initialLetter, onClose, onSave }: Co
   const handleSave = useCallback(async () => {
     setIsSaving(true)
     try {
-      const { data: { user } } = await supabase.auth.getUser()
+      const user = await currentUser()
       if (!user) throw new Error('Not authenticated')
 
       const letterData = {
@@ -93,7 +93,7 @@ export default function CoverLetterEditor({ initialLetter, onClose, onSave }: Co
   const handleRegenerate = useCallback(async () => {
     setIsRegenerating(true)
     try {
-      const { data: { user } } = await supabase.auth.getUser()
+      const user = await currentUser()
       if (!user) throw new Error('Not authenticated')
 
       // Extract job title and company from the title (format: "Job Title at Company")
