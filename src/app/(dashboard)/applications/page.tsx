@@ -156,7 +156,18 @@ export default function ApplicationsPage() {
   const [allApps, setAllApps] = useState<Application[]>([])
   const [loading, setLoading] = useState(true)
   const [view, setView] = useState<'kanban' | 'list'>('kanban')
+  /* The dashboard links here with ?filter=queued (and ?filter=applied for
+     follow-ups). Without this the link landed on "All" and the person had to
+     find their queued matches themselves. */
   const [statusFilter, setStatusFilter] = useState<string>('all')
+
+  /* Applied after mount, not while initialising: on a client-side navigation
+     React renders the new route before the browser URL changes, so reading
+     the query string any earlier still saw the page we came from. */
+  useEffect(() => {
+    const f = new URLSearchParams(window.location.search).get('filter')
+    if (f && (statuses as readonly string[]).includes(f)) setStatusFilter(f)
+  }, [])
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'match'>('newest')
   const [mounted, setMounted] = useState(false)
   const [canScrollLeft, setCanScrollLeft] = useState(false)

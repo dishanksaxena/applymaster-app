@@ -20,6 +20,8 @@ const WEEKS = 8
 const WEEK_MS = 7 * 86400000
 
 type AppRow = {
+  /* PostgREST types a to-one join as an array; at runtime it is an object. */
+  job?: { title: string | null; company: string | null } | { title: string | null; company: string | null }[] | null
   status: string
   match_score: number | null
   created_at: string
@@ -419,7 +421,7 @@ export default function DashboardPage() {
 
       const [{ data: profile }, { data: apps }, { data: resumes }, { data: logs }, { data: prefs }, { count: practiced }] = await Promise.all([
         supabase.from('profiles').select('full_name').eq('id', user.id).maybeSingle(),
-        supabase.from('applications').select('status, match_score, created_at, applied_at').eq('user_id', user.id),
+        supabase.from('applications').select('status, match_score, created_at, applied_at, job:jobs(title, company)').eq('user_id', user.id),
         supabase.from('resumes').select('id').eq('user_id', user.id).limit(1),
         supabase
           .from('apply_log')
@@ -510,6 +512,15 @@ export default function DashboardPage() {
     )
   }, [rows])
 
+  /* Matches auto-apply has queued and nobody has opened. Of the people whose
+     queue filled up, almost none ever opened /applications: the work was being
+     done where they could not see it. */
+  const waiting = useMemo(() => rows.filter(r => r.status === 'queued' || r.status === 'saved'), [rows])
+  const waitingTop = waiting
+    .slice()
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0]
+  const waitingJob = Array.isArray(waitingTop?.job) ? waitingTop?.job[0] : waitingTop?.job
+
   const journeySteps = [
     { step: 1, label: 'Upload resume', desc: 'Get your ATS score', href: '/resume', done: hasResume, t: 'accent' as Tone },
     { step: 2, label: 'Search jobs', desc: 'Find matching roles', href: '/jobs', done: rows.length > 0, t: 'blue' as Tone },
@@ -567,6 +578,41 @@ export default function DashboardPage() {
           </svg>
         </Link>
       </motion.div>
+
+      {/* The queue, named and one click away: the dashboard is where people land. */}
+      {waiting.length > 0 && (
+        <motion.div variants={fadeInUp}>
+          <PremiumCard accent="pink" hover={false}>
+            <div className="flex flex-wrap items-center gap-4 p-5">
+              <span
+                className="grid place-items-center w-10 h-10 rounded-xl shrink-0"
+                style={{ background: toneSurface('accent', 0.16), color: tone('accent') }}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                  <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
+                </svg>
+              </span>
+              <div className="min-w-0 flex-1">
+                <h2 className="text-[14px] font-semibold" style={{ color: 'var(--text)' }}>
+                  <span style={{ color: 'var(--accent)' }}>{waiting.length}</span> match{waiting.length === 1 ? ' is' : 'es are'} waiting for you
+                </h2>
+                <p className="text-[12.5px] mt-0.5 truncate" style={{ color: 'var(--text-muted)' }}>
+                  {waitingJob?.title
+                    ? `${waitingJob.title}${waitingJob.company ? ` at ${waitingJob.company}` : ''}${waiting.length > 1 ? ` and ${waiting.length - 1} more` : ''} — open one and we fill the employer’s form for you.`
+                    : 'Open one and we fill the employer’s form for you. Nothing is sent until you press Submit.'}
+                </p>
+              </div>
+              <Link
+                href="/applications?filter=queued"
+                className="am-press px-3.5 py-2 rounded-lg text-[12.5px] font-semibold shrink-0"
+                style={{ background: 'var(--accent-solid)', color: 'var(--text-on-accent)' }}
+              >
+                Open the queue
+              </Link>
+            </div>
+          </PremiumCard>
+        </motion.div>
+      )}
 
       {/* Metrics */}
       <motion.div variants={staggerContainer} className="grid grid-cols-2 lg:grid-cols-5 gap-4">
