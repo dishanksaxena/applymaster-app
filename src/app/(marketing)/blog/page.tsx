@@ -16,6 +16,15 @@ export const metadata: Metadata = {
 
 const posts = [
   {
+    slug: 'applying-to-nvidia-after-ceo-change',
+    title: 'Should You Still Apply to NVIDIA? What the CEO Change Means for Job Seekers',
+    excerpt: 'Jensen Huang resigned on 12 November and CFO Colette Kress is interim CEO. What a leadership change does and does not do to hiring, whether to apply, and the rule to use next time a company is in the headlines.',
+    category: 'Job search',
+    date: 'November 12, 2026',
+    readTime: '6 min read',
+    color: 'var(--green)',
+  },
+  {
     slug: 'best-auto-apply-tools-2026',
     title: 'The Best Auto-Apply Job Tools in 2026, Honestly Compared',
     excerpt: 'Tsenta, AIApply, LoopCV, Simplify, LazyApply and ApplyMaster side by side: what each actually does, what it costs, and the five questions to ask before paying for any of them.',
