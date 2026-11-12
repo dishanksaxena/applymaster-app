@@ -5,7 +5,7 @@ import { SITE_URL, breadcrumbs } from '@/lib/seo/site'
 import { ROLES, roleOf } from '@/lib/role-insights'
 import { getAllBoards } from '@/lib/public-jobs'
 
-export const revalidate = 86400 // daily: job pages are crawled heavily, and roles rarely change faster
+export const revalidate = 21600 // six-hourly: on Vercel Pro freshness beats crawl cost
 
 const title = 'Skills, Pay and Hiring by Role'
 const description = 'For each role, the skills employers ask for, the pay ranges they publish and who is hiring, counted from thousands of live job postings.'

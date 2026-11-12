@@ -5,9 +5,9 @@ import JobResumeCheck from '@/components/tools/JobResumeCheck'
 import { Crumbs, JsonLd } from '@/components/marketing/Landing'
 import { SITE_URL, STORE_URL, breadcrumbs } from '@/lib/seo/site'
 import { extractKeywords } from '@/lib/tools/keywords'
-import { blocksToText, boardSummary, companyName, getJob, idFromParam, jobPath, jobPostingSchema, slugify } from '@/lib/public-jobs'
+import { blocksToText, boardSummary, companyName, getJob, idFromParam, isBoard, jobPath, jobPostingSchema, slugify } from '@/lib/public-jobs'
 
-export const revalidate = 86400 // daily: job pages are crawled heavily, and roles rarely change faster
+export const revalidate = 21600 // six-hourly: closed jobs leave the page, and their links, within hours
 export const dynamicParams = true
 export function generateStaticParams() {
   return [] // rendered on first visit, then cached for a day
@@ -43,7 +43,14 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 
 export default async function JobPage({ params }: { params: Params }) {
   const job = await load(params)
-  if (!job) notFound()
+  if (!job) {
+    /* The job has closed. Thousands of these pages were indexed during
+       October's discovery surge and died as 404s when the employer filled the
+       role — a third of our previously shown pages. Send the visitor, and the
+       page's standing, to the company's live roles instead of a dead end. */
+    if (isBoard(params.board)) permanentRedirect(`/companies/${params.board}`)
+    notFound()
+  }
   // One address per job: a changed title or a hand-typed slug lands on the canonical URL.
   const path = jobPath(params.board, job)
   if (params.job !== `${job.id}-${slugify(job.title)}`) permanentRedirect(path)

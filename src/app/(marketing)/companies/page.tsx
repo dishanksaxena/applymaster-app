@@ -4,7 +4,7 @@ import { Crumbs, JsonLd } from '@/components/marketing/Landing'
 import { SITE_URL, breadcrumbs } from '@/lib/seo/site'
 import { getAllBoards } from '@/lib/public-jobs'
 
-export const revalidate = 86400 // daily: job pages are crawled heavily, and roles rarely change faster
+export const revalidate = 21600 // six-hourly: on Vercel Pro freshness beats crawl cost
 
 const title = 'Jobs at Top Tech Companies'
 const description = 'Open roles at Stripe, Anthropic, Databricks, Figma, Coinbase, Airbnb and more, read from each company’s own job board and refreshed daily.'

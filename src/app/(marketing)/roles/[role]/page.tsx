@@ -5,7 +5,7 @@ import { Crumbs, Ctas, JsonLd, Section } from '@/components/marketing/Landing'
 import { SITE_URL, breadcrumbs, faqPage } from '@/lib/seo/site'
 import { ROLES, roleBySlug, roleInsights } from '@/lib/role-insights'
 
-export const revalidate = 86400 // daily: job pages are crawled heavily, and roles rarely change faster
+export const revalidate = 21600 // six-hourly: on Vercel Pro freshness beats crawl cost
 export const dynamicParams = false
 export function generateStaticParams() {
   return ROLES.map(r => ({ role: r.slug }))

@@ -117,7 +117,7 @@ export async function roleInsights(role: Role, sample = 30) {
     perCompany.set(p.board, n + 1)
     picked.push(p)
   }
-  const details = (await Promise.all(picked.map(p => getJob(p.board, p.id)))).filter((d): d is NonNullable<typeof d> => !!d)
+  const details = (await Promise.all(picked.map(p => getJob(p.board, p.id).catch(() => null)))).filter((d): d is NonNullable<typeof d> => !!d)
   const skillCount = new Map<string, number>()
   const softCount = new Map<string, number>()
   const lows: number[] = []

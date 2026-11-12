@@ -6,7 +6,7 @@ import { SITE_URL, breadcrumbs } from '@/lib/seo/site'
 import { BOARDS, companyName, getBoardJobs, isBoard, jobPath, parseLocation } from '@/lib/public-jobs'
 import { sourceBySlug } from '@/lib/job-boards'
 
-export const revalidate = 86400 // daily: job pages are crawled heavily, and roles rarely change faster
+export const revalidate = 21600 // six-hourly: on Vercel Pro freshness beats crawl cost
 export function generateStaticParams() {
   return BOARDS.map(board => ({ board }))
 }

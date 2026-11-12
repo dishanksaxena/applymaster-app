@@ -13,7 +13,7 @@ import { BOARD_SOURCES, sourceBySlug, type BoardSource } from './job-boards'
  */
 
 export const BOARDS = BOARD_SOURCES.map(b => b.slug)
-const REVALIDATE = 24 * 3600 // daily; see the page files
+const REVALIDATE = 6 * 3600 // six-hourly: on Vercel Pro freshness beats crawl cost; see the page files
 
 export type ListedJob = {
   id: string
@@ -93,7 +93,10 @@ async function ghBoard(src: BoardSource) {
 async function ghJob(src: BoardSource, id: string): Promise<JobDetail | null> {
   if (!/^\d+$/.test(id)) return null
   const res = await fetch(`${GH}/${src.token}/jobs/${id}`, { next: { revalidate: REVALIDATE } })
-  if (!res.ok) return null
+  // Gone is an answer; anything else is the API having a moment, and must not
+  // be mistaken for gone or the page caches a redirect for a live job.
+  if (res.status === 404 || res.status === 410) return null
+  if (!res.ok) throw new Error(`greenhouse ${res.status} for ${src.slug}/${id}`)
   const j = (await res.json()) as GhJob
   return {
     ...ghListed(j),
@@ -149,7 +152,8 @@ async function leverBoard(src: BoardSource) {
 async function leverJob(src: BoardSource, id: string): Promise<JobDetail | null> {
   if (!/^[0-9a-f-]{36}$/.test(id)) return null
   const res = await fetch(`${LEVER}/${src.token}/${id}?mode=json`, { next: { revalidate: REVALIDATE } })
-  if (!res.ok) return null
+  if (res.status === 404 || res.status === 410) return null
+  if (!res.ok) throw new Error(`lever ${res.status} for ${src.slug}/${id}`)
   const j = (await res.json()) as LeverJob
   const html = `${j.description ?? ''}${(j.lists ?? []).map(l => `<h3>${l.text}</h3><ul>${l.content}</ul>`).join('')}${j.additional ?? ''}`
   return {
@@ -192,14 +196,11 @@ export async function getAllBoards() {
   return rows.filter(r => r.jobs.length > 0)
 }
 
+/** Null means the job is gone (or the id is nonsense); a transient API failure throws. */
 export async function getJob(slug: string, id: string): Promise<JobDetail | null> {
   const src = sourceBySlug(slug)
   if (!src) return null
-  try {
-    return src.ats === 'lever' ? await leverJob(src, id) : await ghJob(src, id)
-  } catch {
-    return null
-  }
+  return src.ats === 'lever' ? await leverJob(src, id) : await ghJob(src, id)
 }
 
 /* ── Description: escaped HTML → headings, paragraphs, lists ───────────── */

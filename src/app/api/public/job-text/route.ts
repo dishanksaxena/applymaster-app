@@ -8,7 +8,7 @@ export async function GET(req: Request) {
   const u = new URL(req.url)
   const board = u.searchParams.get('board') ?? ''
   const id = u.searchParams.get('id') ?? ''
-  const job = board && id ? await getJob(board, id) : null
+  const job = board && id ? await getJob(board, id).catch(() => null) : null
   if (!job) return Response.json({ error: 'Not found' }, { status: 404 })
   return Response.json(
     { text: `${job.title}\n${blocksToText(job.blocks)}` },

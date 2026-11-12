@@ -16,6 +16,24 @@ export const metadata: Metadata = {
 
 const posts = [
   {
+    slug: 'best-auto-apply-tools-2026',
+    title: 'The Best Auto-Apply Job Tools in 2026, Honestly Compared',
+    excerpt: 'Tsenta, AIApply, LoopCV, Simplify, LazyApply and ApplyMaster side by side: what each actually does, what it costs, and the five questions to ask before paying for any of them.',
+    category: 'Tools',
+    date: 'November 12, 2026',
+    readTime: '9 min read',
+    color: 'var(--accent)',
+  },
+  {
+    slug: 'ai-job-search-2026',
+    title: 'AI Job Search in 2026: What Actually Works (and What Is Hype)',
+    excerpt: 'AI now reads your application before a person does — and probably helped you write it. What genuinely moves your odds in 2026, what is theatre, and a realistic weekly workflow.',
+    category: 'AI & Automation',
+    date: 'November 12, 2026',
+    readTime: '8 min read',
+    color: 'var(--blue)',
+  },
+  {
     slug: 'ai-job-application-guide',
     title: 'The Complete Guide to AI Job Applications in 2025',
     excerpt: 'How AI is transforming the job search process. Learn how to leverage automation to apply to hundreds of relevant jobs while maintaining quality and personalization.',
