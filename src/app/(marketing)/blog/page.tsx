@@ -16,6 +16,33 @@ export const metadata: Metadata = {
 
 const posts = [
   {
+    slug: 'tech-layoffs-what-to-do-2026',
+    title: 'Laid Off in the 2026 Tech Cuts? A Calm, Practical First Two Weeks',
+    excerpt: 'Amazon, Meta, Microsoft and more cut tens of thousands of roles in 2026. If you are one of them: the order to do things in — severance, benefits, unemployment, and a job search that actually starts.',
+    category: 'Job search',
+    date: 'November 12, 2026',
+    readTime: '7 min read',
+    color: 'var(--accent)',
+  },
+  {
+    slug: 'ai-and-entry-level-jobs-2026',
+    title: 'Is AI Taking Entry-Level Jobs? What the 2026 Data Actually Shows',
+    excerpt: 'New-grad hiring at big tech is down sharply and surveys blame AI — but the data is more contested than the headlines. What is real, what is overstated, and how a new grad still gets hired.',
+    category: 'AI & Careers',
+    date: 'November 12, 2026',
+    readTime: '8 min read',
+    color: 'var(--blue)',
+  },
+  {
+    slug: 'h1b-100k-fee-what-it-means-2026',
+    title: 'The $100,000 H-1B Fee: What It Means If You Are Job-Hunting From Abroad',
+    excerpt: 'A $100,000 H-1B fee upended US tech hiring for international workers, and its legal status keeps shifting. What job seekers — especially in India — should know, and the moves that still work.',
+    category: 'Global job search',
+    date: 'November 12, 2026',
+    readTime: '7 min read',
+    color: 'var(--green)',
+  },
+  {
     slug: 'applying-to-nvidia-after-ceo-change',
     title: 'Should You Still Apply to NVIDIA? What the CEO Change Means for Job Seekers',
     excerpt: 'Jensen Huang resigned on 12 November and CFO Colette Kress is interim CEO. What a leadership change does and does not do to hiring, whether to apply, and the rule to use next time a company is in the headlines.',
