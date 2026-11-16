@@ -1,57 +1,33 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { postMetadata, PostJsonLd } from '@/lib/blog/seo'
+import { postBySlug } from '@/lib/blog/posts'
 
-const title = 'Is AI Taking Entry-Level Jobs? What the 2026 Data Actually Shows'
-const description =
-  'New-grad hiring at big tech is down sharply and surveys say AI is part of it — but the data is more contested than the headlines. What is real, what is overstated, and how a new grad still gets hired in 2026.'
-const url = 'https://www.applymaster.ai/blog/ai-and-entry-level-jobs-2026'
+const SLUG = 'ai-and-entry-level-jobs-2026'
+const title = postBySlug(SLUG)!.title
 
-export const metadata: Metadata = {
-  title,
-  description,
-  keywords: [
-    'is AI taking entry level jobs',
-    'AI entry level jobs 2026',
-    'new grad job market 2026',
-    'AI replacing new grads',
-    'entry level hiring AI',
-    'new graduate job search',
-    'AI and junior roles',
-  ],
-  alternates: { canonical: url },
-  openGraph: {
-    title,
-    description,
-    url,
-    type: 'article',
-    publishedTime: '2026-11-12T14:00:00Z',
-    modifiedTime: '2026-11-12T14:00:00Z',
-    authors: ['ApplyMaster Team'],
+export const metadata: Metadata = postMetadata(SLUG, ["is AI taking entry level jobs", "AI entry level jobs 2026", "new grad job market 2026", "AI replacing new grads", "entry level hiring AI", "new graduate job search", "AI and junior roles"])
+
+// Must match the FAQ shown on the page.
+const FAQS = [
+  {
+    "q": "Is it a bad time to graduate into tech?",
+    "a": "It is a harder market at the top brands and a normal-to-soft one elsewhere. The advantage goes to grads who apply broadly and demonstrate they can work with AI rather than around it. Difficult is not the same as closed."
   },
-  twitter: { card: 'summary_large_image', title, description },
-}
-
-const jsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'Article',
-  headline: title,
-  description,
-  author: { '@type': 'Organization', name: 'ApplyMaster', url: 'https://www.applymaster.ai' },
-  publisher: {
-    '@type': 'Organization',
-    name: 'ApplyMaster',
-    logo: { '@type': 'ImageObject', url: 'https://www.applymaster.ai/logo.png' },
+  {
+    "q": "Will learning AI tools actually help me get hired?",
+    "a": "Yes, when you can point to specifics — a project, a workflow, a measurable result — rather than listing “AI” as a skill. Employers reorganising around these tools want people who already use them well."
   },
-  datePublished: '2026-11-12T14:00:00Z',
-  dateModified: '2026-11-12T14:00:00Z',
-  mainEntityOfPage: { '@type': 'WebPage', '@id': url },
-  keywords: 'is AI taking entry level jobs, new grad job market 2026, AI replacing new grads',
-}
+  {
+    "q": "Should I take a non-ideal first job?",
+    "a": "Often yes. In a tight market, a real role that builds experience beats waiting for the perfect one. The experienced-worker premium in the data is exactly the thing a first job starts earning you."
+  }
+]
 
 export default function AiEntryLevelPage() {
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <PostJsonLd slug={SLUG} faqs={FAQS} />
       <article className="pt-14 pb-20">
         <div className="mx-auto max-w-3xl px-6 lg:px-8">
           <header className="mb-12">

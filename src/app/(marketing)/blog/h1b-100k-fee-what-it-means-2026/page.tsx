@@ -1,57 +1,33 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { postMetadata, PostJsonLd } from '@/lib/blog/seo'
+import { postBySlug } from '@/lib/blog/posts'
 
-const title = 'The $100,000 H-1B Fee: What It Means If You Are Job-Hunting From Abroad'
-const description =
-  'A $100,000 H-1B fee has upended US tech hiring for international workers, and its legal status keeps shifting. What job seekers — especially in India — should understand, and the practical moves that still work.'
-const url = 'https://www.applymaster.ai/blog/h1b-100k-fee-what-it-means-2026'
+const SLUG = 'h1b-100k-fee-what-it-means-2026'
+const title = postBySlug(SLUG)!.title
 
-export const metadata: Metadata = {
-  title,
-  description,
-  keywords: [
-    'H-1B $100,000 fee',
-    'H-1B visa 2026',
-    'H-1B fee international workers',
-    'tech jobs US visa 2026',
-    'H-1B India tech workers',
-    'working in US tech visa',
-    'H-1B alternatives 2026',
-  ],
-  alternates: { canonical: url },
-  openGraph: {
-    title,
-    description,
-    url,
-    type: 'article',
-    publishedTime: '2026-11-12T16:00:00Z',
-    modifiedTime: '2026-11-12T16:00:00Z',
-    authors: ['ApplyMaster Team'],
+export const metadata: Metadata = postMetadata(SLUG, ["H-1B $100,000 fee", "H-1B visa 2026", "H-1B fee international workers", "tech jobs US visa 2026", "H-1B India tech workers", "working in US tech visa", "H-1B alternatives 2026"])
+
+// Must match the FAQ shown on the page.
+const FAQS = [
+  {
+    "q": "Is the $100,000 fee definitely in effect right now?",
+    "a": "That is exactly the part that has been unstable, with conflicting reports across 2026. We are deliberately not stating a current yes or no, because it may have changed again. Check official USCIS guidance and an immigration attorney for the status as of today."
   },
-  twitter: { card: 'summary_large_image', title, description },
-}
-
-const jsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'Article',
-  headline: title,
-  description,
-  author: { '@type': 'Organization', name: 'ApplyMaster', url: 'https://www.applymaster.ai' },
-  publisher: {
-    '@type': 'Organization',
-    name: 'ApplyMaster',
-    logo: { '@type': 'ImageObject', url: 'https://www.applymaster.ai/logo.png' },
+  {
+    "q": "Does it affect my current H-1B or a renewal?",
+    "a": "Reporting indicated the fee targets new petitions rather than renewals or existing holders, but your specific situation — including any change of status — is a question for an immigration lawyer, not a blog."
   },
-  datePublished: '2026-11-12T16:00:00Z',
-  dateModified: '2026-11-12T16:00:00Z',
-  mainEntityOfPage: { '@type': 'WebPage', '@id': url },
-  keywords: 'H-1B $100,000 fee, H-1B visa 2026, H-1B India tech workers, tech jobs US visa 2026',
-}
+  {
+    "q": "Should I give up on working for a US company?",
+    "a": "No. The visa path narrowed; the goal did not disappear. Global offices, remote-first employers and roles relocating to your region are all live routes to the same kind of work. Widen the target rather than abandoning it."
+  }
+]
 
 export default function H1bFeePage() {
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <PostJsonLd slug={SLUG} faqs={FAQS} />
       <article className="pt-14 pb-20">
         <div className="mx-auto max-w-3xl px-6 lg:px-8">
           <header className="mb-12">

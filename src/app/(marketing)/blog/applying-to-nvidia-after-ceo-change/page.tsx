@@ -1,57 +1,33 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { postMetadata, PostJsonLd } from '@/lib/blog/seo'
+import { postBySlug } from '@/lib/blog/posts'
 
-const title = 'Should You Still Apply to NVIDIA? What the CEO Change Means for Job Seekers'
-const description =
-  'Jensen Huang resigned as NVIDIA CEO on 12 November 2026 and CFO Colette Kress is interim chief executive. What a leadership change does and does not mean for hiring, and how to decide whether to apply.'
-const url = 'https://www.applymaster.ai/blog/applying-to-nvidia-after-ceo-change'
+const SLUG = 'applying-to-nvidia-after-ceo-change'
+const title = postBySlug(SLUG)!.title
 
-export const metadata: Metadata = {
-  title,
-  description,
-  keywords: [
-    'should I apply to NVIDIA',
-    'NVIDIA jobs 2026',
-    'is NVIDIA a good place to work',
-    'NVIDIA hiring',
-    'applying to a company in turmoil',
-    'NVIDIA careers',
-    'job offer company leadership change',
-  ],
-  alternates: { canonical: url },
-  openGraph: {
-    title,
-    description,
-    url,
-    type: 'article',
-    publishedTime: '2026-11-12T20:00:00Z',
-    modifiedTime: '2026-11-12T20:00:00Z',
-    authors: ['ApplyMaster Team'],
+export const metadata: Metadata = postMetadata(SLUG, ["should I apply to NVIDIA", "NVIDIA jobs 2026", "is NVIDIA a good place to work", "NVIDIA hiring", "applying to a company in turmoil", "NVIDIA careers", "job offer company leadership change"])
+
+// Must match the FAQ shown on the page.
+const FAQS = [
+  {
+    "q": "Can a company withdraw my offer because the CEO left?",
+    "a": "A signed written offer is a contract and is rarely rescinded over a leadership change; a verbal offer has far less weight. If you are holding a verbal offer, ask for it in writing now. If an offer is withdrawn after you have resigned from another job, that is worth a conversation with an employment lawyer in your country."
   },
-  twitter: { card: 'summary_large_image', title, description },
-}
-
-const jsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'Article',
-  headline: title,
-  description,
-  author: { '@type': 'Organization', name: 'ApplyMaster', url: 'https://www.applymaster.ai' },
-  publisher: {
-    '@type': 'Organization',
-    name: 'ApplyMaster',
-    logo: { '@type': 'ImageObject', url: 'https://www.applymaster.ai/logo.png' },
+  {
+    "q": "Should I mention the news in my cover letter?",
+    "a": "No. Write about the work and the team. Commentary on a company's turbulence in an application reads as presumptuous at best, and the person reading it has had a difficult week."
   },
-  datePublished: '2026-11-12T20:00:00Z',
-  dateModified: '2026-11-12T20:00:00Z',
-  mainEntityOfPage: { '@type': 'WebPage', '@id': url },
-  keywords: 'should I apply to NVIDIA, NVIDIA jobs 2026, is NVIDIA a good place to work, company leadership change job offer',
-}
+  {
+    "q": "Where do I find NVIDIA's open roles?",
+    "a": "NVIDIA posts on its own careers site, which runs on Workday. ApplyMaster's extension fills Workday applications, which are among the longest forms in tech — see our Workday autofill guide . You can also browse live roles at other employers to keep your pipeline wide while this settles."
+  }
+]
 
 export default function ApplyingToNvidiaPage() {
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <PostJsonLd slug={SLUG} faqs={FAQS} />
       <article className="pt-14 pb-20">
         <div className="mx-auto max-w-3xl px-6 lg:px-8">
           <header className="mb-12">

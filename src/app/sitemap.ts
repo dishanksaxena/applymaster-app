@@ -5,6 +5,7 @@ import { livePortals } from '@/lib/seo/portals'
 import { COMPETITORS } from '@/lib/seo/competitors'
 import { SITE_URL } from '@/lib/seo/site'
 import { ROLES } from '@/lib/role-insights'
+import { POSTS } from '@/lib/blog/posts'
 
 /**
  * Every public page, on the www host the site is served from. Built from the
@@ -13,10 +14,13 @@ import { ROLES } from '@/lib/role-insights'
  */
 
 type Entry = MetadataRoute.Sitemap[number]
-const page = (p: string, priority: number, changeFrequency: Entry['changeFrequency'] = 'weekly'): Entry => ({
+const page = (p: string, priority: number, changeFrequency: Entry['changeFrequency'] = 'weekly', lastModified?: string): Entry => ({
   url: `${SITE_URL}${p === '/' ? '' : p}`,
   changeFrequency,
   priority,
+  // Only where the date is known to be true: Google ignores priority and
+  // changefreq, and stops trusting lastmod on a site that fakes it.
+  ...(lastModified ? { lastModified } : {}),
 })
 
 function blogPosts(): string[] {
@@ -48,8 +52,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...['auto-apply', 'resume-optimizer', 'cover-letter-generator', 'interview-coach', 'job-matching'].map(f => page(`/features/${f}`, 0.75)),
     page('/pricing', 0.8),
     page('/integrations', 0.6),
-    page('/blog', 0.7, 'daily'),
-    ...blogPosts().map(slug => page(`/blog/${slug}`, 0.7, 'monthly')),
+    page('/blog', 0.7, 'daily', POSTS[0]?.modified),
+    ...POSTS.map(p => page(`/blog/${p.slug}`, 0.7, 'monthly', p.modified)),
+    // A post folder someone forgot to register still gets listed, just undated.
+    ...blogPosts().filter(slug => !POSTS.some(p => p.slug === slug)).map(slug => page(`/blog/${slug}`, 0.7, 'monthly')),
     page('/signup', 0.6, 'monthly'),
     page('/login', 0.3, 'monthly'),
     page('/support', 0.4, 'monthly'),

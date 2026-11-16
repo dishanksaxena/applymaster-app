@@ -1,58 +1,33 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { postMetadata, PostJsonLd } from '@/lib/blog/seo'
+import { postBySlug } from '@/lib/blog/posts'
 
-const title = 'AI Job Search in 2026: What Actually Works (and What Is Hype)'
-const description =
-  'AI now sits on both sides of hiring. What AI genuinely does well for job seekers in 2026 — matching, tailoring, autofill, interview practice — what is overpromised, and a realistic weekly workflow.'
-const url = 'https://www.applymaster.ai/blog/ai-job-search-2026'
+const SLUG = 'ai-job-search-2026'
+const title = postBySlug(SLUG)!.title
 
-export const metadata: Metadata = {
-  title,
-  description,
-  keywords: [
-    'AI job search 2026',
-    'AI job application',
-    'using AI to apply for jobs',
-    'AI job hunting tools',
-    'AI resume tailoring',
-    'AI interview practice',
-    'ATS AI screening',
-    'job search automation',
-  ],
-  alternates: { canonical: url },
-  openGraph: {
-    title,
-    description,
-    url,
-    type: 'article',
-    publishedTime: '2026-11-12T08:00:00Z',
-    modifiedTime: '2026-11-12T08:00:00Z',
-    authors: ['ApplyMaster Team'],
+export const metadata: Metadata = postMetadata(SLUG, ["AI job search 2026", "AI job application", "using AI to apply for jobs", "AI job hunting tools", "AI resume tailoring", "AI interview practice", "ATS AI screening", "job search automation"])
+
+// Must match the FAQ shown on the page.
+const FAQS = [
+  {
+    "q": "Can employers tell I used AI on my application?",
+    "a": "Generic AI prose is recognisable, and recruiters read a lot of it now. AI used on structure, keywords and first drafts is invisible; AI used instead of your own voice in “why this company” answers is exactly where it shows. That is why those fields should stay yours."
   },
-  twitter: { card: 'summary_large_image', title, description },
-}
-
-const jsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'Article',
-  headline: title,
-  description,
-  author: { '@type': 'Organization', name: 'ApplyMaster', url: 'https://www.applymaster.ai' },
-  publisher: {
-    '@type': 'Organization',
-    name: 'ApplyMaster',
-    logo: { '@type': 'ImageObject', url: 'https://www.applymaster.ai/logo.png' },
+  {
+    "q": "Is using AI to apply for jobs cheating?",
+    "a": "Employers use AI to screen you; using AI to present your real experience clearly is the same move from the other side. The line is truth: tailoring is fair, fabricating is fraud, and letting software answer questions that ask for your own words serves nobody — including you."
   },
-  datePublished: '2026-11-12T08:00:00Z',
-  dateModified: '2026-11-12T08:00:00Z',
-  mainEntityOfPage: { '@type': 'WebPage', '@id': url },
-  keywords: 'AI job search 2026, AI job application, using AI to apply for jobs, AI interview practice',
-}
+  {
+    "q": "How many applications should I send in 2026?",
+    "a": "As many as you can send well: matched to roles you fit, with honest answers, in your own country or one that will sponsor you. For most people that is five to fifteen a week, sustained — not a hundred in a weekend burst."
+  }
+]
 
 export default function AiJobSearch2026Page() {
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <PostJsonLd slug={SLUG} faqs={FAQS} />
       <article className="pt-14 pb-20">
         <div className="mx-auto max-w-3xl px-6 lg:px-8">
           {/* Header */}

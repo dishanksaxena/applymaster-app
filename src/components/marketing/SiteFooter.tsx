@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { latestPosts } from '@/lib/blog/posts'
 
 const COLUMNS: { heading: string; links: [string, string][] }[] = [
   {
@@ -22,6 +23,13 @@ const COLUMNS: { heading: string; links: [string, string][] }[] = [
       ['LinkedIn Auto Apply Guide', '/blog/linkedin-auto-apply-guide'],
       ['About 3GP.AI', 'https://3gp.ai'],
     ],
+  },
+  {
+    /* The newest posts, linked from every page on the site — including the
+       job pages Google crawls daily. New posts used to be orphans: the only
+       sitewide blog links were hard-coded to the three oldest. */
+    heading: 'Latest articles',
+    links: [...latestPosts(5).map(p => [p.short, `/blog/${p.slug}`] as [string, string]), ['All articles', '/blog']],
   },
   {
     heading: 'Free tools',
@@ -56,7 +64,7 @@ export default function SiteFooter() {
   return (
     <footer className="py-14" style={{ borderTop: '1px solid var(--border)' }}>
       <div className="max-w-[1240px] mx-auto px-6 lg:px-8">
-        <div className="grid sm:grid-cols-2 md:grid-cols-5 gap-10 mb-10">
+        <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-10 mb-10">
           <div>
             <Link prefetch={false} href="/" className="flex items-center gap-2.5 mb-4">
               <span

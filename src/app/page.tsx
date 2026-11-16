@@ -5,6 +5,8 @@ import { motion } from 'framer-motion'
 import ThemeToggle from '@/components/ThemeToggle'
 import Reveal, { RevealGroup, RevealItem } from '@/components/motion/Reveal'
 import { toneA, type Tone } from '@/lib/tone'
+import { HOME_FAQ_LD } from '@/lib/seo/home-faq-ld'
+import { latestPosts } from '@/lib/blog/posts'
 
 /* ============================================================
    ApplyMaster landing page
@@ -416,6 +418,7 @@ export default function Home() {
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg)', color: 'var(--text)' }}>
       <style dangerouslySetInnerHTML={{ __html: HOME_KEYFRAMES }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(HOME_FAQ_LD) }} />
       <a href="#main" className="skip-link">Skip to content</a>
 
       {/* ===== NAV ===== */}
@@ -1158,7 +1161,7 @@ export default function Home() {
       {/* ===== FOOTER ===== */}
       <footer className="py-14" style={{ borderTop: '1px solid var(--border)' }}>
         <div className="max-w-[1240px] mx-auto px-6 lg:px-8">
-          <div className="grid sm:grid-cols-2 md:grid-cols-5 gap-10 mb-10">
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-10 mb-10">
             <div>
               <a href="/" className="flex items-center gap-2.5 mb-4">
                 <span className="w-8 h-8 rounded-lg grid place-items-center font-bold text-[11px]" style={{ background: 'var(--accent-solid)', color: 'var(--text-on-accent)' }}>AM</span>
@@ -1175,6 +1178,7 @@ export default function Home() {
             {[
               { h: 'Product', links: [['Features', '/features'], ['Auto Apply', '/features/auto-apply'], ['Resume Optimizer', '/features/resume-optimizer'], ['Interview Coach', '/features/interview-coach'], ['Integrations', '/integrations'], ['Pricing', '/pricing']] },
               { h: 'Resources', links: [['Blog', '/blog'], ['AI Job Application Guide', '/blog/ai-job-application-guide'], ['ATS Resume Guide', '/blog/ats-resume-optimization'], ['LinkedIn Auto Apply Guide', '/blog/linkedin-auto-apply-guide'], ['About 3GP.AI', 'https://3gp.ai']] },
+              { h: 'Latest articles', links: [...latestPosts(5).map(p => [p.short, `/blog/${p.slug}`]), ['All articles', '/blog']] },
               { h: 'Free tools', links: [['ATS Resume Checker', '/tools/ats-resume-checker'], ['Keyword Extractor', '/tools/job-description-keyword-extractor'], ['Workday Autofill', '/autofill/workday'], ['Autofill Extension', '/autofill'], ['Jobs at Top Companies', '/companies'], ['Skills & Pay by Role', '/roles'], ['Compare Tools', '/compare'], ['Guides', '/guides']] },
               { h: 'Legal', links: [['Privacy Policy', '/privacy'], ['Terms of Service', '/terms'], ['About', '/about']] },
             ].map(col => (

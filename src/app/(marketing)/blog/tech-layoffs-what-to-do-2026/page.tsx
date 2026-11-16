@@ -1,57 +1,33 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { postMetadata, PostJsonLd } from '@/lib/blog/seo'
+import { postBySlug } from '@/lib/blog/posts'
 
-const title = 'Laid Off in the 2026 Tech Cuts? A Calm, Practical First Two Weeks'
-const description =
-  'Amazon, Meta, Microsoft and more have cut tens of thousands of roles in 2026. If you are one of them, here is a clear order of operations — severance, benefits, unemployment, and a job search that actually starts.'
-const url = 'https://www.applymaster.ai/blog/tech-layoffs-what-to-do-2026'
+const SLUG = 'tech-layoffs-what-to-do-2026'
+const title = postBySlug(SLUG)!.title
 
-export const metadata: Metadata = {
-  title,
-  description,
-  keywords: [
-    'tech layoffs 2026',
-    'what to do after being laid off',
-    'laid off job search',
-    'severance negotiation',
-    'Amazon layoffs 2026',
-    'laid off first week plan',
-    'job search after layoff',
-  ],
-  alternates: { canonical: url },
-  openGraph: {
-    title,
-    description,
-    url,
-    type: 'article',
-    publishedTime: '2026-11-12T12:00:00Z',
-    modifiedTime: '2026-11-12T12:00:00Z',
-    authors: ['ApplyMaster Team'],
+export const metadata: Metadata = postMetadata(SLUG, ["tech layoffs 2026", "what to do after being laid off", "laid off job search", "severance negotiation", "Amazon layoffs 2026", "laid off first week plan", "job search after layoff"])
+
+// Must match the FAQ shown on the page.
+const FAQS = [
+  {
+    "q": "Should I start applying the same week?",
+    "a": "Set up the same week — resume, target list, network note. Submitting in volume can wait three to seven days while you steady yourself; applications sent from panic read like it."
   },
-  twitter: { card: 'summary_large_image', title, description },
-}
-
-const jsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'Article',
-  headline: title,
-  description,
-  author: { '@type': 'Organization', name: 'ApplyMaster', url: 'https://www.applymaster.ai' },
-  publisher: {
-    '@type': 'Organization',
-    name: 'ApplyMaster',
-    logo: { '@type': 'ImageObject', url: 'https://www.applymaster.ai/logo.png' },
+  {
+    "q": "Can I really negotiate severance?",
+    "a": "Often, yes — on the amount, on extended benefits, on references or the departure date. You have the most leverage before you sign, which is exactly why you should not sign in the room. For a large package, a short consult with an employment lawyer usually pays for itself."
   },
-  datePublished: '2026-11-12T12:00:00Z',
-  dateModified: '2026-11-12T12:00:00Z',
-  mainEntityOfPage: { '@type': 'WebPage', '@id': url },
-  keywords: 'tech layoffs 2026, what to do after being laid off, severance negotiation, job search after layoff',
-}
+  {
+    "q": "How do I explain a layoff in interviews?",
+    "a": "One honest sentence: “My role was eliminated in the 2026 restructuring.” No apology, no over-explaining. Layoffs are common enough now that interviewers barely blink; dwelling on it is what draws attention."
+  }
+]
 
 export default function TechLayoffsPage() {
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <PostJsonLd slug={SLUG} faqs={FAQS} />
       <article className="pt-14 pb-20">
         <div className="mx-auto max-w-3xl px-6 lg:px-8">
           <header className="mb-12">

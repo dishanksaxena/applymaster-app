@@ -1,53 +1,28 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { postMetadata, PostJsonLd } from '@/lib/blog/seo'
+import { postBySlug } from '@/lib/blog/posts'
 
-const title = 'The Best Auto-Apply Job Tools in 2026, Honestly Compared'
-const description =
-  'Tsenta, AIApply, LoopCV, Simplify, LazyApply and ApplyMaster compared: what each one actually does, what it costs, and the questions to ask before you pay for any auto-apply tool.'
-const url = 'https://www.applymaster.ai/blog/best-auto-apply-tools-2026'
+const SLUG = 'best-auto-apply-tools-2026'
+const title = postBySlug(SLUG)!.title
 
-export const metadata: Metadata = {
-  title,
-  description,
-  keywords: [
-    'best auto apply tools 2026',
-    'auto apply jobs AI',
-    'AI job application tools',
-    'Tsenta alternatives',
-    'AIApply alternative',
-    'LoopCV alternative',
-    'auto apply job tool comparison',
-    'job application bot',
-  ],
-  alternates: { canonical: url },
-  openGraph: {
-    title,
-    description,
-    url,
-    type: 'article',
-    publishedTime: '2026-11-12T08:00:00Z',
-    modifiedTime: '2026-11-12T08:00:00Z',
-    authors: ['ApplyMaster Team'],
+export const metadata: Metadata = postMetadata(SLUG, ["best auto apply tools 2026", "auto apply jobs AI", "AI job application tools", "Tsenta alternatives", "AIApply alternative", "LoopCV alternative", "auto apply job tool comparison", "job application bot"])
+
+// Must match the FAQ shown on the page.
+const FAQS = [
+  {
+    "q": "Do auto-apply tools actually get people interviews?",
+    "a": "They remove the typing, not the competition. Volume with strong matching beats volume alone — an application to a role you fit at 85% is worth a stack of sprayed ones. No tool can honestly guarantee interviews, and you should treat any that does as a red flag."
   },
-  twitter: { card: 'summary_large_image', title, description },
-}
-
-const jsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'Article',
-  headline: title,
-  description,
-  author: { '@type': 'Organization', name: 'ApplyMaster', url: 'https://www.applymaster.ai' },
-  publisher: {
-    '@type': 'Organization',
-    name: 'ApplyMaster',
-    logo: { '@type': 'ImageObject', url: 'https://www.applymaster.ai/logo.png' },
+  {
+    "q": "Is it safe to auto-apply on LinkedIn?",
+    "a": "Automating LinkedIn is against its User Agreement and accounts get restricted for it. Filling a form you opened, where you press Submit, is a different activity from a bot clicking through jobs on its own — ask which one a tool does before trusting it with the account your search depends on."
   },
-  datePublished: '2026-11-12T08:00:00Z',
-  dateModified: '2026-11-12T08:00:00Z',
-  mainEntityOfPage: { '@type': 'WebPage', '@id': url },
-  keywords: 'best auto apply tools 2026, auto apply jobs AI, AI job application tools, Tsenta alternatives',
-}
+  {
+    "q": "What is the cheapest way to start?",
+    "a": "Free tiers: Simplify's autofill, ApplyMaster's 30 applications a month , and LoopCV's free loop. Run one for two weeks before paying anyone."
+  }
+]
 
 const tools = [
   {
@@ -97,7 +72,7 @@ const tools = [
 export default function BestAutoApplyTools2026Page() {
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <PostJsonLd slug={SLUG} faqs={FAQS} />
       <article className="pt-14 pb-20">
         <div className="mx-auto max-w-3xl px-6 lg:px-8">
           {/* Header */}
